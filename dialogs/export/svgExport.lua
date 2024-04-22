@@ -5,6 +5,8 @@ local frameTargetOptions <const> = { "ACTIVE", "ALL", "MANUAL", "RANGE" }
 local defaults <const> = {
     -- TODO: Warning on appearance when color profile of sprite is not
     -- sRGB or working/display profile are not sRGB?
+
+    -- TODO: Rounded corners when border is zero?
     flattenImage = true,
     frameTarget = "ACTIVE",
     rangeStr = "",
@@ -22,6 +24,7 @@ local defaults <const> = {
     usePixelAspect = true,
     lblReset = 100,
     lblBold = 5,
+    renderHintStr = "shape-rendering=\"crispEdges\" "
 }
 
 ---@param bm BlendMode blend mode
@@ -72,8 +75,8 @@ end
 ---@param img Image image
 ---@param border integer border size
 ---@param padding integer margin size
----@param wScale integer scale width
----@param hScale integer scale height
+---@param wPixel integer scale width
+---@param hPixel integer scale height
 ---@param xOff integer x offset
 ---@param yOff integer y offset
 ---@param palette Palette palette
@@ -82,7 +85,7 @@ end
 ---@return integer[][]
 local function imgToSvgStr(
     img, border, padding,
-    wScale, hScale,
+    wPixel, hPixel,
     xOff, yOff,
     palette)
     -- https://github.com/aseprite/aseprite/issues/3561
@@ -98,8 +101,8 @@ local function imgToSvgStr(
     local imgWidth <const> = imgSpec.width
     local colorMode <const> = imgSpec.colorMode
     local borderPad <const> = border + padding
-    local wScalePad <const> = wScale + padding
-    local hScalePad <const> = hScale + padding
+    local wScalePad <const> = wPixel + padding
+    local hScalePad <const> = hPixel + padding
 
     ---@type table<integer, integer[]>
     local pixelDict <const> = {}
@@ -204,8 +207,8 @@ local function imgToSvgStr(
 
             local ax <const> = borderPad + x0 * wScalePad
             local ay <const> = borderPad + y0 * hScalePad
-            local bx <const> = ax + wScale
-            local by <const> = ay + hScale
+            local bx <const> = ax + wPixel
+            local by <const> = ay + hPixel
 
             subPathsArr[i] = strfmt(
                 "M %d %d L %d %d L %d %d L %d %d Z",
@@ -313,8 +316,8 @@ end
 ---@param frame Frame|integer
 ---@param border integer
 ---@param padding integer
----@param wScale integer
----@param hScale integer
+---@param wPixel integer
+---@param hPixel integer
 ---@param spriteBounds Rectangle
 ---@param includeLocked boolean
 ---@param includeHidden boolean
@@ -325,7 +328,7 @@ end
 ---@param layersStrArr string[]
 local function layerToSvgStr(
     layer, frame,
-    border, padding, wScale, hScale,
+    border, padding, wPixel, hPixel,
     spriteBounds,
     includeLocked, includeHidden,
     includeTiles, includeBkg,
@@ -333,10 +336,6 @@ local function layerToSvgStr(
     layersStrArr)
     local isEditable <const> = layer.isEditable
     local isVisible <const> = layer.isVisible
-    local isGroup <const> = layer.isGroup
-    local isRef <const> = layer.isReference
-    local isBkg <const> = layer.isBackground
-    local isTilemap <const> = layer.isTilemap
 
     if (includeLocked or isEditable)
         and (includeHidden or isVisible) then
@@ -345,10 +344,14 @@ local function layerToSvgStr(
         if layer.name and #layer.name > 0 then
             layerName = string.lower(Utilities.validateFilename(layer.name))
         end
+
         local visStr = ""
         if not isVisible then
             visStr = " visibility=\"hidden\""
         end
+
+        local isGroup <const> = layer.isGroup
+        local isTilemap <const> = layer.isTilemap
 
         if isGroup then
             ---@type string[]
@@ -362,7 +365,7 @@ local function layerToSvgStr(
                     i = i + 1
                     local child <const> = children[i]
                     layerToSvgStr(
-                        child, frame, border, padding, wScale, hScale,
+                        child, frame, border, padding, wPixel, hPixel,
                         spriteBounds, includeLocked, includeHidden,
                         includeTiles, includeBkg, colorMode, palette,
                         childStrs)
@@ -373,9 +376,9 @@ local function layerToSvgStr(
                     layerName, visStr, table.concat(childStrs, "\n"))
                 layersStrArr[#layersStrArr + 1] = grpStr
             end
-        elseif (not isRef)
+        elseif (not layer.isReference)
             and (includeTiles or (not isTilemap))
-            and (includeBkg or (not isBkg)) then
+            and (includeBkg or (not layer.isBackground)) then
             local cel <const> = layer:cel(frame)
             if cel then
                 -- A definition could be created for tile sets, then accessed
@@ -389,8 +392,8 @@ local function layerToSvgStr(
 
                 if not celImg:isEmpty() then
                     -- Layer opacity and cel opacity are compounded.
+                    local lyrAlpha <const> = layer.opacity or 255
                     local celAlpha <const> = cel.opacity
-                    local lyrAlpha <const> = layer.opacity
 
                     local alphaStr = ""
                     if lyrAlpha < 0xff or celAlpha < 0xff then
@@ -403,29 +406,34 @@ local function layerToSvgStr(
 
                     -- feBlend seems more backward compatible, but inline
                     -- CSS style results in shorter code.
-                    local bmStr <const> = blendModeToStr(layer.blendMode)
+                    local bmStr <const> = blendModeToStr(layer.blendMode
+                        or BlendMode.NORMAL)
 
-                    -- Clip off cels that are beyond sprite canvas.
-                    local celBounds <const> = cel.bounds
-                    local xCel <const> = celBounds.x
-                    local yCel <const> = celBounds.y
-                    local intersect <const> = celBounds:intersect(spriteBounds)
-                    intersect.x = intersect.x - xCel
-                    intersect.y = intersect.y - yCel
+                    -- TODO: This intersection was never used. Is it worth
+                    -- clipping to bounds?
+                    -- local celBounds <const> = cel.bounds
+                    -- local xCel <const> = celBounds.x
+                    -- local yCel <const> = celBounds.y
+                    -- local intersect <const> = celBounds:intersect(spriteBounds)
+                    -- intersect.x = intersect.x - xCel
+                    -- intersect.y = intersect.y - yCel
+                    local celPos <const> = cel.position
+                    local xCel <const> = celPos.x
+                    local yCel <const> = celPos.y
 
                     local imgStr <const>, _ <const>, _ <const> = imgToSvgStr(
                         celImg, border, padding,
-                        wScale, hScale, xCel, yCel,
+                        wPixel, hPixel, xCel, yCel,
                         palette)
 
                     local grpStr <const> = string.format(
                         "<g id=\"%s\"%s style=\"mix-blend-mode: %s;\"%s>\n%s\n</g>",
                         layerName, visStr, bmStr, alphaStr, imgStr)
                     layersStrArr[#layersStrArr + 1] = grpStr
-                end
-            end -- End cel exists check.
-        end     -- End isGroup branch.
-    end         -- End isVisible and isEditable.
+                end -- End image is not empty.
+            end     -- End cel exists check.
+        end         -- End isGroup branch.
+    end             -- End isVisible and isEditable.
 end
 
 local dlg <const> = Dialog { title = "SVG Export" }
@@ -624,19 +632,19 @@ dlg:color {
 dlg:newrow { always = false }
 
 dlg:check {
-    id = "useChecker",
-    label = "Background:",
-    text = "Chec&ker",
-    selected = defaults.useChecker
+    id = "usePixelAspect",
+    label = "Apply:",
+    text = "Pi&xel Aspect",
+    selected = defaults.usePixelAspect
 }
 
 dlg:newrow { always = false }
 
 dlg:check {
-    id = "usePixelAspect",
-    label = "Apply:",
-    text = "Pi&xel Aspect",
-    selected = defaults.usePixelAspect
+    id = "useChecker",
+    label = "Background:",
+    text = "Chec&ker",
+    selected = defaults.useChecker
 }
 
 dlg:newrow { always = false }
@@ -710,12 +718,12 @@ dlg:button {
         local useLabels <const> = args.useLabels --[[@as boolean]]
 
         -- Process scale
-        local wScale = scale
-        local hScale = scale
+        local wPixel = scale
+        local hPixel = scale
         if usePixelAspect then
             local pxRatio <const> = activeSprite.pixelRatio
-            wScale = wScale * math.max(1, math.abs(pxRatio.width))
-            hScale = hScale * math.max(1, math.abs(pxRatio.height))
+            wPixel = wPixel * math.max(1, math.abs(pxRatio.width))
+            hPixel = hPixel * math.max(1, math.abs(pxRatio.height))
         end
 
         -- Process space for labels
@@ -723,8 +731,8 @@ dlg:button {
             and flattenImage
             and frameTarget == "ACTIVE"
         local useRowColLabels <const> = useLabels
-        local wRowColLabel <const> = useRowColLabels and wScale or 0
-        local hRowColLabel <const> = useRowColLabels and hScale or 0
+        local wRowColLabel <const> = useRowColLabels and wPixel or 0
+        local hRowColLabel <const> = useRowColLabels and hPixel or 0
 
         -- Doc prefs are needed to get the frame UI offset, grid color and
         -- background checker.
@@ -738,8 +746,8 @@ dlg:button {
 
         -- Determine size of scaled image plus pixel padding, then the right
         -- edge facing the border, then the total dimension.
-        local wClip <const> = wScale * wNative + padding * (wNative + 1)
-        local hClip <const> = hScale * hNative + padding * (hNative + 1)
+        local wClip <const> = wPixel * wNative + padding * (wNative + 1)
+        local hClip <const> = hPixel * hNative + padding * (hNative + 1)
         local wnBorder <const> = wClip + border
         local hnBorder <const> = hClip + border
         local wTotal <const> = wnBorder + border
@@ -760,8 +768,8 @@ dlg:button {
             local size <const> = bgPref.size --[[@as Size]]
             local wCheck <const> = math.max(1, math.abs(size.width))
             local hCheck <const> = math.max(1, math.abs(size.height))
-            local wCheckScaled <const> = wCheck * wScale
-            local hCheckScaled <const> = hCheck * hScale
+            local wCheckScaled <const> = wCheck * wPixel
+            local hCheckScaled <const> = hCheck * hPixel
             local wcs2 <const> = wCheckScaled + wCheckScaled
             local hcs2 <const> = hCheckScaled + hCheckScaled
 
@@ -914,7 +922,7 @@ dlg:button {
                     -- animated.
                     local imgStr <const>, _ <const>, _ <const> = imgToSvgStr(
                         flatImg, border, padding,
-                        wScale, hScale, 0, 0,
+                        wPixel, hPixel, 0, 0,
                         palette)
 
                     -- Create frame SVG string.
@@ -957,12 +965,12 @@ dlg:button {
                 local layerStr <const>,
                 hexArr <const>,
                 idcsArr <const> = imgToSvgStr(flatImg, border, padding,
-                    wScale, hScale, 0, 0, palette)
+                    wPixel, hPixel, 0, 0, palette)
                 layerStrsArr[1] = layerStr
 
                 if usePixelLabels then
                     labelsStrArr[1] = genLabelSvgStr("pixellabels", hexArr, idcsArr,
-                        flatImg.width, border, padding, wScale, hScale, 0, 0)
+                        flatImg.width, border, padding, wPixel, hPixel, 0, 0)
                 end
             end
         else
@@ -992,7 +1000,7 @@ dlg:button {
                 j = j + 1
                 local layer <const> = spriteLayers[j]
                 layerToSvgStr(
-                    layer, activeFrame, border, padding, wScale, hScale,
+                    layer, activeFrame, border, padding, wPixel, hPixel,
                     spriteBounds, includeLocked, includeHidden, includeTiles,
                     includeBkg, colorMode, palette, layerStrsArr)
             end
@@ -1010,8 +1018,8 @@ dlg:button {
                 or ""
 
             local borderPad <const> = border + padding
-            local wScalePad <const> = wScale + padding
-            local hScalePad <const> = hScale + padding
+            local wScalePad <const> = wPixel + padding
+            local hScalePad <const> = hPixel + padding
 
             -- Cut out a hole for each pixel (counter-clockwise).
             ---@type string[]
@@ -1024,8 +1032,8 @@ dlg:button {
 
                 local ax <const> = borderPad + x * wScalePad
                 local ay <const> = borderPad + y * hScalePad
-                local bx <const> = ax + wScale
-                local by <const> = ay + hScale
+                local bx <const> = ax + wPixel
+                local by <const> = ay + hPixel
 
                 i = i + 1
                 holeStrArr[i] = strfmt(
@@ -1072,16 +1080,16 @@ dlg:button {
             local lblReset <const> = defaults.lblReset
             local lblBold <const> = defaults.lblBold
             local borderPad <const> = border + padding
-            local wScaleHalf <const> = wScale * 0.5
-            local hScaleHalf <const> = hScale * 0.5
-            local xRowLabel <const> = wnBorder + border + wScaleHalf
-            local yColLabel <const> = hnBorder + border + hScaleHalf
+            local wPixelHalf <const> = wPixel * 0.5
+            local hPixelHalf <const> = hPixel * 0.5
+            local xRowLabel <const> = wnBorder + border + wPixelHalf
+            local yColLabel <const> = hnBorder + border + hPixelHalf
 
             labelsStrArr[#labelsStrArr + 1] = "<g id=\"collabels\" fill=\"#000000\">"
             local j = 0
             while j < wNative do
                 local x1mrg <const> = borderPad + j * padding
-                local cx <const> = x1mrg + j * wScale + wScaleHalf
+                local cx <const> = x1mrg + j * wPixel + wPixelHalf
                 local fwStr <const> = j % lblBold == 0
                     and " font-weight=\"bold\""
                     or ""
@@ -1099,7 +1107,7 @@ dlg:button {
             local i = 0
             while i < hNative do
                 local y1mrg <const> = borderPad + i * padding
-                local cy <const> = y1mrg + i * hScale + hScaleHalf
+                local cy <const> = y1mrg + i * hPixel + hPixelHalf
                 local fwStr <const> = i % lblBold == 0
                     and " font-weight=\"bold\""
                     or ""
@@ -1115,7 +1123,7 @@ dlg:button {
         -- If there were any diagonal guidelines, then this shape rendering
         -- is no longer a suitable choice. However, geometricPrecision causes
         -- problems with background checker pattern.
-        local renderHintStr = "shape-rendering=\"crispEdges\" "
+        local renderHintStr <const> = defaults.renderHintStr
 
         local svgStr <const> = tconcat({
             "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n",
@@ -1134,7 +1142,7 @@ dlg:button {
             "font-family=\"sans-serif\" ",
             strfmt(
                 "font-size=\"%dpx\" ",
-                math.max(1, math.min(wScale, hScale) * 0.5)),
+                math.max(1, math.min(wPixel, hPixel) * 0.5)),
             "text-anchor=\"middle\" ",
             "dominant-baseline=\"middle\">\n",
             defsStr,

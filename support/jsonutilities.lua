@@ -257,6 +257,9 @@ end
 ---@param properties table<string, any>
 ---@return string
 function JsonUtilities.propsToJson(properties)
+    -- TODO: Why does this not include the enclosing brackets?
+    -- It might be more consistent with other funcs if it did.
+
     ---@type string[]
     local propStrs <const> = {}
     local strfmt <const> = string.format
