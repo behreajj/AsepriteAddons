@@ -213,6 +213,11 @@ dlg:button {
         local blueLyr <const> = activeSprite:newLayer()
 
         app.transaction("Set Layer Props", function()
+            if baseLyr then
+                baseLyr.name = "Base"
+                baseLyr.color = Color { r = 32, g = 32, b = 32 }
+            end
+
             redLyr.name = "Red"
             redLyr.color = Color { r = 192, g = 0, b = 0 }
             redLyr.blendMode = BlendMode.ADDITION
@@ -230,10 +235,7 @@ dlg:button {
         end)
 
         app.transaction("Set Group Props", function()
-            -- Avoid setting the stackIndex as much as possible.
             if baseLyr then
-                baseLyr.name = "Base"
-                baseLyr.color = Color { r = 32, g = 32, b = 32 }
                 baseLyr.parent = sepGroup
             end
 
