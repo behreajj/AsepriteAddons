@@ -199,11 +199,8 @@ dlg:button {
             mesh:scaleFacesIndiv(margin)
         end
 
-        local layer = nil
-        app.transaction("New Layer", function()
-            layer = sprite:newLayer()
-            layer.name = mesh.name
-        end)
+        local layer <const> = sprite:newLayer()
+        layer.name = mesh.name
 
         local docPrefs <const> = app.preferences.document(sprite)
         local symmetryPrefs <const> = docPrefs.symmetry

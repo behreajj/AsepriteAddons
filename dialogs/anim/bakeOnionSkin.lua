@@ -271,9 +271,8 @@ dlg:button {
             AseUtilities.getFrames(activeSprite, target))
 
         -- Do not copy source layer blend mode.
-        local trgLayer = nil
-        app.transaction("New Layer", function()
-            trgLayer = activeSprite:newLayer()
+        local trgLayer <const> = activeSprite:newLayer()
+        app.transaction("Set Layer Props", function()
             trgLayer.name = srcLayer.name .. " Onion"
             trgLayer.parent = srcLayer.parent
             trgLayer.opacity = srcLayer.opacity or 255

@@ -163,7 +163,7 @@ dlg:button {
             local brx = tlx + wTile * celImg.width - 1
             local bry = tly + hTile * celImg.height - 1
 
-            if useSel and (not isTilemap) then
+            if sel and (not isTilemap) then
                 transact(strfmt("Crop %s", layerName), function()
                     selectCel(cel, sel)
                 end)
@@ -223,7 +223,7 @@ dlg:button {
             if bry > yMax then yMax = bry end
         end
 
-        if useSel then
+        if sel then
             transact("Crop Canvas To Mask", function()
                 activeSprite:crop(sel.bounds)
             end)

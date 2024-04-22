@@ -208,15 +208,11 @@ dlg:button {
 
         -- Right side of line is mirrored, left side
         -- copies original pixels.
-        local rgtLayer = nil
-        local lftLayer = nil
-        local mrrGroup = nil
+        local rgtLayer <const> = activeSprite:newLayer()
+        local lftLayer <const> = activeSprite:newLayer()
+        local mrrGroup <const> = activeSprite:newGroup()
 
-        app.transaction("New Layers", function()
-            rgtLayer = activeSprite:newLayer()
-            lftLayer = activeSprite:newLayer()
-            mrrGroup = activeSprite:newGroup()
-
+        app.transaction("Set Layer Props", function()
             lftLayer.parent = mrrGroup
             lftLayer.opacity = srcLayer.opacity
             lftLayer.name = "Left"

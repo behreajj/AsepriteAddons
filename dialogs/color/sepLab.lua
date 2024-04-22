@@ -384,9 +384,8 @@ dlg:button {
             end
         end
 
-        local maskLayer = nil
-        app.transaction("Mask Layer", function()
-            maskLayer = activeSprite:newLayer()
+        local maskLayer <const> = activeSprite:newLayer()
+        app.transaction("Set Layer Props", function()
             maskLayer.parent = srcLayer.parent
             maskLayer.name = string.format(
                 "%s Mask %s",

@@ -440,9 +440,8 @@ dlg:button {
         local frames <const> = Utilities.flatArr2(
             AseUtilities.getFrames(activeSprite, target))
 
-        local trgLayer = nil
-        app.transaction("New Layer", function()
-            trgLayer = activeSprite:newLayer()
+        local trgLayer <const> = activeSprite:newLayer()
+        app.transaction("Set Layer Props", function()
             local srcLayerName = "Layer"
             if #srcLayer.name > 0 then
                 srcLayerName = srcLayer.name

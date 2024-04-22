@@ -197,9 +197,8 @@ dlg:button {
         end
 
         -- Create target layer.
-        local trgLayer = nil
-        app.transaction("New Layer", function()
-            trgLayer = activeSprite:newLayer()
+        local trgLayer <const> = activeSprite:newLayer()
+        app.transaction("Set Layer Props", function()
             trgLayer.name = "Gradient Time"
             if useMixed then
                 trgLayer.name = trgLayer.name

@@ -229,11 +229,8 @@ dlg:button {
             sectors, skip, pick, inset * 0.01)
         Utilities.mulMat3Mesh2(mat, mesh)
 
-        local layer = nil
-        app.transaction("New Layer", function()
-            layer = sprite:newLayer()
-            layer.name = mesh.name
-        end)
+        local layer <const> = sprite:newLayer()
+        layer.name = mesh.name
 
         local docPrefs <const> = app.preferences.document(sprite)
         local symmetryPrefs <const> = docPrefs.symmetry

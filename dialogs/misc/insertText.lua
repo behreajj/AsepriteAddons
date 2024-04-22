@@ -365,10 +365,8 @@ dlg:button {
             layer = sprite.layers[1]
             layer.name = "Text"
         else
-            app.transaction("New Layer", function()
-                layer = sprite:newLayer()
-                layer.name = "Text"
-            end)
+            layer = sprite:newLayer()
+            layer.name = "Text"
         end
 
         local spriteSpec <const> = sprite.spec

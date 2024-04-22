@@ -169,9 +169,8 @@ dlg:button {
 
         -- Create new layer.
         -- Layer and cel opacity are baked in loop below.
-        local compLayer = nil
-        app.transaction("New Layer", function()
-            compLayer = activeSprite:newLayer()
+        local compLayer <const> = activeSprite:newLayer()
+        app.transaction("Set Layer Props", function()
             compLayer.name = string.format("Comp %s %s",
                 overLayer.name, underLayer.name)
             compLayer.parent = parent

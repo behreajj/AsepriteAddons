@@ -127,9 +127,8 @@ dlg:button {
 
         -- Create target layer.
         -- Do not copy source layer blend mode.
-        local trgLayer = nil
-        app.transaction("New Layer", function()
-            trgLayer = activeSprite:newLayer()
+        local trgLayer = activeSprite:newLayer()
+        app.transaction("Set Layer Props", function()
             trgLayer.parent = srcLayer.parent
             trgLayer.opacity = srcLayer.opacity or 255
             trgLayer.name = "Gradient Map"

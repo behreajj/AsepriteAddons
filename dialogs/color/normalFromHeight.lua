@@ -194,22 +194,21 @@ dlg:button {
         local activeHeight <const> = spriteHeight
 
         -- Create necessary layers.
-        local flatLayer = nil
-        local grayLayer = nil
-        local normalLayer = nil
+        local flatLayer <const> = showFlatMap
+            and activeSprite:newLayer() or nil
+        local grayLayer <const> = showGrayMap
+            and activeSprite:newLayer() or nil
+        local normalLayer <const> = activeSprite:newLayer()
 
-        app.transaction("New Layers", function()
-            if showFlatMap then
-                flatLayer = activeSprite:newLayer()
+        app.transaction("Set Layer Props", function()
+            if flatLayer then
                 flatLayer.name = "Flattened"
             end
 
-            if showGrayMap then
-                grayLayer = activeSprite:newLayer()
+            if grayLayer then
                 grayLayer.name = "Height Map"
             end
 
-            normalLayer = activeSprite:newLayer()
             normalLayer.name = string.format("Normal Map %03d", scale)
         end)
 
@@ -227,7 +226,7 @@ dlg:button {
                 flatImg:drawSprite(activeSprite, frame)
 
                 -- Show flattened image.
-                if showFlatMap then
+                if flatLayer then
                     activeSprite:newCel(
                         flatLayer, frame, flatImg, originPt)
                 end
@@ -279,7 +278,7 @@ dlg:button {
                 end
 
                 -- Show gray image.
-                if showGrayMap then
+                if grayLayer then
                     local grayImg <const> = Image(specNone)
                     local grayPxItr <const> = grayImg:pixels()
                     local grayIdx = 0

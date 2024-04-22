@@ -237,15 +237,11 @@ dlg:button {
         local srcBlendMode <const> = srcLayer.blendMode
         local srcParent <const> = srcLayer.parent
 
-        local skipLayer = nil
-        local pickLayer = nil
-        local targetGroup = nil
+        local skipLayer <const> = activeSprite:newLayer()
+        local pickLayer <const> = activeSprite:newLayer()
+        local targetGroup <const> = activeSprite:newGroup()
 
-        app.transaction("New Layers", function()
-            skipLayer = activeSprite:newLayer()
-            pickLayer = activeSprite:newLayer()
-            targetGroup = activeSprite:newGroup()
-
+        app.transaction("Set Layer Props", function()
             skipLayer.parent = targetGroup
             skipLayer.blendMode = srcBlendMode
             skipLayer.opacity = aSkip

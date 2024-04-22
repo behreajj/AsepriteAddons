@@ -320,9 +320,8 @@ dlg:button {
 
         -- Create a new layer, srcLayer should not be a group,
         -- and thus have an opacity and blend mode.
-        local trgLayer = nil
-        app.transaction("New Layer", function()
-            trgLayer = activeSprite:newLayer()
+        local trgLayer <const> = activeSprite:newLayer()
+        app.transaction("Set Layer Props", function()
             local srcLayerName = "Layer"
             if #srcLayer.name > 0 then
                 srcLayerName = srcLayer.name

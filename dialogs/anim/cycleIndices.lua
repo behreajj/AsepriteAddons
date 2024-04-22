@@ -172,9 +172,8 @@ dlg:button {
         end
 
         -- Create target layer.
-        local trgLayer = nil
-        app.transaction("Adjustment Layer", function()
-            trgLayer = activeSprite:newLayer()
+        local trgLayer <const> = activeSprite:newLayer()
+        app.transaction("Set Layer Props", function()
             local srcLayerName = "Layer"
             if #srcLayer.name > 0 then
                 srcLayerName = srcLayer.name

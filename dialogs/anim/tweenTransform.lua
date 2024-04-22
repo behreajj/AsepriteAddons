@@ -815,9 +815,8 @@ dlg:button {
         local countFrames <const> = 1 + frIdxDestVerif - frIdxOrigVerif
 
         -- Create new layer.
-        local trgLayer = nil
-        app.transaction("New Layer", function()
-            trgLayer = activeSprite:newLayer()
+        local trgLayer <const> = activeSprite:newLayer()
+        app.transaction("Set Layer Props", function()
             trgLayer.name = string.format("Scale %s At %d From %d To %d",
                 srcLayer.name,
                 srcFrame.frameNumber + frameUiOffset,
@@ -838,15 +837,12 @@ dlg:button {
         local round <const> = Utilities.round
 
         local rotateImage = AseUtilities.rotateImageZ
-        local rotPropId = "zRotation"
         local axis <const> = args.axis
             or defaults.axis --[[@as string]]
         if axis == "X" then
             rotateImage = AseUtilities.rotateImageX
-            rotPropId = "xRotation"
         elseif axis == "Y" then
             rotateImage = AseUtilities.rotateImageY
-            rotPropId = "yRotation"
         end
 
         if mode == "ADD" then

@@ -358,13 +358,13 @@ dlg:button {
 
         -- Create target layer.
         -- Do not copy source layer blend mode.
-        local trgLayer = nil
-        app.transaction("New Layer", function()
+        local trgLayer <const> = activeSprite:newLayer()
+        app.transaction("Set Layer Props", function()
             local srcLayerName = "Layer"
             if #srcLayer.name > 0 then
                 srcLayerName = srcLayer.name
             end
-            trgLayer = activeSprite:newLayer()
+
             trgLayer.parent = srcLayer.parent
             trgLayer.name = string.format(
                 "%s Curves", srcLayerName)

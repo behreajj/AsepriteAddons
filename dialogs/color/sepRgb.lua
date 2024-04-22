@@ -206,51 +206,37 @@ dlg:button {
         local frames <const> = Utilities.flatArr2(
             AseUtilities.getFrames(activeSprite, target))
 
-        local sepGroup = nil
-        local baseLyr = nil
-        local redLyr = nil
-        local greenLyr = nil
-        local blueLyr = nil
+        local sepGroup <const> = activeSprite:newGroup()
+        local baseLyr <const> = fillBase and activeSprite:newLayer() or nil
+        local redLyr <const> = activeSprite:newLayer()
+        local greenLyr <const> = activeSprite:newLayer()
+        local blueLyr <const> = activeSprite:newLayer()
 
-        if fillBase then
-            app.transaction("Base Layer", function()
-                baseLyr = activeSprite:newLayer()
-                baseLyr.name = "Base"
-                baseLyr.color = Color { r = 32, g = 32, b = 32 }
-            end)
-        end
-
-        app.transaction("Red Layer", function()
-            redLyr = activeSprite:newLayer()
+        app.transaction("Set Layer Props", function()
             redLyr.name = "Red"
             redLyr.color = Color { r = 192, g = 0, b = 0 }
             redLyr.blendMode = BlendMode.ADDITION
             redLyr.opacity = opacityRed
-        end)
 
-        app.transaction("Green Layer", function()
-            greenLyr = activeSprite:newLayer()
             greenLyr.name = "Green"
             greenLyr.color = Color { r = 0, g = 192, b = 0 }
             greenLyr.blendMode = BlendMode.ADDITION
             greenLyr.opacity = opacityGreen
-        end)
 
-        app.transaction("Blue Layer", function()
-            blueLyr = activeSprite:newLayer()
             blueLyr.name = "Blue"
             blueLyr.color = Color { r = 0, g = 0, b = 192 }
             blueLyr.blendMode = BlendMode.ADDITION
             blueLyr.opacity = opacityBlue
         end)
 
-        app.transaction("New Group", function()
+        app.transaction("Set Group Props", function()
             -- Avoid setting the stackIndex as much as possible.
-            sepGroup = activeSprite:newGroup()
-
-            if fillBase then
+            if baseLyr then
+                baseLyr.name = "Base"
+                baseLyr.color = Color { r = 32, g = 32, b = 32 }
                 baseLyr.parent = sepGroup
             end
+
             redLyr.parent = sepGroup
             greenLyr.parent = sepGroup
             blueLyr.parent = sepGroup
@@ -353,7 +339,7 @@ dlg:button {
                     greenCel.zIndex = srcZIndex
                     blueCel.zIndex = srcZIndex
 
-                    if fillBase then
+                    if baseLyr then
                         local trxBase <const> = min(trxRed, trxGreen, trxBlue)
                         local tryBase <const> = min(tryRed, tryGreen, tryBlue)
                         local brxBase <const> = max(trxRed, trxGreen, trxBlue)

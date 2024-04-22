@@ -314,48 +314,42 @@ dlg:button {
                     bkgImg, Point(0, 0))
             end)
 
-        -- Layers created in transaction.
-        local headersGroup = nil
-        local rowsGroup = nil
-        local colsGroup = nil
-        local swatchesGroup = nil
-        local dithersGroup = nil
-        local mixesGroup = nil
-        local highsGroup = nil
+        local headersGroup <const> = comboSprite:newGroup()
+        local rowsGroup <const> = comboSprite:newGroup()
+        local colsGroup <const> = comboSprite:newGroup()
+        local swatchesGroup <const> = comboSprite:newGroup()
+        local dithersGroup <const> = comboSprite:newGroup()
+        local mixesGroup <const> = useMix
+            and comboSprite:newGroup() or nil
+        local highsGroup <const> = (useHighlight and paddingGtEq1)
+            and comboSprite:newGroup() or nil
 
-        app.transaction("New Layers", function()
-            headersGroup = comboSprite:newGroup()
+        app.transaction("Set Layer Props", function()
             headersGroup.name = "Headers"
             headersGroup.isCollapsed = true
 
-            rowsGroup = comboSprite:newGroup()
             rowsGroup.name = "Rows"
             rowsGroup.parent = headersGroup
             rowsGroup.isCollapsed = true
 
-            colsGroup = comboSprite:newGroup()
             colsGroup.name = "Columns"
             colsGroup.parent = headersGroup
             colsGroup.isCollapsed = true
 
-            swatchesGroup = comboSprite:newGroup()
             swatchesGroup.name = "Swatches"
             swatchesGroup.isCollapsed = true
 
-            dithersGroup = comboSprite:newGroup()
             dithersGroup.name = "Dithered"
             dithersGroup.parent = swatchesGroup
             dithersGroup.isCollapsed = true
 
-            if useMix then
-                mixesGroup = comboSprite:newGroup()
+            if mixesGroup then
                 mixesGroup.name = "Mixed"
                 mixesGroup.parent = swatchesGroup
                 mixesGroup.isCollapsed = true
             end
 
-            if useHighlight and paddingGtEq1 then
-                highsGroup = comboSprite:newGroup()
+            if highsGroup then
                 highsGroup.name = "Highlights"
                 -- highsGroup.parent = dithersGroup
                 highsGroup.isCollapsed = true
@@ -498,7 +492,9 @@ dlg:button {
                                 local highLayer = nil
                                 highLayer = comboSprite:newLayer()
                                 highLayer.name = layerName
-                                highLayer.parent = highsGroup
+                                if highsGroup then
+                                    highLayer.parent = highsGroup
+                                end
 
                                 comboSprite:newCel(
                                     highLayer,
@@ -526,7 +522,9 @@ dlg:button {
                         mixLayer.name = strfmt(
                             "Mix %s %s",
                             rowWebStr, colWebStr)
-                        mixLayer.parent = mixesGroup
+                        if mixesGroup then
+                            mixLayer.parent = mixesGroup
+                        end
 
                         local mixedCel <const> = comboSprite:newCel(
                             mixLayer,
