@@ -1504,7 +1504,6 @@ end
 ---@param includeTiles? boolean include tile maps
 ---@param includeBkg? boolean include backgrounds
 ---@return Cel[]
----@nodiscard
 function AseUtilities.filterCels(
     sprite, layer, frames, target,
     includeLocked, includeHidden, includeTiles, includeBkg)
