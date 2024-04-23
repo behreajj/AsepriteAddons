@@ -245,22 +245,13 @@ local function imgToSvgStr(
                 local yIn2 <const> = y1 - rounding
                 local yIn3 <const> = y1 - rounding
 
-                local cp0x <const> = xIn1 + kr
-                local cp1y <const> = yIn1 - kr
-                local cp2y <const> = yIn2 + kr
-                local cp3x <const> = xIn2 + kr
-                local cp4x <const> = xIn3 - kr
-                local cp5y <const> = yIn3 + kr
-                local cp6y <const> = yIn0 - kr
-                local cp7x <const> = xIn0 - kr
-
                 subPathsArr[i] = strfmt(
                     roundedRectFormat,
                     xIn0, y0,
-                    xIn1, y0, cp0x, y0, x1, cp1y, x1, yIn1,
-                    x1, yIn2, x1, cp2y, cp3x, y1, xIn2, y1,
-                    xIn3, y1, cp4x, y1, x0, cp5y, x0, yIn3,
-                    x0, yIn0, x0, cp6y, cp7x, y0, xIn0, y0)
+                    xIn1, y0, xIn1 + kr, y0, x1, yIn1 - kr, x1, yIn1,
+                    x1, yIn2, x1, yIn2 + kr, xIn2 + kr, y1, xIn2, y1,
+                    xIn3, y1, xIn3 - kr, y1, x0, yIn3 + kr, x0, yIn3,
+                    x0, yIn0, x0, yIn0 - kr, xIn0 - kr, y0, xIn0, y0)
             end
         else
             local i = 0
