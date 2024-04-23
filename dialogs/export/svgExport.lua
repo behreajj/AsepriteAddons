@@ -3,8 +3,6 @@ dofile("../../support/aseutilities.lua")
 local frameTargetOptions <const> = { "ACTIVE", "ALL", "MANUAL", "RANGE" }
 
 local defaults <const> = {
-    -- TODO: Warning on appearance when color profile of sprite is not
-    -- sRGB or working/display profile are not sRGB?
     flattenImage = true,
     frameTarget = "ACTIVE",
     rangeStr = "",
@@ -1249,7 +1247,17 @@ dlg:button {
             return
         end
 
-        app.alert { title = "Success", text = "File exported." }
+        if activeSpec.colorSpace ~= ColorSpace { sRGB = true } then
+            app.alert {
+                title = "Warning",
+                text = {
+                    "SVGs are not color managed.",
+                    "Vector export colors may differ from original."
+                }
+            }
+        else
+            app.alert { title = "Success", text = "File exported." }
+        end
     end
 }
 
