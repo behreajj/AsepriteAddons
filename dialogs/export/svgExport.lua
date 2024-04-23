@@ -178,7 +178,7 @@ local function imgToSvgStr(
             local r <const>, g <const>, b <const>, a <const> = strbyte(
                 imgBytes, 1 + ibpp, imgbpp + ibpp)
             if a > 0 then
-                local hex <const> = a << 0x18| b << 0x10| g << 0x08| r
+                local hex <const> = a << 0x18 | b << 0x10 | g << 0x08 | r
                 local idcs <const> = pixelDict[hex]
                 if idcs then
                     idcs[#idcs + 1] = i
