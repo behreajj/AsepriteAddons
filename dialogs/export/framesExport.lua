@@ -13,6 +13,9 @@ local cropTypes <const> = { "CROPPED", "SPRITE" }
 local sheetTypes <const> = { "HORIZONTAL", "SQUARE", "VERTICAL" }
 
 local defaults <const> = {
+    -- TODO: Calculate total duration of selected frames and place in JSON?
+    -- https://community.aseprite.org/t/tag-total-time-in-json-export-meta-data/
+
     -- Option to put batches (sprite sheet off) into subfolders? If this is not
     -- implemented, then the batches option should only be available if
     -- useSheet is true.

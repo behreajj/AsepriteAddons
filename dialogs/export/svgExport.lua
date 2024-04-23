@@ -108,27 +108,34 @@ local function imgToSvgStr(
     -- each square diminishes issue.
     local strfmt <const> = string.format
     local tconcat <const> = table.concat
+    local strbyte <const> = string.byte
 
     local imgSpec <const> = img.spec
     local imgWidth <const> = imgSpec.width
+    local imgHeight <const> = imgSpec.height
     local colorMode <const> = imgSpec.colorMode
+    local imgBytes <const> = img.bytes
+    local imgbpp <const> = img.bytesPerPixel
+
     local borderPad <const> = border + padding
     local wScalePad <const> = wPixel + padding
     local hScalePad <const> = hPixel + padding
+    local imgArea <const> = imgWidth * imgHeight
     local kr <const> = 0.55228474983079 * rounding
 
     ---@type table<integer, integer[]>
     local pixelDict <const> = {}
-    local pxItr <const> = img:pixels()
 
     if colorMode == ColorMode.INDEXED then
+        ---@type table<integer, integer>
+        local clrIdxToHex <const> = {}
         local aseColorToHex <const> = AseUtilities.aseColorToHex
         local alphaIdx <const> = imgSpec.transparentColor
         local rgbColorMode <const> = ColorMode.RGB
-        ---@type table<integer, integer>
-        local clrIdxToHex <const> = {}
-        for pixel in pxItr do
-            local clrIdx <const> = pixel()
+
+        local i = 0
+        while i < imgArea do
+            local clrIdx <const> = strbyte(imgBytes, 1 + i)
             if clrIdx ~= alphaIdx then
                 local hex = clrIdxToHex[clrIdx]
                 if not hex then
@@ -138,46 +145,50 @@ local function imgToSvgStr(
                 end
 
                 if hex & 0xff000000 ~= 0 then
-                    local pxIdx <const> = pixel.x + pixel.y * imgWidth
                     local idcs <const> = pixelDict[hex]
                     if idcs then
-                        idcs[#idcs + 1] = pxIdx
+                        idcs[#idcs + 1] = i
                     else
-                        pixelDict[hex] = { pxIdx }
+                        pixelDict[hex] = { i }
                     end
                 end
             end
+            i = i + 1
         end
     elseif colorMode == ColorMode.GRAY then
-        for pixel in pxItr do
-            local gray <const> = pixel()
-            if gray & 0xff00 ~= 0 then
-                local idx <const> = pixel.x + pixel.y * imgWidth
-
-                local a <const> = (gray >> 0x08) & 0xff
-                local v <const> = gray & 0xff
+        local i = 0
+        while i < imgArea do
+            local ibpp <const> = i * imgbpp
+            local v <const>, a <const> = strbyte(imgBytes,
+                1 + ibpp, imgbpp + ibpp)
+            if a > 0 then
                 local hex <const> = a << 0x18 | v << 0x10 | v << 0x08 | v
 
                 local idcs <const> = pixelDict[hex]
                 if idcs then
-                    idcs[#idcs + 1] = idx
+                    idcs[#idcs + 1] = i
                 else
-                    pixelDict[hex] = { idx }
+                    pixelDict[hex] = { i }
                 end
             end
+            i = i + 1
         end
     elseif colorMode == ColorMode.RGB then
-        for pixel in pxItr do
-            local hex <const> = pixel()
-            if hex & 0xff000000 ~= 0 then
-                local idx <const> = pixel.x + pixel.y * imgWidth
+        local i = 0
+        while i < imgArea do
+            local ibpp <const> = i * imgbpp
+            local r <const>, g <const>, b <const>, a <const> = strbyte(
+                imgBytes, 1 + ibpp, imgbpp + ibpp)
+            if a > 0 then
+                local hex <const> = a << 0x18| b << 0x10| g << 0x08| r
                 local idcs <const> = pixelDict[hex]
                 if idcs then
-                    idcs[#idcs + 1] = idx
+                    idcs[#idcs + 1] = i
                 else
-                    pixelDict[hex] = { idx }
+                    pixelDict[hex] = { i }
                 end
             end
+            i = i + 1
         end
     end
 
