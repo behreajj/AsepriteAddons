@@ -15,7 +15,7 @@ local defaults <const> = {
     includeBkg = true,
     border = 0,
     padding = 0,
-    rounding = 0,
+    roundPercent = 0,
     scale = 1,
     useChecker = false,
     usePixelAspect = true,
@@ -621,13 +621,7 @@ dlg:slider {
     label = "Scale:",
     min = 1,
     max = 32,
-    value = defaults.scale,
-    onchange = function()
-        local args <const> = dlg.data
-        local padding <const> = args.padding --[[@as integer]]
-        local scale <const> = args.scale --[[@as integer]]
-        dlg:modify { id = "rounding", visible = scale >= 3 and padding <= 0 }
-    end
+    value = defaults.scale
 }
 
 dlg:newrow { always = false }
@@ -665,10 +659,10 @@ dlg:slider {
     onchange = function()
         local args <const> = dlg.data
         local padding <const> = args.padding --[[@as integer]]
-        local scale <const> = args.scale --[[@as integer]]
-        local gtz <const> = padding > 0
-        dlg:modify { id = "paddingClr", visible = gtz }
-        dlg:modify { id = "rounding", visible = scale >= 3 and (not gtz) }
+        local paddingClr <const> = args.paddingClr --[[@as Color]]
+        dlg:modify { id = "paddingClr", visible = padding > 0 }
+        dlg:modify { id = "roundPercent", visible = padding <= 0
+            or paddingClr.alpha <= 0 }
     end
 }
 
@@ -677,19 +671,23 @@ dlg:newrow { always = false }
 dlg:color {
     id = "paddingClr",
     color = Color { r = 255, g = 255, b = 255 },
-    visible = defaults.padding > 0
+    visible = defaults.padding > 0,
+    onchange = function()
+        local args <const> = dlg.data
+        local paddingClr <const> = args.paddingClr --[[@as Color]]
+        dlg:modify { id = "roundPercent", visible = paddingClr.alpha <= 0 }
+    end
 }
 
 dlg:newrow { always = false }
 
 dlg:slider {
-    id = "rounding",
+    id = "roundPercent",
     label = "Rounding:",
     min = 0,
-    max = 64,
-    value = defaults.rounding,
+    max = 100,
+    value = defaults.roundPercent,
     visible = defaults.padding <= 0
-        and defaults.scale >= 3
 }
 
 dlg:newrow { always = false }
@@ -775,8 +773,8 @@ dlg:button {
         local padding <const> = args.padding
             or defaults.padding --[[@as integer]]
         local paddingClr <const> = args.paddingClr --[[@as Color]]
-        local rounding <const> = args.rounding
-            or defaults.rounding --[[@as number]]
+        local roundPercent <const> = args.roundPercent
+            or defaults.roundPercent --[[@as integer]]
         local scale <const> = args.scale or defaults.scale --[[@as integer]]
         local useChecker <const> = args.useChecker --[[@as boolean]]
         local usePixelAspect <const> = args.usePixelAspect --[[@as boolean]]
@@ -791,13 +789,13 @@ dlg:button {
             hPixel = hPixel * math.max(1, math.abs(pxRatio.height))
         end
 
-        -- Verify rounding. If there's a border, then don't use.
-        local rdVerif = rounding
-        if border > 0 then
-            rdVerif = 0.0
-        else
+        local aPadding <const> = paddingClr.alpha
+        local usePadding <const> = padding > 0 and aPadding > 0
+        local rdVerif = 0.0
+        if not usePadding then
+            local roundFac <const> = roundPercent * 0.01
             local shortEdge <const> = 0.5 * math.min(wPixel, hPixel)
-            rdVerif = math.min(shortEdge, math.abs(rdVerif))
+            rdVerif = shortEdge * roundFac
         end
 
         -- Process space for labels
@@ -1085,8 +1083,7 @@ dlg:button {
         end
 
         local padStr = ""
-        local aPadding <const> = paddingClr.alpha
-        if padding > 0 and aPadding > 0 then
+        if usePadding then
             local webHex <const> = paddingClr.red << 0x10
                 | paddingClr.green << 0x08
                 | paddingClr.blue
@@ -1132,7 +1129,8 @@ dlg:button {
 
         local borderStr = ""
         local aBorder <const> = borderClr.alpha
-        if border > 0 and aBorder > 0 then
+        local useBorder <const> = border > 0 and aBorder > 0
+        if useBorder then
             local webHex <const> = borderClr.red << 0x10
                 | borderClr.green << 0x08
                 | borderClr.blue
@@ -1202,7 +1200,7 @@ dlg:button {
         -- is no longer a suitable choice. However, geometricPrecision causes
         -- problems with background checker pattern.
         local renderHintStr = "shape-rendering=\"crispEdges\" "
-        if (not useChecker) and (useLabels or rounding > 0) then
+        if (not useChecker) and (useLabels or rdVerif > 0.0) then
             renderHintStr = "shape-rendering=\"geometricPrecision\" "
         end
 
@@ -1247,7 +1245,9 @@ dlg:button {
             return
         end
 
-        if activeSpec.colorSpace ~= ColorSpace { sRGB = true } then
+        local colorSpace <const> = activeSpec.colorSpace
+        if colorSpace ~= ColorSpace { sRGB = true }
+            and colorSpace ~= ColorSpace() then
             app.alert {
                 title = "Warning",
                 text = {
