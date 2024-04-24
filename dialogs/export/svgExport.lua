@@ -1213,7 +1213,10 @@ dlg:button {
             renderHintStr = "shape-rendering=\"geometricPrecision\" "
         end
 
-        -- Mozilla Firefox has a minimum font size in its settings that may
+        -- TODO: Do not include font info if no labels? Maybe reorganize so
+        -- that something mandatory is right before close bracket >\n .
+
+        -- Firefox has a minimum font size in its settings that may
         -- prevent text from displaying correctly.
         local fontSize <const> = math.max(1, math.min(wPixel, hPixel) * 0.5)
         local svgStr <const> = tconcat({
