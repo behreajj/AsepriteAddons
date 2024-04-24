@@ -1139,6 +1139,9 @@ dlg:button {
                 and strfmt(" fill-opacity=\"%.3f\"", aBorder / 255.0)
                 or ""
 
+            -- Round interior cut out of border if if rdVerif is
+            -- greater than zero? Might not be worth it, since
+            -- pixels on non-corner edges of border will show gaps.
             borderStr = strfmt(
                 "\n<path id=\"border\" fill=\"#%06X\"%s "
                 .. "d=\"M 0 0 L %d 0 L %d %d L 0 %d Z"
@@ -1204,6 +1207,9 @@ dlg:button {
             renderHintStr = "shape-rendering=\"geometricPrecision\" "
         end
 
+        -- Mozilla Firefox has a minimum font size in its settings that may
+        -- prevent text from displaying correctly.
+        local fontSize <const> = math.max(1, math.min(wPixel, hPixel) * 0.5)
         local svgStr <const> = tconcat({
             "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n",
             "<svg ",
@@ -1219,9 +1225,7 @@ dlg:button {
                 "viewBox=\"0 0 %d %d\" ",
                 wViewBox, hViewBox),
             "font-family=\"sans-serif\" ",
-            strfmt(
-                "font-size=\"%dpx\" ",
-                math.max(1, math.min(wPixel, hPixel) * 0.5)),
+            strfmt("font-size=\"%dpx\" ", fontSize),
             "text-anchor=\"middle\" ",
             "dominant-baseline=\"middle\">\n",
             defsStr,

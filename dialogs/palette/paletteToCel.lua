@@ -19,8 +19,7 @@ local defaults <const> = {
     minCapacityBits = 2,
     maxCapacityBits = 16,
     printElapsed = false,
-    clrSpacePreset = "LINEAR_RGB",
-    pullFocus = false
+    clrSpacePreset = "LINEAR_RGB"
 }
 
 ---@param preset string
@@ -173,7 +172,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "confirm",
     text = "&OK",
-    focus = defaults.pullFocus,
+    focus = false,
     onclick = function()
         -- Begin timing the function elapsed.
         local args <const> = dlg.data
