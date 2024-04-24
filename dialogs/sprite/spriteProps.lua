@@ -15,6 +15,7 @@ local sprite <const> = site.sprite
 if not sprite then return end
 
 local defaults <const> = {
+    -- TODO: Allow background checker to be set along with grid?
     textLenLimit = 32,
     maskWarningInvalid = "Mask index is out of bounds.",
     maskWarningIndex = "Mask index is not zero.",

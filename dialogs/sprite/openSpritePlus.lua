@@ -191,6 +191,7 @@ dlg:button {
         local oldOpSeqPref = 0  -- Ask
         local oldAskProfile = 4 -- Ask
         local oldAskMissing = 4 -- Ask
+        local oldQuantAlg = 0   -- Default
         if appPrefs then
             local openFilePrefs <const> = appPrefs.open_file
             if openFilePrefs then
@@ -205,6 +206,12 @@ dlg:button {
 
                 cmPrefs.files_with_profile = 1 -- Embedded
                 cmPrefs.missing_profile = 0    -- Disable
+            end
+
+            local quantPrefs <const> = appPrefs.quantization
+            if quantPrefs then
+                oldQuantAlg = quantPrefs.rgbmap_algorithm or 0 --[[@as integer]]
+                quantPrefs.rgbmap_algorithm = 1 -- RGB5A3
             end
         end
 
@@ -342,6 +349,11 @@ dlg:button {
             if cmPrefs then
                 cmPrefs.files_with_profile = oldAskProfile
                 cmPrefs.missing_profile = oldAskMissing
+            end
+
+            local quantPrefs <const> = appPrefs.quantization
+            if quantPrefs then
+                quantPrefs.rgbmap_algorithm = oldQuantAlg
             end
         end
 
