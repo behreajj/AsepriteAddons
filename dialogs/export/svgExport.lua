@@ -1,6 +1,12 @@
 dofile("../../support/aseutilities.lua")
 
-local frameTargetOptions <const> = { "ACTIVE", "ALL", "MANUAL", "RANGE" }
+local frameTargetOptions <const> = {
+    "ACTIVE",
+    "ALL",
+    "MANUAL",
+    "RANGE",
+    "TAG"
+}
 
 local defaults <const> = {
     flattenImage = true,
