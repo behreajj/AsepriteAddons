@@ -2181,6 +2181,20 @@ function AseUtilities.getSelectedTiles(
     return tiles, coords
 end
 
+---Gets the top-most parent layer that is visible.
+---@param layer Layer
+---@return Layer|Sprite
+function AseUtilities.getTopVisibleParent(layer)
+    local query = layer --[[@as Layer|Sprite]]
+    while query do
+        query = query.parent
+        ---@diagnostic disable-next-line: undefined-field
+        if query.__name == "doc::Sprite" then return query end
+        if query.isVisible then return query end
+    end
+    return layer
+end
+
 ---Get unique cels from layers that have already been verified as leaves and
 ---filtered. If the output target array is not supplied, a new one is created.
 ---@param leaves Layer[] leaf layers
@@ -2291,18 +2305,6 @@ function AseUtilities.hideSource(sprite, layer, frames, preset)
         end
     end
     return false
-end
-
----Returns true if a layer is visible not just locally, but in the hierarchy.
----@param layer Layer
-function AseUtilities.isVisibleHierarchy(layer)
-    local query = layer
-    repeat
-        query = query.parent --[[@as Layer]]
-    until (not query.isVisible)
-        ---@diagnostic disable-next-line: undefined-field
-        or query.parent.__name == "doc::Sprite"
-    return query.isVisible
 end
 
 ---Adds padding around the edges of an image. Does not check if image is a tile

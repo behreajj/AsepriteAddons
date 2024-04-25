@@ -850,9 +850,7 @@ dlg:button {
             end
             trgLayer.name = string.format(
                 "%s Adjusted", srcLayerName)
-            if AseUtilities.isVisibleHierarchy(srcLayer) then
-                trgLayer.parent = srcLayer.parent
-            end
+            trgLayer.parent = AseUtilities.getTopVisibleParent(srcLayer)
             trgLayer.opacity = srcLayer.opacity or 255
             -- Do not copy blend mode, it only confuses things.
 

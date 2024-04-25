@@ -386,9 +386,7 @@ dlg:button {
 
         local trgLayer <const> = activeSprite:newLayer()
         app.transaction("Set Layer Props", function()
-            if AseUtilities.isVisibleHierarchy(srcLayer) then
-                trgLayer.parent = srcLayer.parent
-            end
+            trgLayer.parent = AseUtilities.getTopVisibleParent(srcLayer)
             trgLayer.name = string.format(
                 "%s Mask %s",
                 srcLayer.name, biasLabel)

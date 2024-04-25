@@ -365,9 +365,7 @@ dlg:button {
                 srcLayerName = srcLayer.name
             end
 
-            if AseUtilities.isVisibleHierarchy(srcLayer) then
-                trgLayer.parent = srcLayer.parent
-            end
+            trgLayer.parent = AseUtilities.getTopVisibleParent(srcLayer)
             trgLayer.name = string.format(
                 "%s Curves", srcLayerName)
         end)

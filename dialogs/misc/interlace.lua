@@ -252,9 +252,7 @@ dlg:button {
             pickLayer.opacity = aPick
             pickLayer.name = "Pick"
 
-            if AseUtilities.isVisibleHierarchy(srcLayer) then
-                targetGroup.parent = srcLayer.parent
-            end
+            targetGroup.parent = AseUtilities.getTopVisibleParent(srcLayer)
             targetGroup.isCollapsed = true
             targetGroup.name = string.format(
                 "%s Interlaced %s",
