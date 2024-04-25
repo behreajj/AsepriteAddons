@@ -42,6 +42,15 @@ local roundedRectFormat <const> = table.concat({
     "Z"
 })
 
+local circleFormat <const> = table.concat({
+    "M %.3f %.3f ",
+    "C %.3f %.3f %.3f %.3f %.3f %.3f ",
+    "C %.3f %.3f %.3f %.3f %.3f %.3f ",
+    "C %.3f %.3f %.3f %.3f %.3f %.3f ",
+    "C %.3f %.3f %.3f %.3f %.3f %.3f ",
+    "Z"
+})
+
 ---@param bm BlendMode blend mode
 ---@return string
 local function blendModeToStr(bm)
@@ -125,7 +134,11 @@ local function imgToSvgStr(
     local wScalePad <const> = wPixel + padding
     local hScalePad <const> = hPixel + padding
     local imgArea <const> = imgWidth * imgHeight
-    local kr <const> = 0.55228474983079 * rounding
+    local rk <const> = 0.55228474983079 * rounding
+    local wHalf <const> = wPixel * 0.5
+    local hHalf <const> = hPixel * 0.5
+    local roundLtEq0 <const> = rounding <= 0.0
+    local roundGtEq1 <const> = rounding >= math.min(wHalf, hHalf)
 
     ---@type table<integer, integer[]>
     local pixelDict <const> = {}
@@ -227,37 +240,8 @@ local function imgToSvgStr(
         local subPathsArr <const> = {}
         local lenIdcs <const> = #idcs
 
-        if rounding > 0 then
-            local i = 0
-            while i < lenIdcs do
-                i = i + 1
-                local idx <const> = idcs[i]
-                local x <const> = xOff + (idx % imgWidth)
-                local y <const> = yOff + (idx // imgWidth)
-
-                local x0 <const> = borderPad + x * wScalePad
-                local y0 <const> = borderPad + y * hScalePad
-                local x1 <const> = x0 + wPixel
-                local y1 <const> = y0 + hPixel
-
-                local xIn0 <const> = x0 + rounding
-                local xIn1 <const> = x1 - rounding
-                local xIn2 <const> = x1 - rounding
-                local xIn3 <const> = x0 + rounding
-                local yIn0 <const> = y0 + rounding
-                local yIn1 <const> = y0 + rounding
-                local yIn2 <const> = y1 - rounding
-                local yIn3 <const> = y1 - rounding
-
-                subPathsArr[i] = strfmt(
-                    roundedRectFormat,
-                    xIn0, y0,
-                    xIn1, y0, xIn1 + kr, y0, x1, yIn1 - kr, x1, yIn1,
-                    x1, yIn2, x1, yIn2 + kr, xIn2 + kr, y1, xIn2, y1,
-                    xIn3, y1, xIn3 - kr, y1, x0, yIn3 + kr, x0, yIn3,
-                    x0, yIn0, x0, yIn0 - kr, xIn0 - kr, y0, xIn0, y0)
-            end
-        else
+        if roundLtEq0 then
+            -- Draw a square.
             local i = 0
             while i < lenIdcs do
                 i = i + 1
@@ -273,6 +257,56 @@ local function imgToSvgStr(
                 subPathsArr[i] = strfmt(
                     "M %d %d L %d %d L %d %d L %d %d Z",
                     x0, y0, x1, y0, x1, y1, x0, y1)
+            end
+        elseif roundGtEq1 then
+            -- Draw a circle.
+            local i = 0
+            while i < lenIdcs do
+                i = i + 1
+                local idx <const> = idcs[i]
+                local x <const> = xOff + (idx % imgWidth)
+                local y <const> = yOff + (idx // imgWidth)
+
+                local x0 <const> = borderPad + x * wScalePad
+                local y0 <const> = borderPad + y * hScalePad
+                local x1 <const> = x0 + wPixel
+                local y1 <const> = y0 + hPixel
+                local xc <const> = x0 + wHalf
+                local yc <const> = y0 + hHalf
+
+                subPathsArr[i] = strfmt(
+                    circleFormat,
+                    xc, y0,
+                    xc + rk, y0, x1, yc - rk, x1, yc,
+                    x1, yc + rk, xc + rk, y1, xc, y1,
+                    xc - rk, y1, x0, yc + rk, x0, yc,
+                    x0, yc - rk, xc - rk, y0, xc, y0)
+            end
+        else
+            local i = 0
+            while i < lenIdcs do
+                i = i + 1
+                local idx <const> = idcs[i]
+                local x <const> = xOff + (idx % imgWidth)
+                local y <const> = yOff + (idx // imgWidth)
+
+                local x0 <const> = borderPad + x * wScalePad
+                local y0 <const> = borderPad + y * hScalePad
+                local x1 <const> = x0 + wPixel
+                local y1 <const> = y0 + hPixel
+
+                local x0In <const> = x0 + rounding
+                local x1In <const> = x1 - rounding
+                local y0In <const> = y0 + rounding
+                local y1In <const> = y1 - rounding
+
+                subPathsArr[i] = strfmt(
+                    roundedRectFormat,
+                    x0In, y0,
+                    x1In, y0, x1In + rk, y0, x1, y0In - rk, x1, y0In,
+                    x1, y1In, x1, y1In + rk, x1In + rk, y1, x1In, y1,
+                    x0In, y1, x0In - rk, y1, x0, y1In + rk, x0, y1In,
+                    x0, y0In, x0, y0In - rk, x0In - rk, y0, x0In, y0)
             end
         end
 
