@@ -1151,7 +1151,7 @@ dlg:button {
             borderStr = strfmt(
                 "\n<path id=\"border\" fill=\"#%06X\"%s "
                 .. "d=\"M 0 0 L %d 0 L %d %d L 0 %d Z"
-                .. "M %d %d L %d %d L %d %d L %d %d Z\" />",
+                .. " M %d %d L %d %d L %d %d L %d %d Z\" />",
                 webHex, alphaStr,
                 wTotal, wTotal,
                 hTotal, hTotal,
@@ -1213,12 +1213,16 @@ dlg:button {
             renderHintStr = "shape-rendering=\"geometricPrecision\" "
         end
 
-        -- TODO: Do not include font info if no labels? Maybe reorganize so
-        -- that something mandatory is right before close bracket >\n .
-
         -- Firefox has a minimum font size in its settings that may
         -- prevent text from displaying correctly.
         local fontSize <const> = math.max(1, math.min(wPixel, hPixel) * 0.5)
+        local fontBlock <const> = useLabels
+            and table.concat({ "font-family=\"sans-serif\" ",
+                strfmt("font-size=\"%dpx\" ", fontSize),
+                "text-anchor=\"middle\" ",
+                "dominant-baseline=\"middle\" ", })
+            or ""
+
         local svgStr <const> = tconcat({
             "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n",
             "<svg ",
@@ -1226,17 +1230,14 @@ dlg:button {
             "xmlns:xlink=\"http://www.w3.org/1999/xlink\" ",
             renderHintStr,
             "stroke=\"none\" ",
+            fontBlock,
             "preserveAspectRatio=\"xMidYMid slice\" ",
             strfmt(
                 "width=\"%d\" height=\"%d\" ",
                 wViewBox, hViewBox),
             strfmt(
-                "viewBox=\"0 0 %d %d\" ",
+                "viewBox=\"0 0 %d %d\">\n",
                 wViewBox, hViewBox),
-            "font-family=\"sans-serif\" ",
-            strfmt("font-size=\"%dpx\" ", fontSize),
-            "text-anchor=\"middle\" ",
-            "dominant-baseline=\"middle\">\n",
             defsStr,
             checkerStr,
             bkgStr,
