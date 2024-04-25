@@ -2181,7 +2181,8 @@ function AseUtilities.getSelectedTiles(
     return tiles, coords
 end
 
----Gets the top-most parent layer that is visible.
+---Gets the top most parent layer that is visible. Returns the sprite as a
+---parent if it is reached.
 ---@param layer Layer
 ---@return Layer|Sprite
 function AseUtilities.getTopVisibleParent(layer)
