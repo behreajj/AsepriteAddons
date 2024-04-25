@@ -189,7 +189,9 @@ dlg:button {
             trgLayer.name = string.format(
                 "%s %s %d",
                 srcLayerName, filterType, wKrn)
-            trgLayer.parent = srcLayer.parent
+            if AseUtilities.isVisibleHierarchy(srcLayer) then
+                trgLayer.parent = srcLayer.parent
+            end
             trgLayer.opacity = srcLayer.opacity or 255
             trgLayer.blendMode = srcLayer.blendMode
                 or BlendMode.NORMAL

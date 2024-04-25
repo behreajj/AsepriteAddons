@@ -327,7 +327,9 @@ dlg:button {
             end
             trgLayer.name = string.format("%s %s %03d",
                 srcLayerName, clrSpacePreset, hexesSrgbLen)
-            trgLayer.parent = srcLayer.parent
+            if AseUtilities.isVisibleHierarchy(srcLayer) then
+                trgLayer.parent = srcLayer.parent
+            end
             trgLayer.opacity = srcLayer.opacity or 255
             trgLayer.blendMode = srcLayer.blendMode
                 or BlendMode.NORMAL
@@ -409,6 +411,7 @@ dlg:button {
             end
         end
 
+        app.layer = trgLayer
         app.refresh()
 
         if printElapsed then

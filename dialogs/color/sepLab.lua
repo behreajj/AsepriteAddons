@@ -384,10 +384,12 @@ dlg:button {
             end
         end
 
-        local maskLayer <const> = activeSprite:newLayer()
+        local trgLayer <const> = activeSprite:newLayer()
         app.transaction("Set Layer Props", function()
-            maskLayer.parent = srcLayer.parent
-            maskLayer.name = string.format(
+            if AseUtilities.isVisibleHierarchy(srcLayer) then
+                trgLayer.parent = srcLayer.parent
+            end
+            trgLayer.name = string.format(
                 "%s Mask %s",
                 srcLayer.name, biasLabel)
         end)
@@ -469,7 +471,7 @@ dlg:button {
                     end
 
                     activeSprite:newCel(
-                        maskLayer, srcFrame, trgImg,
+                        trgLayer, srcFrame, trgImg,
                         Point(xSrcPos + xoff, ySrcPos + yoff))
                 end
             end
@@ -477,7 +479,7 @@ dlg:button {
 
         -- Active layer assignment triggers a timeline update.
         AseUtilities.hideSource(activeSprite, srcLayer, frames, delSrcStr)
-        app.layer = maskLayer
+        app.layer = trgLayer
         app.refresh()
     end
 }

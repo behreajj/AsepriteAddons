@@ -2293,6 +2293,18 @@ function AseUtilities.hideSource(sprite, layer, frames, preset)
     return false
 end
 
+---Returns true if a layer is visible not just locally, but in the hierarchy.
+---@param layer Layer
+function AseUtilities.isVisibleHierarchy(layer)
+    local query = layer
+    repeat
+        query = query.parent --[[@as Layer]]
+    until (not query.isVisible)
+        ---@diagnostic disable-next-line: undefined-field
+        or query.parent.__name == "doc::Sprite"
+    return query.isVisible
+end
+
 ---Adds padding around the edges of an image. Does not check if image is a tile
 ---map. If the padding is less than one, returns the source image.
 ---@param image Image source image

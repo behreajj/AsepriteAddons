@@ -221,7 +221,9 @@ dlg:button {
             rgtLayer.opacity = srcLayer.opacity
             rgtLayer.name = "Right"
 
-            mrrGroup.parent = srcLayer.parent
+            if AseUtilities.isVisibleHierarchy(srcLayer) then
+                mrrGroup.parent = srcLayer.parent
+            end
             mrrGroup.isCollapsed = true
             mrrGroup.name = srcLayer.name .. " Mirrored"
         end)

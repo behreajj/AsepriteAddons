@@ -355,7 +355,9 @@ dlg:button {
         -- Do not copy source layer blend mode.
         local trgLayer <const> = activeSprite:newLayer()
         app.transaction("Set Layer Props", function()
-            trgLayer.parent = srcLayer.parent
+            if AseUtilities.isVisibleHierarchy(srcLayer) then
+                trgLayer.parent = srcLayer.parent
+            end
             trgLayer.opacity = srcLayer.opacity or 255
             trgLayer.name = "Gradient Outline " .. clrSpacePreset
         end)
@@ -459,6 +461,7 @@ dlg:button {
             end
         end
 
+        app.layer = trgLayer
         app.refresh()
 
         if printElapsed then

@@ -173,6 +173,7 @@ dlg:button {
         app.transaction("Set Layer Props", function()
             compLayer.name = string.format("Comp %s %s",
                 overLayer.name, underLayer.name)
+            -- Exception: this always sets to parent.
             compLayer.parent = parent
             compLayer.blendMode = underLayer.blendMode
         end)

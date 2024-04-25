@@ -850,7 +850,9 @@ dlg:button {
             end
             trgLayer.name = string.format(
                 "%s Adjusted", srcLayerName)
-            trgLayer.parent = srcLayer.parent
+            if AseUtilities.isVisibleHierarchy(srcLayer) then
+                trgLayer.parent = srcLayer.parent
+            end
             trgLayer.opacity = srcLayer.opacity or 255
             -- Do not copy blend mode, it only confuses things.
 
@@ -926,6 +928,8 @@ dlg:button {
                     trgCels[lenTrgCels] = trgCel
                 end
             end
+
+            app.layer = trgLayer
         end)
 
         -- For normalizing image.
