@@ -363,7 +363,7 @@ local function genLabelSvgStr(
     local wScalePad <const> = wScale + padding
     local hScalePad <const> = hScale + padding
 
-    labelsArr[#labelsArr + 1] = strfmt("<g id=\"%s\">", id)
+    labelsArr[#labelsArr + 1] = strfmt("\n<g id=\"%s\">", id)
 
     local lenUniques = math.min(#hexArr, #idcsArr)
     local h = 0
