@@ -1,6 +1,6 @@
 # Aseprite Add-ons
 
-This repository developed out of the Medium article, ["How To Script Aseprite Tools in Lua"](https://behreajj.medium.com/how-to-script-aseprite-tools-in-lua-8f849b08733).
+This repository developed out of the Medium article, ["How To Script Aseprite Tools in Lua"](https://behreajj.medium.com/how-to-script-aseprite-tools-in-lua-8f849b08733). Short demonstrations for some the scripts here can be found in this [Youtube playlist](https://www.youtube.com/playlist?list=PLK6A984Cb4MVaYKSGIn9SalpD9EVrfvUi).
 
 ## Installation
 
@@ -10,7 +10,7 @@ There is a [known issue](https://community.aseprite.org/t/script-folder-path-can
 
 ## Usage
 
-Aseprite version 1.3.5 is the minimum version needed to run these scripts.
+Aseprite version 1.3.6 is the minimum version needed to run these scripts.
 
 To use, go to `File > Scripts` and choose from entries in the `dialogs` or `commands` folder.
 
