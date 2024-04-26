@@ -4,8 +4,6 @@ local palTypes <const> = { "ACTIVE", "FILE" }
 local ditherTypes <const> = { "CHECKER", "CUSTOM" }
 
 local defaults <const> = {
-    -- TODO: Set sprite grid so that magic wand double click works.
-
     palType = "ACTIVE",
     startIndex = 0,
     count = 256,
@@ -305,6 +303,8 @@ dlg:button {
         local firstFrame <const> = comboSprite.frames[1]
 
         app.transaction("Set Grid", function()
+            -- To set color, see
+            -- https://github.com/aseprite/aseprite/blob/main/data/pref.xml#L511
             comboSprite.gridBounds = Rectangle(
                 border, border,
                 swatchSize + padding, swatchSize + padding)

@@ -610,7 +610,7 @@ dlg:button {
         local entryPadding <const> = 2
         local colCount <const> = 1
 
-        -- Get user prefs for what to display.
+        -- Get args for what to display.
         local idxDisplay <const> = args.idxDisplay --[[@as boolean]]
         local hexDisplay <const> = args.hexDisplay --[[@as boolean]]
         local alphaDisplay <const> = args.alphaDisplay --[[@as boolean]]
@@ -830,6 +830,8 @@ dlg:button {
             mnfstSpec, mnfstTitle)
 
         app.transaction("Set Grid", function()
+            -- To set color, see
+            -- https://github.com/aseprite/aseprite/blob/main/data/pref.xml#L511
             manifestSprite.gridBounds = Rectangle(
                 spriteMargin, spriteMargin,
                 entryWidth, entryHeight)
