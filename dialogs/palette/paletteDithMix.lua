@@ -4,6 +4,8 @@ local palTypes <const> = { "ACTIVE", "FILE" }
 local ditherTypes <const> = { "CHECKER", "CUSTOM" }
 
 local defaults <const> = {
+    -- TODO: Set sprite grid so that magic wand double click works.
+
     palType = "ACTIVE",
     startIndex = 0,
     count = 256,
@@ -302,17 +304,22 @@ dlg:button {
             spriteSpec, "Dither Mix")
         local firstFrame <const> = comboSprite.frames[1]
 
-        app.transaction(
-            "Set Background", function()
-                local bkgLayer <const> = comboSprite.layers[1]
-                bkgLayer.name = "Bkg"
+        app.transaction("Set Grid", function()
+            comboSprite.gridBounds = Rectangle(
+                border, border,
+                swatchSize + padding, swatchSize + padding)
+        end)
 
-                local bkgImg <const> = Image(spriteSpec)
-                bkgImg:clear(bkgHex)
-                comboSprite:newCel(
-                    bkgLayer, firstFrame,
-                    bkgImg, Point(0, 0))
-            end)
+        app.transaction("Set Background", function()
+            local bkgLayer <const> = comboSprite.layers[1]
+            bkgLayer.name = "Bkg"
+
+            local bkgImg <const> = Image(spriteSpec)
+            bkgImg:clear(bkgHex)
+            comboSprite:newCel(
+                bkgLayer, firstFrame,
+                bkgImg, Point(0, 0))
+        end)
 
         local headersGroup <const> = comboSprite:newGroup()
         local rowsGroup <const> = comboSprite:newGroup()
