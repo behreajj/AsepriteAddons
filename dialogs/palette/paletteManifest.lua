@@ -461,9 +461,9 @@ dlg:button {
                 end
 
                 local clr <const> = Clr.new(
-                    redSrgb255 * 0.003921568627451,
-                    greenSrgb255 * 0.003921568627451,
-                    blueSrgb255 * 0.003921568627451,
+                    redSrgb255 / 255.0,
+                    greenSrgb255 / 255.0,
+                    blueSrgb255 / 255.0,
                     1.0)
                 local lab <const> = sRgbToLab(clr)
                 local lch <const> = labToLch(
@@ -828,6 +828,12 @@ dlg:button {
         -- Create sprite.
         local manifestSprite <const> = AseUtilities.createSprite(
             mnfstSpec, mnfstTitle)
+
+        app.transaction("Set Grid", function()
+            manifestSprite.gridBounds = Rectangle(
+                spriteMargin, spriteMargin,
+                entryWidth, entryHeight)
+        end)
 
         -- This is not necessary. It is retained in case this
         -- script ever needs to use multiple frames.
