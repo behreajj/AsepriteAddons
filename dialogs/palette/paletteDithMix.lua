@@ -13,6 +13,7 @@ local defaults <const> = {
     useHighlight = false,
     minHighlight = 15,
     maxHighlight = 50,
+    frameWeight = 1,
     highColor = 0x80d5f7ff,
     bkgColor = 0xff101010,
     ditherType = "CHECKER",
@@ -377,66 +378,60 @@ dlg:button {
         local strpack <const> = string.pack
 
         local highlightFrame = nil
-        local frameWeight = 1
+        local frameWeight <const> = defaults.frameWeight
         if useHighlight and paddingGtEq1 then
             -- For some reason, the pixel iterator approach stopped working.
             local highStr <const> = strpack("B B B B",
-                highColor.red,
-                highColor.green,
-                highColor.blue,
-                highColor.alpha)
+                highHex & 0xff,
+                (highHex >> 0x08) & 0xff,
+                (highHex >> 0x10) & 0xff,
+                (highHex >> 0x18) & 0xff)
             local zeroStr <const> = strpack("B B B B", 0, 0, 0, 0)
 
-            local wHigh <const> = swatchSize + frameWeight * 2
-            local hHigh <const> = swatchSize + frameWeight * 2
+            local szHigh <const> = swatchSize + frameWeight * 2
             local highFrameSpec <const> = AseUtilities.createSpec(
-                wHigh, hHigh, ColorMode.RGB, clrPrf, 0)
+                szHigh, szHigh, ColorMode.RGB, clrPrf, 0)
             highlightFrame = Image(highFrameSpec)
 
             ---@type string[]
             local highBytes <const> = {}
-            local horizStripWeight <const> = wHigh - frameWeight
-            local vertStripWeight <const> = hHigh - frameWeight
-            local horizStripArea <const> = frameWeight * horizStripWeight
-            local vertStripArea <const> = frameWeight * vertStripWeight
+            local stripWeight <const> = swatchSize + frameWeight
+            local stripArea <const> = frameWeight * stripWeight
             local swatchArea <const> = swatchSize * swatchSize
 
-            -- Draw top and bottom horizontal strips.
+            -- Because swatches have the same width and height, horizontal
+            -- and vertical borders can be drawn in one loop.
             local i = 0
-            while i < horizStripArea do
-                local x <const> = i % horizStripWeight
-                local y <const> = i // horizStripWeight
+            while i < stripArea do
+                -- Horizontal.
+                local xh <const> = i % stripWeight
+                local yh <const> = i // stripWeight
 
-                local xTop <const> = x
-                local yTop <const> = y
-                local idxTop <const> = xTop + yTop * wHigh
+                local xTop <const> = xh
+                local yTop <const> = yh
+                local idxTop <const> = xTop + yTop * szHigh
                 highBytes[1 + idxTop] = highStr
 
-                local xBtm <const> = x + frameWeight
-                local yBtm <const> = y + vertStripWeight
-                local idxBtm <const> = xBtm + yBtm * wHigh
+                local xBtm <const> = xh + frameWeight
+                local yBtm <const> = yh + stripWeight
+                local idxBtm <const> = xBtm + yBtm * szHigh
                 highBytes[1 + idxBtm] = highStr
 
-                i = i + 1
-            end
+                -- Vertical.
+                local xv <const> = i % frameWeight
+                local yv <const> = i // frameWeight
 
-            -- Draw left and right vertical strips.
-            local j = 0
-            while j < vertStripArea do
-                local x <const> = j % frameWeight
-                local y <const> = j // frameWeight
-
-                local xLft <const> = x
-                local yLft <const> = y + frameWeight
-                local idxLft <const> = xLft + yLft * wHigh
+                local xLft <const> = xv
+                local yLft <const> = yv + frameWeight
+                local idxLft <const> = xLft + yLft * szHigh
                 highBytes[1 + idxLft] = highStr
 
-                local xRgt <const> = x + horizStripWeight
-                local yRgt <const> = y
-                local idxRgt <const> = xRgt + yRgt * wHigh
+                local xRgt <const> = xv + stripWeight
+                local yRgt <const> = yv
+                local idxRgt <const> = xRgt + yRgt * szHigh
                 highBytes[1 + idxRgt] = highStr
 
-                j = j + 1
+                i = i + 1
             end
 
             -- Draw clear center.
@@ -444,7 +439,7 @@ dlg:button {
             while k < swatchArea do
                 local x <const> = frameWeight + k % swatchSize
                 local y <const> = frameWeight + k // swatchSize
-                local idxCenter <const> = x + y * wHigh
+                local idxCenter <const> = x + y * szHigh
                 highBytes[1 + idxCenter] = zeroStr
                 k = k + 1
             end
@@ -500,7 +495,9 @@ dlg:button {
                         -- Dither colors.
                         local ditherImage <const> = Image(swatchSpec)
 
-                        -- TODO: Replace with string bytes approach?
+                        -- TODO: Replace with string bytes approach? Might
+                        -- have to create yet another dictionary for packed
+                        -- binary strings.
                         local dithPxItr <const> = ditherImage:pixels()
                         for pixel in dithPxItr do
                             local xpx <const> = pixel.x
@@ -538,8 +535,7 @@ dlg:button {
                             ditherCel.color = hexToAseColor(highHex)
 
                             if paddingGtEq1 then
-                                local highLayer = nil
-                                highLayer = comboSprite:newLayer()
+                                local highLayer <const> = comboSprite:newLayer()
                                 highLayer.name = layerName
                                 if highsGroup then
                                     highLayer.parent = highsGroup
