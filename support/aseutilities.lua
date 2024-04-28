@@ -654,9 +654,9 @@ function AseUtilities.bakeFlag(source, flag)
 end
 
 ---Converts a sprite's background layer, if any, to a normal layer. Uses the
----method Sprite.backgroundLayer to determine this; if a background has been
+---method Sprite.backgroundLayer to determine this. If a background has been
 ---childed to a group, this may fail. Returns true if a background was found
----and converted; otherwise, returns false. Ignores linked cels. Always sets
+---and converted. Otherwise, returns false. Ignores linked cels. Always sets
 ---the new layer to stack index 1, parented to the sprite.
 ---@param sprite Sprite sprite
 ---@param overrideLock boolean? ignore layer lock

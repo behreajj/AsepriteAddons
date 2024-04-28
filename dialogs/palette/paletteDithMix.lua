@@ -366,40 +366,6 @@ dlg:button {
         local swatchSpec <const> = AseUtilities.createSpec(
             swatchSize, swatchSize, ColorMode.RGB, clrPrf, 0)
 
-        local highlightFrame = nil
-        local frameWeight = 1
-        if useHighlight and paddingGtEq1 then
-            local wHigh <const> = swatchSize + frameWeight * 2
-            local hHigh <const> = swatchSize + frameWeight * 2
-            local highFrameSpec <const> = AseUtilities.createSpec(
-                wHigh, hHigh, ColorMode.RGB, clrPrf, 0)
-            highlightFrame = Image(highFrameSpec)
-
-            local topRect <const> = Rectangle(
-                0, 0,
-                wHigh - frameWeight, frameWeight)
-            local topItr <const> = highlightFrame:pixels(topRect)
-            for pixel in topItr do pixel(highHex) end
-
-            local rgtRect <const> = Rectangle(
-                wHigh - frameWeight, 0,
-                border, hHigh - frameWeight)
-            local rgtItr <const> = highlightFrame:pixels(rgtRect)
-            for pixel in rgtItr do pixel(highHex) end
-
-            local btmRect <const> = Rectangle(
-                frameWeight, hHigh - frameWeight,
-                wHigh - frameWeight, frameWeight)
-            local btmItr <const> = highlightFrame:pixels(btmRect)
-            for pixel in btmItr do pixel(highHex) end
-
-            local lftRect <const> = Rectangle(
-                0, frameWeight,
-                frameWeight, hHigh - frameWeight)
-            local lftItr <const> = highlightFrame:pixels(lftRect)
-            for pixel in lftItr do pixel(highHex) end
-        end
-
         -- Cache methods used in loop
         local abs <const> = math.abs
         local sqrt <const> = math.sqrt
@@ -408,6 +374,83 @@ dlg:button {
         local srLab2TosRgb <const> = Clr.srLab2TosRgb
         local toHex <const> = Clr.toHex
         local hexToAseColor <const> = AseUtilities.hexToAseColor
+        local strpack <const> = string.pack
+
+        local highlightFrame = nil
+        local frameWeight = 1
+        if useHighlight and paddingGtEq1 then
+            -- For some reason, the pixel iterator approach stopped working.
+            local highStr <const> = strpack("B B B B",
+                highColor.red,
+                highColor.green,
+                highColor.blue,
+                highColor.alpha)
+            local zeroStr <const> = strpack("B B B B", 0, 0, 0, 0)
+
+            local wHigh <const> = swatchSize + frameWeight * 2
+            local hHigh <const> = swatchSize + frameWeight * 2
+            local highFrameSpec <const> = AseUtilities.createSpec(
+                wHigh, hHigh, ColorMode.RGB, clrPrf, 0)
+            highlightFrame = Image(highFrameSpec)
+
+            ---@type string[]
+            local highBytes <const> = {}
+            local horizStripWeight <const> = wHigh - frameWeight
+            local vertStripWeight <const> = hHigh - frameWeight
+            local horizStripArea <const> = frameWeight * horizStripWeight
+            local vertStripArea <const> = frameWeight * vertStripWeight
+            local swatchArea <const> = swatchSize * swatchSize
+
+            -- Draw top and bottom horizontal strips.
+            local i = 0
+            while i < horizStripArea do
+                local x <const> = i % horizStripWeight
+                local y <const> = i // horizStripWeight
+
+                local xTop <const> = x
+                local yTop <const> = y
+                local idxTop <const> = xTop + yTop * wHigh
+                highBytes[1 + idxTop] = highStr
+
+                local xBtm <const> = x + frameWeight
+                local yBtm <const> = y + vertStripWeight
+                local idxBtm <const> = xBtm + yBtm * wHigh
+                highBytes[1 + idxBtm] = highStr
+
+                i = i + 1
+            end
+
+            -- Draw left and right horizontal strips.
+            local j = 0
+            while j < vertStripArea do
+                local x <const> = j % frameWeight
+                local y <const> = j // frameWeight
+
+                local xLft <const> = x
+                local yLft <const> = y + frameWeight
+                local idxLft <const> = xLft + yLft * wHigh
+                highBytes[1 + idxLft] = highStr
+
+                local xRgt <const> = x + horizStripWeight
+                local yRgt <const> = y
+                local idxRgt <const> = xRgt + yRgt * wHigh
+                highBytes[1 + idxRgt] = highStr
+
+                j = j + 1
+            end
+
+            -- Draw clear center.
+            local k = 0
+            while k < swatchArea do
+                local x <const> = frameWeight + k % swatchSize
+                local y <const> = frameWeight + k // swatchSize
+                local idxCenter <const> = x + y * wHigh
+                highBytes[1 + idxCenter] = zeroStr
+                k = k + 1
+            end
+
+            highlightFrame.bytes = table.concat(highBytes)
+        end
 
         local i = lenUniqueHexes + 1
         while i > 1 do
@@ -458,6 +501,8 @@ dlg:button {
                     if i < j then
                         -- Dither colors.
                         local ditherImage <const> = Image(swatchSpec)
+
+                        -- TODO: Replace with string bytes approach?
                         local dithPxItr <const> = ditherImage:pixels()
                         for pixel in dithPxItr do
                             local xpx <const> = pixel.x
