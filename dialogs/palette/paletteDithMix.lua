@@ -420,7 +420,7 @@ dlg:button {
                 i = i + 1
             end
 
-            -- Draw left and right horizontal strips.
+            -- Draw left and right vertical strips.
             local j = 0
             while j < vertStripArea do
                 local x <const> = j % frameWeight
@@ -465,8 +465,7 @@ dlg:button {
                 local refImage <const> = Image(swatchSpec)
                 refImage:clear(rowHex)
 
-                local leftHeader = nil
-                leftHeader = comboSprite:newLayer()
+                local leftHeader <const> = comboSprite:newLayer()
                 leftHeader.name = rowWebStr
                 leftHeader.parent = rowsGroup
 
@@ -476,8 +475,7 @@ dlg:button {
                     refImage,
                     Point(border, y))
 
-                local topHeader = nil
-                topHeader = comboSprite:newLayer()
+                local topHeader <const> = comboSprite:newLayer()
                 topHeader.name = rowWebStr
                 topHeader.parent = colsGroup
 
@@ -526,8 +524,7 @@ dlg:button {
                             "Dither %s %s %03d",
                             rowWebStr, colWebStr, dist)
 
-                        local ditherLayer = nil
-                        ditherLayer = comboSprite:newLayer()
+                        local ditherLayer <const> = comboSprite:newLayer()
                         ditherLayer.name = layerName
                         ditherLayer.parent = dithersGroup
 
@@ -569,8 +566,7 @@ dlg:button {
                         local mixImage <const> = Image(swatchSpec)
                         mixImage:clear(hexMixed)
 
-                        local mixLayer = nil
-                        mixLayer = comboSprite:newLayer()
+                        local mixLayer <const> = comboSprite:newLayer()
                         mixLayer.name = strfmt(
                             "Mix %s %s",
                             rowWebStr, colWebStr)
