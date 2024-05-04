@@ -459,6 +459,13 @@ dlg:button {
             return
         end
 
+        -- Transfer grid from source to target sprite.
+        local srcGrid <const> = srcSprite.gridBounds
+        local wGrid <const> = math.max(1, math.abs(srcGrid.width))
+        local hGrid <const> = math.max(1, math.abs(srcGrid.height))
+        local xGrid <const> = srcGrid.x
+        local yGrid <const> = srcGrid.y
+
         -- Cache palette, preserve fore and background.
         AseUtilities.preserveForeBack()
         local hexArr <const> = AseUtilities.asePalettesToHexArr(
@@ -1010,6 +1017,10 @@ dlg:button {
         -- Create sprite, name sprite, set palette.
         local trgSprite <const> = AseUtilities.createSprite(srcSpec, "Wave")
         AseUtilities.setPalette(hexArr, trgSprite, 1)
+
+        app.transaction("Set Grid", function()
+            trgSprite.gridBounds = Rectangle(xGrid, yGrid, wGrid, hGrid)
+        end)
 
         -- Create frames.
         app.transaction("New Frames", function()

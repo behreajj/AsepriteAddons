@@ -830,8 +830,6 @@ dlg:button {
             mnfstSpec, mnfstTitle)
 
         app.transaction("Set Grid", function()
-            -- To set color, see
-            -- https://github.com/aseprite/aseprite/blob/main/data/pref.xml#L511
             manifestSprite.gridBounds = Rectangle(
                 spriteMargin, spriteMargin,
                 entryWidth, entryHeight)

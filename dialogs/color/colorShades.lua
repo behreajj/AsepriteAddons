@@ -3,6 +3,8 @@ dofile("../../support/aseutilities.lua")
 local paletteTypes <const> = { "ACTIVE", "DEFAULT", "FILE" }
 
 local defaults <const> = {
+    -- Due to rounding to integer, quantization does not lead to swatches
+    -- always being the same size, so no point in setting sprite grid.
     size = 256,
     frames = 36,
     fps = 24,

@@ -304,8 +304,6 @@ dlg:button {
         local firstFrame <const> = comboSprite.frames[1]
 
         app.transaction("Set Grid", function()
-            -- To set color, see
-            -- https://github.com/aseprite/aseprite/blob/main/data/pref.xml#L511
             comboSprite.gridBounds = Rectangle(
                 border, border,
                 swatchSize + padding, swatchSize + padding)
