@@ -664,11 +664,12 @@ end
 function AseUtilities.bkgToLayer(sprite, overrideLock)
     local bkgLayer <const> = sprite.backgroundLayer
     if bkgLayer and (overrideLock or bkgLayer.isEditable) then
-        local colorCopy <const> = AseUtilities.aseColorCopy
+        -- local colorCopy <const> = AseUtilities.aseColorCopy
 
         local unBkgLayer <const> = sprite:newLayer()
 
-        unBkgLayer.color = colorCopy(bkgLayer.color, "")
+        -- unBkgLayer.color = colorCopy(bkgLayer.color, "")
+        unBkgLayer.color = bkgLayer.color
         unBkgLayer.data = bkgLayer.data
         unBkgLayer.isEditable = bkgLayer.isEditable
         unBkgLayer.isVisible = bkgLayer.isVisible
@@ -687,7 +688,8 @@ function AseUtilities.bkgToLayer(sprite, overrideLock)
                 local bkgImage <const> = bkgCel.image
                 local unBkgCel <const> = sprite:newCel(unBkgLayer, i,
                     bkgImage, bkgCelPos)
-                unBkgCel.color = colorCopy(bkgCel.color, "")
+                -- unBkgCel.color = colorCopy(bkgCel.color, "")
+                unBkgCel.color = bkgCel.color
                 unBkgCel.data = bkgCel.data
                 unBkgCel.zIndex = bkgCel.zIndex
             end

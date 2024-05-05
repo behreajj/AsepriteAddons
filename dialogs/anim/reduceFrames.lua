@@ -62,16 +62,15 @@ dlg:button {
         delete = math.min(delete, lenFrames - 1)
         local all <const> = delete + skip
 
-        app.transaction("Reduce Frames",
-            function()
-                local i = lenFrames
-                while i > 0 do
-                    i = i - 1
-                    if (i + offset) % all < delete then
-                        activeSprite:deleteFrame(frames[1 + i])
-                    end
+        app.transaction("Reduce Frames", function()
+            local i = lenFrames
+            while i > 0 do
+                i = i - 1
+                if (i + offset) % all < delete then
+                    activeSprite:deleteFrame(frames[1 + i])
                 end
-            end)
+            end
+        end)
 
         app.refresh()
     end
