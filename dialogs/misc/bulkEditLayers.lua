@@ -1,7 +1,7 @@
 dofile("../../support/gradientutilities.lua")
 
 local defaults <const> = {
-    -- TODO: Key problem is that RangeType.FRAMES returns empty AND in some
+    -- TODO: Key problem is that RangeType.FRAMES hold no layers AND in some
     -- cases you want both groups and leaves, so AseUtilities.filterLayers is
     -- not always appropriate.
 

@@ -14,7 +14,6 @@ if range.sprite == sprite then
     else
         local rangeLayers <const> = range.layers
         local lenRangeLayers <const> = #rangeLayers
-        if lenRangeLayers <= 0 then return end
         local i = 0
         while i < lenRangeLayers do
             i = i + 1
