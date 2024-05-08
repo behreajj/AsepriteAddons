@@ -50,4 +50,6 @@ Unlike `dialog` scripts, it's not always apparent what `commands` scripts do. No
 
 - `toggleGroups`: Toggles the collapsed or expanded state of group folders in the timeline. The active layer's hierarchy remains expanded.
 
+- `toggleVisible`: Toggles the visibility of layers in a timeline range. If the range is empty or is `RangeType.FRAMES`, then toggles the active layer.
+
 - `ungroupLayers`: Sets the parent of layers in the active layer to their grandparent, if any.
