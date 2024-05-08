@@ -123,13 +123,17 @@ function AseUtilities.appendGroups(layer, array, includeLocked, includeHidden)
         and (includeHidden or layer.isVisible) then
         array[#array + 1] = layer
 
-        local append <const> = AseUtilities.appendGroups
-        local childLayers <const> = layer.layers --[=[@as Layer[]]=]
-        local lenChildLayers <const> = #childLayers
-        local i = 0
-        while i < lenChildLayers do
-            i = i + 1
-            append(childLayers[i], array, includeLocked, includeHidden)
+        -- Using type annotation causes syntax highlight bug when looking
+        -- at the code on Github.
+        local childLayers <const> = layer.layers
+        if childLayers then
+            local append <const> = AseUtilities.appendGroups
+            local lenChildLayers <const> = #childLayers
+            local i = 0
+            while i < lenChildLayers do
+                i = i + 1
+                append(childLayers[i], array, includeLocked, includeHidden)
+            end
         end
     end
     return array
@@ -151,15 +155,19 @@ function AseUtilities.appendLeaves(
     if (includeLocked or layer.isEditable)
         and (includeHidden or layer.isVisible) then
         if layer.isGroup then
-            local append <const> = AseUtilities.appendLeaves
-            local childLayers <const> = layer.layers --[=[@as Layer[]]=]
-            local lenChildLayers <const> = #childLayers
-            local i = 0
-            while i < lenChildLayers do
-                i = i + 1
-                append(childLayers[i], array,
-                    includeLocked, includeHidden,
-                    includeTiles, includeBkg)
+            -- Using type annotation causes syntax highlight bug when looking
+            -- at the code on Github.
+            local childLayers <const> = layer.layers
+            if childLayers then
+                local append <const> = AseUtilities.appendLeaves
+                local lenChildLayers <const> = #childLayers
+                local i = 0
+                while i < lenChildLayers do
+                    i = i + 1
+                    append(childLayers[i], array,
+                        includeLocked, includeHidden,
+                        includeTiles, includeBkg)
+                end
             end
         elseif (not layer.isReference)
             and (includeTiles or (not layer.isTilemap))
@@ -2693,7 +2701,7 @@ end
 ---@nodiscard
 function AseUtilities.skewImageX(source, angle)
     -- This doesn't have an internal version because it's not worth making
-    -- a seprate method for skewing by integer rise and run.
+    -- a separate method for skewing by integer rise and run.
     local srcBytes <const> = source.bytes
     local srcBpp <const> = source.bytesPerPixel
     local srcSpec <const> = source.spec
@@ -2757,7 +2765,7 @@ end
 ---@nodiscard
 function AseUtilities.skewImageY(source, angle)
     -- This doesn't have an internal version because it's not worth making
-    -- a seprate method for skewing by integer rise and run.
+    -- a separate method for skewing by integer rise and run.
     local srcBytes <const> = source.bytes
     local srcBpp <const> = source.bytesPerPixel
     local srcSpec <const> = source.spec
