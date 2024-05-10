@@ -307,7 +307,7 @@ function AseUtilities.asePaletteLoad(
         end
     elseif palType == "ACTIVE" then
         local palActSpr <const> = app.sprite
-        if palActSpr and palActSpr ~= nil then
+        if palActSpr ~= nil then
             local modeAct <const> = palActSpr.colorMode
             if modeAct == ColorMode.GRAY then
                 local grCntVrf = AseUtilities.GRAY_COUNT
@@ -317,13 +317,13 @@ function AseUtilities.asePaletteLoad(
                 hexesProfile = AseUtilities.asePalettesToHexArr(
                     palActSpr.palettes)
                 local profileAct <const> = palActSpr.colorSpace
-                if profileAct then
+                if profileAct ~= nil then
                     -- Tests a number of color profile components for
                     -- approximate equality. See
                     -- https://github.com/aseprite/laf/blob/main/gfx/color_space.cpp#L107
 
                     -- It might be safer not to treat the NONE color space as
-                    -- equivalent to SRGB, as the user could have a display
+                    -- equivalent to sRGB, as the user could have a display
                     -- profile which differs radically.
                     local profileSrgb <const> = ColorSpace { sRGB = true }
                     if profileAct ~= profileSrgb then
@@ -1464,8 +1464,8 @@ end
 ---@param img Image image
 ---@param colorMode ColorMode color mode
 ---@param alphaMask integer alpha mask index
----@param colorSpace ColorSpace color space
----@param nonUniform boolean non uniform dimensions
+---@param colorSpace? ColorSpace color space
+---@param nonUniform? boolean non uniform dimensions
 ---@return Image
 ---@nodiscard
 function AseUtilities.expandImageToPow2(
@@ -1673,7 +1673,7 @@ end
 ---@param group Layer group layer
 ---@param frame Frame|integer frame
 ---@param sprClrMode ColorMode|integer sprite color mode
----@param colorSpace ColorSpace color space
+---@param colorSpace? ColorSpace color space
 ---@param alphaIndex? integer alpha mask index
 ---@param includeLocked? boolean include locked layers
 ---@param includeHidden? boolean include hidden layers
