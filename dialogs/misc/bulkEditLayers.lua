@@ -1,10 +1,6 @@
 dofile("../../support/gradientutilities.lua")
 
 local defaults <const> = {
-    -- TODO: Key problem is that RangeType.FRAMES hold no layers AND in some
-    -- cases you want both groups and leaves, so AseUtilities.filterLayers is
-    -- not always appropriate.
-
     -- Blend mode is not included because it would require more
     -- of the same as in multiProps file -- converting to and
     -- from strings.
@@ -27,7 +23,9 @@ local function adjustOpacity(sprite, range, opFlag, opNum)
         return
     end
 
-    local rangeLayers <const> = range.layers
+    local rangeLayers <const> = range.type == RangeType.FRAMES
+        and { app.layer or sprite.layers[1] }
+        or range.layers
     local lenRangeLayers <const> = #rangeLayers
 
     if lenRangeLayers <= 0 then
@@ -204,7 +202,9 @@ dlg:button {
             return
         end
 
-        local rangeLayers <const> = range.layers
+        local rangeLayers <const> = range.type == RangeType.FRAMES
+            and { app.layer or sprite.layers[1] }
+            or range.layers
         local lenRangeLayers <const> = #rangeLayers
 
         if lenRangeLayers <= 0 then
@@ -280,7 +280,9 @@ dlg:button {
             return
         end
 
-        local rangeLayers <const> = range.layers
+        local rangeLayers <const> = range.type == RangeType.FRAMES
+            and { app.layer or sprite.layers[1] }
+            or range.layers
         local lenRangeLayers <const> = #rangeLayers
         if lenRangeLayers <= 0 then
             app.alert {
@@ -318,7 +320,9 @@ dlg:button {
             return
         end
 
-        local rangeLayers <const> = range.layers
+        local rangeLayers <const> = range.type == RangeType.FRAMES
+            and { app.layer or sprite.layers[1] }
+            or range.layers
         local lenRangeLayers <const> = #rangeLayers
         if lenRangeLayers <= 0 then
             app.alert {
@@ -356,7 +360,9 @@ dlg:button {
             return
         end
 
-        local rangeLayers <const> = range.layers
+        local rangeLayers <const> = range.type == RangeType.FRAMES
+            and { app.layer or sprite.layers[1] }
+            or range.layers
         local lenRangeLayers <const> = #rangeLayers
         if lenRangeLayers <= 0 then
             app.alert {
@@ -500,7 +506,9 @@ dlg:button {
             return
         end
 
-        local rangeLayers <const> = range.layers
+        local rangeLayers <const> = range.type == RangeType.FRAMES
+            and { app.layer or sprite.layers[1] }
+            or range.layers
         local lenRangeLayers <const> = #rangeLayers
 
         if lenRangeLayers <= 0 then
