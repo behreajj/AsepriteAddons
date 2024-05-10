@@ -1487,13 +1487,15 @@ function AseUtilities.expandImageToPow2(
         return img
     end
 
+    -- TODO: Seems unnecessary to pass in color space separate when image has
+    -- a color space, color mode and alpha mask?
     local potSpec <const> = ImageSpec {
         width = wDest,
         height = hDest,
         colorMode = colorMode,
         transparentColor = alphaMask
     }
-    potSpec.colorSpace = colorSpace
+    if colorSpace then potSpec.colorSpace = colorSpace end
     local potImg <const> = Image(potSpec)
     potImg:drawImage(img, Point(0, 0), 255, BlendMode.SRC)
 
@@ -1775,7 +1777,7 @@ function AseUtilities.flattenGroup(
             colorMode = sprClrMode,
             transparentColor = aiVerif
         }
-        compSpec.colorSpace = colorSpace
+        if colorSpace then compSpec.colorSpace = colorSpace end
         image = Image(compSpec)
 
         local floor <const> = math.floor
@@ -1819,7 +1821,7 @@ function AseUtilities.flattenGroup(
             colorMode = sprClrMode,
             transparentColor = aiVerif
         }
-        invalSpec.colorSpace = colorSpace
+        if colorSpace then invalSpec.colorSpace = colorSpace end
         image = Image(invalSpec)
     end
 
