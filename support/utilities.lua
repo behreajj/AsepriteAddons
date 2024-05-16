@@ -968,8 +968,8 @@ end
 ---@param source string source bytes
 ---@param wSrc integer source image width
 ---@param hSrc integer source image height
----@param cosa number sine of angle
----@param sina number cosine of angle
+---@param cosa number cosine of angle
+---@param sina number sine of angle
 ---@param bpp integer bits per pixel
 ---@param alphaIndex integer alpha index
 ---@return string rotated
@@ -1006,8 +1006,8 @@ end
 ---@param source string source bytes
 ---@param wSrc integer source image width
 ---@param hSrc integer source image height
----@param cosa number sine of angle
----@param sina number cosine of angle
+---@param cosa number cosine of angle
+---@param sina number sine of angle
 ---@param bpp integer bits per pixel
 ---@param alphaIndex integer alpha index
 ---@return string rotated
@@ -1043,8 +1043,8 @@ end
 ---@param source string source bytes
 ---@param wSrc integer source image width
 ---@param hSrc integer source image height
----@param cosa number sine of angle
----@param sina number cosine of angle
+---@param cosa number cosine of angle
+---@param sina number sine of angle
 ---@param bpp integer bits per pixel
 ---@param alphaIndex integer alpha index
 ---@return string rotated
@@ -1506,10 +1506,8 @@ function Utilities.wrapPixels(source, xt, yt, w, h, bpp)
 
     local i = 0
     while i < len do
-        local y <const> = i // w
-        local x <const> = i % w
-        local yShift <const> = (y + yt) % h
-        local xShift <const> = (x - xt) % w
+        local xShift <const> = (i % w - xt) % w
+        local yShift <const> = (i // w + yt) % h
         local j <const> = yShift * w + xShift
         local jbpp <const> = j * bpp
         wrapped[1 + i] = strsub(source, 1 + jbpp, bpp + jbpp)

@@ -219,10 +219,10 @@ end
 ---@nodiscard
 function AseUtilities.aseColorToClr(aseColor)
     return Clr.new(
-        0.003921568627451 * aseColor.red,
-        0.003921568627451 * aseColor.green,
-        0.003921568627451 * aseColor.blue,
-        0.003921568627451 * aseColor.alpha)
+        aseColor.red / 255.0,
+        aseColor.green / 255.0,
+        aseColor.blue / 255.0,
+        aseColor.alpha / 255.0)
 end
 
 ---Converts an Aseprite color object to an integer. The meaning of the integer
@@ -672,11 +672,7 @@ end
 function AseUtilities.bkgToLayer(sprite, overrideLock)
     local bkgLayer <const> = sprite.backgroundLayer
     if bkgLayer and (overrideLock or bkgLayer.isEditable) then
-        -- local colorCopy <const> = AseUtilities.aseColorCopy
-
         local unBkgLayer <const> = sprite:newLayer()
-
-        -- unBkgLayer.color = colorCopy(bkgLayer.color, "")
         unBkgLayer.color = bkgLayer.color
         unBkgLayer.data = bkgLayer.data
         unBkgLayer.isEditable = bkgLayer.isEditable
@@ -696,7 +692,6 @@ function AseUtilities.bkgToLayer(sprite, overrideLock)
                 local bkgImage <const> = bkgCel.image
                 local unBkgCel <const> = sprite:newCel(unBkgLayer, i,
                     bkgImage, bkgCelPos)
-                -- unBkgCel.color = colorCopy(bkgCel.color, "")
                 unBkgCel.color = bkgCel.color
                 unBkgCel.data = bkgCel.data
                 unBkgCel.zIndex = bkgCel.zIndex
