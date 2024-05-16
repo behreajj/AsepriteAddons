@@ -544,8 +544,6 @@ dlg:button {
         -- Unpack sprite.
         local spriteSpec <const> = activeSprite.spec
         local spriteColorMode <const> = spriteSpec.colorMode
-        local spriteColorSpace <const> = spriteSpec.colorSpace
-        local spriteAlphaIndex <const> = spriteSpec.transparentColor
         local spritePalettes <const> = activeSprite.palettes
 
         -- Unpack arguments.
@@ -842,11 +840,7 @@ dlg:button {
 
                     if usePow2 then
                         local imgPow2 <const> = expandPot(
-                            packets1[k].cel.image,
-                            spriteColorMode,
-                            spriteAlphaIndex,
-                            spriteColorSpace,
-                            nonUniformDim)
+                            packets1[k].cel.image, nonUniformDim)
 
                         -- Bounds are not updated here because
                         -- user may want to extract image from pot.

@@ -1457,16 +1457,13 @@ end
 ---height, e.g., 64x32. Returns the image by reference if its size is already
 ---a power of 2.
 ---@param img Image image
----@param colorMode ColorMode color mode
----@param alphaMask integer alpha mask index
----@param colorSpace? ColorSpace color space
 ---@param nonUniform? boolean non uniform dimensions
 ---@return Image
 ---@nodiscard
-function AseUtilities.expandImageToPow2(
-    img, colorMode, alphaMask, colorSpace, nonUniform)
-    local wOrig <const> = img.width
-    local hOrig <const> = img.height
+function AseUtilities.expandImageToPow2(img, nonUniform)
+    local srcSpec <const> = img.spec
+    local wOrig <const> = srcSpec.width
+    local hOrig <const> = srcSpec.height
     local wDest = wOrig
     local hDest = hOrig
     if nonUniform then
@@ -1482,15 +1479,13 @@ function AseUtilities.expandImageToPow2(
         return img
     end
 
-    -- TODO: Seems unnecessary to pass in color space separate when image has
-    -- a color space, color mode and alpha mask?
     local potSpec <const> = ImageSpec {
         width = wDest,
         height = hDest,
-        colorMode = colorMode,
-        transparentColor = alphaMask
+        colorMode = srcSpec.colorMode,
+        transparentColor = srcSpec.transparentColor
     }
-    if colorSpace then potSpec.colorSpace = colorSpace end
+    if srcSpec.colorSpace then potSpec.colorSpace = srcSpec.colorSpace end
     local potImg <const> = Image(potSpec)
     potImg:drawImage(img, Point(0, 0), 255, BlendMode.SRC)
 
@@ -2574,13 +2569,12 @@ function AseUtilities.rotateImageX(source, angle)
         return AseUtilities.flipImageY(source)
     end
 
-    local cosa <const> = math.cos(angle * 0.017453292519943)
     local srcSpec <const> = source.spec
     local trgBytes <const>,
     wTrg <const>,
     hTrg <const> = Utilities.rotatePixelsX(
         source.bytes, srcSpec.width, srcSpec.height,
-        cosa, 0, source.bytesPerPixel,
+        math.cos(angle * 0.017453292519943), 0.0, source.bytesPerPixel,
         srcSpec.transparentColor)
 
     local trgSpec <const> = ImageSpec {
@@ -2610,13 +2604,12 @@ function AseUtilities.rotateImageY(source, angle)
         return AseUtilities.flipImageX(source)
     end
 
-    local cosa <const> = math.cos(angle * 0.017453292519943)
     local srcSpec <const> = source.spec
     local trgBytes <const>,
     wTrg <const>,
     hTrg <const> = Utilities.rotatePixelsY(
         source.bytes, srcSpec.width, srcSpec.height,
-        cosa, 0, source.bytesPerPixel,
+        math.cos(angle * 0.017453292519943), 0.0, source.bytesPerPixel,
         srcSpec.transparentColor)
 
     local trgSpec <const> = ImageSpec {
@@ -2653,10 +2646,8 @@ function AseUtilities.rotateImageZ(source, angle)
     end
 
     local rad <const> = angle * 0.017453292519943
-    local cosa <const> = math.cos(rad)
-    local sina <const> = math.sin(rad)
-
-    return AseUtilities.rotateImageZInternal(source, cosa, sina)
+    return AseUtilities.rotateImageZInternal(source,
+        math.cos(rad), math.sin(rad))
 end
 
 ---Internal helper function to rotateZ. Accepts pre-calculated cosine and sine

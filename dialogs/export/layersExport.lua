@@ -615,11 +615,7 @@ dlg:button {
                         end
 
                         if toPow2 then
-                            local imgPow2 <const> = expandPow2(
-                                image,
-                                spriteColorMode,
-                                spriteAlphaIndex,
-                                spriteColorSpace,
+                            local imgPow2 <const> = expandPow2(image,
                                 nonUniformDim)
 
                             -- Bounds are not updated here because
