@@ -702,10 +702,12 @@ dlg:button {
 
                     local column <const> = k % columns
                     local row <const> = k // columns
-                    local xOff <const> = margin + column * padding
-                    local yOff <const> = margin + row * padding
-                    local xTrg <const> = xOff + column * wTileTrg
-                    local yTrg <const> = yOff + row * hTileTrg
+                    local xTrg <const> = margin
+                        + column * padding
+                        + column * wTileTrg
+                    local yTrg <const> = margin
+                        + row * padding
+                        + row * hTileTrg
                     sheetImage:drawImage(tileScaled, Point(xTrg, yTrg),
                         255, blendModeSrc)
 

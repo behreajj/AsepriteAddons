@@ -130,10 +130,12 @@ local function imgToSvgStr(
     local imgBytes <const> = img.bytes
     local imgbpp <const> = img.bytesPerPixel
 
-    local borderPad <const> = border + padding
     local wScalePad <const> = wPixel + padding
     local hScalePad <const> = hPixel + padding
     local imgArea <const> = imgWidth * imgHeight
+    local borderPad <const> = border + padding
+    local xOffFull <const> = xOff * wScalePad + borderPad
+    local yOffFull <const> = yOff * hScalePad + borderPad
     local rk <const> = 0.55228474983079 * rounding
     local wHalf <const> = wPixel * 0.5
     local hHalf <const> = hPixel * 0.5
@@ -247,11 +249,9 @@ local function imgToSvgStr(
             while i < lenIdcs do
                 i = i + 1
                 local idx <const> = idcs[i]
-                local x <const> = xOff + (idx % imgWidth)
-                local y <const> = yOff + (idx // imgWidth)
 
-                local x0 <const> = borderPad + x * wScalePad
-                local y0 <const> = borderPad + y * hScalePad
+                local x0 <const> = (idx % imgWidth) * wScalePad + xOffFull
+                local y0 <const> = (idx // imgWidth) * hScalePad + yOffFull
                 local x1 <const> = x0 + wPixel
                 local y1 <const> = y0 + hPixel
 
@@ -265,11 +265,9 @@ local function imgToSvgStr(
             while i < lenIdcs do
                 i = i + 1
                 local idx <const> = idcs[i]
-                local x <const> = xOff + (idx % imgWidth)
-                local y <const> = yOff + (idx // imgWidth)
 
-                local x0 <const> = borderPad + x * wScalePad
-                local y0 <const> = borderPad + y * hScalePad
+                local x0 <const> = (idx % imgWidth) * wScalePad + xOffFull
+                local y0 <const> = (idx // imgWidth) * hScalePad + yOffFull
                 local x1 <const> = x0 + wPixel
                 local y1 <const> = y0 + hPixel
                 local xc <const> = x0 + wHalf
@@ -288,11 +286,9 @@ local function imgToSvgStr(
             while i < lenIdcs do
                 i = i + 1
                 local idx <const> = idcs[i]
-                local x <const> = xOff + (idx % imgWidth)
-                local y <const> = yOff + (idx // imgWidth)
 
-                local x0 <const> = borderPad + x * wScalePad
-                local y0 <const> = borderPad + y * hScalePad
+                local x0 <const> = (idx % imgWidth) * wScalePad + xOffFull
+                local y0 <const> = (idx // imgWidth) * hScalePad + yOffFull
                 local x1 <const> = x0 + wPixel
                 local y1 <const> = y0 + hPixel
 
