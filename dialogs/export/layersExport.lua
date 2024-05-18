@@ -390,9 +390,12 @@ dlg:button {
                 app.command.Timeline { open = true }
             end
 
-            local appRange <const> = app.range
-            if appRange.sprite == activeSprite then
-                local rangeLayers <const> = appRange.layers
+            local range <const> = app.range
+            if range.sprite == activeSprite then
+                -- If range is RangeType.FRAMES, then the layers table will be
+                -- empty, but maybe that is appropriate for export, unlike with
+                -- toggling visibility, etc.
+                local rangeLayers <const> = range.layers
                 local lenRangeLayers <const> = #rangeLayers
                 local i = 0
                 while i < lenRangeLayers do
