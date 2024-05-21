@@ -351,10 +351,9 @@ dlg:button {
         local w <const> = spec.width
         local h <const> = spec.height
         local short <const> = math.min(w, h)
-        local xtl <const> = (w == short) and 0 or (w - short) // 2
-        local ytl <const> = (h == short) and 0 or (h - short) // 2
-        local trgSel <const> = Selection(Rectangle(
-            xtl, ytl, short, short))
+        local x <const> = (w == short) and 0 or (w - short) // 2
+        local y <const> = (h == short) and 0 or (h - short) // 2
+        local trgSel <const> = Selection(Rectangle(x, y, short, short))
         updateSel(sprite, trgSel, selMode)
         app.refresh()
     end
@@ -380,11 +379,9 @@ dlg:button {
         local len <const> = short * short
 
         local pxRect <const> = Rectangle(0, 0, 1, 1)
-        local floor <const> = math.floor
         local xtl <const> = (w == short) and 0 or (w - short) // 2
         local ytl <const> = (h == short) and 0 or (h - short) // 2
-        local trgSel <const> = Selection(Rectangle(
-            floor(xtl), floor(ytl), short, short))
+        local trgSel <const> = Selection(Rectangle(xtl, ytl, short, short))
 
         local radius <const> = short * 0.5
         local rsq <const> = radius * radius
@@ -398,8 +395,8 @@ dlg:button {
             local dx <const> = x - cx
             local dy <const> = y - cy
             if (dx * dx + dy * dy) >= rsq then
-                pxRect.x = floor(x)
-                pxRect.y = floor(y)
+                pxRect.x = x
+                pxRect.y = y
                 trgSel:subtract(pxRect)
             end
             i = i + 1
