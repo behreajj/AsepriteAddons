@@ -47,7 +47,7 @@ local defaults <const> = {
     facType = "TIME",
     axis = "Z",
     angleType = "NEAR",
-    units = "PIXEL",
+    units = "PERCENT",
     alpSampleCount = 96,
     usePreIncr = false,
 
