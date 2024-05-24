@@ -16,7 +16,7 @@ JsonUtilities.CEL_FORMAT = table.concat({
     "\"layer\":%d",
     "\"opacity\":%d",
     "\"zIndex\":%d",
-    "\"properties\":{%s}}",
+    "\"properties\":%s}",
 }, ",")
 
 ---Format string for frames.
@@ -35,7 +35,7 @@ JsonUtilities.LAYER_FORMAT = table.concat({
     "\"parent\":%d",
     "\"stackIndex\":%d",
     "\"tileset\":%d",
-    "\"properties\":{%s}}",
+    "\"properties\":%s}",
 }, ",")
 
 ---Rectangle origin formatting presets.
@@ -56,7 +56,7 @@ JsonUtilities.SPRITE_FORMAT = table.concat({
     "\"data\":%s",
     "\"pixelAspect\":%s",
     "\"size\":%s",
-    "\"properties\":{%s}}",
+    "\"properties\":%s}",
 }, ",")
 
 ---Format string for tags.
@@ -68,7 +68,7 @@ JsonUtilities.TAG_FORMAT = table.concat({
     "\"fromFrame\":%d",
     "\"toFrame\":%d",
     "\"repeats\":%d",
-    "\"properties\":{%s}}",
+    "\"properties\":%s}",
 }, ",")
 
 ---Format string for app version.
@@ -257,22 +257,15 @@ end
 ---@param properties table<string, any>
 ---@return string
 function JsonUtilities.propsToJson(properties)
-    -- TODO: Why does this not include the enclosing brackets?
-    -- It might be more consistent with other funcs if it did.
-
     ---@type string[]
     local propStrs <const> = {}
     local strfmt <const> = string.format
     local mathtype <const> = math.type
-    local propsToJson <const> = JsonUtilities.propsToJson
     for k, v in pairs(properties) do
-        local vStr = ""
+        local vStr = "null"
         local typev <const> = type(v)
         if typev == "boolean" then
             vStr = v and "true" or "false"
-        elseif typev == "nil" then
-            -- This is an extra precaution, nil entries don't appear.
-            vStr = "null"
         elseif typev == "number" then
             vStr = mathtype(v) == "integer"
                 and strfmt("%d", v)
@@ -280,14 +273,22 @@ function JsonUtilities.propsToJson(properties)
         elseif typev == "string" then
             vStr = strfmt("\"%s\"", v)
         elseif typev == "table" then
-            vStr = strfmt("{%s}", propsToJson(v))
+            vStr = JsonUtilities.propsToJson(v)
+        elseif typev == "userdata" then
+            local namev <const> = v.__name
+            if namev == "gfx::Point" then
+                vStr = JsonUtilities.pointToJson(v.x, v.y)
+            elseif namev == "gfx::Rect" then
+                vStr = JsonUtilities.rectToJson(v, "TOP_LEFT")
+            elseif namev == "gfx::Size" then
+                vStr = JsonUtilities.pointToJson(v.width, v.height)
+            end
         end
 
-        local propStr <const> = strfmt("\"%s\":%s", k, vStr)
-        propStrs[#propStrs + 1] = propStr
+        propStrs[#propStrs + 1] = strfmt("\"%s\":%s", k, vStr)
     end
 
-    return table.concat(propStrs, ",")
+    return string.format("{%s}", table.concat(propStrs, ","))
 end
 
 ---Formats a rectangle, or table containing the same properties, as a JSON
