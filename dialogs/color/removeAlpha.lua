@@ -107,6 +107,15 @@ dlg:check {
 
 dlg:newrow { always = false }
 
+dlg:check {
+    id = "absOpaque",
+    text = "Transparent",
+    selected = defaults.absOpaque,
+    visible = defaults.removeImage ~= "NONE"
+}
+
+dlg:newrow { always = false }
+
 dlg:combobox {
     id = "removeLayer",
     label = "Layers:",
@@ -129,7 +138,12 @@ dlg:combobox {
     id = "removeImage",
     label = "Images:",
     option = defaults.removeImage,
-    options = removeImageOptions
+    options = removeImageOptions,
+    onchange = function()
+        local args <const> = dlg.data
+        local removeImage <const> = args.removeImage --[[@as string]]
+        dlg:modify { id = "absOpaque", visible = removeImage ~= "NONE" }
+    end
 }
 
 dlg:newrow { always = false }
@@ -177,6 +191,7 @@ dlg:button {
         local includeHidden <const> = args.includeHidden --[[@as boolean]]
         local includeTiles <const> = args.includeTiles --[[@as boolean]]
         local includeBkg <const> = args.includeBkg --[[@as boolean]]
+        local absOpaque <const> = args.absOpaque --[[@as boolean]]
         local opaqueLayer <const> = args.removeLayer
             or defaults.removeLayer --[[@as string]]
         local opaqueCel <const> = args.removeCel
@@ -188,8 +203,6 @@ dlg:button {
         local opaquePalette <const> = args.removePalette
             or defaults.removePalette --[[@as boolean]]
 
-        -- TODO: Make this a checkbox in GUI?
-        local absOpaque <const> = defaults.absOpaque
 
         if opaqueLayer ~= "NONE" then
             local chosenLayers = AseUtilities.filterLayers(activeSprite,
