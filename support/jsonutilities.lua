@@ -275,7 +275,7 @@ function JsonUtilities.propsToJson(properties)
         elseif typev == "table" then
             vStr = JsonUtilities.propsToJson(v)
         elseif typev == "userdata" then
-            local namev <const> = v.__name
+            local namev <const> = v.__name --[[@as string]]
             if namev == "gfx::Point" then
                 vStr = JsonUtilities.pointToJson(v.x, v.y)
             elseif namev == "gfx::Rect" then
@@ -300,11 +300,11 @@ end
 ---@nodiscard
 function JsonUtilities.rectToJson(r, format)
     if format == "CENTER_FULL" then
-        local rw_2 <const> = r.width * 0.5
-        local rh_2 <const> = r.height * 0.5
+        local rw <const> = r.width
+        local rh <const> = r.height
         return string.format("{\"center\":%s,\"size\":%s}",
-            JsonUtilities.pointToJson(r.x + rw_2, r.y + rh_2),
-            JsonUtilities.pointToJson(r.width, r.height))
+            JsonUtilities.pointToJson(r.x + rw * 0.5, r.y + rh * 0.5),
+            JsonUtilities.pointToJson(rw, rh))
     elseif format == "CENTER_HALF" then
         local rw_2 <const> = r.width * 0.5
         local rh_2 <const> = r.height * 0.5
@@ -350,7 +350,7 @@ function JsonUtilities.spriteToJson(sprite)
         JsonUtilities.propsToJson(sprite.properties))
 end
 
----Fomats a tag, or table containing the same properties, as a JSON string.
+---Formats a tag, or table containing the same properties, as a JSON string.
 ---
 ---One is subtracted from the start and end frame numbers to match the indexing
 ---conventions of other languages.

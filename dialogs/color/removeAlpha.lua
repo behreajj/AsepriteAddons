@@ -13,7 +13,8 @@ local defaults <const> = {
     removeCel = "ALL",
     removeImage = "ALL",
     removeTiles = "ALL",
-    removePalette = "ALL"
+    removePalette = "ALL",
+    absOpaque = false
 }
 
 ---@param srcImg Image
@@ -187,6 +188,9 @@ dlg:button {
         local opaquePalette <const> = args.removePalette
             or defaults.removePalette --[[@as boolean]]
 
+        -- TODO: Make this a checkbox in GUI?
+        local absOpaque <const> = defaults.absOpaque
+
         if opaqueLayer ~= "NONE" then
             local chosenLayers = AseUtilities.filterLayers(activeSprite,
                 site.layer, opaqueLayer, includeLocked, includeHidden,
@@ -198,8 +202,7 @@ dlg:button {
                     local i = 0
                     while i < lenChosenLayers do
                         i = i + 1
-                        local layer <const> = chosenLayers[i]
-                        layer.opacity = 255
+                        chosenLayers[i].opacity = 255
                     end
                 end)
             end
@@ -216,8 +219,7 @@ dlg:button {
                     local i = 0
                     while i < lenChosenCels do
                         i = i + 1
-                        local cel <const> = chosenCels[i]
-                        cel.opacity = 255
+                        chosenCels[i].opacity = 255
                     end
                 end)
             end
@@ -237,7 +239,7 @@ dlg:button {
                     while i < lenChosenCels do
                         i = i + 1
                         local cel <const> = chosenCels[i]
-                        cel.image = opaque(cel.image, false)
+                        cel.image = opaque(cel.image, absOpaque)
                     end
                 end)
             end
@@ -271,7 +273,7 @@ dlg:button {
                         while j < lenTileSet do
                             local tile <const> = tileSet:tile(j)
                             if tile then
-                                tile.image = opaque(tile.image, false)
+                                tile.image = opaque(tile.image, absOpaque)
                             end
                             j = j + 1
                         end
