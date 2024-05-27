@@ -16,10 +16,11 @@ local importFileExts <const> = {
     "ilbm", -- Interleaved Bitmap
     "jpeg",
     "jpg",
-    "lbm",  -- IFF image
-    "pbm",  -- Binary PNM
-    "pgm",  -- Gray PNM
-    "ppm",  -- Color PNM
+    "lbm", -- IFF image
+    "pal", -- Palette format in binary
+    "pbm", -- Binary PNM
+    "pgm", -- Gray PNM
+    "ppm", -- Color PNM
     "txt"
 }
 
@@ -415,7 +416,7 @@ dlg:button {
             end
 
             if useUtf8 then
-                local utf8char<const> = utf8.char
+                local utf8char <const> = utf8.char
                 local lenBytes <const> = #bytes
                 local j = 0
                 while j < lenBytes do
