@@ -20,7 +20,6 @@ end
 local paletteModes <const> = { "APPEND", "REPLACE" }
 
 local defaults <const> = {
-    -- TODO: Option to concat to existing palette rather than replace!
     uniquesOnly = false,
     prependMask = true,
     useNew = false,
