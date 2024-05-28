@@ -40,15 +40,6 @@ dlg:file {
 
 dlg:newrow { always = false }
 
-dlg:combobox {
-    id = "paletteMode",
-    label = "Mode:",
-    option = defaults.paletteMode,
-    options = paletteModes
-}
-
-dlg:newrow { always = false }
-
 dlg:check {
     id = "uniquesOnly",
     label = "Uniques Only:",
@@ -73,7 +64,18 @@ dlg:check {
         local args <const> = dlg.data
         local useNew <const> = args.useNew --[[@as boolean]]
         dlg:modify { id = "paletteIndex", visible = not useNew }
+        dlg:modify { id = "paletteMode", visible = not useNew }
     end
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "paletteMode",
+    label = "Mode:",
+    option = defaults.paletteMode,
+    options = paletteModes,
+    visible = not defaults.useNew
 }
 
 dlg:newrow { always = false }
