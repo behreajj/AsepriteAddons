@@ -17,11 +17,15 @@ if app.preferences then
     end
 end
 
+local paletteModes <const> = { "APPEND", "REPLACE" }
+
 local defaults <const> = {
+    -- TODO: Option to concat to existing palette rather than replace!
     uniquesOnly = false,
     prependMask = true,
     useNew = false,
-    paletteIndex = 1
+    paletteIndex = 1,
+    paletteMode = "REPLACE"
 }
 
 local dlg <const> = Dialog { title = "GPL Import" }
@@ -32,6 +36,15 @@ dlg:file {
     filetypes = { "gpl", "pal" },
     open = true,
     focus = true
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "paletteMode",
+    label = "Mode:",
+    option = defaults.paletteMode,
+    options = paletteModes
 }
 
 dlg:newrow { always = false }
@@ -129,24 +142,59 @@ dlg:button {
             return
         end
 
-        local fileExt <const> = string.lower(
+        local fileExtLc <const> = string.lower(
             app.fs.fileExtension(filepath))
-        if fileExt ~= "gpl" and fileExt ~= "pal" then
+        local extIsPal <const> = fileExtLc == "pal"
+        local extIsGpl <const> = fileExtLc == "gpl"
+        if (not extIsGpl) and (not extIsPal) then
             app.alert {
                 title = "Error",
-                text = "File format is not gpl."
+                text = "File format must be gpl or pal."
             }
             return
         end
+
+        AseUtilities.preserveForeBack()
 
         ---@type integer[]
         local colors = {}
         local lenColors = 0
         local columns = 0
 
-        local file <const>, err <const> = io.open(filepath, "r")
-        if file ~= nil then
-            AseUtilities.preserveForeBack()
+        local palIdx <const> = args.paletteIndex
+            or defaults.paletteIndex --[[@as integer]]
+        local paletteMode <const> = args.paletteMode
+            or defaults.paletteMode --[[@as string]]
+        local activeSprite = app.site.sprite
+        if paletteMode == "APPEND" then
+            if activeSprite then
+                local rgbColorMode <const> = ColorMode.RGB
+                local aseToHex <const> = AseUtilities.aseColorToHex
+                local palette <const> = AseUtilities.getPalette(
+                    palIdx, activeSprite.palettes)
+                local lenPalette = #palette
+                local i = 0
+                while i < lenPalette do
+                    local aseColor <const> = palette:getColor(i)
+                    lenColors = lenColors + 1
+                    colors[lenColors] = aseToHex(aseColor, rgbColorMode)
+                    i = i + 1
+                end
+            end
+        end
+
+        local isValidRiff = false
+        if extIsPal then
+            -- TODO: Support reading binary RIFF PAL files?
+        end
+
+        if not isValidRiff then
+            local aciiFile <const>, asciiErr <const> = io.open(filepath, "r")
+            if asciiErr ~= nil then
+                app.alert { title = "Error", text = asciiErr }
+                return
+            end
+            if aciiFile == nil then return end
 
             -- Cache functions to local when used in loop.
             local strlower <const> = string.lower
@@ -165,7 +213,7 @@ dlg:button {
             local comments <const> = {}
 
             local lineCount = 1
-            local linesItr <const> = file:lines()
+            local linesItr <const> = aciiFile:lines()
 
             for line in linesItr do
                 local lc <const> = strlower(line)
@@ -239,80 +287,73 @@ dlg:button {
                 end
                 lineCount = lineCount + 1
             end
-            file:close()
+            aciiFile:close()
+        end
 
-            local uniquesOnly <const> = args.uniquesOnly --[[@as boolean]]
-            if uniquesOnly then
-                local uniques <const>, _ <const> = Utilities.uniqueColors(
-                    colors, true)
-                colors = uniques
+        local uniquesOnly <const> = args.uniquesOnly --[[@as boolean]]
+        if uniquesOnly then
+            local uniques <const>, _ <const> = Utilities.uniqueColors(
+                colors, true)
+            colors = uniques
+        end
+
+        local prependMask <const> = args.prependMask --[[@as boolean]]
+        if prependMask then
+            Utilities.prependMask(colors)
+        end
+
+        -- If no sprite exists, then create a new
+        -- sprite and place palette swatches in it.
+        local useNew <const> = args.useNew --[[@as boolean]]
+        local profileFlag = false
+        if useNew or (not activeSprite) then
+            -- Try to base sprite width on columns in GPL file. If not,
+            -- find square root of colors length.
+            local wSprite = columns
+            if columns < 1 then
+                wSprite = math.max(8,
+                    math.ceil(math.sqrt(math.max(
+                        1, lenColors))))
             end
+            local hSprite <const> = math.max(1,
+                math.ceil(lenColors / wSprite))
 
-            local prependMask <const> = args.prependMask --[[@as boolean]]
-            if prependMask then
-                Utilities.prependMask(colors)
-            end
-
-            -- If no sprite exists, then create a new
-            -- sprite and place palette swatches in it.
-            local useNew <const> = args.useNew --[[@as boolean]]
-            local activeSprite = app.site.sprite
-            local profileFlag = false
-            if useNew or (not activeSprite) then
-                -- Try to base sprite width on columns in GPL file. If not,
-                -- find square root of colors length.
-                local wSprite = columns
-                if columns < 1 then
-                    wSprite = math.max(8,
-                        math.ceil(math.sqrt(math.max(
-                            1, lenColors))))
+            local spec <const> = AseUtilities.createSpec(wSprite, hSprite)
+            local image <const> = Image(spec)
+            local pxItr <const> = image:pixels()
+            local index = 0
+            for pixel in pxItr do
+                if index <= lenColors then
+                    index = index + 1
+                    pixel(colors[index])
                 end
-                local hSprite <const> = math.max(1,
-                    math.ceil(lenColors / wSprite))
-
-                local spec <const> = AseUtilities.createSpec(wSprite, hSprite)
-                local image <const> = Image(spec)
-                local pxItr <const> = image:pixels()
-                local index = 0
-                for pixel in pxItr do
-                    if index <= lenColors then
-                        index = index + 1
-                        pixel(colors[index])
-                    end
-                end
-
-                activeSprite = AseUtilities.createSprite(spec, "Palette")
-                local layer <const> = activeSprite.layers[1]
-                local cel <const> = layer.cels[1]
-                cel.image = image
-                app.tool = "hand"
-            else
-                local profile <const> = activeSprite.colorSpace
-                profileFlag = profile ~= ColorSpace { sRGB = true }
-                    and profile ~= ColorSpace()
             end
 
-            local oldMode <const> = activeSprite.colorMode
-            app.command.ChangePixelFormat { format = "rgb" }
-            local palIdx <const> = args.paletteIndex
-                or defaults.paletteIndex --[[@as integer]]
-            AseUtilities.setPalette(colors, activeSprite, palIdx)
-            AseUtilities.changePixelFormat(oldMode)
-            app.refresh()
+            activeSprite = AseUtilities.createSprite(spec, "Palette")
+            local layer <const> = activeSprite.layers[1]
+            local cel <const> = layer.cels[1]
+            cel.image = image
+            app.tool = "hand"
+        else
+            local profile <const> = activeSprite.colorSpace
+            profileFlag = profile ~= ColorSpace { sRGB = true }
+                and profile ~= ColorSpace()
+        end
 
-            if profileFlag then
-                app.alert {
-                    title = "Warning",
-                    text = {
-                        "Palette may not appear as intended.",
-                        "Sprite uses a custom color profile."
-                    }
+        local oldMode <const> = activeSprite.colorMode
+        app.command.ChangePixelFormat { format = "rgb" }
+        AseUtilities.setPalette(colors, activeSprite, palIdx)
+        AseUtilities.changePixelFormat(oldMode)
+        app.refresh()
+
+        if profileFlag then
+            app.alert {
+                title = "Warning",
+                text = {
+                    "Palette may not appear as intended.",
+                    "Sprite uses a custom color profile."
                 }
-            end
-        end -- File is not nil.
-
-        if err ~= nil then
-            app.alert { title = "Error", text = err }
+            }
         end
     end
 }

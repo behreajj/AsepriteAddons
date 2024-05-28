@@ -17,7 +17,7 @@ local importFileExts <const> = {
     "jpeg",
     "jpg",
     "lbm", -- IFF image
-    "pal", -- Palette format in binary
+    "pal", -- RIFF binary palette
     "pbm", -- Binary PNM
     "pgm", -- Gray PNM
     "ppm", -- Color PNM
