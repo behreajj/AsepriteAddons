@@ -28,7 +28,7 @@ local defaults <const> = {
     paletteMode = "REPLACE"
 }
 
-local dlg <const> = Dialog { title = "GPL Import" }
+local dlg <const> = Dialog { title = "GPL PAL Import" }
 
 dlg:file {
     id = "filepath",
@@ -185,24 +185,95 @@ dlg:button {
             end
         end
 
+        -- Cache functions to local when used in loop.
+        local strbyte <const> = string.byte
+        local strgmatch <const> = string.gmatch
+        local strlower <const> = string.lower
+        local strsub <const> = string.sub
+        local strmatch <const> = string.match
+        local strunpack <const> = string.unpack
+
         local isValidRiff = false
         if extIsPal then
-            -- TODO: Support reading binary RIFF PAL files?
+            local binFile <const>, binErr <const> = io.open(filepath, "rb")
+            if binErr ~= nil then
+                app.alert { title = "Error", text = binErr }
+                return
+            end
+            if binFile == nil then return end
+
+            local fileData <const> = binFile:read("a")
+            binFile:close()
+
+            local lenFileData <const> = #fileData
+            -- print(string.format("lenFileData: %d", lenFileData))
+
+            local magicCheckRiff <const> = strunpack("I4", "RIFF")
+            local magicWordRiff <const> = strunpack("I4", strsub(fileData, 1, 4))
+            -- print(string.format(
+            --     "magicWordRiff: %d, magicCheckRiff: %d %s",
+            --     magicWordRiff, magicCheckRiff,
+            --     magicWordRiff == magicCheckRiff and "MATCH" or "MISMATCH"))
+
+            local magicWordPal = 0
+            local magicCheckPal <const> = strunpack("I4", "PAL ")
+            local i = 4
+            while i < lenFileData and magicWordPal ~= magicCheckPal do
+                magicWordPal = strunpack("I4", strsub(fileData, 1 + i, 4 + i))
+                i = i + 1
+            end
+            -- print(string.format(
+            --     "i: %d, magicWordPal: %d, magicCheckPal: %d %s",
+            --     i, magicWordPal, magicCheckPal,
+            --     magicWordPal == magicCheckPal and "MATCH" or "MISMATCH"))
+
+            local magicWordData = 0
+            local magicCheckData <const> = strunpack("I4", "data")
+            while i < lenFileData and magicWordData ~= magicCheckData do
+                magicWordData = strunpack("I4", strsub(fileData, 1 + i, 4 + i))
+                i = i + 1
+            end
+            -- print(string.format(
+            --     "i: %d, magicWordData: %d, magicCheckData: %d %s",
+            --     i, magicWordData, magicCheckData,
+            --     magicWordData == magicCheckData and "MATCH" or "MISMATCH"))
+
+            isValidRiff = magicWordRiff == magicCheckRiff
+                and magicWordPal == magicCheckPal
+                and magicWordData == magicCheckData
+            -- print(isValidRiff and "Valid" or "Not valid")
+
+            if isValidRiff then
+                -- local lenDataChunk <const> = strunpack("I4",
+                -- strsub(fileData, 4 + i, 7 + i))
+                -- local palVersion <const> = strunpack("I2",
+                -- strsub(fileData, 8 + i, 9 + i))
+                local numColors <const> = strunpack("I2",
+                    strsub(fileData, 10 + i, 11 + i))
+                -- print(string.format(
+                --     "lenDataChunk: %d, palVersion: %d, numColors: %d",
+                --     lenDataChunk, palVersion, numColors))
+
+                local j = 0
+                while j < numColors do
+                    local j4 <const> = i + j * 4
+                    local r <const>, g <const>, b <const> = strbyte(
+                        fileData, 12 + j4, 14 + j4)
+                    local hex <const> = 0xff000000 | b << 0x10 | g << 0x08 | r
+                    lenColors = lenColors + 1
+                    colors[lenColors] = hex
+                    j = j + 1
+                end
+            end
         end
 
         if not isValidRiff then
-            local aciiFile <const>, asciiErr <const> = io.open(filepath, "r")
+            local asciiFile <const>, asciiErr <const> = io.open(filepath, "r")
             if asciiErr ~= nil then
                 app.alert { title = "Error", text = asciiErr }
                 return
             end
-            if aciiFile == nil then return end
-
-            -- Cache functions to local when used in loop.
-            local strlower <const> = string.lower
-            local strsub <const> = string.sub
-            local strgmatch <const> = string.gmatch
-            local strmatch <const> = string.match
+            if asciiFile == nil then return end
 
             -- Implicitly tries to support JASC-PAL.
             local gplHeaderFound = 0
@@ -215,7 +286,7 @@ dlg:button {
             local comments <const> = {}
 
             local lineCount = 1
-            local linesItr <const> = aciiFile:lines()
+            local linesItr <const> = asciiFile:lines()
 
             for line in linesItr do
                 local lc <const> = strlower(line)
@@ -289,7 +360,7 @@ dlg:button {
                 end
                 lineCount = lineCount + 1
             end
-            aciiFile:close()
+            asciiFile:close()
         end
 
         local uniquesOnly <const> = args.uniquesOnly --[[@as boolean]]
