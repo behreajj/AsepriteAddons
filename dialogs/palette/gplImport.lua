@@ -207,20 +207,26 @@ dlg:button {
             local lenFileData <const> = #fileData
             -- print(string.format("lenFileData: %d", lenFileData))
 
+            local magicWordRiff <const> = strunpack("I4",
+                strsub(fileData, 1, 4))
             local magicCheckRiff <const> = strunpack("I4", "RIFF")
-            local magicWordRiff <const> = strunpack("I4", strsub(fileData, 1, 4))
+            isValidRiff = magicWordRiff == magicCheckRiff
             -- print(string.format(
             --     "magicWordRiff: %d, magicCheckRiff: %d %s",
             --     magicWordRiff, magicCheckRiff,
             --     magicWordRiff == magicCheckRiff and "MATCH" or "MISMATCH"))
 
+            local i = 4
             local magicWordPal = 0
             local magicCheckPal <const> = strunpack("I4", "PAL ")
-            local i = 4
-            while i < lenFileData and magicWordPal ~= magicCheckPal do
-                magicWordPal = strunpack("I4", strsub(fileData, 1 + i, 4 + i))
-                i = i + 1
+            if isValidRiff then
+                while i < lenFileData and magicWordPal ~= magicCheckPal do
+                    magicWordPal = strunpack("I4",
+                        strsub(fileData, 1 + i, 4 + i))
+                    i = i + 1
+                end
             end
+            isValidRiff = isValidRiff and magicWordPal == magicCheckPal
             -- print(string.format(
             --     "i: %d, magicWordPal: %d, magicCheckPal: %d %s",
             --     i, magicWordPal, magicCheckPal,
@@ -228,20 +234,20 @@ dlg:button {
 
             local magicWordData = 0
             local magicCheckData <const> = strunpack("I4", "data")
-            while i < lenFileData and magicWordData ~= magicCheckData do
-                magicWordData = strunpack("I4", strsub(fileData, 1 + i, 4 + i))
-                i = i + 1
+            if isValidRiff then
+                while i < lenFileData and magicWordData ~= magicCheckData do
+                    magicWordData = strunpack("I4",
+                        strsub(fileData, 1 + i, 4 + i))
+                    i = i + 1
+                end
             end
+            isValidRiff = isValidRiff and magicWordData == magicCheckData
             -- print(string.format(
             --     "i: %d, magicWordData: %d, magicCheckData: %d %s",
             --     i, magicWordData, magicCheckData,
             --     magicWordData == magicCheckData and "MATCH" or "MISMATCH"))
 
-            isValidRiff = magicWordRiff == magicCheckRiff
-                and magicWordPal == magicCheckPal
-                and magicWordData == magicCheckData
             -- print(isValidRiff and "Valid" or "Not valid")
-
             if isValidRiff then
                 -- local lenDataChunk <const> = strunpack("I4",
                 -- strsub(fileData, 4 + i, 7 + i))
