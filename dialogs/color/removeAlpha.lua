@@ -9,12 +9,13 @@ local defaults <const> = {
     includeHidden = true,
     includeTiles = true,
     includeBkg = true,
+    absOpaque = false,
     removeLayer = "ALL",
     removeCel = "ALL",
     removeImage = "ALL",
     removeTiles = "ALL",
     removePalette = "ALL",
-    absOpaque = false
+    removeNonActive = true,
 }
 
 ---@param srcImg Image
@@ -106,6 +107,12 @@ dlg:check {
 }
 
 dlg:newrow { always = false }
+
+dlg:check {
+    id = "removeNonActive",
+    text = "&Inactive",
+    selected = defaults.removeNonActive
+}
 
 dlg:check {
     id = "absOpaque",
@@ -201,7 +208,9 @@ dlg:button {
         local includeHidden <const> = args.includeHidden --[[@as boolean]]
         local includeTiles <const> = args.includeTiles --[[@as boolean]]
         local includeBkg <const> = args.includeBkg --[[@as boolean]]
+        local removeNonActive <const> = args.removeNonActive --[[@as boolean]]
         local absOpaque <const> = args.absOpaque --[[@as boolean]]
+
         local opaqueLayer <const> = args.removeLayer
             or defaults.removeLayer --[[@as string]]
         local opaqueCel <const> = args.removeCel
@@ -384,6 +393,21 @@ dlg:button {
                 end)            -- End transaction.
             end                 -- More than zero palette check.
         end                     -- End remove palette check.
+
+        if removeNonActive then
+            local appPrefs <const> = app.preferences
+            if appPrefs then
+                local experimental <const> = appPrefs.experimental
+                if experimental then
+                    if experimental.nonactive_layers_opacity then
+                        experimental.nonactive_layers_opacity = 255
+                    end
+                    if experimental.nonactive_layers_opacity_preview then
+                        experimental.nonactive_layers_opacity_preview = 255
+                    end
+                end
+            end
+        end
 
         app.refresh()
     end

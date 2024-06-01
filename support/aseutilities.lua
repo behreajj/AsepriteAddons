@@ -1375,6 +1375,10 @@ function AseUtilities.createSprite(spec, fileName)
         -- https://steamcommunity.com/app/431730/discussions/2/4356743320309073149/
         -- appPrefs.selection.pivot_position = 4
 
+        -- appPrefs.experimental.nonactive_layers_opacity and ... _preview can
+        -- cause confusion, as only one layer will be visible at a time and the
+        -- setting may default to zero in some cases?
+
         -- It's overkill to handle sprite.pixelRatio (a Size) here. Handle it in
         -- newSpritePlus and spriteProps, if at all. See also
         -- appPrefs.new_file.pixel_ratio, a string, "1:2", "2:1", "1:1" .

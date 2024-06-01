@@ -626,6 +626,7 @@ dlg:button {
             end
         end
 
+        -- TODO: Replace these usages with app.fs.joinPath
         local pathSep = app.fs.pathSeparator
         pathSep = string.gsub(pathSep, "\\", "\\\\")
 
