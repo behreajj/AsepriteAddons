@@ -10,12 +10,12 @@ local defaults <const> = {
     includeTiles = true,
     includeBkg = true,
     absOpaque = false,
+    removeNonActive = false,
     removeLayer = "ALL",
     removeCel = "ALL",
     removeImage = "ALL",
     removeTiles = "ALL",
     removePalette = "ALL",
-    removeNonActive = true,
 }
 
 ---@param srcImg Image
@@ -117,9 +117,7 @@ dlg:check {
 dlg:check {
     id = "absOpaque",
     text = "Transparent",
-    selected = defaults.absOpaque,
-    visible = defaults.removeImage ~= "NONE"
-        or defaults.removeTiles ~= "NONE"
+    selected = defaults.absOpaque
 }
 
 dlg:newrow { always = false }
@@ -146,14 +144,7 @@ dlg:combobox {
     id = "removeImage",
     label = "Images:",
     option = defaults.removeImage,
-    options = removeImageOptions,
-    onchange = function()
-        local args <const> = dlg.data
-        local removeImage <const> = args.removeImage --[[@as string]]
-        local removeTiles <const> = args.removeTiles --[[@as string]]
-        dlg:modify { id = "absOpaque", visible = removeImage ~= "NONE"
-            or removeTiles ~= "NONE" }
-    end
+    options = removeImageOptions
 }
 
 dlg:newrow { always = false }
@@ -162,14 +153,7 @@ dlg:combobox {
     id = "removeTiles",
     label = "Tiles:",
     option = defaults.removeTiles,
-    options = removeTilesOptions,
-    onchange = function()
-        local args <const> = dlg.data
-        local removeImage <const> = args.removeImage --[[@as string]]
-        local removeTiles <const> = args.removeTiles --[[@as string]]
-        dlg:modify { id = "absOpaque", visible = removeImage ~= "NONE"
-            or removeTiles ~= "NONE" }
-    end
+    options = removeTilesOptions
 }
 
 dlg:newrow { always = false }
