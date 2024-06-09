@@ -206,7 +206,6 @@ dlg:button {
         local opaquePalette <const> = args.removePalette
             or defaults.removePalette --[[@as boolean]]
 
-
         if opaqueLayer ~= "NONE" then
             local chosenLayers = AseUtilities.filterLayers(activeSprite,
                 site.layer, opaqueLayer, includeLocked, includeHidden,

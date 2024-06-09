@@ -278,7 +278,7 @@ dlg:button {
                                 local jOver <const> = pxOver[1 + iOver]
                                 if jOver ~= alphaIndex then
                                     local cOver <const> = palette:getColor(jOver)
-                                    local aOver = (cOver.alpha * overCompOpacity) // 255
+                                    local aOver <const> = (cOver.alpha * overCompOpacity) // 255
                                     if aOver > 0 then
                                         local xUnder <const> = xSprite - xTlUnder
                                         local yUnder <const> = ySprite - yTlUnder
@@ -309,14 +309,12 @@ dlg:button {
                                 local xOver <const> = xSprite - xTlOver
                                 local yOver <const> = ySprite - yTlOver
                                 local iOver2 <const> = (yOver * widthOver + xOver) * 2
-                                local aOver = pxOver[2 + iOver2]
-                                aOver = (aOver * overCompOpacity) // 255
+                                local aOver <const> = (pxOver[2 + iOver2] * overCompOpacity) // 255
                                 if aOver > 0 then
                                     local xUnder <const> = xSprite - xTlUnder
                                     local yUnder <const> = ySprite - yTlUnder
                                     local iUnder2 <const> = (yUnder * widthUnder + xUnder) * 2
-                                    local aUnder = pxUnder[2 + iUnder2]
-                                    aUnder = (aUnder * underCompOpacity) // 255
+                                    local aUnder <const> = (pxUnder[2 + iUnder2] * underCompOpacity) // 255
                                     if aUnder > 0 then
                                         -- Value is assigned under layer color.
                                         vTarget = pxUnder[1 + iUnder2]
@@ -344,14 +342,12 @@ dlg:button {
                                 local xOver <const> = xSprite - xTlOver
                                 local yOver <const> = ySprite - yTlOver
                                 local iOver4 <const> = (yOver * widthOver + xOver) * 4
-                                local aOver = pxOver[4 + iOver4]
-                                aOver = (aOver * overCompOpacity) // 255
+                                local aOver <const> = (pxOver[4 + iOver4] * overCompOpacity) // 255
                                 if aOver > 0 then
                                     local xUnder <const> = xSprite - xTlUnder
                                     local yUnder <const> = ySprite - yTlUnder
                                     local iUnder4 <const> = (yUnder * widthUnder + xUnder) * 4
-                                    local aUnder = pxUnder[4 + iUnder4]
-                                    aUnder = (aUnder * underCompOpacity) // 255
+                                    local aUnder <const> = (pxUnder[4 + iUnder4] * underCompOpacity) // 255
                                     if aUnder > 0 then
                                         -- RGB are assigned under layer color.
                                         rTarget = pxUnder[1 + iUnder4]

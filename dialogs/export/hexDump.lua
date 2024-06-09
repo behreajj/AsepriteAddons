@@ -18,7 +18,7 @@ local importFileExts <const> = {
     "jpg",
     "lbm", -- IFF image
     "pal", -- RIFF binary palette
-    "pbm", -- Binary PNM
+    "pbm", -- B&W PNM
     "pgm", -- Gray PNM
     "ppm", -- Color PNM
     "txt"
@@ -387,7 +387,7 @@ dlg:button {
         end
 
         local cols <const> = 16
-        local rows <const> = math.ceil(lenBinData / 16)
+        local rows <const> = math.ceil(lenBinData / cols)
 
         local row = 0
         while row < rows do
