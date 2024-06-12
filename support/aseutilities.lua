@@ -118,6 +118,7 @@ end
 ---@param includeHidden? boolean include hidden groups
 ---@return Layer[]
 function AseUtilities.appendGroups(layer, array, includeLocked, includeHidden)
+    -- TODO: Switch to stack-based approach.
     if layer.isGroup
         and (includeLocked or layer.isEditable)
         and (includeHidden or layer.isVisible) then
@@ -151,32 +152,37 @@ end
 ---@return Layer[]
 function AseUtilities.appendLeaves(
     layer, array, includeLocked, includeHidden, includeTiles, includeBkg)
-    -- First, check properties passed by parents to their children.
-    if (includeLocked or layer.isEditable)
-        and (includeHidden or layer.isVisible) then
-        if layer.isGroup then
+    ---@type Layer[]
+    local stack <const> = { layer }
+    local i = 1
+
+    while i > 0 do
+        local query <const> = stack[i]
+        i = i - 1
+
+        if (includeLocked or query.isEditable)
+            and (includeHidden or query.isVisible) then
             -- Using type annotation causes syntax highlight bug when looking
             -- at the code on Github.
-            local childLayers <const> = layer.layers
-            if childLayers then
-                local append <const> = AseUtilities.appendLeaves
-                local lenChildLayers <const> = #childLayers
-                local i = 0
-                while i < lenChildLayers do
+            local children <const> = query.layers
+            if children then
+                -- Leaf order should be what's ideal for composition, with
+                -- ascending stack indices.
+                local lenChildren <const> = #children
+                local j = lenChildren + 1
+                while j > 1 do
+                    j = j - 1
                     i = i + 1
-                    append(childLayers[i], array,
-                        includeLocked, includeHidden,
-                        includeTiles, includeBkg)
+                    stack[i] = children[j]
                 end
+            elseif (not query.isReference)
+                and (includeTiles or (not query.isTilemap))
+                and (includeBkg or (not query.isBackground)) then
+                array[#array + 1] = query
             end
-        elseif (not layer.isReference)
-            and (includeTiles or (not layer.isTilemap))
-            and (includeBkg or (not layer.isBackground)) then
-            -- Leaf order should be what's ideal for composition, with
-            -- ascending stack indices.
-            array[#array + 1] = layer
         end
     end
+
     return array
 end
 
