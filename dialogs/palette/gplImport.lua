@@ -418,6 +418,9 @@ dlg:button {
                 and profile ~= ColorSpace()
         end
 
+        -- No point in preserving old transparent color index if sprite is in
+        -- indexed color mode. The new palette may be shorter than the old, or
+        -- have clear black at different index.
         local oldMode <const> = activeSprite.colorMode
         app.command.ChangePixelFormat { format = "rgb" }
         AseUtilities.setPalette(colors, activeSprite, palIdx)

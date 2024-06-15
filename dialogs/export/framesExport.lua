@@ -13,7 +13,10 @@ local cropTypes <const> = { "CROPPED", "SPRITE" }
 local sheetTypes <const> = { "HORIZONTAL", "SQUARE", "VERTICAL" }
 
 local defaults <const> = {
-    -- TODO: Calculate total duration of selected frames and place in JSON?
+    -- Calculate total duration of selected frames and place in JSON?
+    -- The reason why not is that if an animation is split to tags, then
+    -- the start time is reset for every tag, not accumulated... And this
+    -- information can be calculated by the importer from given data.
     -- https://community.aseprite.org/t/tag-total-time-in-json-export-meta-data/
 
     -- Option to put batches (sprite sheet off) into subfolders? If this is not

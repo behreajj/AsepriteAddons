@@ -13,6 +13,7 @@ local defaults <const> = {
     includeBkg = true,
     bakeOpacity = true,
     flatGroups = true,
+    -- TODO: Support "TAG" frame target?
     frameTarget = "ACTIVE",
     rangeStr = "",
     strExample = "4,6:9,13",
