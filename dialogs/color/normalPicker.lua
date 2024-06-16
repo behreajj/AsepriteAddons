@@ -452,7 +452,9 @@ dlg:canvas {
         local barHeight <const> = ctx.height
         active.azBarWidth = barWidth
 
-        local xToAzimuth <const> = barWidth > 1 and 6.2831853071796 / (barWidth - 1.0) or 0.0
+        local xToAzimuth <const> = barWidth > 1
+            and 6.2831853071796 / (barWidth - 1.0)
+            or 0.0
         local img <const> = Image(barWidth, 1, ColorMode.RGB)
         local pxItr <const> = img:pixels()
         for pixel in pxItr do
@@ -505,7 +507,9 @@ dlg:canvas {
         active.inBarWidth = barWidth
 
         local halfPi <const> = 1.5707963267949
-        local xToIncl <const> = barWidth > 1 and math.pi / (barWidth - 1.0) or 0.0
+        local xToIncl <const> = barWidth > 1
+            and math.pi / (barWidth - 1.0)
+            or 0.0
         local img <const> = Image(barWidth, 1, ColorMode.RGB)
         local pxItr <const> = img:pixels()
         for pixel in pxItr do

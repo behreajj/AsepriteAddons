@@ -527,7 +527,7 @@ function Mesh2.gridHex(rings)
         end
     end
 
-    return Mesh2.new(fs, vs, "Grid.Hexagon")
+    return Mesh2.new(fs, vs, "Grid Hexagon")
 end
 
 ---Creates a regular convex polygon
