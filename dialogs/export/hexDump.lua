@@ -4,13 +4,16 @@ local importFileExts <const> = {
     "acb",  -- Adobe Color Book
     "aco",  -- Adobe Color
     "act",  -- Adobe Color Table
+    "ani",  -- Animated Windows cursor
     "anim", -- IFF Animated
     "ase",  -- Adobe Swatch Exchange
     "aseprite",
     "bmp",
+    "cur",  -- Windows cursor
     "gif",
-    "ham", -- IFF Hold-And-Modify
+    "ham",  -- IFF Hold-And-Modify
     "hex",
+    "ico",  -- Windows icon
     "iff",
     "ilbm", -- Interleaved Bitmap
     "jpeg",

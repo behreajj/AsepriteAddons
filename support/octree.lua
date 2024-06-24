@@ -326,6 +326,7 @@ function Octree.queryInternal(o, center, rad, df)
             end
         end
 
+        -- TODO: Can this be replaced with a stack based approach?
         if lenChildren < 1 then
             local points <const> = o.points
             local lenPoints <const> = #points
