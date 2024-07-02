@@ -111,8 +111,9 @@ dlg:button {
         end)
 
         local sel = nil
+        local isValid = false
         if useSel then
-            sel, _ = AseUtilities.getSelection(activeSprite)
+            sel, isValid = AseUtilities.getSelection(activeSprite)
         end
 
         local leaves <const> = AseUtilities.getLayerHierarchy(
@@ -225,13 +226,7 @@ dlg:button {
 
         if sel then
             transact("Crop Canvas To Mask", function()
-                local selBounds <const> = sel.bounds
-                local verifBounds <const> = Rectangle(
-                    selBounds.x, selBounds.y,
-                    math.max(1, math.abs(selBounds.width)),
-                    math.max(1, selBounds.height))
-                activeSprite.selection:deselect()
-                activeSprite:crop(verifBounds)
+                activeSprite:crop(sel.bounds)
             end)
         elseif xMax > xMin and yMax > yMin then
             if not useExpand then
@@ -246,11 +241,16 @@ dlg:button {
             end
 
             transact("Crop Canvas", function()
-                activeSprite.selection:deselect()
-                activeSprite:crop(
-                    xMin, yMin,
-                    1 + xMax - xMin,
-                    1 + yMax - yMin)
+                local wCrop <const> = 1 + xMax - xMin
+                local hCrop <const> = 1 + yMax - yMin
+
+                sel, isValid = AseUtilities.getSelection(activeSprite)
+                if isValid then
+                    sel:intersect(Rectangle(xMin, yMin, wCrop, hCrop))
+                    activeSprite.selection = sel
+                end
+
+                activeSprite:crop(xMin, yMin, wCrop, hCrop)
             end)
         end
 
