@@ -225,7 +225,13 @@ dlg:button {
 
         if sel then
             transact("Crop Canvas To Mask", function()
-                activeSprite:crop(sel.bounds)
+                local selBounds <const> = sel.bounds
+                local verifBounds <const> = Rectangle(
+                    selBounds.x, selBounds.y,
+                    math.max(1, math.abs(selBounds.width)),
+                    math.max(1, selBounds.height))
+                activeSprite.selection:deselect()
+                activeSprite:crop(verifBounds)
             end)
         elseif xMax > xMin and yMax > yMin then
             if not useExpand then
@@ -240,6 +246,7 @@ dlg:button {
             end
 
             transact("Crop Canvas", function()
+                activeSprite.selection:deselect()
                 activeSprite:crop(
                     xMin, yMin,
                     1 + xMax - xMin,
