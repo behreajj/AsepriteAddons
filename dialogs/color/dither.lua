@@ -393,34 +393,24 @@ dlg:button {
                 -- In HSI, I = (r + g + b) / 3, S = 1 - min(r, g, b) / I.
                 -- 3 * 255 = 765
                 greyMethod = function(rSrc, gSrc, bSrc)
-                    return (rSrc + gSrc + bSrc) * 0.0013071895424837
+                    return (rSrc + gSrc + bSrc) / 765.0
                 end
                 greyStr = "Average"
             elseif greyPreset == "HSL" then
                 -- 2 * 255 = 510
                 greyMethod = function(rSrc, gSrc, bSrc)
                     return (math.max(rSrc, gSrc, bSrc)
-                        + math.min(rSrc, gSrc, bSrc)) * 0.0019607843137255
+                        + math.min(rSrc, gSrc, bSrc)) / 510.0
                 end
                 greyStr = "HSL"
             elseif greyPreset == "HSV" then
                 greyMethod = function(rSrc, gSrc, bSrc)
-                    return math.max(rSrc, gSrc, bSrc) * 0.003921568627451
+                    return math.max(rSrc, gSrc, bSrc) / 255.0
                 end
                 greyStr = "HSV"
             else
-                -- TODO: Phase out use of look up tables?
-                local stlLut <const> = Utilities.STL_LUT
-                local ltsLut <const> = Utilities.LTS_LUT
                 greyMethod = function(rSrc, gSrc, bSrc)
-                    local rLin <const> = stlLut[1 + rSrc]
-                    local gLin <const> = stlLut[1 + gSrc]
-                    local bLin <const> = stlLut[1 + bSrc]
-                    local lum <const> = math.floor(
-                        rLin * 0.21264934272065
-                        + gLin * 0.7151691357059
-                        + bLin * 0.072181521573443)
-                    return ltsLut[1 + lum] * 0.003921568627451
+                    return (rSrc * 0.30 + gSrc * 0.59 + bSrc * 0.11) / 255.0
                 end
                 greyStr = "Luminance"
             end
