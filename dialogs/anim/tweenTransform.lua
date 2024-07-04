@@ -124,6 +124,13 @@ local function getCelDataAtFrame(axis)
     local xCenter = pxWidth * 0.5
     local yCenter = pxHeight * 0.5
 
+    local appEditor <const> = app.editor
+    if appEditor then
+        local spritePos <const> = appEditor.spritePos
+        xCenter = spritePos.x
+        yCenter = spritePos.y
+    end
+
     local activeFrame <const> = site.frame or activeSprite.frames[1]
     frIdx = activeFrame.frameNumber + frameUiOffset
 

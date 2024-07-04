@@ -5,6 +5,9 @@ local shiftOptions <const> = { "CARDINAL", "DIAGONAL", "DIMETRIC" }
 local selModes <const> = { "REPLACE", "ADD", "SUBTRACT", "INTERSECT" }
 
 local defaults <const> = {
+    -- TODO: Button to select in a circle around the cursor?
+    -- Maybe by brush size? Maybe modify the EXPAND command if there's
+    -- no room for a new button.
     amount = 1,
     shiftOption = "CARDINAL",
     selMode = "REPLACE",

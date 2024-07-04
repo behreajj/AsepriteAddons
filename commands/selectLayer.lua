@@ -102,12 +102,11 @@ while i > 1 do
                     local tileEntry <const> = strunpack(unpackFmt, dataStr)
                     local tileIndex <const> = pxTilei(tileEntry)
 
-                    if tileIndex > 0 and tileIndex < lenTileSet
-                        and aComp01 > 0.0 then
+                    if tileIndex > 0 and tileIndex < lenTileSet then
                         -- For tile maps, this is good enough. Otherwise,
                         -- you have to deal with flags in the image map
                         -- that have flipped or rotated the tile image.
-                        isNonZero = true
+                        isNonZero = aComp01 > 0.0
                     end
                 else
                     local dataIdx <const> = (yLocal * wImage + xLocal) * bpp
