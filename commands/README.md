@@ -48,6 +48,8 @@ Unlike `dialog` scripts, it's not always apparent what `commands` scripts do. No
 
 - `selectCelsRange`: Creates a selection based on the timeline range, or the active cel if the range is empty. Finds the union of images in the range. Ignores reference layers. Selects tile map layers based on non-empty tiles. Equivalent to holding down `Ctrl` and clicking on an inactive layer in the timeline.
 
+- `selectLayer`: Makes the topmost non-transparent layer beneath the mouse cursor active.
+
 - `toggleGroups`: Toggles the collapsed or expanded state of group folders in the timeline. The active layer's hierarchy remains expanded.
 
 - `toggleVisible`: Toggles the visibility of layers in a timeline range. If the range is empty or is `RangeType.FRAMES`, then refers to the active layer.
