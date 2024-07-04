@@ -519,54 +519,14 @@ dlg:button {
     text = "E&XPAND",
     focus = false,
     onclick = function()
-        local sprite <const> = app.sprite
-        if not sprite then return end
-        if not sprite.selection.isEmpty then
-            local args <const> = dlg.data
-            local brushOption <const> = args.brushOption --[[@as string]]
-            local amount <const> = args.amount --[[@as integer]]
-            app.command.ModifySelection {
-                modifier = "expand",
-                brush = string.lower(brushOption),
-                quantity = amount
-            }
-        else
-            local editor <const> = app.editor
-            if not editor then return end
-
-            local brush <const> = app.brush
-            local brushSize <const> = brush.size
-
-            local mouse <const> = editor.spritePos
-            local xMouse <const> = mouse.x
-            local yMouse <const> = mouse.y
-            local xtl <const> = xMouse - brushSize * 0.5
-            local ytl <const> = yMouse - brushSize * 0.5
-
-            local sel <const> = Selection()
-            local pxRect <const> = Rectangle(0, 0, 1, 1)
-            local area <const> = brushSize * brushSize
-            local rsq <const> = (brushSize * 0.5) ^ 2
-
-            local round <const> = Utilities.round
-
-            local i = 0
-            while i < area do
-                local x <const> = xtl + i % brushSize
-                local y <const> = ytl + i // brushSize
-                local dx <const> = x - xMouse
-                local dy <const> = y - yMouse
-                if dx * dx + dy * dy < rsq then
-                    pxRect.x = round(x)
-                    pxRect.y = round(y)
-                    sel:add(pxRect)
-                end
-                i = i + 1
-            end
-            sel:intersect(sprite.bounds)
-            sprite.selection = sel
-            app.refresh()
-        end
+        local args <const> = dlg.data
+        local brushOption <const> = args.brushOption --[[@as string]]
+        local amount <const> = args.amount --[[@as integer]]
+        app.command.ModifySelection {
+            modifier = "expand",
+            brush = string.lower(brushOption),
+            quantity = amount
+        }
     end
 }
 
