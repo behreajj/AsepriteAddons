@@ -604,7 +604,6 @@ dlg:button {
             if #frIdcs < 1 then frIdcs = { site.frame.frameNumber } end
 
             local lenFrIdcs <const> = #frIdcs
-            local frObjs <const> = sprite.frames
             local layer <const> = sprite:newLayer()
             layer.name = "Selection"
             local tlSel <const> = Point(xSel, ySel)
@@ -613,8 +612,7 @@ dlg:button {
             while i < lenFrIdcs do
                 i = i + 1
                 local frIdx <const> = frIdcs[i]
-                local frObj <const> = frObjs[frIdx]
-                sprite:newCel(layer, frObj, selImage, tlSel)
+                sprite:newCel(layer, frIdx, selImage, tlSel)
             end
         end)
         app.refresh()

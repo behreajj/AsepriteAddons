@@ -55,7 +55,7 @@ else
     local lenLeaves <const> = #leaves
     if lenLeaves > 0 then
         app.transaction("Cycle Cel Right", function()
-            local tempFrameObj <const> = activeSprite:newEmptyFrame()
+            local tempFrObj <const> = activeSprite:newEmptyFrame()
             local i = 0
             while i < lenLeaves do
                 i = i + 1
@@ -63,7 +63,7 @@ else
                 local origCel <const> = leaf:cel(origFrObj)
                 local destCel <const> = leaf:cel(destFrObj)
                 if origCel and destCel then
-                    origCel.frame = tempFrameObj
+                    origCel.frame = tempFrObj
                     destCel.frame = origFrObj
                     origCel.frame = destFrObj
                 elseif origCel then
@@ -72,7 +72,7 @@ else
                     destCel.frame = origFrObj
                 end
             end
-            activeSprite:deleteFrame(tempFrameObj)
+            activeSprite:deleteFrame(tempFrObj)
             app.frame = destFrObj
         end)
     end

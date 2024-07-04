@@ -458,108 +458,164 @@ function AseUtilities.asePalettesToHexArr(palettes)
     end
 end
 
----Finds the average color of a selection in a sprite. Calculates the average
+---Finds the average color of a selection in a sprite. If there is no selection,
+---tries getting the color at the editor mouse position. Calculates the average
 ---in the SR LAB 2 color space.
 ---@param sprite Sprite
----@param frame Frame|integer
+---@param frObj Frame|integer
 ---@return { l: number, a: number, b: number, alpha: number }
 ---@nodiscard
-function AseUtilities.averageColor(sprite, frame)
-    local sel <const>, _ <const> = AseUtilities.getSelection(sprite)
-    local selBounds <const> = sel.bounds
-    local xSel <const> = selBounds.x
-    local ySel <const> = selBounds.y
+function AseUtilities.averageColor(sprite, frObj)
+    local sel <const>,
+    isValid <const> = AseUtilities.getSelection(sprite)
 
     local sprSpec <const> = sprite.spec
     local colorMode <const> = sprSpec.colorMode
+    local alphaIndex <const> = sprSpec.transparentColor
+    local colorSpace <const> = sprSpec.colorSpace
 
-    local flatImage <const> = Image(AseUtilities.createSpec(
-        selBounds.width, selBounds.height,
-        colorMode, sprSpec.colorSpace,
-        sprSpec.transparentColor))
-    flatImage:drawSprite(sprite, frame, Point(-xSel, -ySel))
+    if isValid then
+        local selBounds <const> = sel.bounds
+        local xSel <const> = selBounds.x
+        local ySel <const> = selBounds.y
 
-    local eval = nil
-    local palette = nil
-    if colorMode == ColorMode.RGB then
-        eval = function(h, d)
-            if (h & 0xff000000) ~= 0 then
-                local q <const> = d[h]
-                if q then d[h] = q + 1 else d[h] = 1 end
-            end
-        end
-    elseif colorMode == ColorMode.GRAY then
-        eval = function(gray, d)
-            local a = (gray >> 0x08) & 0xff
-            if a > 0 then
-                local v <const> = gray & 0xff
-                local h <const> = a << 0x18 | v << 0x10 | v << 0x08 | v
-                local q <const> = d[h]
-                if q then d[h] = q + 1 else d[h] = 1 end
-            end
-        end
-    elseif colorMode == ColorMode.INDEXED then
-        if not frame then
-            return { l = 0.0, a = 0.0, b = 0.0, alpha = 0.0 }
-        end
+        local flatImage <const> = Image(AseUtilities.createSpec(
+            selBounds.width, selBounds.height,
+            colorMode, colorSpace, alphaIndex))
+        flatImage:drawSprite(sprite, frObj, Point(-xSel, -ySel))
 
-        palette = AseUtilities.getPalette(frame, sprite.palettes)
-
-        eval = function(idx, d, pal)
-            if idx >= 0 and idx < #pal then
-                local aseColor <const> = pal:getColor(idx)
-                local a <const> = aseColor.alpha
-                if a > 0 then
-                    -- TODO: Don't use rgbaPixel.
-                    local h <const> = aseColor.rgbaPixel
+        local eval = nil
+        local palette = nil
+        if colorMode == ColorMode.RGB then
+            eval = function(h, d)
+                if (h & 0xff000000) ~= 0 then
                     local q <const> = d[h]
                     if q then d[h] = q + 1 else d[h] = 1 end
                 end
             end
+        elseif colorMode == ColorMode.GRAY then
+            eval = function(gray, d)
+                local a = (gray >> 0x08) & 0xff
+                if a > 0 then
+                    local v <const> = gray & 0xff
+                    local h <const> = a << 0x18 | v << 0x10 | v << 0x08 | v
+                    local q <const> = d[h]
+                    if q then d[h] = q + 1 else d[h] = 1 end
+                end
+            end
+        elseif colorMode == ColorMode.INDEXED then
+            if not frObj then
+                return { l = 0.0, a = 0.0, b = 0.0, alpha = 0.0 }
+            end
+
+            palette = AseUtilities.getPalette(frObj, sprite.palettes)
+
+            eval = function(idx, d, pal)
+                if idx >= 0 and idx < #pal then
+                    local aseColor <const> = pal:getColor(idx)
+                    local a <const> = aseColor.alpha
+                    if a > 0 then
+                        -- TODO: Don't use rgbaPixel.
+                        local h <const> = aseColor.rgbaPixel
+                        local q <const> = d[h]
+                        if q then d[h] = q + 1 else d[h] = 1 end
+                    end
+                end
+            end
+        else
+            return { l = 0.0, a = 0.0, b = 0.0, alpha = 0.0 }
         end
-    else
+
+        -- The key is the color in hex. The value is a number of pixels with that
+        -- color in the selection. This tally is for the average.
+        ---@type table<integer, integer>
+        local hexDict <const> = {}
+        local pxItr <const> = flatImage:pixels()
+        for pixel in pxItr do
+            if sel:contains(pixel.x + xSel, pixel.y + ySel) then
+                eval(pixel(), hexDict, palette)
+            end
+        end
+
+        -- Cache methods used in loop.
+        local fromHex <const> = Clr.fromHex
+        local sRgbToLab <const> = Clr.sRgbToSrLab2
+
+        local lSum = 0.0
+        local aSum = 0.0
+        local bSum = 0.0
+        local alphaSum = 0.0
+        local count = 0
+
+        for hex, tally in pairs(hexDict) do
+            local srgb <const> = fromHex(hex)
+            local lab <const> = sRgbToLab(srgb)
+            lSum = lSum + lab.l * tally
+            aSum = aSum + lab.a * tally
+            bSum = bSum + lab.b * tally
+            alphaSum = alphaSum + lab.alpha * tally
+            count = count + tally
+        end
+
+        if alphaSum > 0 and count > 0 then
+            local countInv <const> = 1.0 / count
+            return {
+                l = lSum * countInv,
+                a = aSum * countInv,
+                b = bSum * countInv,
+                alpha = alphaSum * countInv
+            }
+        end
+    end
+
+    local editor <const> = app.editor
+    if not editor then
         return { l = 0.0, a = 0.0, b = 0.0, alpha = 0.0 }
     end
 
-    -- The key is the color in hex. The value is a number of pixels with that
-    -- color in the selection. This tally is for the average.
-    ---@type table<integer, integer>
-    local hexDict <const> = {}
-    local pxItr <const> = flatImage:pixels()
-    for pixel in pxItr do
-        if sel:contains(pixel.x + xSel, pixel.y + ySel) then
-            eval(pixel(), hexDict, palette)
+    local mouse <const> = editor.spritePos
+    local xMouse <const> = mouse.x
+    local yMouse <const> = mouse.y
+
+    local wSprite <const> = sprSpec.width
+    local hSprite <const> = sprSpec.height
+
+    if xMouse <= 0 or yMouse <= 0
+        or xMouse >= wSprite or yMouse >= hSprite then
+        return { l = 0.0, a = 0.0, b = 0.0, alpha = 0.0 }
+    end
+
+    local flatImage <const> = Image(AseUtilities.createSpec(
+        1, 1, colorMode, colorSpace, alphaIndex))
+    flatImage:drawSprite(sprite, frObj, Point(-xMouse, -yMouse))
+
+    if colorMode == ColorMode.RGB then
+        local pixel <const> = string.unpack("I4", flatImage.bytes)
+        if (pixel & 0xff000000) ~= 0 then
+            return Clr.sRgbToSrLab2(Clr.fromHex(pixel))
         end
-    end
+    elseif colorMode == ColorMode.GRAY then
+        local pixel <const> = string.unpack("I2", flatImage.bytes)
+        local a = (pixel >> 0x08) & 0xff
+        if a > 0 then
+            local v <const> = (pixel & 0xff) / 255.0
+            return Clr.sRgbToSrLab2(Clr.new(v, v, v, a / 255.0))
+        end
+    elseif colorMode == ColorMode.INDEXED then
+        if not frObj then
+            return { l = 0.0, a = 0.0, b = 0.0, alpha = 0.0 }
+        end
 
-    -- Cache methods used in loop.
-    local fromHex <const> = Clr.fromHex
-    local sRgbToLab <const> = Clr.sRgbToSrLab2
-
-    local lSum = 0.0
-    local aSum = 0.0
-    local bSum = 0.0
-    local alphaSum = 0.0
-    local count = 0
-
-    for hex, tally in pairs(hexDict) do
-        local srgb <const> = fromHex(hex)
-        local lab <const> = sRgbToLab(srgb)
-        lSum = lSum + lab.l * tally
-        aSum = aSum + lab.a * tally
-        bSum = bSum + lab.b * tally
-        alphaSum = alphaSum + lab.alpha * tally
-        count = count + tally
-    end
-
-    if alphaSum > 0 and count > 0 then
-        local countInv <const> = 1.0 / count
-        return {
-            l = lSum * countInv,
-            a = aSum * countInv,
-            b = bSum * countInv,
-            alpha = alphaSum * countInv
-        }
+        local palette <const> = AseUtilities.getPalette(frObj, sprite.palettes)
+        local lenPalette <const> = #palette
+        local pixel <const> = string.byte(flatImage.bytes)
+        if pixel >= 0 and pixel < lenPalette then
+            local aseColor <const> = palette:getColor(pixel)
+            local a <const> = aseColor.alpha
+            if a > 0 then
+                return Clr.sRgbToSrLab2(AseUtilities.aseColorToClr(aseColor))
+            end
+        end
     end
 
     return { l = 0.0, a = 0.0, b = 0.0, alpha = 0.0 }
@@ -569,68 +625,113 @@ end
 ---normal used in a normal map. If the sprite color mode is not RGB, returns
 ---up direction.
 ---@param sprite Sprite
----@param frame Frame|integer
+---@param frObj Frame|integer
 ---@return Vec3
 ---@nodiscard
-function AseUtilities.averageNormal(sprite, frame)
+function AseUtilities.averageNormal(sprite, frObj)
+    local sel <const>,
+    isValid <const> = AseUtilities.getSelection(sprite)
+
     local sprSpec <const> = sprite.spec
     local colorMode <const> = sprSpec.colorMode
-    if colorMode ~= ColorMode.RGB then
+    if colorMode ~= ColorMode.RGB then return Vec3.up() end
+    local alphaIndex <const> = sprSpec.transparentColor
+    local colorSpace <const> = sprSpec.colorSpace
+
+    if isValid then
+        local selBounds <const> = sel.bounds
+        local xSel <const> = selBounds.x
+        local ySel <const> = selBounds.y
+        local wSel <const> = selBounds.width
+        local hSel <const> = selBounds.height
+
+        local flatImage <const> = Image(AseUtilities.createSpec(
+            wSel, hSel, colorMode, colorSpace, alphaIndex))
+        flatImage:drawSprite(sprite, frObj, Point(-xSel, -ySel))
+        local lenSel <const> = wSel * hSel
+
+        local abs <const> = math.abs
+        local strbyte <const> = string.byte
+
+        local xSum = 0.0
+        local ySum = 0.0
+        local zSum = 0.0
+
+        local bytes = flatImage.bytes
+        local i = 0
+        while i < lenSel do
+            local xPixel <const> = i % wSel
+            local yPixel <const> = i // wSel
+            if sel:contains(xPixel + xSel, yPixel + ySel) then
+                local i4 <const> = i * 4
+                local a8 <const> = strbyte(bytes, 4 + i4)
+                if a8 > 0 then
+                    local r8 <const>, g8 <const>, b8 <const> = strbyte(
+                        bytes, 1 + i4, 3 + i4)
+
+                    local x = (r8 + r8 - 255) / 255.0
+                    local y = (g8 + g8 - 255) / 255.0
+                    local z = (b8 + b8 - 255) / 255.0
+
+                    if abs(x) < 0.0039216 then x = 0.0 end
+                    if abs(y) < 0.0039216 then y = 0.0 end
+                    if abs(z) < 0.0039216 then z = 0.0 end
+
+                    xSum = xSum + x
+                    ySum = ySum + y
+                    zSum = zSum + z
+                end
+            end
+            i = i + 1
+        end
+
+        local mSq <const> = xSum * xSum + ySum * ySum + zSum * zSum
+        if mSq > 0.0 then
+            local mInv <const> = 1.0 / math.sqrt(mSq)
+            return Vec3.new(xSum * mInv, ySum * mInv, zSum * mInv)
+        end
         return Vec3.up()
     end
 
-    local sel <const>, _ <const> = AseUtilities.getSelection(sprite)
-    local selBounds <const> = sel.bounds
-    local xSel <const> = selBounds.x
-    local ySel <const> = selBounds.y
-    local wSel <const> = selBounds.width
-    local hSel <const> = selBounds.height
+    local editor <const> = app.editor
+    if not editor then return Vec3.up() end
+
+    local mouse <const> = editor.spritePos
+    local xMouse <const> = mouse.x
+    local yMouse <const> = mouse.y
+
+    local wSprite <const> = sprSpec.width
+    local hSprite <const> = sprSpec.height
+
+    if xMouse <= 0 or yMouse <= 0
+        or xMouse >= wSprite or yMouse >= hSprite then
+        return Vec3.up()
+    end
 
     local flatImage <const> = Image(AseUtilities.createSpec(
-        wSel, hSel, colorMode, sprSpec.colorSpace, sprSpec.transparentColor))
-    flatImage:drawSprite(sprite, frame, Point(-xSel, -ySel))
-    local lenSel <const> = wSel * hSel
+        1, 1, colorMode, colorSpace, alphaIndex))
+    flatImage:drawSprite(sprite, frObj, Point(-xMouse, -yMouse))
+    local r8 <const>,
+    g8 <const>,
+    b8 <const>,
+    a8 <const> = string.byte(flatImage.bytes, 1, 4)
 
-    local abs <const> = math.abs
-    local strbyte <const> = string.byte
+    if a8 > 0 then
+        local x = (r8 + r8 - 255) / 255.0
+        local y = (g8 + g8 - 255) / 255.0
+        local z = (b8 + b8 - 255) / 255.0
 
-    local xSum = 0.0
-    local ySum = 0.0
-    local zSum = 0.0
+        if math.abs(x) < 0.0039216 then x = 0.0 end
+        if math.abs(y) < 0.0039216 then y = 0.0 end
+        if math.abs(z) < 0.0039216 then z = 0.0 end
 
-    local bytes = flatImage.bytes
-    local i = 0
-    while i < lenSel do
-        local xPixel <const> = i % wSel
-        local yPixel <const> = i // wSel
-        if sel:contains(xPixel + xSel, yPixel + ySel) then
-            local i4 <const> = i * 4
-            local a8 <const> = strbyte(bytes, 4 + i4)
-            if a8 >= 0 then
-                local r8 <const>, g8 <const>, b8 <const> = strbyte(
-                    bytes, 1 + i4, 3 + i4)
-
-                local x = (r8 + r8 - 255) / 255.0
-                local y = (g8 + g8 - 255) / 255.0
-                local z = (b8 + b8 - 255) / 255.0
-
-                if abs(x) < 0.0039216 then x = 0.0 end
-                if abs(y) < 0.0039216 then y = 0.0 end
-                if abs(z) < 0.0039216 then z = 0.0 end
-
-                xSum = xSum + x
-                ySum = ySum + y
-                zSum = zSum + z
-            end
+        local mSq <const> = x * x + y * y + z * z
+        if mSq > 0.0 then
+            local mInv <const> = 1.0 / math.sqrt(mSq)
+            return Vec3.new(x * mInv, y * mInv, z * mInv)
         end
-        i = i + 1
     end
 
-    local mSq <const> = xSum * xSum + ySum * ySum + zSum * zSum
-    if mSq > 0.0 then
-        local mInv <const> = 1.0 / math.sqrt(mSq)
-        return Vec3.new(xSum * mInv, ySum * mInv, zSum * mInv)
-    end
     return Vec3.up()
 end
 

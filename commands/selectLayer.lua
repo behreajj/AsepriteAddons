@@ -18,10 +18,14 @@ if xMouse < 0 or yMouse < 0 then return end
 local specSprite <const> = sprite.spec
 local wSprite <const> = specSprite.width
 local hSprite <const> = specSprite.height
-local colorMode <const> = specSprite.colorMode
-local alphaIndex <const> = specSprite.transparentColor
 
 if xMouse >= wSprite or yMouse >= hSprite then return end
+
+local colorMode <const> = specSprite.colorMode
+local alphaIndex <const> = specSprite.transparentColor
+local isRgb <const> = colorMode == ColorMode.RGB
+local isGry <const> = colorMode == ColorMode.GRAY
+local isIdx <const> = colorMode == ColorMode.INDEXED
 
 local palette <const> = AseUtilities.getPalette(frObj, sprite.palettes)
 local lenPalette <const> = #palette
@@ -48,14 +52,19 @@ while i > 1 do
         if xMouse >= xtlCel and yMouse >= ytlCel then
             local wTile = 1
             local hTile = 1
+
             local isTileMap <const> = layer.isTilemap
+            local tileSet = nil
+            local lenTileSet = 0
+
             if isTileMap then
-                local tileSet <const> = layer.tileset
+                tileSet = layer.tileset
                 if tileSet then
                     local tileGrid <const> = tileSet.grid
                     local tileSize <const> = tileGrid.tileSize
                     wTile = max(1, abs(tileSize.width))
                     hTile = max(1, abs(tileSize.height))
+                    lenTileSet = #tileSet
                 end
             end
 
@@ -71,7 +80,7 @@ while i > 1 do
                 local xLocal <const> = xMouse - xtlCel
                 local yLocal <const> = yMouse - ytlCel
 
-                local aLayer8 <const> = layer.opacity
+                local aLayer8 <const> = layer.opacity or 255
                 local aCel8 <const> = cel.opacity
                 local aComp01 <const> = (aLayer8 / 255.0) * (aCel8 / 255.0)
 
@@ -79,28 +88,26 @@ while i > 1 do
                 local bpp <const> = image.bytesPerPixel
                 local unpackFmt <const> = "I" .. bpp
 
-                local isOpaque = false
+                local isNonZero = false
                 if isTileMap then
-                    local tileSet <const> = layer.tileset
-                    if tileSet then
-                        local xMap <const> = xLocal // wTile
-                        local yMap <const> = yLocal // hTile
+                    -- Coordinates within tile image would be xLocal % wTile
+                    -- and yLocal % hTile.
+                    local xMap <const> = xLocal // wTile
+                    local yMap <const> = yLocal // hTile
 
-                        local dataIdx <const> = (yMap * wImage + xMap) * bpp
-                        local dataStr <const> = strsub(bytesStr,
-                            1 + dataIdx, bpp + dataIdx)
+                    local dataIdx <const> = (yMap * wImage + xMap) * bpp
+                    local dataStr <const> = strsub(bytesStr,
+                        1 + dataIdx, bpp + dataIdx)
 
-                        local tileEntry <const> = strunpack(unpackFmt, dataStr)
-                        local tileIndex <const> = pxTilei(tileEntry)
+                    local tileEntry <const> = strunpack(unpackFmt, dataStr)
+                    local tileIndex <const> = pxTilei(tileEntry)
 
-                        local lenTileSet <const> = #tileSet
-                        if tileIndex > 0 and tileIndex < lenTileSet
-                            and aComp01 > 0.0 then
-                            -- For tile maps, this is good enough. Otherwise,
-                            -- you have to deal with flags in the image map
-                            -- that have flipped or rotated the tile image.
-                            isOpaque = true
-                        end
+                    if tileIndex > 0 and tileIndex < lenTileSet
+                        and aComp01 > 0.0 then
+                        -- For tile maps, this is good enough. Otherwise,
+                        -- you have to deal with flags in the image map
+                        -- that have flipped or rotated the tile image.
+                        isNonZero = true
                     end
                 else
                     local dataIdx <const> = (yLocal * wImage + xLocal) * bpp
@@ -108,31 +115,31 @@ while i > 1 do
                         1 + dataIdx, bpp + dataIdx)
                     local dataInt <const> = strunpack(unpackFmt, dataStr)
 
-                    if colorMode == ColorMode.RGB then
+                    if isRgb then
                         local a8 <const> = (dataInt >> 0x18) & 0xff
                         local a01 <const> = aComp01 * (a8 / 255.0)
-                        isOpaque = a01 > 0.0
-                    elseif colorMode == ColorMode.GRAY then
+                        isNonZero = a01 > 0.0
+                    elseif isGry then
                         local a8 <const> = (dataInt >> 0x08) & 0xff
                         local a01 <const> = aComp01 * (a8 / 255.0)
-                        isOpaque = a01 > 0.0
-                    elseif colorMode == ColorMode.INDEXED then
+                        isNonZero = a01 > 0.0
+                    elseif isIdx then
                         if dataInt ~= alphaIndex
                             and dataInt >= 0 and dataInt < lenPalette then
                             local aseColor <const> = palette:getColor(dataInt)
                             local a8 <const> = aseColor.alpha
                             local a01 <const> = aComp01 * (a8 / 255.0)
-                            isOpaque = a01 > 0.0
+                            isNonZero = a01 > 0.0
                         end
                     end
                 end
 
-                if isOpaque then
+                if isNonZero then
                     app.layer = layer
                     app.refresh()
                     return
-                end -- End pixel is not transparent
-            end     -- End mouse within upper bound
-        end         -- End mouse within lower bound
-    end             -- End cel is not nil
+                end -- End pixel is not transparent.
+            end     -- End mouse within upper bound.
+        end         -- End mouse within lower bound.
+    end             -- End cel is not nil.
 end                 -- End layers loop.
