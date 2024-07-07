@@ -76,7 +76,7 @@ AseUtilities.DISPLAY_DECIMAL = 3
 ---Table of file extensions supported for open file dialogs.
 AseUtilities.FILE_FORMATS_OPEN = {
     "ase", "aseprite", "bmp", "flc", "fli",
-    "gif", "ico", "jpeg", "jpg", "pcc", "pcx",
+    "gif", "jpeg", "jpg", "pcc", "pcx",
     "png", "tga", "webp"
 }
 

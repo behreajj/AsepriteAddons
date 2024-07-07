@@ -637,8 +637,9 @@ dlg:button {
             local tileSetName <const> = tileSet.name
             local tileSetBaseIndex <const> = tileSet.baseIndex
             local tsProps <const> = tileSet.properties
+            ---@type table[]
             local tileData <const> = {}
-            local tsId <const> = tsProps["id"]
+            local tsId <const> = tsProps["id"] --[[@as integer]]
 
             local tileGrid <const> = tileSet.grid
             local tileDim <const> = tileGrid.tileSize
@@ -716,7 +717,7 @@ dlg:button {
                     local props <const> = tile.properties
                     local tileChance = id > 0 and 1.0 or 0.0
                     if props["probability"] then
-                        tileChance = props["probability"]
+                        tileChance = props["probability"] --[[@as number]]
                     end
                     tileData[#tileData + 1] = {
                         id = id,
@@ -812,7 +813,7 @@ dlg:button {
                         -- TODO: Should this use a nil check?
                         local tileSet <const> = tmLayer.tileset --[[@as Tileset]]
                         local lenTileSet <const> = #tileSet
-                        local tileSetId <const> = tileSet.properties["id"]
+                        local tileSetId <const> = tileSet.properties["id"] --[[@as integer]]
 
                         local tileGrid <const> = tileSet.grid
                         local tileDim <const> = tileGrid.tileSize

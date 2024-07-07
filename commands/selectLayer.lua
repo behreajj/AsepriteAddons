@@ -105,10 +105,13 @@ while i > 1 do
                     if tileIndex > 0 and tileIndex < lenTileSet then
                         -- For tile maps, this is good enough. Otherwise,
                         -- you have to deal with flags in the image map
-                        -- that have flipped or rotated the tile image.
+                        -- that have flipped or rotated the tile image,
+                        -- including cases where wTile ~= hTile.
                         isNonZero = aComp01 > 0.0
                     end
                 else
+                    -- If you wanted to handle tile images, then you
+                    -- might as well abstract this into its own method.
                     local dataIdx <const> = (yLocal * wImage + xLocal) * bpp
                     local dataStr <const> = strsub(bytesStr,
                         1 + dataIdx, bpp + dataIdx)

@@ -1,6 +1,7 @@
 dofile("../../support/aseutilities.lua")
 dofile("../../support/canvasutilities.lua")
 
+-- TODO: Built-in new sprite will copy selection bounds to width and height.
 local screenScale = 1
 local setWidth = 320
 local setHeight = 180
