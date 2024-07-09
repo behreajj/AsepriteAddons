@@ -591,16 +591,12 @@ function AseUtilities.averageColor(sprite, frObj)
 
     if colorMode == ColorMode.RGB then
         local pixel <const> = string.unpack("I4", flatImage.bytes)
-        if (pixel & 0xff000000) ~= 0 then
-            return Clr.sRgbToSrLab2(Clr.fromHex(pixel))
-        end
+        return Clr.sRgbToSrLab2(Clr.fromHex(pixel))
     elseif colorMode == ColorMode.GRAY then
         local pixel <const> = string.unpack("I2", flatImage.bytes)
         local a = (pixel >> 0x08) & 0xff
-        if a > 0 then
-            local v <const> = (pixel & 0xff) / 255.0
-            return Clr.sRgbToSrLab2(Clr.new(v, v, v, a / 255.0))
-        end
+        local v <const> = (pixel & 0xff) / 255.0
+        return Clr.sRgbToSrLab2(Clr.new(v, v, v, a / 255.0))
     elseif colorMode == ColorMode.INDEXED then
         if not frObj then
             return { l = 0.0, a = 0.0, b = 0.0, alpha = 0.0 }
@@ -611,10 +607,7 @@ function AseUtilities.averageColor(sprite, frObj)
         local pixel <const> = string.byte(flatImage.bytes)
         if pixel >= 0 and pixel < lenPalette then
             local aseColor <const> = palette:getColor(pixel)
-            local a <const> = aseColor.alpha
-            if a > 0 then
-                return Clr.sRgbToSrLab2(AseUtilities.aseColorToClr(aseColor))
-            end
+            return Clr.sRgbToSrLab2(AseUtilities.aseColorToClr(aseColor))
         end
     end
 
