@@ -602,9 +602,8 @@ function AseUtilities.averageColor(sprite, frObj)
         end
 
         local palette <const> = AseUtilities.getPalette(frObj, sprite.palettes)
-        local lenPalette <const> = #palette
         local pixel <const> = string.byte(flatImage.bytes)
-        if pixel >= 0 and pixel < lenPalette then
+        if pixel >= 0 and pixel < #palette then
             local aseColor <const> = palette:getColor(pixel)
             return Clr.sRgbToSrLab2(AseUtilities.aseColorToClr(aseColor))
         end
@@ -621,14 +620,17 @@ end
 ---@return Vec3
 ---@nodiscard
 function AseUtilities.averageNormal(sprite, frObj)
-    local sel <const>,
-    isValid <const> = AseUtilities.getSelection(sprite)
-
     local sprSpec <const> = sprite.spec
     local colorMode <const> = sprSpec.colorMode
     if colorMode ~= ColorMode.RGB then return Vec3.up() end
     local alphaIndex <const> = sprSpec.transparentColor
     local colorSpace <const> = sprSpec.colorSpace
+
+    local sel <const>,
+    isValid <const> = AseUtilities.getSelection(sprite)
+
+    local abs <const> = math.abs
+    local strbyte <const> = string.byte
 
     if isValid then
         local selBounds <const> = sel.bounds
@@ -641,9 +643,6 @@ function AseUtilities.averageNormal(sprite, frObj)
             wSel, hSel, colorMode, colorSpace, alphaIndex))
         flatImage:drawSprite(sprite, frObj, Point(-xSel, -ySel))
         local lenSel <const> = wSel * hSel
-
-        local abs <const> = math.abs
-        local strbyte <const> = string.byte
 
         local xSum = 0.0
         local ySum = 0.0
@@ -706,16 +705,16 @@ function AseUtilities.averageNormal(sprite, frObj)
     local r8 <const>,
     g8 <const>,
     b8 <const>,
-    a8 <const> = string.byte(flatImage.bytes, 1, 4)
+    a8 <const> = strbyte(flatImage.bytes, 1, 4)
 
     if a8 > 0 then
         local x = (r8 + r8 - 255) / 255.0
         local y = (g8 + g8 - 255) / 255.0
         local z = (b8 + b8 - 255) / 255.0
 
-        if math.abs(x) < 0.0039216 then x = 0.0 end
-        if math.abs(y) < 0.0039216 then y = 0.0 end
-        if math.abs(z) < 0.0039216 then z = 0.0 end
+        if abs(x) < 0.0039216 then x = 0.0 end
+        if abs(y) < 0.0039216 then y = 0.0 end
+        if abs(z) < 0.0039216 then z = 0.0 end
 
         local mSq <const> = x * x + y * y + z * z
         if mSq > 0.0 then
@@ -1708,8 +1707,7 @@ function AseUtilities.filterLayers(
 
         local range <const> = app.range
         if range.sprite == sprite then
-            local rangeType <const> = range.type
-            if rangeType == RangeType.FRAMES then
+            if range.type == RangeType.FRAMES then
                 trgLayers = AseUtilities.getLayerHierarchy(sprite,
                     includeLocked, includeHidden, includeTiles, includeBkg)
             else
@@ -2008,8 +2006,7 @@ function AseUtilities.getFrames(sprite, target, batch, mnStr, tags)
         local frIdcsRange = { {} }
         local range <const> = app.range
         if range.sprite == sprite then
-            local rangeType <const> = range.type
-            if rangeType == RangeType.LAYERS then
+            if range.type == RangeType.LAYERS then
                 frIdcsRange = { AseUtilities.frameObjsToIdcs(sprite.frames) }
             else
                 local frIdcs1 <const> = AseUtilities.frameObjsToIdcs(
@@ -2134,8 +2131,7 @@ function AseUtilities.getPalette(frame, palettes)
         ---@diagnostic disable-next-line: undefined-field
         idx = frame.frameNumber
     end
-    local lenPalettes <const> = #palettes
-    if idx > lenPalettes then idx = 1 end
+    if idx > #palettes then idx = 1 end
     return palettes[idx]
 end
 
@@ -2366,7 +2362,7 @@ end
 ---Returns true if the layer was altered, false if no action was taken.
 ---@param sprite Sprite sprite
 ---@param layer Layer source layer
----@param frames Frame[] frames array
+---@param frames integer[]|Frame[] frames array
 ---@param preset string preset string
 ---@return boolean
 function AseUtilities.hideSource(sprite, layer, frames, preset)

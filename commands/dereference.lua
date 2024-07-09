@@ -28,12 +28,12 @@ app.transaction("Dereference Layer", function()
     derefLayer.isEditable = refLayer.isEditable
     derefLayer.isVisible = refLayer.isVisible
 
-    local frames <const> = sprite.frames
-    local lenFrames <const> = #frames
+    local frObjs <const> = sprite.frames
+    local lenFrObjs <const> = #frObjs
     local i = 0
-    while i < lenFrames do
+    while i < lenFrObjs do
         i = i + 1
-        local frObj <const> = frames[i]
+        local frObj <const> = frObjs[i]
         local refCel <const> = refLayer:cel(frObj)
         if refCel then
             local derefCel <const> = sprite:newCel(

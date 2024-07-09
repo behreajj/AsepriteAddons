@@ -542,7 +542,7 @@ dlg:button {
             tileSetUnder = aLayer.tileset
         end
 
-        local frames = Utilities.flatArr2(
+        local frIdcs <const> = Utilities.flatArr2(
             AseUtilities.getFrames(activeSprite, target))
 
         -- Unpack layer opacity.
@@ -570,7 +570,7 @@ dlg:button {
             compLayer.parent = parent
         end)
 
-        local lenFrames <const> = #frames
+        local lenFrames <const> = #frIdcs
         app.transaction("Blend Layers", function()
             ---@type table<integer, {l: number, a: number, b: number, alpha: number}>
             local dict <const> = {}
@@ -579,7 +579,7 @@ dlg:button {
             local idxFrame = 0
             while idxFrame < lenFrames do
                 idxFrame = idxFrame + 1
-                local frame <const> = frames[idxFrame]
+                local frIdx <const> = frIdcs[idxFrame]
 
                 local bx = 0
                 local by = 0
@@ -588,7 +588,7 @@ dlg:button {
                 local bImage = nil
                 local bOpac01 = 1.0
 
-                local bCel <const> = bLayer:cel(frame)
+                local bCel <const> = bLayer:cel(frIdx)
                 if bCel then
                     bImage = bCel.image
                     if overIsTile then
@@ -616,7 +616,7 @@ dlg:button {
                 local aImage = nil
                 local aOpac01 = 1.0
 
-                local aCel <const> = aLayer:cel(frame)
+                local aCel <const> = aLayer:cel(frIdx)
                 if aCel then
                     aImage = aCel.image
                     if underIsTile then
@@ -690,11 +690,6 @@ dlg:button {
                         local bIdx <const> = (bxs + bys * bWidth) * bbpp
                         bRed, bGreen, bBlue, bAlpha = strbyte(bpx, 1 + bIdx, 4 + bIdx)
                     end
-
-                    local cRed = 0
-                    local cGreen = 0
-                    local cBlue = 0
-                    local cAlpha = 0
 
                     local t = bOpac01 * (bAlpha / 255.0)
                     local v = aOpac01 * (aAlpha / 255.0)
@@ -778,29 +773,27 @@ dlg:button {
                     end
 
                     local cClr <const> = srLab2TosRgb(cl, ca, cb, tuv)
-                    cRed = floor(min(max(cClr.r, 0.0), 1.0) * 255.0 + 0.5)
-                    cGreen = floor(min(max(cClr.g, 0.0), 1.0) * 255.0 + 0.5)
-                    cBlue = floor(min(max(cClr.b, 0.0), 1.0) * 255.0 + 0.5)
-                    cAlpha = floor(min(max(cClr.a, 0.0), 1.0) * 255.0 + 0.5)
+                    local cRed <const> = floor(min(max(cClr.r, 0.0), 1.0) * 255.0 + 0.5)
+                    local cGreen <const> = floor(min(max(cClr.g, 0.0), 1.0) * 255.0 + 0.5)
+                    local cBlue <const> = floor(min(max(cClr.b, 0.0), 1.0) * 255.0 + 0.5)
+                    local cAlpha <const> = floor(min(max(cClr.a, 0.0), 1.0) * 255.0 + 0.5)
 
                     i = i + 1
-                    local cStr <const> = strpack(
+                    cStrs[i] = strpack(
                         "B B B B",
                         cRed, cGreen, cBlue, cAlpha)
-                    cStrs[i] = cStr
                 end
 
-                local cImageSpec <const> = createSpec(
-                    cWidth, cHeight, spriteColorMode, colorSpace, alphaIndex)
-                local cImage <const> = Image(cImageSpec)
+                local cImage <const> = Image(createSpec(
+                    cWidth, cHeight, spriteColorMode, colorSpace, alphaIndex))
                 cImage.bytes = tconcat(cStrs)
 
-                activeSprite:newCel(compLayer, frame, cImage, Point(cx, cy))
+                activeSprite:newCel(compLayer, frIdx, cImage, Point(cx, cy))
             end
         end)
 
-        AseUtilities.hideSource(activeSprite, aLayer, frames, delUnderStr)
-        AseUtilities.hideSource(activeSprite, bLayer, frames, delOverStr)
+        AseUtilities.hideSource(activeSprite, aLayer, frIdcs, delUnderStr)
+        AseUtilities.hideSource(activeSprite, bLayer, frIdcs, delOverStr)
         app.layer = compLayer
         app.refresh()
 

@@ -716,8 +716,7 @@ dlg:button {
             local i = 0
             while i < lenFrIdcs do
                 i = i + 1
-                local frIdx <const> = frIdcs[i]
-                sprite:newCel(layer, frIdx, selImage, tlSel)
+                sprite:newCel(layer, frIdcs[i], selImage, tlSel)
             end
         end)
         app.refresh()
@@ -873,8 +872,7 @@ dlg:canvas {
         end
     end,
     onmouseup = function(event)
-        local x <const> = event.x
-        local fac <const> = x / (active.swatchesWidth - 1.0)
+        local fac <const> = event.x / (active.swatchesWidth - 1.0)
         local swatches <const> = active.swatches
         local lenSwatches <const> = #swatches
 

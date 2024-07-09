@@ -13,12 +13,12 @@ local isFramesType <const> = range.type == RangeType.FRAMES
 local sameSprite <const> = activeSprite == range.sprite
 local isValid <const> = isFramesType and sameSprite
 if isValid then
-    local rangeFrames <const> = range.frames
-    local lenRangeFrames <const> = #rangeFrames
+    local rangeFrObjs <const> = range.frames
+    local lenRangeFrObjs <const> = #rangeFrObjs
     local i = 0
-    while i < lenRangeFrames do
+    while i < lenRangeFrObjs do
         i = i + 1
-        rangeFrIdcs[i] = rangeFrames[i].frameNumber
+        rangeFrIdcs[i] = rangeFrObjs[i].frameNumber
     end
 end
 

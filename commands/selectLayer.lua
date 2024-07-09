@@ -97,8 +97,7 @@ while i > 1 do
             if isTileMap then
                 tileSet = layer.tileset
                 if tileSet then
-                    local tileGrid <const> = tileSet.grid
-                    local tileSize <const> = tileGrid.tileSize
+                    local tileSize <const> = tileSet.grid.tileSize
                     wTile = max(1, abs(tileSize.width))
                     hTile = max(1, abs(tileSize.height))
                     lenTileSet = #tileSet
@@ -152,9 +151,9 @@ while i > 1 do
                                 isNonZero = eval(xTile, yTile, wTile, colorMode,
                                     tileImage.bytesPerPixel, tileImage.bytes,
                                     aComp01, alphaIndex, palette)
-                            end
-                        end
-                    end
+                            end -- End tile exists.
+                        end     -- End tile width and height equal.
+                    end         -- End index is in range.
                 else
                     isNonZero = eval(xLocal, yLocal, wImage, colorMode, bpp,
                         bytesStr, aComp01, alphaIndex, palette)
