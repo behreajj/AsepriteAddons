@@ -45,6 +45,7 @@ local tCompOptions <const> = {
 }
 
 local defaults <const> = {
+    -- TODO: Is this leaking memory somewhere?
     target = "ACTIVE",
     compMode = "LAB",
     lComp = "BLEND",
@@ -570,227 +571,226 @@ dlg:button {
             compLayer.parent = parent
         end)
 
+        ---@type table<integer, {l: number, a: number, b: number, alpha: number}>
+        local dict <const> = {}
+        dict[0] = { l = 0.0, a = 0.0, b = 0.0, alpha = 0.0 }
+
+        local i = 0
         local lenFrames <const> = #frIdcs
-        app.transaction("Blend Layers", function()
-            ---@type table<integer, {l: number, a: number, b: number, alpha: number}>
-            local dict <const> = {}
-            dict[0] = { l = 0.0, a = 0.0, b = 0.0, alpha = 0.0 }
+        while i < lenFrames do
+            i = i + 1
+            local frIdx <const> = frIdcs[i]
 
-            local idxFrame = 0
-            while idxFrame < lenFrames do
-                idxFrame = idxFrame + 1
-                local frIdx <const> = frIdcs[idxFrame]
+            local bx = 0
+            local by = 0
+            local bWidth = wSprite
+            local bHeight = hSprite
+            local bImage = nil
+            local bOpac01 = 1.0
 
-                local bx = 0
-                local by = 0
-                local bWidth = wSprite
-                local bHeight = hSprite
-                local bImage = nil
-                local bOpac01 = 1.0
-
-                local bCel <const> = bLayer:cel(frIdx)
-                if bCel then
-                    bImage = bCel.image
-                    if overIsTile then
-                        bImage = tilesToImage(
-                            bImage, tileSetOver, spriteColorMode)
-                    end
-
-                    local bPos <const> = bCel.position
-                    bx = bPos.x
-                    by = bPos.y
-                    bWidth = bImage.width
-                    bHeight = bImage.height
-
-                    bOpac01 = bLayerOpac01 * (bCel.opacity / 255.0)
-                else
-                    bImage = Image(spriteSpec)
-                end
-                local bpx <const> = bImage.bytes
-                local bbpp <const> = bImage.bytesPerPixel
-
-                local ax = 0
-                local ay = 0
-                local aWidth = wSprite
-                local aHeight = hSprite
-                local aImage = nil
-                local aOpac01 = 1.0
-
-                local aCel <const> = aLayer:cel(frIdx)
-                if aCel then
-                    aImage = aCel.image
-                    if underIsTile then
-                        aImage = tilesToImage(
-                            aImage, tileSetUnder, spriteColorMode)
-                    end
-
-                    local aPos <const> = aCel.position
-                    ax = aPos.x
-                    ay = aPos.y
-                    aWidth = aImage.width
-                    aHeight = aImage.height
-
-                    aOpac01 = aLayerOpac01 * (aCel.opacity / 255.0)
-                else
-                    aImage = Image(spriteSpec)
-                end
-                local apx <const> = aImage.bytes
-                local abpp <const> = aImage.bytesPerPixel
-
-                local abrx <const> = ax + aWidth - 1
-                local abry <const> = ay + aHeight - 1
-                local bbrx <const> = bx + bWidth - 1
-                local bbry <const> = by + bHeight - 1
-
-                -- Composite occurs, for most generous case, at union.
-                local cx <const> = min(ax, bx)
-                local cy <const> = min(ay, by)
-                local cbrx <const> = max(abrx, bbrx)
-                local cbry <const> = max(abry, bbry)
-                local cWidth <const> = 1 + cbrx - cx
-                local cHeight <const> = 1 + cbry - cy
-                local cLen <const> = cWidth * cHeight
-
-                -- Find the difference between the union top left corner and the
-                -- top left corners of a and b.
-                local axud <const> = ax - cx
-                local ayud <const> = ay - cy
-                local bxud <const> = bx - cx
-                local byud <const> = by - cy
-
-                ---@type string[]
-                local cStrs <const> = {}
-                local i = 0
-                while i < cLen do
-                    local x = i % cWidth
-                    local y = i // cWidth
-
-                    local aRed = 0
-                    local aGreen = 0
-                    local aBlue = 0
-                    local aAlpha = 0
-
-                    local axs <const> = x - axud
-                    local ays <const> = y - ayud
-                    if ays >= 0 and ays < aHeight
-                        and axs >= 0 and axs < aWidth then
-                        local aIdx <const> = (axs + ays * aWidth) * abpp
-                        aRed, aGreen, aBlue, aAlpha = strbyte(apx, 1 + aIdx, 4 + aIdx)
-                    end
-
-                    local bRed = 0
-                    local bGreen = 0
-                    local bBlue = 0
-                    local bAlpha = 0
-
-                    local bxs <const> = x - bxud
-                    local bys <const> = y - byud
-                    if bys >= 0 and bys < bHeight
-                        and bxs >= 0 and bxs < bWidth then
-                        local bIdx <const> = (bxs + bys * bWidth) * bbpp
-                        bRed, bGreen, bBlue, bAlpha = strbyte(bpx, 1 + bIdx, 4 + bIdx)
-                    end
-
-                    local t = bOpac01 * (bAlpha / 255.0)
-                    local v = aOpac01 * (aAlpha / 255.0)
-
-                    local aInt <const> = aAlpha << 0x18
-                        | aBlue << 0x10
-                        | aGreen << 0x08
-                        | aRed
-                    local aLab = dict[aInt]
-                    if not aLab then
-                        local aClr <const> = clrNew(
-                            aRed / 255.0,
-                            aGreen / 255.0,
-                            aBlue / 255.0,
-                            1.0)
-                        aLab = sRgbToSrLab2(aClr)
-                        dict[aInt] = aLab
-                    end
-
-                    local bInt <const> = bAlpha << 0x18
-                        | bBlue << 0x10
-                        | bGreen << 0x08
-                        | bRed
-                    local bLab = dict[bInt]
-                    if not bLab then
-                        local bClr <const> = clrNew(
-                            bRed / 255.0,
-                            bGreen / 255.0,
-                            bBlue / 255.0,
-                            1.0)
-                        bLab = sRgbToSrLab2(bClr)
-                        dict[bInt] = bLab
-                    end
-
-                    if v <= 0.0 then aLab = bLab end
-                    if t <= 0.0 then bLab = aLab end
-
-                    local u <const> = 1.0 - t
-                    local cl = 0.0
-                    local ca = 0.0
-                    local cb = 0.0
-
-                    local tuv = t + u * v
-                    if useAlphaOver then
-                        tuv = t
-                    elseif useAlphaUnder then
-                        tuv = v
-                    elseif useAlphaMin then
-                        tuv = min(t, v)
-                    elseif useAlphaMax then
-                        tuv = max(t, v)
-                    end
-
-                    -- Timeline overlays display colors that are transparent,
-                    -- but have non-zero RGB channels.
-                    if tuv > 0.0 then
-                        cl = lBlendFunc(aLab.l, bLab.l, v, t)
-
-                        if useLch then
-                            local aLch <const> = srLab2ToSrLch(
-                                aLab.l, aLab.a, aLab.b, 1.0)
-                            local bLch <const> = srLab2ToSrLch(
-                                bLab.l, bLab.a, bLab.b, 1.0)
-
-                            local cc = 0.0
-                            local ch = 0.0
-
-                            cc = cBlendFunc(aLch.c, bLch.c, v, t)
-                            ch = hBlendFunc(aLch.h, bLch.h, t)
-
-                            local cLab <const> = srLchToSrLab2(cl, cc, ch, 1.0)
-                            ca = cLab.a
-                            cb = cLab.b
-                        else
-                            -- Default to LAB.
-                            ca, cb = abBlendFunc(
-                                aLab.a, aLab.b,
-                                bLab.a, bLab.b,
-                                v, t)
-                        end
-                    end
-
-                    local cClr <const> = srLab2TosRgb(cl, ca, cb, tuv)
-                    local cRed <const> = floor(min(max(cClr.r, 0.0), 1.0) * 255.0 + 0.5)
-                    local cGreen <const> = floor(min(max(cClr.g, 0.0), 1.0) * 255.0 + 0.5)
-                    local cBlue <const> = floor(min(max(cClr.b, 0.0), 1.0) * 255.0 + 0.5)
-                    local cAlpha <const> = floor(min(max(cClr.a, 0.0), 1.0) * 255.0 + 0.5)
-
-                    i = i + 1
-                    cStrs[i] = strpack(
-                        "B B B B",
-                        cRed, cGreen, cBlue, cAlpha)
+            local bCel <const> = bLayer:cel(frIdx)
+            if bCel then
+                bImage = bCel.image
+                if overIsTile then
+                    bImage = tilesToImage(
+                        bImage, tileSetOver, spriteColorMode)
                 end
 
-                local cImage <const> = Image(createSpec(
-                    cWidth, cHeight, spriteColorMode, colorSpace, alphaIndex))
-                cImage.bytes = tconcat(cStrs)
+                local bPos <const> = bCel.position
+                bx = bPos.x
+                by = bPos.y
+                bWidth = bImage.width
+                bHeight = bImage.height
 
-                activeSprite:newCel(compLayer, frIdx, cImage, Point(cx, cy))
+                bOpac01 = bLayerOpac01 * (bCel.opacity / 255.0)
+            else
+                bImage = Image(spriteSpec)
             end
-        end)
+            local bpx <const> = bImage.bytes
+            local bbpp <const> = bImage.bytesPerPixel
+
+            local ax = 0
+            local ay = 0
+            local aWidth = wSprite
+            local aHeight = hSprite
+            local aImage = nil
+            local aOpac01 = 1.0
+
+            local aCel <const> = aLayer:cel(frIdx)
+            if aCel then
+                aImage = aCel.image
+                if underIsTile then
+                    aImage = tilesToImage(
+                        aImage, tileSetUnder, spriteColorMode)
+                end
+
+                local aPos <const> = aCel.position
+                ax = aPos.x
+                ay = aPos.y
+                aWidth = aImage.width
+                aHeight = aImage.height
+
+                aOpac01 = aLayerOpac01 * (aCel.opacity / 255.0)
+            else
+                aImage = Image(spriteSpec)
+            end
+            local apx <const> = aImage.bytes
+            local abpp <const> = aImage.bytesPerPixel
+
+            local abrx <const> = ax + aWidth - 1
+            local abry <const> = ay + aHeight - 1
+            local bbrx <const> = bx + bWidth - 1
+            local bbry <const> = by + bHeight - 1
+
+            -- Composite occurs, for most generous case, at union.
+            local cx <const> = min(ax, bx)
+            local cy <const> = min(ay, by)
+            local cbrx <const> = max(abrx, bbrx)
+            local cbry <const> = max(abry, bbry)
+            local cWidth <const> = 1 + cbrx - cx
+            local cHeight <const> = 1 + cbry - cy
+            local cLen <const> = cWidth * cHeight
+
+            -- Find the difference between the union top left corner and the
+            -- top left corners of a and b.
+            local axud <const> = ax - cx
+            local ayud <const> = ay - cy
+            local bxud <const> = bx - cx
+            local byud <const> = by - cy
+
+            ---@type string[]
+            local cStrs <const> = {}
+            local j = 0
+            while j < cLen do
+                local x = j % cWidth
+                local y = j // cWidth
+
+                local aRed = 0
+                local aGreen = 0
+                local aBlue = 0
+                local aAlpha = 0
+
+                local axs <const> = x - axud
+                local ays <const> = y - ayud
+                if ays >= 0 and ays < aHeight
+                    and axs >= 0 and axs < aWidth then
+                    local aIdx <const> = (ays * aWidth + axs) * abpp
+                    aRed, aGreen, aBlue, aAlpha = strbyte(apx, 1 + aIdx, 4 + aIdx)
+                end
+
+                local bRed = 0
+                local bGreen = 0
+                local bBlue = 0
+                local bAlpha = 0
+
+                local bxs <const> = x - bxud
+                local bys <const> = y - byud
+                if bys >= 0 and bys < bHeight
+                    and bxs >= 0 and bxs < bWidth then
+                    local bIdx <const> = (bys * bWidth + bxs) * bbpp
+                    bRed, bGreen, bBlue, bAlpha = strbyte(bpx, 1 + bIdx, 4 + bIdx)
+                end
+
+                local t = bOpac01 * (bAlpha / 255.0)
+                local v = aOpac01 * (aAlpha / 255.0)
+
+                local aInt <const> = aAlpha << 0x18
+                    | aBlue << 0x10
+                    | aGreen << 0x08
+                    | aRed
+                local aLab = dict[aInt]
+                if not aLab then
+                    local aClr <const> = clrNew(
+                        aRed / 255.0,
+                        aGreen / 255.0,
+                        aBlue / 255.0,
+                        1.0)
+                    aLab = sRgbToSrLab2(aClr)
+                    dict[aInt] = aLab
+                end
+
+                local bInt <const> = bAlpha << 0x18
+                    | bBlue << 0x10
+                    | bGreen << 0x08
+                    | bRed
+                local bLab = dict[bInt]
+                if not bLab then
+                    local bClr <const> = clrNew(
+                        bRed / 255.0,
+                        bGreen / 255.0,
+                        bBlue / 255.0,
+                        1.0)
+                    bLab = sRgbToSrLab2(bClr)
+                    dict[bInt] = bLab
+                end
+
+                if v <= 0.0 then aLab = bLab end
+                if t <= 0.0 then bLab = aLab end
+
+                local u <const> = 1.0 - t
+                local cl = 0.0
+                local ca = 0.0
+                local cb = 0.0
+
+                local tuv = t + u * v
+                if useAlphaOver then
+                    tuv = t
+                elseif useAlphaUnder then
+                    tuv = v
+                elseif useAlphaMin then
+                    tuv = min(t, v)
+                elseif useAlphaMax then
+                    tuv = max(t, v)
+                end
+
+                -- Timeline overlays display colors that are transparent,
+                -- but have non-zero RGB channels.
+                if tuv > 0.0 then
+                    cl = lBlendFunc(aLab.l, bLab.l, v, t)
+
+                    if useLch then
+                        local aLch <const> = srLab2ToSrLch(
+                            aLab.l, aLab.a, aLab.b, 1.0)
+                        local bLch <const> = srLab2ToSrLch(
+                            bLab.l, bLab.a, bLab.b, 1.0)
+
+                        local cc = 0.0
+                        local ch = 0.0
+
+                        cc = cBlendFunc(aLch.c, bLch.c, v, t)
+                        ch = hBlendFunc(aLch.h, bLch.h, t)
+
+                        local cLab <const> = srLchToSrLab2(cl, cc, ch, 1.0)
+                        ca = cLab.a
+                        cb = cLab.b
+                    else
+                        -- Default to LAB.
+                        ca, cb = abBlendFunc(
+                            aLab.a, aLab.b,
+                            bLab.a, bLab.b,
+                            v, t)
+                    end
+                end
+
+                local cClr <const> = srLab2TosRgb(cl, ca, cb, tuv)
+                local cRed <const> = floor(min(max(cClr.r, 0.0), 1.0) * 255.0 + 0.5)
+                local cGreen <const> = floor(min(max(cClr.g, 0.0), 1.0) * 255.0 + 0.5)
+                local cBlue <const> = floor(min(max(cClr.b, 0.0), 1.0) * 255.0 + 0.5)
+                local cAlpha <const> = floor(min(max(cClr.a, 0.0), 1.0) * 255.0 + 0.5)
+
+                j = j + 1
+                cStrs[j] = strpack(
+                    "B B B B",
+                    cRed, cGreen, cBlue, cAlpha)
+            end
+
+            local cImage <const> = Image(createSpec(
+                cWidth, cHeight, spriteColorMode, colorSpace, alphaIndex))
+            cImage.bytes = tconcat(cStrs)
+
+            activeSprite:newCel(compLayer, frIdx, cImage, Point(cx, cy))
+        end
+        -- end)
 
         AseUtilities.hideSource(activeSprite, aLayer, frIdcs, delUnderStr)
         AseUtilities.hideSource(activeSprite, bLayer, frIdcs, delOverStr)

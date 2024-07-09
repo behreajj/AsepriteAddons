@@ -33,7 +33,7 @@ function ClrKey.newByRef(step, clr)
     if step then
         inst.step = math.min(math.max(step, 0.0), 1.0)
     end
-    inst.clr = clr or Clr.clearBlack()
+    inst.clr = clr or Clr.new(0.0, 0.0, 0.0, 0.0)
     return inst
 end
 
@@ -60,7 +60,7 @@ function ClrKey.newByVal(step, clr)
             inst.clr = Clr.new(clr.r, clr.g, clr.b, clr.a)
         end
     else
-        inst.clr = Clr.clearBlack()
+        inst.clr = Clr.new(0.0, 0.0, 0.0, 0.0)
     end
 
     return inst

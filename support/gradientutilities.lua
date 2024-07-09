@@ -102,15 +102,15 @@ function GradientUtilities.aseColorsToClrGradient(aseColors)
     -- iterations are lost if background is zero.
 
     ---@type ClrKey[]
-    local clrKeys <const> = {}
+    local keys <const> = {}
     local lenColors <const> = #aseColors
     if lenColors < 1 then
-        clrKeys[1] = ClrKey.newByRef(0.0, Clr.black())
-        clrKeys[2] = ClrKey.newByRef(1.0, Clr.white())
+        keys[1] = ClrKey.newByRef(0.0, Clr.new(0.0, 0.0, 0.0, 1.0))
+        keys[2] = ClrKey.newByRef(1.0, Clr.new(1.0, 1.0, 1.0, 1.0))
     elseif lenColors < 2 then
         local c <const> = AseUtilities.aseColorToClr(aseColors[1])
-        clrKeys[1] = ClrKey.newByRef(0.0, c)
-        clrKeys[2] = ClrKey.newByRef(1.0, Clr.new(c.r, c.g, c.b, 1.0))
+        keys[1] = ClrKey.newByRef(0.0, c)
+        keys[2] = ClrKey.newByRef(1.0, Clr.new(c.r, c.g, c.b, 1.0))
     else
         local toStep <const> = 1.0 / (lenColors - 1)
         local i = 0
@@ -118,10 +118,10 @@ function GradientUtilities.aseColorsToClrGradient(aseColors)
             local step <const> = i * toStep
             i = i + 1
             local c <const> = AseUtilities.aseColorToClr(aseColors[i])
-            clrKeys[i] = ClrKey.newByRef(step, c)
+            keys[i] = ClrKey.newByRef(step, c)
         end
     end
-    return ClrGradient.newInternal(clrKeys)
+    return ClrGradient.newInternal(keys)
 end
 
 ---Finds the appropriate color easing function based on the color space preset
@@ -197,8 +197,8 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
                     while i < lenRangeColors do
                         i = i + 1
                         local idx <const> = rangeColors[i]
-                        local clr <const> = pal:getColor(idx)
-                        newColors[lenOldColors + i] = clr
+                        local aseColor <const> = pal:getColor(idx)
+                        newColors[lenOldColors + i] = aseColor
                     end
                 end
 

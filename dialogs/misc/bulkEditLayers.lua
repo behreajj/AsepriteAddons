@@ -551,8 +551,8 @@ dlg:button {
         local fromClr = AseUtilities.aseColorToClr(fromColor)
         local toClr = AseUtilities.aseColorToClr(toColor)
         if fromClr.a <= 0.0 and toClr.a <= 0.0 then
-            fromClr = Clr.clearBlack()
-            toClr = Clr.clearBlack()
+            fromClr = Clr.new(0.0, 0.0, 0.0, 0.0)
+            toClr = Clr.new(0.0, 0.0, 0.0, 0.0)
         end
 
         app.transaction("Tint Layers", function()

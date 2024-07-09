@@ -173,7 +173,7 @@ function Clr.blendInternal(a, b)
             (b.b * t + a.b * uv) * tuvInv,
             tuv)
     else
-        return Clr.clearBlack()
+        return Clr.new(0.0, 0.0, 0.0, 0.0)
     end
 end
 
@@ -206,9 +206,10 @@ end
 ---@return Clr[]
 ---@nodiscard
 function Clr.fromHexArray(arr)
-    local len <const> = #arr
+    ---@type Clr[]
     local result <const> = {}
     local i = 0
+    local len <const> = #arr
     while i < len do
         i = i + 1
         result[i] = Clr.fromHex(arr[i])
@@ -245,7 +246,7 @@ function Clr.fromHexWeb(hexstr)
             (sn & 0xff) / 255.0,
             1.0)
     end
-    return Clr.clearBlack()
+    return Clr.new(0.0, 0.0, 0.0, 0.0)
 end
 
 ---Creates a one-dimensional table of colors arranged in a Cartesian grid from
@@ -935,76 +936,6 @@ function Clr.toJson(c)
     return string.format(
         "{\"r\":%.4f,\"g\":%.4f,\"b\":%.4f,\"a\":%.4f}",
         c.r, c.g, c.b, c.a)
-end
-
----Creates a red color.
----@return Clr
----@nodiscard
-function Clr.red()
-    return Clr.new(1.0, 0.0, 0.0, 1.0)
-end
-
----Creates a green color.
----@return Clr
----@nodiscard
-function Clr.green()
-    return Clr.new(0.0, 1.0, 0.0, 1.0)
-end
-
----Creates a blue color.
----@return Clr
----@nodiscard
-function Clr.blue()
-    return Clr.new(0.0, 0.0, 1.0, 1.0)
-end
-
----Creates a cyan color.
----@return Clr
----@nodiscard
-function Clr.cyan()
-    return Clr.new(0.0, 1.0, 1.0, 1.0)
-end
-
----Creates a magenta color.
----@return Clr
----@nodiscard
-function Clr.magenta()
-    return Clr.new(1.0, 0.0, 1.0, 1.0)
-end
-
----Creates a yellow color.
----@return Clr
----@nodiscard
-function Clr.yellow()
-    return Clr.new(1.0, 1.0, 0.0, 1.0)
-end
-
----Creates a black color.
----@return Clr
----@nodiscard
-function Clr.black()
-    return Clr.new(0.0, 0.0, 0.0, 1.0)
-end
-
----Creates a white color.
----@return Clr
----@nodiscard
-function Clr.white()
-    return Clr.new(1.0, 1.0, 1.0, 1.0)
-end
-
----Creates a transparent black color.
----@return Clr
----@nodiscard
-function Clr.clearBlack()
-    return Clr.new(0.0, 0.0, 0.0, 0.0)
-end
-
----Creates a transparent white color.
----@return Clr
----@nodiscard
-function Clr.clearWhite()
-    return Clr.new(1.0, 1.0, 1.0, 0.0)
 end
 
 return Clr
