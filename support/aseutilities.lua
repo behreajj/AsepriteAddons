@@ -1402,26 +1402,17 @@ function AseUtilities.createSpec(
     local cmVerif <const> = colorMode or ColorMode.RGB
 
     local wVerif = 320
-    local hVerif = 180
-    local appPrefs <const> = app.preferences
-    if appPrefs then
-        local newFilePrefs <const> = appPrefs.new_file
-        if newFilePrefs then
-            if newFilePrefs.width then
-                wVerif = newFilePrefs.width --[[@as integer]]
-            end
-            if newFilePrefs.height then
-                hVerif = newFilePrefs.height --[[@as integer]]
-            end
-        end
-    end
-
     if width then
         wVerif = math.min(math.max(math.abs(width), 1), 65535)
+    else
+        wVerif = app.preferences.new_file.width --[[@as integer]]
     end
 
+    local hVerif = 180
     if height then
         hVerif = math.min(math.max(math.abs(height), 1), 65535)
+    else
+        hVerif = app.preferences.new_file.height --[[@as integer]]
     end
 
     local spec <const> = ImageSpec {

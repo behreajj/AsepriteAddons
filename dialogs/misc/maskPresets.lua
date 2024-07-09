@@ -524,24 +524,17 @@ dlg:button {
         local selMode <const> = args.selMode
             or defaults.selMode --[[@as string]]
 
-        local brush <const> = app.brush
-        local brushType <const> = brush.type
-        local brushCenter <const> = brush.center
-        local xBrCenter <const> = brushCenter.x
-        local yBrCenter <const> = brushCenter.y
-
         local trgSel <const> = Selection()
 
-        -- For now, circle and line are not worth implementing.
-        -- Same for brush angle.
-        if brushType == BrushType.SQUARE then
-            local brushSize <const> = brush.size
-            trgSel:add(Rectangle(
-                xMouse - xBrCenter, yMouse - yBrCenter,
-                brushSize, brushSize))
-        elseif brushType == BrushType.IMAGE then
+        local brush <const> = app.brush
+        local brushType <const> = brush.type
+        if brushType == BrushType.IMAGE then
             local brushImage <const> = brush.image
             if brushImage then
+                local brushCenter <const> = brush.center
+                local xBrCenter <const> = brushCenter.x
+                local yBrCenter <const> = brushCenter.y
+
                 local imgSel <const> = AseUtilities.selectImage(
                     brushImage, 0, 0, nil, activeSprite.bounds)
                 imgSel.origin = Point(
