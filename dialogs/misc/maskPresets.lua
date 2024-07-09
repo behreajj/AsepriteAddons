@@ -520,6 +520,10 @@ dlg:button {
         local xMouse <const> = mouse.x
         local yMouse <const> = mouse.y
 
+        local args <const> = dlg.data
+        local selMode <const> = args.selMode
+            or defaults.selMode --[[@as string]]
+
         local brush <const> = app.brush
         local brushType <const> = brush.type
         local brushCenter <const> = brush.center
@@ -530,15 +534,11 @@ dlg:button {
 
         -- For now, circle and line are not worth implementing.
         -- Same for brush angle.
-        if brushType == BrushType.CIRCLE then
-            trgSel:add(Rectangle(xMouse, yMouse, 1, 1))
-        elseif brushType == BrushType.SQUARE then
+        if brushType == BrushType.SQUARE then
             local brushSize <const> = brush.size
             trgSel:add(Rectangle(
                 xMouse - xBrCenter, yMouse - yBrCenter,
                 brushSize, brushSize))
-        elseif brushType == BrushType.LINE then
-            trgSel:add(Rectangle(xMouse, yMouse, 1, 1))
         elseif brushType == BrushType.IMAGE then
             local brushImage <const> = brush.image
             if brushImage then
@@ -552,12 +552,32 @@ dlg:button {
                 trgSel:add(Rectangle(xMouse, yMouse, 1, 1))
             end
         else
-            trgSel:add(Rectangle(xMouse, yMouse, 1, 1))
+            local amount <const> = args.amount
+                or defaults.amount --[[@as integer]]
+            local area <const> = amount * amount
+            local center <const> = amount * 0.5
+            local xtl <const> = xMouse - center
+            local ytl <const> = yMouse - center
+            local rsq <const> = center * center
+            local pxRect <const> = Rectangle(0, 0, 1, 1)
+            local floor <const> = math.floor
+
+            local i = 0
+            while i < area do
+                local x <const> = xtl + i % amount
+                local y <const> = ytl + i // amount
+                local dx <const> = x - xMouse
+                local dy <const> = y - yMouse
+                if dx * dx + dy * dy < rsq then
+                    pxRect.x = floor(x)
+                    pxRect.y = floor(y)
+                    trgSel:add(pxRect)
+                end
+                i = i + 1
+            end
         end
 
-        local args <const> = dlg.data
-        local selMode <const> = args.selMode
-            or defaults.selMode --[[@as string]]
+        trgSel:intersect(activeSprite.bounds)
 
         app.transaction("Select Cel", function()
             updateSel(activeSprite, trgSel, selMode)
