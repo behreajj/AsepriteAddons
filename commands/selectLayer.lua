@@ -21,14 +21,48 @@ local hSprite <const> = specSprite.height
 
 if xMouse >= wSprite or yMouse >= hSprite then return end
 
+---@param x integer
+---@param y integer
+---@param wImage integer
+---@param colorMode ColorMode
+---@param bpp integer
+---@param bytesStr string
+---@param aComp01 number
+---@param alphaIndex integer
+---@param palette Palette
+---@return boolean
+local function eval(
+    x, y, wImage, colorMode, bpp, bytesStr, aComp01, alphaIndex, palette)
+    local dataIdx <const> = (y * wImage + x) * bpp
+    local dataStr <const> = string.sub(bytesStr,
+        1 + dataIdx, bpp + dataIdx)
+    local unpackFmt <const> = "I" .. bpp
+    local dataInt <const> = string.unpack(unpackFmt, dataStr)
+
+    if colorMode == ColorMode.RGB then
+        local a8 <const> = (dataInt >> 0x18) & 0xff
+        local a01 <const> = aComp01 * (a8 / 255.0)
+        return a01 > 0.0
+    elseif colorMode == ColorMode.GRAY then
+        local a8 <const> = (dataInt >> 0x08) & 0xff
+        local a01 <const> = aComp01 * (a8 / 255.0)
+        return a01 > 0.0
+    elseif colorMode == ColorMode.INDEXED then
+        if dataInt ~= alphaIndex
+            and dataInt >= 0 and dataInt < #palette then
+            local aseColor <const> = palette:getColor(dataInt)
+            local a8 <const> = aseColor.alpha
+            local a01 <const> = aComp01 * (a8 / 255.0)
+            return a01 > 0.0
+        end
+    end
+    return false
+end
+
 local colorMode <const> = specSprite.colorMode
 local alphaIndex <const> = specSprite.transparentColor
-local isRgb <const> = colorMode == ColorMode.RGB
-local isGry <const> = colorMode == ColorMode.GRAY
-local isIdx <const> = colorMode == ColorMode.INDEXED
 
 local palette <const> = AseUtilities.getPalette(frObj, sprite.palettes)
-local lenPalette <const> = #palette
 
 local layers <const> = AseUtilities.getLayerHierarchy(
     sprite, true, false, true, true)
@@ -38,7 +72,10 @@ local max <const> = math.max
 local abs <const> = math.abs
 local strsub <const> = string.sub
 local strunpack <const> = string.unpack
+
+local bakeFlag <const> = AseUtilities.bakeFlag
 local pxTilei <const> = app.pixelColor.tileI
+local pxTilef <const> = app.pixelColor.tileF
 
 local i = lenLayers + 1
 while i > 1 do
@@ -90,8 +127,6 @@ while i > 1 do
 
                 local isNonZero = false
                 if isTileMap then
-                    -- Coordinates within tile image would be xLocal % wTile
-                    -- and yLocal % hTile.
                     local xMap <const> = xLocal // wTile
                     local yMap <const> = yLocal // hTile
 
@@ -103,42 +138,30 @@ while i > 1 do
                     local tileIndex <const> = pxTilei(tileEntry)
 
                     if tileIndex > 0 and tileIndex < lenTileSet then
-                        -- For tile maps, this is good enough. Otherwise,
-                        -- you have to deal with flags in the image map
-                        -- that have flipped or rotated the tile image,
-                        -- including cases where wTile ~= hTile.
+                        -- For cases where tile sizes are unequal, aComp01
+                        -- being non-zero is good enough.
                         isNonZero = aComp01 > 0.0
-                    end
-                else
-                    -- If you wanted to handle tile images, then you
-                    -- might as well abstract this into its own method.
-                    local dataIdx <const> = (yLocal * wImage + xLocal) * bpp
-                    local dataStr <const> = strsub(bytesStr,
-                        1 + dataIdx, bpp + dataIdx)
-                    local dataInt <const> = strunpack(unpackFmt, dataStr)
-
-                    if isRgb then
-                        local a8 <const> = (dataInt >> 0x18) & 0xff
-                        local a01 <const> = aComp01 * (a8 / 255.0)
-                        isNonZero = a01 > 0.0
-                    elseif isGry then
-                        local a8 <const> = (dataInt >> 0x08) & 0xff
-                        local a01 <const> = aComp01 * (a8 / 255.0)
-                        isNonZero = a01 > 0.0
-                    elseif isIdx then
-                        if dataInt ~= alphaIndex
-                            and dataInt >= 0 and dataInt < lenPalette then
-                            local aseColor <const> = palette:getColor(dataInt)
-                            local a8 <const> = aseColor.alpha
-                            local a01 <const> = aComp01 * (a8 / 255.0)
-                            isNonZero = a01 > 0.0
+                        if tileSet and wTile == hTile then
+                            local tile <const> = tileSet:tile(tileIndex)
+                            if tile then
+                                local tileFlag <const> = pxTilef(tileEntry)
+                                local tileImage <const> = bakeFlag(
+                                    tile.image, tileFlag)
+                                local xTile <const> = xLocal % wTile
+                                local yTile <const> = yLocal % hTile
+                                isNonZero = eval(xTile, yTile, wTile, colorMode,
+                                    tileImage.bytesPerPixel, tileImage.bytes,
+                                    aComp01, alphaIndex, palette)
+                            end
                         end
                     end
+                else
+                    isNonZero = eval(xLocal, yLocal, wImage, colorMode, bpp,
+                        bytesStr, aComp01, alphaIndex, palette)
                 end
 
                 if isNonZero then
                     app.layer = layer
-                    app.refresh()
                     return
                 end -- End pixel is not transparent.
             end     -- End mouse within upper bound.

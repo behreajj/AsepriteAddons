@@ -548,8 +548,7 @@ function AseUtilities.averageColor(sprite, frObj)
         local count = 0
 
         for hex, tally in pairs(hexDict) do
-            local srgb <const> = fromHex(hex)
-            local lab <const> = sRgbToLab(srgb)
+            local lab <const> = sRgbToLab(fromHex(hex))
             lSum = lSum + lab.l * tally
             aSum = aSum + lab.a * tally
             bSum = bSum + lab.b * tally
