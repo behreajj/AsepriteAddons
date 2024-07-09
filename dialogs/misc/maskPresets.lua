@@ -305,6 +305,31 @@ dlg:button {
     end
 }
 
+dlg:button {
+    id = "inSquareButton",
+    text = "S&QUARE",
+    focus = false,
+    visible = false,
+    onclick = function()
+        -- https://en.wikipedia.org/wiki/Rabatment_of_the_rectangle
+        local site <const> = app.site
+        local sprite <const> = site.sprite
+        if not sprite then return end
+        local spec <const> = sprite.spec
+        local args <const> = dlg.data
+        local selMode <const> = args.selMode
+            or defaults.selMode --[[@as string]]
+        local w <const> = spec.width
+        local h <const> = spec.height
+        local short <const> = math.min(w, h)
+        local x <const> = (w == short) and 0 or (w - short) // 2
+        local y <const> = (h == short) and 0 or (h - short) // 2
+        local trgSel <const> = Selection(Rectangle(x, y, short, short))
+        updateSel(sprite, trgSel, selMode)
+        app.refresh()
+    end
+}
+
 dlg:newrow { always = false }
 
 dlg:button {
@@ -338,25 +363,32 @@ dlg:button {
 }
 
 dlg:button {
-    id = "inSquareButton",
-    text = "S&QUARE",
+    id = "bottomHalfButton",
+    text = "BOTTO&M",
     focus = false,
-    visible = false,
     onclick = function()
-        -- https://en.wikipedia.org/wiki/Rabatment_of_the_rectangle
         local site <const> = app.site
         local sprite <const> = site.sprite
         if not sprite then return end
-        local spec <const> = sprite.spec
         local args <const> = dlg.data
         local selMode <const> = args.selMode
             or defaults.selMode --[[@as string]]
-        local w <const> = spec.width
-        local h <const> = spec.height
-        local short <const> = math.min(w, h)
-        local x <const> = (w == short) and 0 or (w - short) // 2
-        local y <const> = (h == short) and 0 or (h - short) // 2
-        local trgSel <const> = Selection(Rectangle(x, y, short, short))
+        local spec <const> = sprite.spec
+
+        local docPrefs <const> = app.preferences.document(sprite)
+        local symPrefs <const> = docPrefs.symmetry
+        local symMode <const> = symPrefs.mode --[[@as integer]]
+
+        local y = spec.height // 2
+        local h = math.ceil(spec.height * 0.5)
+        if symMode == 2 or symMode == 3 then
+            local yAxis <const> = symPrefs.y_axis --[[@as number]]
+            y = math.floor(yAxis)
+            h = math.ceil(spec.height - yAxis)
+        end
+
+        local trgSel <const> = Selection(Rectangle(
+            0, y, spec.width, h))
         updateSel(sprite, trgSel, selMode)
         app.refresh()
     end
@@ -405,38 +437,6 @@ dlg:button {
             i = i + 1
         end
 
-        updateSel(sprite, trgSel, selMode)
-        app.refresh()
-    end
-}
-
-dlg:button {
-    id = "bottomHalfButton",
-    text = "BOTTO&M",
-    focus = false,
-    onclick = function()
-        local site <const> = app.site
-        local sprite <const> = site.sprite
-        if not sprite then return end
-        local args <const> = dlg.data
-        local selMode <const> = args.selMode
-            or defaults.selMode --[[@as string]]
-        local spec <const> = sprite.spec
-
-        local docPrefs <const> = app.preferences.document(sprite)
-        local symPrefs <const> = docPrefs.symmetry
-        local symMode <const> = symPrefs.mode --[[@as integer]]
-
-        local y = spec.height // 2
-        local h = math.ceil(spec.height * 0.5)
-        if symMode == 2 or symMode == 3 then
-            local yAxis <const> = symPrefs.y_axis --[[@as number]]
-            y = math.floor(yAxis)
-            h = math.ceil(spec.height - yAxis)
-        end
-
-        local trgSel <const> = Selection(Rectangle(
-            0, y, spec.width, h))
         updateSel(sprite, trgSel, selMode)
         app.refresh()
     end
@@ -491,6 +491,69 @@ dlg:button {
         if not activeCel then return end
 
         local trgSel <const> = AseUtilities.selectCel(activeCel)
+
+        local args <const> = dlg.data
+        local selMode <const> = args.selMode
+            or defaults.selMode --[[@as string]]
+
+        app.transaction("Select Cel", function()
+            updateSel(activeSprite, trgSel, selMode)
+        end)
+        app.refresh()
+    end
+}
+
+dlg:button {
+    id = "cursorSelectButton",
+    text = "C&URSOR",
+    focus = false,
+    visible = false,
+    onclick = function()
+        local site <const> = app.site
+        local activeSprite <const> = site.sprite
+        if not activeSprite then return end
+
+        local editor <const> = app.editor
+        if not editor then return end
+
+        local mouse <const> = editor.spritePos
+        local xMouse <const> = mouse.x
+        local yMouse <const> = mouse.y
+
+        local brush <const> = app.brush
+        local brushType <const> = brush.type
+        local brushCenter <const> = brush.center
+        local xBrCenter <const> = brushCenter.x
+        local yBrCenter <const> = brushCenter.y
+
+        local trgSel <const> = Selection()
+
+        -- For now, circle and line are not worth implementing.
+        -- Same for brush angle.
+        if brushType == BrushType.CIRCLE then
+            trgSel:add(Rectangle(xMouse, yMouse, 1, 1))
+        elseif brushType == BrushType.SQUARE then
+            local brushSize <const> = brush.size
+            trgSel:add(Rectangle(
+                xMouse - xBrCenter, yMouse - yBrCenter,
+                brushSize, brushSize))
+        elseif brushType == BrushType.LINE then
+            trgSel:add(Rectangle(xMouse, yMouse, 1, 1))
+        elseif brushType == BrushType.IMAGE then
+            local brushImage <const> = brush.image
+            if brushImage then
+                local imgSel <const> = AseUtilities.selectImage(
+                    brushImage, 0, 0, nil, activeSprite.bounds)
+                imgSel.origin = Point(
+                    xMouse - xBrCenter,
+                    yMouse - yBrCenter)
+                trgSel:add(imgSel)
+            else
+                trgSel:add(Rectangle(xMouse, yMouse, 1, 1))
+            end
+        else
+            trgSel:add(Rectangle(xMouse, yMouse, 1, 1))
+        end
 
         local args <const> = dlg.data
         local selMode <const> = args.selMode
