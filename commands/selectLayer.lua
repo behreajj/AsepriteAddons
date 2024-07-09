@@ -147,8 +147,8 @@ while i > 1 do
                                 local tileFlag <const> = pxTilef(tileEntry)
                                 local tileImage <const> = bakeFlag(
                                     tile.image, tileFlag)
-                                local xTile <const> = xLocal % wTile
-                                local yTile <const> = yLocal % hTile
+                                local xTile <const> = xLocal % tileImage.width
+                                local yTile <const> = yLocal % tileImage.height
                                 isNonZero = eval(xTile, yTile, wTile, colorMode,
                                     tileImage.bytesPerPixel, tileImage.bytes,
                                     aComp01, alphaIndex, palette)
