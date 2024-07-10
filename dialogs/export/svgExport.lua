@@ -918,7 +918,7 @@ dlg:button {
 
         -- In indexed color mode, the transparent color is ignored when the
         -- sprite has a background color.
-        local bkgStr = ""
+        local alphaIdxStr = ""
         if activeSprite.backgroundLayer ~= nil
             and colorMode == ColorMode.INDEXED then
             -- This poses a problem for animation, because the background
@@ -949,7 +949,7 @@ dlg:button {
                     and ""
                     or " visibility=\"hidden\""
 
-                bkgStr = strfmt(
+                alphaIdxStr = strfmt(
                     "<path id =\"bkg\" d=\"M %d %d L %d %d L %d %d L %d %d Z\" "
                     .. "fill=\"#%06X\"%s%s />\n",
                     border, border, wnBorder, border,
@@ -1276,7 +1276,7 @@ dlg:button {
                 wViewBox, hViewBox),
             defsStr,
             checkerStr,
-            bkgStr,
+            alphaIdxStr,
             tconcat(layerStrsArr, "\n"),
             padStr,
             borderStr,
