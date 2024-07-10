@@ -950,11 +950,11 @@ dlg:button {
                     or " visibility=\"hidden\""
 
                 alphaIdxStr = strfmt(
-                    "<path id =\"bkg\" d=\"M %d %d L %d %d L %d %d L %d %d Z\" "
-                    .. "fill=\"#%06X\"%s%s />\n",
-                    border, border, wnBorder, border,
+                    "<path id =\"bkg\"%s d=\"M %d %d L %d %d L %d %d L %d %d Z\" "
+                    .. "fill=\"#%06X\"%s />\n",
+                    visStr, border, border, wnBorder, border,
                     wnBorder, hnBorder, border, hnBorder,
-                    webHex, alphaStr, visStr)
+                    webHex, alphaStr)
             end
         end
 
