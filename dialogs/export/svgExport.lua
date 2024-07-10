@@ -30,24 +30,26 @@ local defaults <const> = {
 }
 
 local roundedRectFormat <const> = table.concat({
-    "M %.3f %.3f ",
-    "L %.3f %.3f ",
-    "C %.3f %.3f %.3f %.3f %.3f %.3f ",
-    "L %.3f %.3f ",
-    "C %.3f %.3f %.3f %.3f %.3f %.3f ",
-    "L %.3f %.3f ",
-    "C %.3f %.3f %.3f %.3f %.3f %.3f ",
-    "L %.3f %.3f ",
-    "C %.3f %.3f %.3f %.3f %.3f %.3f ",
+    "M %.3f %d ",
+    "L %.3f %d ",
+    "C %.3f %d %d %.3f %d %.3f ",
+    "L %d %.3f ",
+    "C %d %.3f %.3f %d %.3f %d ",
+    "L %.3f %d ",
+    "C %.3f %d %d %.3f %d %.3f ",
+    "L %d %.3f ",
+    "C %d %.3f %.3f %d %.3f %d ",
     "Z"
 })
 
+-- One decimal points are for the circle center,
+-- which is the top left corner plus half the size.
 local circleFormat <const> = table.concat({
-    "M %.3f %.3f ",
-    "C %.3f %.3f %.3f %.3f %.3f %.3f ",
-    "C %.3f %.3f %.3f %.3f %.3f %.3f ",
-    "C %.3f %.3f %.3f %.3f %.3f %.3f ",
-    "C %.3f %.3f %.3f %.3f %.3f %.3f ",
+    "M %.1f %d ",
+    "C %.3f %d %d %.3f %d %.1f ",
+    "C %d %.3f %.3f %d %.1f %d ",
+    "C %.3f %d %d %.3f %d %.1f ",
+    "C %d %.3f %.3f %d %.1f %d ",
     "Z"
 })
 
