@@ -6,6 +6,11 @@ local layerTargetOptions <const> = { "ACTIVE", "ALL", "RANGE" }
 local cropTypes <const> = { "CROPPED", "SPRITE" }
 
 local defaults <const> = {
+    -- If there's a malformed palette in indexed color mode, then background
+    -- layers will save with transparency where there shouldn't be.
+
+    -- "TAG" and "TAGS" frame targets are not supported because they would
+    -- require extra data to be written to the json data.
     layerTarget = "ALL",
     includeLocked = true,
     includeHidden = false,
@@ -13,7 +18,6 @@ local defaults <const> = {
     includeBkg = true,
     bakeOpacity = true,
     flatGroups = true,
-    -- TODO: Support "TAG" frame target?
     frameTarget = "ACTIVE",
     rangeStr = "",
     strExample = "4,6:9,13",
