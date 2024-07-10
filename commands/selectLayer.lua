@@ -81,6 +81,11 @@ local i = lenLayers + 1
 while i > 1 do
     i = i - 1
     local layer <const> = layers[i]
+    if layer.isBackground then
+        app.layer = layer
+        return
+    end
+
     local cel <const> = layer:cel(frObj)
     if cel then
         local celPos <const> = cel.position
