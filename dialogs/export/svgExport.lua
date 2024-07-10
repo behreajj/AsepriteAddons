@@ -945,11 +945,16 @@ dlg:button {
                     and strfmt(" fill-opacity=\"%.3f\"", aBkg / 255.0)
                     or ""
 
+                local visStr <const> = activeSprite.backgroundLayer.isVisible
+                    and ""
+                    or " visibility=\"hidden\""
+
                 bkgStr = strfmt(
                     "<path id =\"bkg\" d=\"M %d %d L %d %d L %d %d L %d %d Z\" "
-                    .. "fill=\"#%06X\"%s />\n",
+                    .. "fill=\"#%06X\"%s%s />\n",
                     border, border, wnBorder, border,
-                    wnBorder, hnBorder, border, hnBorder, webHex, alphaStr)
+                    wnBorder, hnBorder, border, hnBorder,
+                    webHex, alphaStr, visStr)
             end
         end
 
