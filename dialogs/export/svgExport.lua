@@ -161,8 +161,7 @@ local function imgToSvgStr(
             if clrIdx ~= alphaIdx then
                 local hex = clrIdxToHex[clrIdx]
                 if not hex then
-                    local aseColor <const> = palette:getColor(clrIdx)
-                    hex = aseColorToHex(aseColor, rgbColorMode)
+                    hex = aseColorToHex(palette:getColor(clrIdx), rgbColorMode)
                     clrIdxToHex[clrIdx] = hex
                 end
 
@@ -320,11 +319,10 @@ local function imgToSvgStr(
                 and strfmt(" fill-opacity=\"%.3f\"", a / 255.0)
                 or ""
 
-            local pathStr <const> = strfmt(
+            pathsArr[#pathsArr + 1] = strfmt(
                 "<path id=\"%08x\" fill=\"#%06X\"%s d=\"%s\" />",
                 hex, webHex, alphaStr,
                 tconcat(subPathsArr, " "))
-            pathsArr[#pathsArr + 1] = pathStr
         end
     end
 
@@ -931,8 +929,8 @@ dlg:button {
 
             local bkgHex = 0x0
             if alphaIdx >= 0 and alphaIdx < lenPalette1 then
-                local aseColor <const> = palette1:getColor(alphaIdx)
-                bkgHex = AseUtilities.aseColorToHex(aseColor, ColorMode.RGB)
+                bkgHex = AseUtilities.aseColorToHex(
+                    palette1:getColor(alphaIdx), ColorMode.RGB)
             end
 
             -- An indexed color mode sprite may contain a background, yet have
@@ -968,8 +966,8 @@ dlg:button {
             local chosenFrIdcs <const> = Utilities.flatArr2(
                 AseUtilities.getFrames(
                     activeSprite, frameTarget, true, rangeStr))
-            local lenChosenFrames <const> = #chosenFrIdcs
-            if lenChosenFrames <= 0 then
+            local lenChosenFrIdcs <const> = #chosenFrIdcs
+            if lenChosenFrIdcs <= 0 then
                 app.alert {
                     title = "Error",
                     text = "No frames were selected."
@@ -977,7 +975,7 @@ dlg:button {
                 return
             end
 
-            local animate <const> = lenChosenFrames > 1
+            local animate <const> = lenChosenFrIdcs > 1
             if animate then
                 local useLoop <const> = args.useLoop --[[@as boolean]]
                 local timeScalar <const> = args.timeScalar
@@ -992,7 +990,7 @@ dlg:button {
                 if useLoop then
                     animBeginStr = strfmt(
                         "0s;anim%d.end",
-                        lenChosenFrames)
+                        lenChosenFrIdcs)
                 end
                 local timeScaleVrf = 1.0
                 if timeScalar ~= 0.0 then
@@ -1021,7 +1019,7 @@ dlg:button {
                 local pixelFrameStrs <const> = {}
 
                 local i = 0
-                while i < lenChosenFrames do
+                while i < lenChosenFrIdcs do
                     i = i + 1
                     local frIdx <const> = chosenFrIdcs[i]
                     local frObj <const> = spriteFrames[frIdx]
@@ -1044,7 +1042,7 @@ dlg:button {
 
                     -- Create frame SVG string.
                     local durStr = "indefinite"
-                    if useLoop or i < lenChosenFrames then
+                    if useLoop or i < lenChosenFrIdcs then
                         -- Before time scalar, only 3 decimals were needed
                         -- because duration was truncated from millis.
                         durStr = strfmt("%.6fs", timeScaleVrf * duration)
@@ -1063,7 +1061,7 @@ dlg:button {
                 layerStrsArr[1] = tconcat(pixelFrameStrs, "\n")
             else
                 local activeFrame = site.frame
-                if lenChosenFrames > 0 then
+                if lenChosenFrIdcs > 0 then
                     activeFrame = activeSprite.frames[chosenFrIdcs[1]]
                 end
                 if not activeFrame then
@@ -1146,18 +1144,15 @@ dlg:button {
             local lenPixels <const> = wNative * hNative
             local i = 0
             while i < lenPixels do
-                local y <const> = i // wNative
-                local x <const> = i % wNative
-
-                local ax <const> = borderPad + x * wScalePad
-                local ay <const> = borderPad + y * hScalePad
-                local bx <const> = ax + wPixel
-                local by <const> = ay + hPixel
+                local x0 <const> = (i % wNative) * wScalePad + borderPad
+                local y0 <const> = (i // wNative) * hScalePad + borderPad
+                local x1 <const> = x0 + wPixel
+                local y1 <const> = y0 + hPixel
 
                 i = i + 1
                 holeStrArr[i] = strfmt(
                     "M %d %d L %d %d L %d %d L %d %d Z",
-                    ax, ay, ax, by, bx, by, bx, ay)
+                    x0, y0, x0, y1, x1, y1, x1, y0)
             end
 
             padStr = strfmt(
@@ -1304,7 +1299,7 @@ dlg:button {
                 title = "Warning",
                 text = {
                     "SVGs are not color managed.",
-                    "Vector export colors may differ from original."
+                    "Exported color may differ from original."
                 }
             }
         else
