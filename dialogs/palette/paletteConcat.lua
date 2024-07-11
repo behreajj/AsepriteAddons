@@ -297,10 +297,8 @@ dlg:button {
             local compare = nil
             if sortPreset == "GREEN_RED" then
                 compare = function(a, b)
-                    local aClr <const> = Clr.fromHex(a)
-                    local bClr <const> = Clr.fromHex(b)
-                    local aLab <const> = Clr.sRgbToSrLab2(aClr)
-                    local bLab <const> = Clr.sRgbToSrLab2(bClr)
+                    local aLab <const> = Clr.sRgbToSrLab2(Clr.fromHex(a))
+                    local bLab <const> = Clr.sRgbToSrLab2(Clr.fromHex(b))
                     return aLab.a < bLab.a
                 end
             elseif sortPreset == "ALPHA" then
@@ -311,10 +309,8 @@ dlg:button {
                 end
             elseif sortPreset == "BLUE_YELLOW" then
                 compare = function(a, b)
-                    local aClr <const> = Clr.fromHex(a)
-                    local bClr <const> = Clr.fromHex(b)
-                    local aLab <const> = Clr.sRgbToSrLab2(aClr)
-                    local bLab <const> = Clr.sRgbToSrLab2(bClr)
+                    local aLab <const> = Clr.sRgbToSrLab2(Clr.fromHex(a))
+                    local bLab <const> = Clr.sRgbToSrLab2(Clr.fromHex(b))
                     return aLab.b < bLab.b
                 end
             elseif sortPreset == "CHROMA" then
@@ -343,10 +339,8 @@ dlg:button {
                 end
             elseif sortPreset == "LUMA" then
                 compare = function(a, b)
-                    local aClr <const> = Clr.fromHex(a)
-                    local bClr <const> = Clr.fromHex(b)
-                    local aLab <const> = Clr.sRgbToSrLab2(aClr)
-                    local bLab <const> = Clr.sRgbToSrLab2(bClr)
+                    local aLab <const> = Clr.sRgbToSrLab2(Clr.fromHex(a))
+                    local bLab <const> = Clr.sRgbToSrLab2(Clr.fromHex(b))
                     return aLab.l < bLab.l
                 end
             end

@@ -334,8 +334,11 @@ dlg:button {
                             Point(xTrimRgt, yTrimRgt))
 
                         local srcOpacity <const> = srcCel.opacity
+                        local srcZIndex <const> = srcCel.zIndex
                         lftCel.opacity = srcOpacity
                         rgtCel.opacity = srcOpacity
+                        lftCel.zIndex = srcZIndex
+                        rgtCel.zIndex = srcZIndex
                     end)
             end
         end

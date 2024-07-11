@@ -740,7 +740,7 @@ dlg:button {
                 palette = sheetPalette
             }
 
-            local sheetPacket <const> = {
+            sheetPackets[tsId] = {
                 id = tsId,
                 fileName = fileNameShort,
                 baseIndex = tileSetBaseIndex,
@@ -754,7 +754,6 @@ dlg:button {
                 width = wSheet,
                 wTile = wTileTrg
             }
-            sheetPackets[tsId] = sheetPacket
         end
 
         if metaData ~= "NONE" then

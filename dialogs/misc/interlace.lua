@@ -379,8 +379,11 @@ dlg:button {
                             srcPos + offSkip)
 
                         local srcOpacity <const> = srcCel.opacity
+                        local srcZIndex <const> = srcCel.zIndex
                         pickCel.opacity = srcOpacity
                         skipCel.opacity = srcOpacity
+                        pickCel.zIndex = srcZIndex
+                        skipCel.zIndex = srcZIndex
                     end)
             end
         end
