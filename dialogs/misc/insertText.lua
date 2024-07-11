@@ -209,10 +209,9 @@ dlg:button {
         -- Begin measuring elapsed time.
         local args <const> = dlg.data
         local printElapsed <const> = args.printElapsed --[[@as boolean]]
-        local startTime = 0
+        local startTime <const> = os.clock()
         local endTime = 0
         local elapsed = 0
-        if printElapsed then startTime = os.clock() end
 
         -- Only support RGB color mode.
         if app.sprite

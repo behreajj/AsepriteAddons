@@ -330,10 +330,7 @@ dlg:button {
         -- Begin measuring elapsed time.
         local args <const> = dlg.data
         local printElapsed <const> = args.printElapsed --[[@as boolean]]
-        local startTime = 0
-        local endTime = 0
-        local elapsed = 0
-        if printElapsed then startTime = os.clock() end
+        local startTime <const> = os.clock()
 
         -- Early returns.
         local site <const> = app.site
@@ -571,8 +568,8 @@ dlg:button {
         end
 
         if printElapsed then
-            endTime = os.clock()
-            elapsed = endTime - startTime
+            local endTime <const> = os.clock()
+            local elapsed <const> = endTime - startTime
 
             local txtArr <const> = {
                 string.format("Start: %.2f", startTime),

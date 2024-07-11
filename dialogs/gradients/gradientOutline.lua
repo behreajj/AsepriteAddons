@@ -170,11 +170,9 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
+        -- TODO: Expose this option?
         local printElapsed <const> = false
-        local startTime = 0
-        local endTime = 0
-        local elapsed = 0
-        if printElapsed then startTime = os.clock() end
+        local startTime <const> = os.clock()
 
         -- Early returns.
         local site <const> = app.site
@@ -463,8 +461,8 @@ dlg:button {
         app.refresh()
 
         if printElapsed then
-            endTime = os.clock()
-            elapsed = endTime - startTime
+            local endTime <const> = os.clock()
+            local elapsed <const> = endTime - startTime
             local txtArr <const> = {
                 string.format("Start: %.2f", startTime),
                 string.format("End: %.2f", endTime),

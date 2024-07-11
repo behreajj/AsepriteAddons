@@ -2,12 +2,7 @@ dofile("../../support/aseutilities.lua")
 dofile("../../support/octree.lua")
 
 local palTypes <const> = { "ACTIVE", "FILE" }
-local colorSpaces <const> = {
-    "LINEAR_RGB",
-    "S_RGB",
-    "SR_LAB_2"
-}
-
+local colorSpaces <const> = { "LINEAR_RGB", "S_RGB", "SR_LAB_2" }
 local targets <const> = { "ACTIVE", "ALL", "RANGE" }
 
 local defaults <const> = {
@@ -177,12 +172,7 @@ dlg:button {
         -- Begin timing the function elapsed.
         local args <const> = dlg.data
         local printElapsed <const> = args.printElapsed --[[@as boolean]]
-        local startTime = 0
-        local endTime = 0
-        local elapsed = 0
-        if printElapsed then
-            startTime = os.clock()
-        end
+        local startTime <const> = os.clock()
 
         -- Early returns.
         local site <const> = app.site
@@ -413,8 +403,8 @@ dlg:button {
         app.refresh()
 
         if printElapsed then
-            endTime = os.clock()
-            elapsed = endTime - startTime
+            local endTime <const> = os.clock()
+            local elapsed <const> = endTime - startTime
             app.alert {
                 title = "Diagnostic",
                 text = {
