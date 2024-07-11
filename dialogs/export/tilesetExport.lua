@@ -641,8 +641,7 @@ dlg:button {
             local tileData <const> = {}
             local tsId <const> = tsProps["id"] --[[@as integer]]
 
-            local tileGrid <const> = tileSet.grid
-            local tileDim <const> = tileGrid.tileSize
+            local tileDim <const> = tileSet.grid.tileSize
             local wTileSrc <const> = tileDim.width
             local hTileSrc <const> = tileDim.height
 
@@ -814,8 +813,7 @@ dlg:button {
                         local lenTileSet <const> = #tileSet
                         local tileSetId <const> = tileSet.properties["id"] --[[@as integer]]
 
-                        local tileGrid <const> = tileSet.grid
-                        local tileDim <const> = tileGrid.tileSize
+                        local tileDim <const> = tileSet.grid.tileSize
                         local wTile <const> = tileDim.width
                         local hTile <const> = tileDim.height
 
@@ -989,8 +987,7 @@ dlg:button {
                     local hSprGrd = 1
                     if lenTileSets == 1 then
                         local tileSet <const> = tileSets[1]
-                        local tileGrid <const> = tileSet.grid
-                        local tileDim <const> = tileGrid.tileSize
+                        local tileDim <const> = tileSet.grid.tileSize
                         wSprGrd = math.max(1, math.abs(tileDim.width))
                         hSprGrd = math.max(1, math.abs(tileDim.height))
                     else

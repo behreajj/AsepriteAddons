@@ -286,8 +286,7 @@ dlg:button {
                 local tileSet <const> = tileSets[h]
                 local lenTileSet <const> = #tileSet
 
-                local tileGrid <const> = tileSet.grid
-                local tileSize <const> = tileGrid.tileSize
+                local tileSize <const> = tileSet.grid.tileSize
                 local wSrc <const> = max(1, abs(tileSize.width))
                 local hSrc <const> = max(1, abs(tileSize.height))
                 local lenSrc = wSrc * hSrc

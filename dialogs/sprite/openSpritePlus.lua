@@ -221,12 +221,11 @@ dlg:button {
         -- there is no new sprite.
         local palType <const> = args.palType
             or defaults.palType --[[@as string]]
-        local hexesSrgb = {}
         local hexesProfile = {}
 
         if palType ~= "DEFAULT" then
             local palFile <const> = args.palFile --[[@as string]]
-            hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
+            hexesProfile, _ = AseUtilities.asePaletteLoad(
                 palType, palFile, 0, 512, true)
         else
             -- local defaultPalette = app.defaultPalette
@@ -242,8 +241,6 @@ dlg:button {
                 hexesProfile[i] = hexesDefault[i]
             end
             -- end
-
-            hexesSrgb = hexesProfile
         end
 
         -- Shift indexed fore- and back colors to RGB.

@@ -107,8 +107,7 @@ local function moveMap(xShift, yShift)
     if activeLayer.isTilemap then
         local tileSet <const> = activeLayer.tileset
         if tileSet then
-            local tileGrid <const> = tileSet.grid
-            local tileDim <const> = tileGrid.tileSize
+            local tileDim <const> = tileSet.grid.tileSize
             local wTile <const> = tileDim.width
             local hTile <const> = tileDim.height
             xShScl = xShScl * wTile
@@ -286,8 +285,7 @@ local function transformCel(dialog, preset)
     local ytlCel <const> = celPos.y
 
     local lenTileSet <const> = #tileSet
-    local tileGrid <const> = tileSet.grid
-    local tileDim <const> = tileGrid.tileSize
+    local tileDim <const> = tileSet.grid.tileSize
     local wTile <const> = tileDim.width
     local hTile <const> = tileDim.height
     if wTile ~= hTile
@@ -745,8 +743,7 @@ dlg:button {
             local xTopLeft <const> = celPos.x
             local yTopLeft <const> = celPos.y
 
-            local tileGrid <const> = tileSet.grid
-            local tileSize <const> = tileGrid.tileSize
+            local tileSize <const> = tileSet.grid.tileSize
             local wTile <const> = tileSize.width
             local hTile <const> = tileSize.height
 
@@ -815,8 +812,7 @@ dlg:button {
 
         local tileSet <const> = activeLayer.tileset
         if not tileSet then return end
-        local tileGrid <const> = tileSet.grid
-        local tileSize <const> = tileGrid.tileSize
+        local tileSize <const> = tileSet.grid.tileSize
         local wTile <const> = tileSize.width
         local hTile <const> = tileSize.height
 

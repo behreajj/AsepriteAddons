@@ -148,8 +148,7 @@ local function getCelDataAtFrame(axis)
             if activeLayer.isTilemap then
                 local tileSet <const> = activeLayer.tileset
                 if tileSet then
-                    local tileGrid <const> = tileSet.grid
-                    local tileDim <const> = tileGrid.tileSize
+                    local tileDim <const> = tileSet.grid.tileSize
                     local wTile <const> = math.max(1, math.abs(tileDim.width))
                     local hTile <const> = math.max(1, math.abs(tileDim.height))
 

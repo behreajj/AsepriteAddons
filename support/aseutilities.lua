@@ -2211,8 +2211,7 @@ function AseUtilities.getSelectedTiles(
     local vxtlCel <const> = xtlCel or 0
 
     -- Unpack tile set.
-    local tileGrid <const> = tileSet.grid
-    local tileDim <const> = tileGrid.tileSize
+    local tileDim <const> = tileSet.grid.tileSize
     local wTile <const> = tileDim.width
     local hTile <const> = tileDim.height
     local flatDimTile <const> = wTile * hTile
@@ -2931,8 +2930,7 @@ function AseUtilities.selectImage(image, xtl, ytl, tileSet, spriteBounds)
     local mask = nil
     if colorMode == ColorMode.TILEMAP then
         if tileSet then
-            local tileGrid <const> = tileSet.grid
-            local tileDim <const> = tileGrid.tileSize
+            local tileDim <const> = tileSet.grid.tileSize
             local wTile <const> = tileDim.width
             local hTile <const> = tileDim.height
 
@@ -3053,8 +3051,7 @@ function AseUtilities.tileMapToImage(imgSrc, tileSet, sprClrMode)
             sprClrMode, srcSpec.colorSpace, srcSpec.transparentColor))
     end
 
-    local tileGrid <const> = tileSet.grid
-    local tileDim <const> = tileGrid.tileSize
+    local tileDim <const> = tileSet.grid.tileSize
     local tileWidth <const> = tileDim.width
     local tileHeight <const> = tileDim.height
 

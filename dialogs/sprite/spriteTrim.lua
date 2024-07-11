@@ -152,8 +152,7 @@ dlg:button {
             if isTilemap then
                 local tileSet <const> = layer.tileset
                 if tileSet then
-                    local tileGrid <const> = tileSet.grid
-                    local tileDim <const> = tileGrid.tileSize
+                    local tileDim <const> = tileSet.grid.tileSize
                     wTile = tileDim.width
                     hTile = tileDim.height
                 end

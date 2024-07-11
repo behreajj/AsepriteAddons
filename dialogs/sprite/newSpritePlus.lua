@@ -249,7 +249,8 @@ dlg:combobox {
     options = palTypes,
     visible = defaults.colorMode ~= "GRAY",
     onchange = function()
-        local state = dlg.data.palType
+        local args <const> = dlg.data
+        local state <const> = args.palType --[[@as string]]
         dlg:modify { id = "palFile", visible = state == "FILE" }
     end
 }
@@ -307,16 +308,14 @@ dlg:button {
         local useAspect <const> = sizeMode == "ASPECT"
 
         -- Create palette.
-        local hexesSrgb = {}
         local hexesProfile = {}
         if useGray then
             local grayCount <const> = args.grayCount
                 or AseUtilities.GRAY_COUNT --[[@as integer]]
             hexesProfile = AseUtilities.grayHexes(grayCount)
-            hexesSrgb = hexesProfile
         elseif palType ~= "DEFAULT" then
             local palFile <const> = args.palFile --[[@as string]]
-            hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
+            hexesProfile, _ = AseUtilities.asePaletteLoad(
                 palType, palFile, 0, 512, true)
         else
             -- As of circa apiVersion 24, version v1.3-rc4.
@@ -333,8 +332,6 @@ dlg:button {
                 hexesProfile[i] = hexesDefault[i]
             end
             -- end
-
-            hexesSrgb = hexesProfile
         end
 
         if prependMask then
