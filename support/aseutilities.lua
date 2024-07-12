@@ -2890,9 +2890,9 @@ function AseUtilities.skewImageY(source, angle)
     return target
 end
 
----Selects the non-zero pixels of a cel's image. Intersects the selection with
----the sprite bounds, if provided, for cases where cel may be partially outside
----the canvas edges.
+---Selects non-transparent pixels of a cel's image. Intersects the selection
+---with the sprite bounds, if provided, for cases where cel may be partially
+---outside the canvas edges.
 ---@param cel Cel cel
 ---@param spriteBounds Rectangle? sprite bounds
 ---@return Selection
@@ -2903,9 +2903,10 @@ function AseUtilities.selectCel(cel, spriteBounds)
         cel.layer.tileset, spriteBounds)
 end
 
----Selects the non-zero pixels of an image. Intersects the selection with
+---Selects non-transparent pixels of an image. Intersects the selection with
 ---the sprite bounds, if provided, for cases where cel may be partially outside
----the canvas edges.
+---the canvas edges. Ignores tile flips and rotations. For indexed color mode,
+---ignores the palette color's alpha channel.
 ---@param image Image source image
 ---@param xtl integer cel position x
 ---@param ytl integer cel position y
