@@ -30,9 +30,11 @@ if xMouse >= wSprite or yMouse >= hSprite then return end
 ---@param aComp01 number
 ---@param alphaIndex integer
 ---@param palette Palette
+---@param isBkg boolean
 ---@return boolean
 local function eval(
-    x, y, wImage, colorMode, bpp, bytesStr, aComp01, alphaIndex, palette)
+    x, y, wImage, colorMode, bpp, bytesStr, aComp01,
+    alphaIndex, palette, isBkg)
     local dataIdx <const> = (y * wImage + x) * bpp
     local dataStr <const> = string.sub(bytesStr,
         1 + dataIdx, bpp + dataIdx)
@@ -48,7 +50,7 @@ local function eval(
         local a01 <const> = aComp01 * (a8 / 255.0)
         return a01 > 0.0
     elseif colorMode == ColorMode.INDEXED then
-        if dataInt ~= alphaIndex
+        if (isBkg or dataInt ~= alphaIndex)
             and dataInt >= 0 and dataInt < #palette then
             local aseColor <const> = palette:getColor(dataInt)
             local a8 <const> = aseColor.alpha
@@ -83,11 +85,6 @@ while i > 1 do
     local layer <const> = layers[i]
     local cel <const> = layer:cel(frObj)
     if cel then
-        if layer.isBackground then
-            app.layer = layer
-            return
-        end
-
         local celPos <const> = cel.position
         local xtlCel <const> = celPos.x
         local ytlCel <const> = celPos.y
@@ -155,13 +152,14 @@ while i > 1 do
                                 local yTile <const> = yLocal % tileImage.height
                                 isNonZero = eval(xTile, yTile, wTile, colorMode,
                                     tileImage.bytesPerPixel, tileImage.bytes,
-                                    aComp01, alphaIndex, palette)
+                                    aComp01, alphaIndex, palette, false)
                             end -- End tile exists.
                         end     -- End tile width and height equal.
                     end         -- End index is in range.
                 else
+                    local isBkg <const> = layer.isBackground
                     isNonZero = eval(xLocal, yLocal, wImage, colorMode, bpp,
-                        bytesStr, aComp01, alphaIndex, palette)
+                        bytesStr, aComp01, alphaIndex, palette, isBkg)
                 end
 
                 if isNonZero then
