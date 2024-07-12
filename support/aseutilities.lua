@@ -1389,8 +1389,15 @@ end
 ---@nodiscard
 function AseUtilities.createSpec(
     width, height, colorMode, colorSpace, alphaIndex)
-    local tcVerif <const> = alphaIndex or 0
     local cmVerif <const> = colorMode or ColorMode.RGB
+
+    -- transparentColor is an unsigned integer. Setting it to a negative
+    -- number will wrap to a large positive, e.g., 4294967295, and when the
+    -- file is saved an error will be raised.
+    local tcVerif = 0
+    if alphaIndex and alphaIndex >= 0 then
+        tcVerif = alphaIndex
+    end
 
     local wVerif = 320
     if width then
