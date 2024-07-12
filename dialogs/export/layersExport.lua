@@ -433,6 +433,10 @@ dlg:button {
         end
         local lenTopLayers <const> = #topLayers
 
+        -- Image save function has no context as to whether a background layer
+        -- image should have its transparent color treated as opaque.
+        local bkgWarnFlag = false
+
         -- Because the layers loop is the inner loop below,
         -- avoid processing this information for each frame.
         local g = 0
@@ -474,8 +478,11 @@ dlg:button {
                 lenChosenLayers = lenChosenLayers + 1
                 chosenLayers[lenChosenLayers] = topLayer
                 verifLayerNames[lenChosenLayers] = nameVerify(topLayer.name)
+                bkgWarnFlag = bkgWarnFlag or topLayer.isBackground
             end
         end
+
+        bkgWarnFlag = bkgWarnFlag and spriteColorMode == ColorMode.INDEXED
 
         if lenChosenLayers <= 0 then
             app.alert {
@@ -758,10 +765,20 @@ dlg:button {
             end
         end
 
-        app.alert {
-            title = "Success",
-            text = "File(s) exported."
-        }
+        if bkgWarnFlag then
+            app.alert {
+                title = "Warning",
+                text = {
+                    "Background layer images may not appear correctly",
+                    "if sprite transparent color was treated as opaque."
+                }
+            }
+        else
+            app.alert {
+                title = "Success",
+                text = "File(s) exported."
+            }
+        end
     end
 }
 
