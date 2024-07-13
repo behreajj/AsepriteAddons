@@ -64,6 +64,9 @@ local alphaIndex <const> = specSprite.transparentColor
 
 local palette <const> = AseUtilities.getPalette(frObj, sprite.palettes)
 
+-- TODO: Instead of getting all layers in advance, you could spare yourself
+-- by using AseUtilities.appendLeaves in the loop below and only deal with
+-- group layers if you have to...
 local layers <const> = AseUtilities.getLayerHierarchy(
     sprite, true, false, true, true)
 local lenLayers <const> = #layers

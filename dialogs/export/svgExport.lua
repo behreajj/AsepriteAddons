@@ -152,13 +152,13 @@ local function imgToSvgStr(
         ---@type table<integer, integer>
         local clrIdxToHex <const> = {}
         local aseColorToHex <const> = AseUtilities.aseColorToHex
-        local alphaIdx <const> = imgSpec.transparentColor
+        local alphaIndex <const> = imgSpec.transparentColor
         local rgbColorMode <const> = ColorMode.RGB
 
         local i = 0
         while i < imgArea do
             local clrIdx <const> = strbyte(imgBytes, 1 + i)
-            if clrIdx ~= alphaIdx then
+            if clrIdx ~= alphaIndex then
                 local hex = clrIdxToHex[clrIdx]
                 if not hex then
                     hex = aseColorToHex(palette:getColor(clrIdx), rgbColorMode)

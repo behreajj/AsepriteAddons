@@ -35,8 +35,7 @@ app.transaction("Correct Palette", function()
         local k = 0
         while k < lenAseColors do
             k = k + 1
-            local aseColor <const> = aseColors[k]
-            palette:setColor(k - 1, aseColor)
+            palette:setColor(k - 1, aseColors[k])
         end
     end
 end)

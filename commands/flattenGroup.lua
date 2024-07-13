@@ -20,7 +20,7 @@ local colorSpace <const> = spriteSpec.colorSpace
 local alphaIndex <const> = spriteSpec.transparentColor
 
 local frObjs <const> = activeSprite.frames
-local lenFrames <const> = #frObjs
+local lenFrObjs <const> = #frObjs
 
 local flatGroup <const> = AseUtilities.flattenGroup
 
@@ -28,7 +28,7 @@ app.transaction("Flatten Group", function()
     local flattened <const> = activeSprite:newLayer()
 
     local i = 0
-    while i < lenFrames do
+    while i < lenFrObjs do
         i = i + 1
         local frObj <const> = frObjs[i]
         local comp <const>, bounds <const> = flatGroup(

@@ -11,8 +11,7 @@ if range.sprite == activeSprite and (not range.isEmpty) then
     local h = 0
     while h < lenRangeLayers do
         h = h + 1
-        local rangeLayer <const> = rangeLayers[h]
-        layers[h] = rangeLayer
+        layers[h] = rangeLayers[h]
     end
 
     -- Layers can be out of order vs. the stack, even if the range
@@ -38,8 +37,7 @@ app.transaction("Ungroup Layers", function()
         local parent <const> = layer.parent
         ---@diagnostic disable-next-line: undefined-field
         if parent.__name ~= "doc::Sprite" then
-            local grandparent <const> = parent.parent
-            layer.parent = grandparent
+            layer.parent = parent.parent
         end
     end
 
