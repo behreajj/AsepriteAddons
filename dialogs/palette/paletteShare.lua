@@ -50,7 +50,7 @@ dlg:newrow { always = false }
 dlg:check {
     id = "prependMask",
     label = "Prepend Mask:",
-    selected = false,
+    selected = defaults.prependMask,
 }
 
 dlg:newrow { always = false }
@@ -110,7 +110,6 @@ dlg:button {
         local palType <const> = args.palType
             or defaults.palType --[[@as string]]
         local palFile <const> = args.palFile --[[@as string]]
-        local prependMask <const> = args.prependMask --[[@as boolean]]
         local startIndex <const> = args.startIndex
             or defaults.startIndex --[[@as integer]]
         local count <const> = args.count
@@ -160,19 +159,23 @@ dlg:button {
             end
         end
 
-        local hexesProfile = {}
-        local hexesSrgb = {}
-        hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
+        local hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
             palType, palFile, startIndex, count, true)
 
         local uniquesOnly <const> = args.uniquesOnly --[[@as boolean]]
         if uniquesOnly then
-            local uniques <const>, _ <const> = Utilities.uniqueColors(
+            local uniquesProfile <const>, _ <const> = Utilities.uniqueColors(
+                hexesProfile, true)
+            hexesProfile = uniquesProfile
+
+            local uniquesSrgb <const>, _ <const> = Utilities.uniqueColors(
                 hexesSrgb, true)
-            hexesSrgb = uniques
+            hexesSrgb = uniquesSrgb
         end
 
+        local prependMask <const> = args.prependMask --[[@as boolean]]
         if prependMask then
+            Utilities.prependMask(hexesProfile)
             Utilities.prependMask(hexesSrgb)
         end
 
