@@ -104,7 +104,7 @@ dlg:button {
 
         AseUtilities.preserveForeBack()
         local openSprites <const> = app.sprites
-        local openLen <const> = #openSprites
+        local lenOpenSprites <const> = #openSprites
 
         local args <const> = dlg.data
         local palType <const> = args.palType
@@ -131,7 +131,7 @@ dlg:button {
 
         local errorFlag = false
         local h = 0
-        while h < openLen do
+        while h < lenOpenSprites do
             h = h + 1
             local sprite <const> = openSprites[h]
             local colorMode <const> = sprite.colorMode
