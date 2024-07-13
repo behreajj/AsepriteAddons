@@ -823,7 +823,7 @@ dlg:button {
         -- Create new layer.
         local trgLayer <const> = activeSprite:newLayer()
         app.transaction("Set Layer Props", function()
-            trgLayer.name = string.format("Scale %s At %d From %d To %d",
+            trgLayer.name = string.format("Tween %s At %d From %d To %d",
                 srcLayer.name,
                 srcFrame.frameNumber + frameUiOffset,
                 frIdxOrigVerif + frameUiOffset,
