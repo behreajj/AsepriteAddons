@@ -1,3 +1,5 @@
+dofile("../../support/aseutilities.lua")
+
 local palTypes <const> = { "ACTIVE", "FILE" }
 
 local defaults <const> = {
@@ -30,7 +32,7 @@ dlg:newrow { always = false }
 
 dlg:file {
     id = "palFile",
-    filetypes = { "aseprite", "gpl", "pal", "png", "webp" },
+    filetypes = AseUtilities.FILE_FORMATS_PAL,
     open = true,
     visible = false
 }

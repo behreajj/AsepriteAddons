@@ -129,7 +129,7 @@ dlg:newrow { always = false }
 
 dlg:file {
     id = "palFile",
-    filetypes = { "aseprite", "gpl", "pal", "png", "webp" },
+    filetypes = AseUtilities.FILE_FORMATS_PAL,
     open = true,
     visible = defaults.palType == "FILE"
 }

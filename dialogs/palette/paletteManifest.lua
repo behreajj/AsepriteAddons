@@ -1,7 +1,6 @@
 dofile("../../support/textutilities.lua")
 
 local palTypes <const> = { "ACTIVE", "FILE" }
-local palFormats <const> = { "aseprite", "gpl", "png", "pal", "webp" }
 local sortPresets <const> = {
     "A", "ALPHA", "B",
     "CHROMA", "HUE",
@@ -129,7 +128,7 @@ dlg:newrow { always = false }
 
 dlg:file {
     id = "palFile",
-    filetypes = palFormats,
+    filetypes = AseUtilities.FILE_FORMATS_PAL,
     open = true,
     visible = defaults.palType == "FILE"
 }

@@ -80,6 +80,12 @@ AseUtilities.FILE_FORMATS_OPEN = {
     "png", "tga", "webp"
 }
 
+---Table of file extensions supported for open and save palette dialogs.
+AseUtilities.FILE_FORMATS_PAL = {
+    "act", "aseprite", "col", "gpl", "hex",
+    "pal", "png"
+}
+
 ---Table of file extensions supported for save file dialogs.
 AseUtilities.FILE_FORMATS_SAVE = {
     "aseprite", "bmp", "flc", "fli",
