@@ -28,7 +28,11 @@ local function loadSprite(filePath)
     local fileExt <const> = app.fs.fileExtension(filePath)
     local fileExtLower <const> = string.lower(fileExt)
     local sprite = nil
-    if fileExtLower == "gpl" or fileExtLower == "pal" then
+    if fileExtLower == "gpl"
+        or fileExtLower == "pal"
+        or fileExtLower == "act"
+        or fileExtLower == "col"
+        or fileExtLower == "hex" then
         local spriteHexes <const>, _ <const> = AseUtilities.asePaletteLoad(
             "FILE", filePath, 0, 512, true)
         local lenColors <const> = #spriteHexes
