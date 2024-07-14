@@ -4,6 +4,13 @@ local site <const> = app.site
 local srcSprite <const> = site.sprite
 if not srcSprite then return end
 
+local appTool <const> = app.tool
+if appTool then
+    if appTool.id == "slice" then
+        app.tool = "hand"
+    end
+end
+
 local appPrefs <const> = app.preferences
 local getDocPrefs <const> = appPrefs.document
 local hexToAseColor <const> = AseUtilities.hexToAseColor

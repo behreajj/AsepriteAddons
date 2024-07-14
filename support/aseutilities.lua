@@ -1444,11 +1444,10 @@ end
 ---@nodiscard
 function AseUtilities.createSprite(spec, fileName)
     -- Do not allow slices UI interface to be active.
-    local appTool <const> = app.tool
     local appPrefs <const> = app.preferences
+    local appTool <const> = app.tool
     if appTool then
-        local toolName <const> = appTool.id
-        if toolName == "slice" then
+        if appTool.id == "slice" then
             app.tool = "hand"
         end
 

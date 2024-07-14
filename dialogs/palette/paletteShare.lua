@@ -102,6 +102,13 @@ dlg:button {
             return
         end
 
+        local appTool <const> = app.tool
+        if appTool then
+            if appTool.id == "slice" then
+                app.tool = "hand"
+            end
+        end
+
         AseUtilities.preserveForeBack()
         local openSprites <const> = app.sprites
         local lenOpenSprites <const> = #openSprites
