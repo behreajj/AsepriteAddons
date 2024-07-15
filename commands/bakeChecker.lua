@@ -16,20 +16,39 @@ local appPrefs <const> = app.preferences
 if appPrefs then
     local docPrefs <const> = appPrefs.document(activeSprite)
     if docPrefs then
-        local bgPrefs <const> = docPrefs.bg
-        if bgPrefs then
-            local checkSize <const> = bgPrefs.size --[[@as Size]]
-            if checkSize then
-                wCheck = math.max(1, math.abs(checkSize.width))
-                hCheck = math.max(1, math.abs(checkSize.height))
+        -- https://github.com/aseprite/aseprite/blob/main/data/pref.xml#L521
+        local bgPref <const> = docPrefs.bg
+        if bgPref then
+            local typePref <const> = bgPref.type --[[@as integer]]
+            if typePref == 0 then
+                wCheck = 16
+                hCheck = 16
+            elseif typePref == 1 then
+                wCheck = 8
+                hCheck = 8
+            elseif typePref == 2 then
+                wCheck = 4
+                hCheck = 4
+            elseif typePref == 3 then
+                wCheck = 2
+                hCheck = 2
+            elseif typePref == 4 then
+                wCheck = 1
+                hCheck = 1
+            else
+                local checkSize <const> = bgPref.size --[[@as Size]]
+                if checkSize then
+                    wCheck = math.max(1, math.abs(checkSize.width))
+                    hCheck = math.max(1, math.abs(checkSize.height))
+                end
             end
 
-            local bgPrefColor1 <const> = bgPrefs.color1 --[[@as Color]]
+            local bgPrefColor1 <const> = bgPref.color1 --[[@as Color]]
             if bgPrefColor1 then
                 aAse = bgPrefColor1
             end
 
-            local bgPrefColor2 <const> = bgPrefs.color2 --[[@as Color]]
+            local bgPrefColor2 <const> = bgPref.color2 --[[@as Color]]
             if bgPrefColor2 then
                 bAse = bgPrefColor2
             end

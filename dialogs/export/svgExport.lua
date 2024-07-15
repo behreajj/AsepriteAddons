@@ -872,24 +872,59 @@ dlg:button {
         local defsStr = ""
         local checkerStr = ""
         if useChecker then
-            local bgPref <const> = docPrefs.bg
+            local wCheck = 8
+            local hCheck = 8
+            local aAse = Color { r = 28, g = 28, b = 28, a = 255 }
+            local bAse = Color { r = 10, g = 10, b = 10, a = 255 }
 
-            local size <const> = bgPref.size --[[@as Size]]
-            local wCheck <const> = math.max(1, math.abs(size.width))
-            local hCheck <const> = math.max(1, math.abs(size.height))
+            -- https://github.com/aseprite/aseprite/blob/main/data/pref.xml#L521
+            local bgPref <const> = docPrefs.bg
+            if bgPref then
+                local typePref <const> = bgPref.type --[[@as integer]]
+                if typePref == 0 then
+                    wCheck = 16
+                    hCheck = 16
+                elseif typePref == 1 then
+                    wCheck = 8
+                    hCheck = 8
+                elseif typePref == 2 then
+                    wCheck = 4
+                    hCheck = 4
+                elseif typePref == 3 then
+                    wCheck = 2
+                    hCheck = 2
+                elseif typePref == 4 then
+                    wCheck = 1
+                    hCheck = 1
+                else
+                    local checkSize <const> = bgPref.size --[[@as Size]]
+                    if checkSize then
+                        wCheck = math.max(1, math.abs(checkSize.width))
+                        hCheck = math.max(1, math.abs(checkSize.height))
+                    end
+                end
+
+                if bgPref.color1 then
+                    aAse = bgPref.color1 --[[@as Color]]
+                end
+
+                if bgPref.color2 then
+                    bAse = bgPref.color2 --[[@as Color]]
+                end
+            end
+
             local wCheckScaled <const> = wCheck * wPixel
             local hCheckScaled <const> = hCheck * hPixel
             local wcs2 <const> = wCheckScaled + wCheckScaled
             local hcs2 <const> = hCheckScaled + hCheckScaled
 
-            local aColor <const> = bgPref.color1 --[[@as Color]]
-            local aHex <const> = aColor.red << 0x10
-                | aColor.green << 0x08
-                | aColor.blue
-            local bColor <const> = bgPref.color2 --[[@as Color]]
-            local bHex <const> = bColor.red << 0x10
-                | bColor.green << 0x08
-                | bColor.blue
+            local aWebHex <const> = aAse.red << 0x10
+                | aAse.green << 0x08
+                | aAse.blue
+
+            local bWebHex <const> = bAse.red << 0x10
+                | bAse.green << 0x08
+                | bAse.blue
 
             local sqFmt <const> = "<path d=\"M %d %d L %d %d L %d %d L %d %d "
                 .. "Z M %d %d L %d %d L %d %d L %d %d Z\" fill=\"#%06x\" />\n"
@@ -901,10 +936,10 @@ dlg:button {
                     border, border, wcs2, hcs2, "userSpaceOnUse"),
                 strfmt(sqFmt, 0, 0, wCheckScaled, 0, wCheckScaled, hCheckScaled,
                     0, hCheckScaled, wCheckScaled, hCheckScaled, wcs2,
-                    hCheckScaled, wcs2, hcs2, wCheckScaled, hcs2, aHex),
+                    hCheckScaled, wcs2, hcs2, wCheckScaled, hcs2, aWebHex),
                 strfmt(sqFmt, wCheckScaled, 0, wcs2, 0, wcs2, hCheckScaled,
                     wCheckScaled, hCheckScaled, 0, hCheckScaled, wCheckScaled,
-                    hCheckScaled, wCheckScaled, hcs2, 0, hcs2, bHex),
+                    hCheckScaled, wCheckScaled, hcs2, 0, hcs2, bWebHex),
                 "</pattern>\n",
                 "</defs>\n"
             })
