@@ -912,12 +912,9 @@ function CanvasUtilities.spectrum(
 
     local isVisVrf = false
     if isVisible then isVisVrf = true end
-    local hVrf = height or 128
-    local wVrf = width or 128
+    local hVrf <const> = math.max(8, height or 128)
+    local wVrf <const> = math.max(8, width or 128)
     local idVrf <const> = id or "spectrum"
-
-    wVrf = math.max(8, wVrf)
-    hVrf = math.max(8, hVrf)
 
     local spectrumHeight <const> = math.floor(0.5 + hVrf * (40.0 / 56.0))
     local chrBarHeight <const> = math.floor(0.5 + hVrf * (8.0 / 56.0))
@@ -1017,14 +1014,11 @@ function CanvasUtilities.spectrum(
                 local x <const> = pixel.x
                 local y <const> = pixel.y
                 if y < spectrumHeight then
-                    local l <const> = 100.0 - y * yToLgt
-                    local h <const> = x * xToHue
-                    local clr <const> = lchTosRgb(l, cActive, h, 1.0)
-                    pixel(toHex(clr))
+                    pixel(toHex(lchTosRgb(
+                        100.0 - y * yToLgt, cActive, x * xToHue, 1.0)))
                 elseif y < chrBarThresh then
-                    local c <const> = x * xToChr
-                    local clr <const> = lchTosRgb(lActive, c, hActive, 1.0)
-                    pixel(toHex(clr))
+                    pixel(toHex(lchTosRgb(
+                        lActive, x * xToChr, hActive, 1.0)))
                 else
                     local v <const> = floor(x * xToAlpha255 + 0.5)
                     pixel(0xff000000 | v << 0x10 | v << 0x08 | v)
