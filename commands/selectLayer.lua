@@ -132,7 +132,6 @@ while h > 1 do
 
                     local bytesStr <const> = image.bytes
                     local bpp <const> = image.bytesPerPixel
-                    local unpackFmt <const> = "I" .. bpp
 
                     local isNonZero = false
                     if isTileMap then
@@ -143,7 +142,7 @@ while h > 1 do
                         local dataStr <const> = strsub(bytesStr,
                             1 + dataIdx, bpp + dataIdx)
 
-                        local tileEntry <const> = strunpack(unpackFmt, dataStr)
+                        local tileEntry <const> = strunpack("I" .. bpp, dataStr)
                         local tileIndex <const> = pxTilei(tileEntry)
 
                         if tileIndex > 0 and tileIndex < lenTileSet then
