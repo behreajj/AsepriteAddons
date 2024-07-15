@@ -36,8 +36,7 @@ local function eval(
     local dataIdx <const> = (y * wImage + x) * bpp
     local dataStr <const> = string.sub(bytesStr,
         1 + dataIdx, bpp + dataIdx)
-    local unpackFmt <const> = "I" .. bpp
-    local dataInt <const> = string.unpack(unpackFmt, dataStr)
+    local dataInt <const> = string.unpack("I" .. bpp, dataStr)
 
     if colorMode == ColorMode.RGB then
         local a8 <const> = (dataInt >> 0x18) & 0xff
@@ -64,114 +63,119 @@ local alphaIndex <const> = specSprite.transparentColor
 
 local palette <const> = AseUtilities.getPalette(frObj, sprite.palettes)
 
--- TODO: Instead of getting all layers in advance, you could spare yourself
--- by using AseUtilities.appendLeaves in the loop below and only deal with
--- group layers if you have to...
-local layers <const> = AseUtilities.getLayerHierarchy(
-    sprite, true, false, true, true)
-local lenLayers <const> = #layers
-
 local max <const> = math.max
 local abs <const> = math.abs
 local strsub <const> = string.sub
 local strunpack <const> = string.unpack
 
+local appendLeaves <const> = AseUtilities.appendLeaves
 local bakeFlag <const> = AseUtilities.bakeFlag
 local pxTilei <const> = app.pixelColor.tileI
 local pxTilef <const> = app.pixelColor.tileF
 
-local i = lenLayers + 1
-while i > 1 do
-    i = i - 1
-    local layer <const> = layers[i]
-    local cel <const> = layer:cel(frObj)
-    if cel then
-        if layer.isBackground then
-            app.layer = layer
-            return
-        end
+local topLayers <const> = sprite.layers
+local lenTopLayers <const> = #topLayers
 
-        local celPos <const> = cel.position
-        local xtlCel <const> = celPos.x
-        local ytlCel <const> = celPos.y
-        if xMouse >= xtlCel and yMouse >= ytlCel then
-            local wTile = 1
-            local hTile = 1
-
-            local isTileMap <const> = layer.isTilemap
-            local tileSet = nil
-            local lenTileSet = 0
-
-            if isTileMap then
-                tileSet = layer.tileset
-                if tileSet then
-                    local tileSize <const> = tileSet.grid.tileSize
-                    wTile = max(1, abs(tileSize.width))
-                    hTile = max(1, abs(tileSize.height))
-                    lenTileSet = #tileSet
-                end
+local h = lenTopLayers + 1
+while h > 1 do
+    h = h - 1
+    local topLayer <const> = topLayers[h]
+    local leaves <const> = appendLeaves(topLayer, {}, true, false, true, true)
+    local lenLeaves <const> = #leaves
+    local i = lenLeaves + 1
+    while i > 1 do
+        i = i - 1
+        local leaf <const> = leaves[i]
+        local cel <const> = leaf:cel(frObj)
+        if cel then
+            if leaf.isBackground then
+                app.layer = leaf
+                return
             end
 
-            local image <const> = cel.image
-            local specImage <const> = image.spec
-            local wImage <const> = specImage.width
-            local hImage <const> = specImage.height
+            local celPos <const> = cel.position
+            local xtlCel <const> = celPos.x
+            local ytlCel <const> = celPos.y
+            if xMouse >= xtlCel and yMouse >= ytlCel then
+                local wTile = 1
+                local hTile = 1
 
-            local xbrCel <const> = xtlCel + wImage * wTile - 1
-            local ybrCel <const> = ytlCel + hImage * hTile - 1
+                local isTileMap <const> = leaf.isTilemap
+                local tileSet = nil
+                local lenTileSet = 0
 
-            if xMouse <= xbrCel and yMouse <= ybrCel then
-                local xLocal <const> = xMouse - xtlCel
-                local yLocal <const> = yMouse - ytlCel
-
-                local aLayer8 <const> = layer.opacity or 255
-                local aCel8 <const> = cel.opacity
-                local aComp01 <const> = (aLayer8 / 255.0) * (aCel8 / 255.0)
-
-                local bytesStr <const> = image.bytes
-                local bpp <const> = image.bytesPerPixel
-                local unpackFmt <const> = "I" .. bpp
-
-                local isNonZero = false
                 if isTileMap then
-                    local xMap <const> = xLocal // wTile
-                    local yMap <const> = yLocal // hTile
-
-                    local dataIdx <const> = (yMap * wImage + xMap) * bpp
-                    local dataStr <const> = strsub(bytesStr,
-                        1 + dataIdx, bpp + dataIdx)
-
-                    local tileEntry <const> = strunpack(unpackFmt, dataStr)
-                    local tileIndex <const> = pxTilei(tileEntry)
-
-                    if tileIndex > 0 and tileIndex < lenTileSet then
-                        -- For cases where tile sizes are unequal, aComp01
-                        -- being non-zero is good enough.
-                        isNonZero = aComp01 > 0.0
-                        if tileSet and wTile == hTile then
-                            local tile <const> = tileSet:tile(tileIndex)
-                            if tile then
-                                local tileFlag <const> = pxTilef(tileEntry)
-                                local tileImage <const> = bakeFlag(
-                                    tile.image, tileFlag)
-                                local xTile <const> = xLocal % tileImage.width
-                                local yTile <const> = yLocal % tileImage.height
-                                isNonZero = eval(xTile, yTile, wTile, colorMode,
-                                    tileImage.bytesPerPixel, tileImage.bytes,
-                                    aComp01, alphaIndex, palette)
-                            end -- End tile exists.
-                        end     -- End tile width and height equal.
-                    end         -- End index is in range.
-                else
-                    isNonZero = eval(xLocal, yLocal, wImage, colorMode, bpp,
-                        bytesStr, aComp01, alphaIndex, palette)
+                    tileSet = leaf.tileset
+                    if tileSet then
+                        local tileSize <const> = tileSet.grid.tileSize
+                        wTile = max(1, abs(tileSize.width))
+                        hTile = max(1, abs(tileSize.height))
+                        lenTileSet = #tileSet
+                    end
                 end
 
-                if isNonZero then
-                    app.layer = layer
-                    return
-                end -- End pixel is not transparent.
-            end     -- End mouse within upper bound.
-        end         -- End mouse within lower bound.
-    end             -- End cel is not nil.
-end                 -- End layers loop.
+                local image <const> = cel.image
+                local specImage <const> = image.spec
+                local wImage <const> = specImage.width
+                local hImage <const> = specImage.height
+
+                local xbrCel <const> = xtlCel + wImage * wTile - 1
+                local ybrCel <const> = ytlCel + hImage * hTile - 1
+
+                if xMouse <= xbrCel and yMouse <= ybrCel then
+                    local xLocal <const> = xMouse - xtlCel
+                    local yLocal <const> = yMouse - ytlCel
+
+                    local aLayer8 <const> = leaf.opacity or 255
+                    local aCel8 <const> = cel.opacity
+                    local aComp01 <const> = (aLayer8 / 255.0) * (aCel8 / 255.0)
+
+                    local bytesStr <const> = image.bytes
+                    local bpp <const> = image.bytesPerPixel
+                    local unpackFmt <const> = "I" .. bpp
+
+                    local isNonZero = false
+                    if isTileMap then
+                        local xMap <const> = xLocal // wTile
+                        local yMap <const> = yLocal // hTile
+
+                        local dataIdx <const> = (yMap * wImage + xMap) * bpp
+                        local dataStr <const> = strsub(bytesStr,
+                            1 + dataIdx, bpp + dataIdx)
+
+                        local tileEntry <const> = strunpack(unpackFmt, dataStr)
+                        local tileIndex <const> = pxTilei(tileEntry)
+
+                        if tileIndex > 0 and tileIndex < lenTileSet then
+                            -- For cases where tile sizes are unequal, aComp01
+                            -- being non-zero is good enough.
+                            isNonZero = aComp01 > 0.0
+                            if tileSet and wTile == hTile then
+                                local tile <const> = tileSet:tile(tileIndex)
+                                if tile then
+                                    local tileFlag <const> = pxTilef(tileEntry)
+                                    local tileImage <const> = bakeFlag(
+                                        tile.image, tileFlag)
+                                    local xTile <const> = xLocal % tileImage.width
+                                    local yTile <const> = yLocal % tileImage.height
+                                    isNonZero = eval(xTile, yTile, wTile,
+                                        colorMode, tileImage.bytesPerPixel,
+                                        tileImage.bytes, aComp01, alphaIndex,
+                                        palette)
+                                end -- End tile exists.
+                            end     -- End tile width and height equal.
+                        end         -- End index is in range.
+                    else
+                        isNonZero = eval(xLocal, yLocal, wImage, colorMode, bpp,
+                            bytesStr, aComp01, alphaIndex, palette)
+                    end
+
+                    if isNonZero then
+                        app.layer = leaf
+                        return
+                    end -- End pixel is not transparent.
+                end     -- End mouse within upper bound.
+            end         -- End mouse within lower bound.
+        end             -- End cel is not nil.
+    end                 -- End leaves loop.
+end                     -- End top layers loop.
