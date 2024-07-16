@@ -201,9 +201,9 @@ dlg:button {
             nameFormat = "[%02d,%02d]"
         end
 
-        -- A selection transformation preview state will stop this script at
-        -- this point, even though there's no reason for it to. You could
-        -- insert double InvertMask commands if you wanted to counter that.
+        -- Acquire tool for no other reason than to prevent transformation
+        -- preview from stopping script.
+        local _ <const> = app.tool
 
         if deleteExisting then
             local oldTags <const> = activeSprite.tags
@@ -212,8 +212,7 @@ dlg:button {
                 local h = lenOldTags + 1
                 while h > 1 do
                     h = h - 1
-                    local oldTag <const> = oldTags[h]
-                    activeSprite:deleteTag(oldTag)
+                    activeSprite:deleteTag(oldTags[h])
                 end
             end)
         end

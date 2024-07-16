@@ -1,5 +1,6 @@
 dofile("../support/aseutilities.lua")
 
+-- TODO: Apply this to all open sprites, not just active sprite?
 local activeSprite <const> = app.site.sprite
 if not activeSprite then return end
 

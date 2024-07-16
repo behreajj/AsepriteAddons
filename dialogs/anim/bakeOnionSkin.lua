@@ -458,8 +458,7 @@ dlg:button {
 
                                 local x <const> = xOffset + k % width
                                 local y <const> = yOffset + k // width
-                                local m <const> = y * wTrg + x
-                                local m4 <const> = m * 4
+                                local m4 <const> = (y * wTrg + x) * 4
                                 local rOrig <const> = pxTrg[1 + m4]
                                 local gOrig <const> = pxTrg[2 + m4]
                                 local bOrig <const> = pxTrg[3 + m4]

@@ -327,8 +327,7 @@ dlg:button {
                 local j = 0
                 while j < lenLeaves do
                     j = j + 1
-                    local leaf <const> = leaves[j]
-                    local cel <const> = leaf:cel(i)
+                    local cel <const> = leaves[j]:cel(i)
                     if cel then
                         cel.color = ase
                     end
@@ -445,8 +444,7 @@ dlg:button {
                         local right <const> = samples[2 + tFloor].y
                         t = (1.0 - tFrac) * left + tFrac * right
                     end
-                    local u <const> = 1.0 - t
-                    local dur <const> = u * durOrig + t * durDest
+                    local dur <const> = (1.0 - t) * durOrig + t * durDest
                     frObj.duration = dur
 
                     j = j + 1
