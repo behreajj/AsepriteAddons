@@ -881,7 +881,6 @@ dlg:button {
             local j = 0
             while j < countFrames do
                 local frIdx <const> = frIdxOrigVerif + j
-                local frObj <const> = frObjs[frIdx]
 
                 local trgImg = resize(srcImg, wCurr, hCurr)
                 trgImg = rotateImage(trgImg, currDeg)
@@ -891,7 +890,7 @@ dlg:button {
 
                 transact("Anim Cel", function()
                     activeSprite:newCel(
-                        trgLayer, frObj, trgImg, trgPoint)
+                        trgLayer, frIdx, trgImg, trgPoint)
                 end)
 
                 j = j + 1

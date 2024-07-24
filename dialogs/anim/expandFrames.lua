@@ -364,8 +364,7 @@ dlg:button {
                                             local yNext <const> = yComp + ytlDiffNext
                                             if yNext >= 0 and yNext < hNext
                                                 and xNext >= 0 and xNext < wNext then
-                                                local kNext <const> = yNext * wNext + xNext
-                                                local kn4 <const> = kNext * 4
+                                                local kn4 <const> = (yNext * wNext + xNext) * 4
 
                                                 rNext = bytesNext[1 + kn4]
                                                 gNext = bytesNext[2 + kn4]
@@ -382,8 +381,7 @@ dlg:button {
                                             local yPrev <const> = yComp + ytlDiffPrev
                                             if yPrev >= 0 and yPrev < hPrev
                                                 and xPrev >= 0 and xPrev < wPrev then
-                                                local kPrev <const> = yPrev * wPrev + xPrev
-                                                local kp4 <const> = kPrev * 4
+                                                local kp4 <const> = (yPrev * wPrev + xPrev) * 4
 
                                                 rPrev = bytesPrev[1 + kp4]
                                                 gPrev = bytesPrev[2 + kp4]

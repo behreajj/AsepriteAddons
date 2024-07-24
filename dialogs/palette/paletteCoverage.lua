@@ -271,6 +271,7 @@ dlg:button {
         local fromHex <const> = Clr.fromHex
         local rotax <const> = Vec3.rotateInternal
         local v3hash <const> = Vec3.hashCode
+        local v3new <const> = Vec3.new
         local octins <const> = Octree.insert
         local search <const> = Octree.queryInternal
         local distFunc <const> = function(a, b)
@@ -348,7 +349,7 @@ dlg:button {
             j = j + 1
             local srcClr <const> = gridClrs[j]
             local srcLab <const> = sRgbToLab(srcClr)
-            local srcLabPt <const> = Vec3.new(
+            local srcLabPt <const> = v3new(
                 srcLab.a, srcLab.b, srcLab.l)
 
             local nearPoint <const>, _ <const> = search(octree, srcLabPt, queryRad, distFunc)
