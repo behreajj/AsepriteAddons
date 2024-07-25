@@ -124,7 +124,7 @@ dlg:check {
 
 dlg:check {
     id = "absOpaque",
-    text = "Transparent",
+    text = "&Mask",
     selected = defaults.absOpaque
 }
 
