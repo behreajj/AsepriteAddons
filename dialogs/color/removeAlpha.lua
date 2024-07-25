@@ -11,6 +11,7 @@ local defaults <const> = {
     includeBkg = true,
     absOpaque = false,
     removeNonActive = false,
+    removeTools = false,
     removeLayer = "ALL",
     removeCel = "ALL",
     removeImage = "ALL",
@@ -111,7 +112,14 @@ dlg:newrow { always = false }
 dlg:check {
     id = "removeNonActive",
     text = "&Inactive",
-    selected = defaults.removeNonActive
+    selected = defaults.removeNonActive,
+    visible = false
+}
+
+dlg:check {
+    id = "removeTools",
+    text = "Tool&s",
+    selected = defaults.removeTools
 }
 
 dlg:check {
@@ -193,6 +201,7 @@ dlg:button {
         local includeTiles <const> = args.includeTiles --[[@as boolean]]
         local includeBkg <const> = args.includeBkg --[[@as boolean]]
         local removeNonActive <const> = args.removeNonActive --[[@as boolean]]
+        local removeTools <const> = args.removeTools --[[@as boolean]]
         local absOpaque <const> = args.absOpaque --[[@as boolean]]
 
         local opaqueLayer <const> = args.removeLayer
@@ -387,6 +396,38 @@ dlg:button {
                     end
                     if experimental.nonactive_layers_opacity_preview then
                         experimental.nonactive_layers_opacity_preview = 255
+                    end
+                end
+            end
+        end
+
+        if removeTools then
+            local appPrefs <const> = app.preferences
+            if appPrefs then
+                -- Preferences seem to read and write as 255, regardless of UI.
+                -- local maxOpacity = 255
+                -- local maxPref <const> = appPrefs.range
+                -- if maxPref then
+                --     local opacPref <const> = maxPref.opacity
+                --     if opacPref and opacPref == 1 then
+                --         maxOpacity = 100
+                --     end
+                -- end
+
+                local toolsWithAlpha <const> = {
+                    "pencil", "spray", "eraser", "paint_bucket", "gradient",
+                    "contour", "polygon", "blur", "jumble"
+                }
+                local lenToolsWithAlpha <const> = #toolsWithAlpha
+
+                local i = 0
+                while i < lenToolsWithAlpha do
+                    i = i + 1
+                    local tool <const> = toolsWithAlpha[i]
+                    local toolPref <const> = appPrefs.tool(tool)
+                    if toolPref and toolPref.opacity then
+                        -- print(string.format("\"%s\": %d", tool, toolPref.opacity))
+                        toolPref.opacity = 255
                     end
                 end
             end

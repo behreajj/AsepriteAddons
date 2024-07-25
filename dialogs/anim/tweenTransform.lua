@@ -1001,7 +1001,7 @@ dlg:button {
 
             local j = 0
             while j < countFrames do
-                local frObj <const> = frObjs[frIdxOrigVerif + j]
+                local frIdx <const> = frIdxOrigVerif + j
                 local fac <const> = factors[1 + j]
                 local t = eval(curve, fac).x
                 -- Can go out of bounds with 0.0 and 1.0 as boundaries
@@ -1039,7 +1039,7 @@ dlg:button {
 
                 transact("Anim Cel", function()
                     activeSprite:newCel(
-                        trgLayer, frObj, trgImg, trgPoint)
+                        trgLayer, frIdx, trgImg, trgPoint)
                 end)
 
                 j = j + 1
