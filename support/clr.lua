@@ -229,23 +229,30 @@ function Clr.fromHexWeb(hexstr)
         s = string.sub(s, 2)
     end
 
-    -- Account for #abc.
-    if #s == 3 then
-        local r <const> = string.sub(s, 1, 1)
-        local g <const> = string.sub(s, 2, 2)
-        local b <const> = string.sub(s, 3, 3)
-        s = r .. r .. g .. g .. b .. b
+    local sn <const> = tonumber(s, 16)
+    local lens <const> = #s
+    if sn then
+        if lens == 3 then
+            return Clr.new(
+                (sn >> 0x8 & 0xf) / 15.0,
+                (sn >> 0x4 & 0xf) / 15.0,
+                (sn & 0xf) / 15.0,
+                1.0)
+        elseif lens == 4 then
+            return Clr.new(
+                (sn >> 0xb & 0x1f) / 31.0,
+                (sn >> 0x5 & 0x3f) / 63.0,
+                (sn >> 0x0 & 0x1f) / 31.0,
+                1.0)
+        elseif lens == 6 then
+            return Clr.new(
+                (sn >> 0x10 & 0xff) / 255.0,
+                (sn >> 0x08 & 0xff) / 255.0,
+                (sn & 0xff) / 255.0,
+                1.0)
+        end
     end
 
-    -- tonumber may return fail.
-    local sn <const> = tonumber(s, 16)
-    if sn then
-        return Clr.new(
-            (sn >> 0x10 & 0xff) / 255.0,
-            (sn >> 0x08 & 0xff) / 255.0,
-            (sn & 0xff) / 255.0,
-            1.0)
-    end
     return Clr.new(0.0, 0.0, 0.0, 0.0)
 end
 
