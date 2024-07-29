@@ -230,8 +230,8 @@ function Clr.fromHexWeb(hexstr)
     end
 
     local sn <const> = tonumber(s, 16)
-    local lens <const> = #s
     if sn then
+        local lens <const> = #s
         if lens == 3 then
             return Clr.new(
                 (sn >> 0x8 & 0xf) / 15.0,
@@ -239,6 +239,7 @@ function Clr.fromHexWeb(hexstr)
                 (sn & 0xf) / 15.0,
                 1.0)
         elseif lens == 4 then
+            -- Assume RGB565.
             return Clr.new(
                 (sn >> 0xb & 0x1f) / 31.0,
                 (sn >> 0x5 & 0x3f) / 63.0,
