@@ -243,7 +243,7 @@ function Clr.fromHexWeb(hexstr)
             return Clr.new(
                 (sn >> 0xb & 0x1f) / 31.0,
                 (sn >> 0x5 & 0x3f) / 63.0,
-                (sn >> 0x0 & 0x1f) / 31.0,
+                (sn & 0x1f) / 31.0,
                 1.0)
         elseif lens == 6 then
             return Clr.new(

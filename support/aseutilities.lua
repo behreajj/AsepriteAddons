@@ -585,7 +585,7 @@ function AseUtilities.averageColor(sprite, frObj)
     local wSprite <const> = sprSpec.width
     local hSprite <const> = sprSpec.height
 
-    if xMouse <= 0 or yMouse <= 0
+    if xMouse < 0 or yMouse < 0
         or xMouse >= wSprite or yMouse >= hSprite then
         return { l = 0.0, a = 0.0, b = 0.0, alpha = 0.0 }
     end
@@ -700,7 +700,7 @@ function AseUtilities.averageNormal(sprite, frObj)
     local wSprite <const> = sprSpec.width
     local hSprite <const> = sprSpec.height
 
-    if xMouse <= 0 or yMouse <= 0
+    if xMouse < 0 or yMouse < 0
         or xMouse >= wSprite or yMouse >= hSprite then
         return Vec3.up()
     end
