@@ -15,7 +15,6 @@ local sprite <const> = site.sprite
 if not sprite then return end
 
 local defaults <const> = {
-    -- TODO: Allow background checker to be set along with grid?
     textLenLimit = 32,
     maskWarningInvalid = "Mask index is out of bounds.",
     maskWarningIndex = "Mask index is not zero.",
@@ -352,23 +351,25 @@ local hGridOld <const> = spriteGrid.height
 -- since its grid is independent from the sprite grid.
 dlg:number {
     id = "xGrid",
-    label = "Grid:",
     text = string.format("%d", xGridOld),
     decimals = 0,
-    focus = false
+    focus = false,
+    visible = false
 }
 
 dlg:number {
     id = "yGrid",
     text = string.format("%d", yGridOld),
     decimals = 0,
-    focus = false
+    focus = false,
+    visible = false
 }
 
 dlg:newrow { always = false }
 
 dlg:number {
     id = "wGrid",
+    label = "Grid:",
     text = string.format("%d", wGridOld),
     decimals = 0,
     focus = false
@@ -382,6 +383,26 @@ dlg:number {
 }
 
 dlg:newrow { always = false }
+
+if appPrefs then
+    local docPrefs <const> = appPrefs.document(sprite)
+    if docPrefs then
+        local bgPref <const> = docPrefs.bg
+        if bgPref then
+            dlg:color {
+                id = "bkg1",
+                color = AseUtilities.aseColorCopy(bgPref.color1, "")
+            }
+
+            dlg:color {
+                id = "bkg2",
+                color = AseUtilities.aseColorCopy(bgPref.color2, "")
+            }
+
+            dlg:newrow { always = false }
+        end
+    end
+end
 
 dlg:button {
     id = "confirm",
@@ -413,6 +434,22 @@ dlg:button {
                 sprite.color = AseUtilities.aseColorCopy(sprColor, "")
                 sprite.data = userDataNew
             end)
+
+            if appPrefs then
+                local docPrefs <const> = appPrefs.document(sprite)
+                if docPrefs then
+                    local bgPref <const> = docPrefs.bg
+                    if bgPref then
+                        local bkg1 <const> = args.bkg1 --[[@as Color]]
+                        local bkg2 <const> = args.bkg2 --[[@as Color]]
+
+                        bgPref.type = 5
+                        bgPref.size = Size(wGridNew, hGridNew)
+                        bgPref.color1 = AseUtilities.aseColorCopy(bkg1, "")
+                        bgPref.color2 = AseUtilities.aseColorCopy(bkg2, "")
+                    end
+                end
+            end
 
             -- Refresh command cannot be used to update sprite tab color
             -- because it crashes older versions of Aseprite.
