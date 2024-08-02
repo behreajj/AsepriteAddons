@@ -1,3 +1,5 @@
+dofile("../../support/aseutilities.lua")
+
 local targets <const> = { "ALL", "AFTER", "BEFORE" }
 local fillOpts <const> = { "CROSS_FADE", "EMPTY", "SUSTAIN" }
 
