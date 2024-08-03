@@ -207,6 +207,7 @@ dlg:button {
             local lenFileData <const> = #fileData
             -- print(string.format("lenFileData: %d", lenFileData))
 
+            -- TODO: Make the endianness of these explicit with < or >
             local magicWordRiff <const> = strunpack("I4",
                 strsub(fileData, 1, 4))
             local magicCheckRiff <const> = strunpack("I4", "RIFF")

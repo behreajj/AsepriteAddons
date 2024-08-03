@@ -1,11 +1,15 @@
 dofile("../../support/aseutilities.lua")
 
-local cropTypes <const> = { "CROP", "EXPAND", "SELECTION" }
+local cropTypes <const> = { "CROP", "EDGES", "EXPAND", "SELECTION" }
 
 local defaults <const> = {
     cropType = "SELECTION",
     includeLocked = false,
     includeHidden = true,
+    leftEdge = 0,
+    topEdge = 0,
+    rightEdge = 0,
+    bottomEdge = 0,
     padding = 0,
     trimFrames = false
 }
@@ -16,24 +20,55 @@ dlg:combobox {
     id = "cropType",
     label = "Mode:",
     option = defaults.cropType,
-    options = cropTypes
+    options = cropTypes,
+    onchange = function()
+        local args <const> = dlg.data
+        local cropType <const> = args.cropType
+        local isEdges <const> = cropType == "EDGES"
+        dlg:modify { id = "leftEdge", visible = isEdges }
+        dlg:modify { id = "topEdge", visible = isEdges }
+        dlg:modify { id = "rightEdge", visible = isEdges }
+        dlg:modify { id = "bottomEdge", visible = isEdges }
+        dlg:modify { id = "padding", visible = not isEdges }
+    end
 }
 
 dlg:newrow { always = false }
 
-dlg:check {
-    id = "includeLocked",
-    label = "Include:",
-    text = "&Locked",
+dlg:number {
+    id = "leftEdge",
+    label = "Top Left:",
+    text = string.format("%d", defaults.leftEdge),
+    decimals = 0,
     focus = false,
-    selected = defaults.includeLocked
+    visible = defaults.cropType == "EDGES"
 }
 
-dlg:check {
-    id = "includeHidden",
-    text = "&Hidden",
+dlg:number {
+    id = "topEdge",
+    text = string.format("%d", defaults.topEdge),
+    decimals = 0,
     focus = false,
-    selected = defaults.includeHidden
+    visible = defaults.cropType == "EDGES"
+}
+
+dlg:newrow { always = false }
+
+dlg:number {
+    id = "rightEdge",
+    label = "Bottom Right:",
+    text = string.format("%d", defaults.rightEdge),
+    decimals = 0,
+    focus = false,
+    visible = defaults.cropType == "EDGES"
+}
+
+dlg:number {
+    id = "bottomEdge",
+    text = string.format("%d", defaults.bottomEdge),
+    decimals = 0,
+    focus = false,
+    visible = defaults.cropType == "EDGES"
 }
 
 dlg:newrow { always = false }
@@ -43,7 +78,25 @@ dlg:slider {
     label = "Padding:",
     min = 0,
     max = 32,
-    value = defaults.padding
+    value = defaults.padding,
+    visible = defaults.cropType ~= "EDGES"
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "includeLocked",
+    label = "Include:",
+    text = "&Locked",
+    selected = defaults.includeLocked,
+    focus = false,
+}
+
+dlg:check {
+    id = "includeHidden",
+    text = "&Hidden",
+    selected = defaults.includeHidden,
+    focus = false,
 }
 
 dlg:newrow { always = false }
@@ -87,6 +140,7 @@ dlg:button {
         local trimFrames <const> = args.trimFrames --[[@as boolean]]
 
         local useCrop <const> = cropType == "CROP"
+        local useEdges <const> = cropType == "EDGES"
         local useExpand <const> = cropType == "EXPAND"
         local useSel <const> = cropType == "SELECTION"
 
@@ -114,6 +168,21 @@ dlg:button {
         local isValid = false
         if useSel then
             sel, isValid = AseUtilities.getSelection(activeSprite)
+        elseif useEdges then
+            local leftEdge <const> = args.leftEdge
+                or defaults.leftEdge --[[@as integer]]
+            local topEdge <const> = args.topEdge
+                or defaults.topEdge --[[@as integer]]
+            local rightEdge <const> = args.rightEdge
+                or defaults.rightEdge --[[@as integer]]
+            local bottomEdge <const> = args.bottomEdge
+                or defaults.bottomEdge --[[@as integer]]
+
+            sel = Selection(Rectangle(
+                leftEdge, topEdge,
+                wSprite - (rightEdge + leftEdge),
+                hSprite - (bottomEdge + topEdge)))
+            isValid = not sel.isEmpty
         end
 
         local leaves <const> = AseUtilities.getLayerHierarchy(
