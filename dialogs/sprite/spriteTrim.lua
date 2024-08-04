@@ -56,6 +56,8 @@ dlg:combobox {
         dlg:modify { id = "rectAlignBc", visible = isRect }
         dlg:modify { id = "rectAlignBr", visible = isRect }
 
+        dlg:modify { id = "setSelection", visible = isRect }
+
         dlg:modify { id = "padding", visible = (not isEdges) and (not isRect) }
     end
 }
@@ -300,6 +302,33 @@ dlg:button {
         local ytlRect <const> = (hSprite - 1) - (hRect - 1)
         dlg:modify { id = "xtlRect", text = string.format("%d", xtlRect) }
         dlg:modify { id = "ytlRect", text = string.format("%d", ytlRect) }
+    end,
+    visible = defaults.cropType == "RECTANGLE"
+}
+
+dlg:newrow { always = false }
+
+dlg:button {
+    id = "setSelection",
+    label = "Set:",
+    text = "MASK",
+    focus = false,
+    onclick = function()
+        local activeSprite <const> = app.sprite
+        if not activeSprite then return end
+
+        local args <const> = dlg.data
+        local xtlRect <const> = args.xtlRect --[[@as integer]]
+        local ytlRect <const> = args.ytlRect --[[@as integer]]
+        local wRect <const> = args.wRect --[[@as integer]]
+        local hRect <const> = args.hRect --[[@as integer]]
+
+        local selRect <const> = Rectangle(xtlRect, ytlRect, wRect, hRect)
+        local intRect <const> = selRect:intersect(activeSprite.bounds)
+        if not intRect.isEmpty then
+            activeSprite.selection = Selection(intRect)
+            app.refresh()
+        end
     end,
     visible = defaults.cropType == "RECTANGLE"
 }
