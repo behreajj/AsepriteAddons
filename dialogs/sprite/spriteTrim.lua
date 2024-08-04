@@ -309,10 +309,11 @@ dlg:button {
             local bottomEdge <const> = args.bottomEdge
                 or defaults.bottomEdge --[[@as integer]]
 
+            -- The sign for edges is reveresed to match Aseprite convention.
             sel = Selection(Rectangle(
-                leftEdge, topEdge,
-                wSprite - (rightEdge + leftEdge),
-                hSprite - (bottomEdge + topEdge)))
+                -leftEdge, -topEdge,
+                wSprite + (rightEdge + leftEdge),
+                hSprite + (bottomEdge + topEdge)))
             isValid = not sel.isEmpty
         elseif useRect then
             local xtlRect <const> = args.xtlRect
