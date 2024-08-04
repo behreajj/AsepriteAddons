@@ -3,6 +3,7 @@ dofile("../../support/aseutilities.lua")
 local cropTypes <const> = { "CROP", "EDGES", "EXPAND", "RECTANGLE", "SELECTION" }
 
 local defaults <const> = {
+    -- TODO: Option to set selection to rect?
     cropType = "SELECTION",
 
     leftEdge = 0,
@@ -44,8 +45,15 @@ dlg:combobox {
         dlg:modify { id = "hRect", visible = isRect }
 
         dlg:modify { id = "rectAlignTl", visible = isRect }
+        dlg:modify { id = "rectAlignTc", visible = isRect }
         dlg:modify { id = "rectAlignTr", visible = isRect }
+
+        dlg:modify { id = "rectAlignCl", visible = isRect }
+        dlg:modify { id = "rectAlignC", visible = isRect }
+        dlg:modify { id = "rectAlignCr", visible = isRect }
+
         dlg:modify { id = "rectAlignBl", visible = isRect }
+        dlg:modify { id = "rectAlignBc", visible = isRect }
         dlg:modify { id = "rectAlignBr", visible = isRect }
 
         dlg:modify { id = "padding", visible = (not isEdges) and (not isRect) }
@@ -145,6 +153,23 @@ dlg:button {
 }
 
 dlg:button {
+    id = "rectAlignTc",
+    text = "TC",
+    focus = false,
+    onclick = function()
+        local activeSprite <const> = app.sprite
+        if not activeSprite then return end
+        local args <const> = dlg.data
+        local wRect <const> = args.wRect --[[@as integer]]
+        local wSprite <const> = activeSprite.width
+        local xtlRect <const> = math.floor((wSprite - wRect) * 0.5)
+        dlg:modify { id = "xtlRect", text = string.format("%d", xtlRect) }
+        dlg:modify { id = "ytlRect", text = string.format("%d", 0) }
+    end,
+    visible = defaults.cropType == "RECTANGLE"
+}
+
+dlg:button {
     id = "rectAlignTr",
     text = "TR",
     focus = false,
@@ -164,6 +189,65 @@ dlg:button {
 dlg:newrow { always = false }
 
 dlg:button {
+    id = "rectAlignCl",
+    text = "CL",
+    focus = false,
+    onclick = function()
+        local activeSprite <const> = app.sprite
+        if not activeSprite then return end
+        local args <const> = dlg.data
+        local hRect <const> = args.hRect --[[@as integer]]
+        local hSprite <const> = activeSprite.height
+        local ytlRect <const> = math.floor((hSprite - hRect) * 0.5)
+        dlg:modify { id = "xtlRect", text = string.format("%d", 0) }
+        dlg:modify { id = "ytlRect", text = string.format("%d", ytlRect) }
+    end,
+    visible = defaults.cropType == "RECTANGLE"
+}
+
+dlg:button {
+    id = "rectAlignC",
+    text = "C",
+    focus = false,
+    onclick = function()
+        local activeSprite <const> = app.sprite
+        if not activeSprite then return end
+        local args <const> = dlg.data
+        local wRect <const> = args.wRect --[[@as integer]]
+        local hRect <const> = args.hRect --[[@as integer]]
+        local wSprite <const> = activeSprite.width
+        local hSprite <const> = activeSprite.height
+        local xtlRect <const> = math.floor((wSprite - wRect) * 0.5)
+        local ytlRect <const> = math.floor((hSprite - hRect) * 0.5)
+        dlg:modify { id = "xtlRect", text = string.format("%d", xtlRect) }
+        dlg:modify { id = "ytlRect", text = string.format("%d", ytlRect) }
+    end,
+    visible = defaults.cropType == "RECTANGLE"
+}
+
+dlg:button {
+    id = "rectAlignCr",
+    text = "CR",
+    focus = false,
+    onclick = function()
+        local activeSprite <const> = app.sprite
+        if not activeSprite then return end
+        local args <const> = dlg.data
+        local wRect <const> = args.wRect --[[@as integer]]
+        local hRect <const> = args.hRect --[[@as integer]]
+        local wSprite <const> = activeSprite.width
+        local hSprite <const> = activeSprite.height
+        local xtlRect <const> = (wSprite - 1) - (wRect - 1)
+        local ytlRect <const> = math.floor((hSprite - hRect) * 0.5)
+        dlg:modify { id = "xtlRect", text = string.format("%d", xtlRect) }
+        dlg:modify { id = "ytlRect", text = string.format("%d", ytlRect) }
+    end,
+    visible = defaults.cropType == "RECTANGLE"
+}
+
+dlg:newrow { always = false }
+
+dlg:button {
     id = "rectAlignBl",
     text = "BL",
     focus = false,
@@ -175,6 +259,26 @@ dlg:button {
         local hSprite <const> = activeSprite.height
         local ytlRect <const> = (hSprite - 1) - (hRect - 1)
         dlg:modify { id = "xtlRect", text = string.format("%d", 0) }
+        dlg:modify { id = "ytlRect", text = string.format("%d", ytlRect) }
+    end,
+    visible = defaults.cropType == "RECTANGLE"
+}
+
+dlg:button {
+    id = "rectAlignBc",
+    text = "BC",
+    focus = false,
+    onclick = function()
+        local activeSprite <const> = app.sprite
+        if not activeSprite then return end
+        local args <const> = dlg.data
+        local wRect <const> = args.wRect --[[@as integer]]
+        local hRect <const> = args.hRect --[[@as integer]]
+        local wSprite <const> = activeSprite.width
+        local hSprite <const> = activeSprite.height
+        local xtlRect <const> = math.floor((wSprite - wRect) * 0.5)
+        local ytlRect <const> = (hSprite - 1) - (hRect - 1)
+        dlg:modify { id = "xtlRect", text = string.format("%d", xtlRect) }
         dlg:modify { id = "ytlRect", text = string.format("%d", ytlRect) }
     end,
     visible = defaults.cropType == "RECTANGLE"
@@ -309,7 +413,7 @@ dlg:button {
             local bottomEdge <const> = args.bottomEdge
                 or defaults.bottomEdge --[[@as integer]]
 
-            -- The sign for edges is reveresed to match Aseprite convention.
+            -- The sign for edges is reversed to match Aseprite convention.
             sel = Selection(Rectangle(
                 -leftEdge, -topEdge,
                 wSprite + (rightEdge + leftEdge),
