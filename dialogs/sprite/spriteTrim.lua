@@ -1,8 +1,10 @@
 dofile("../../support/aseutilities.lua")
 
-local cropTypes <const> = { "CROP", "EDGES", "EXPAND", "SELECTION" }
+local cropTypes <const> = { "CROP", "EDGES", "EXPAND", "RECTANGLE", "SELECTION" }
 
 local defaults <const> = {
+    -- TODO: Option to align rectangle top-left corner, top-right, top-center,
+    -- etc.
     cropType = "SELECTION",
     includeLocked = false,
     includeHidden = true,
@@ -10,6 +12,8 @@ local defaults <const> = {
     topEdge = 0,
     rightEdge = 0,
     bottomEdge = 0,
+    wRect = 0,
+    hRect = 0,
     padding = 0,
     trimFrames = false
 }
@@ -25,11 +29,14 @@ dlg:combobox {
         local args <const> = dlg.data
         local cropType <const> = args.cropType
         local isEdges <const> = cropType == "EDGES"
-        dlg:modify { id = "leftEdge", visible = isEdges }
-        dlg:modify { id = "topEdge", visible = isEdges }
+        local isRect <const> = cropType == "RECTANGLE"
+        dlg:modify { id = "leftEdge", visible = isEdges or isRect }
+        dlg:modify { id = "topEdge", visible = isEdges or isRect }
         dlg:modify { id = "rightEdge", visible = isEdges }
         dlg:modify { id = "bottomEdge", visible = isEdges }
-        dlg:modify { id = "padding", visible = not isEdges }
+        dlg:modify { id = "wRect", visible = isRect }
+        dlg:modify { id = "hRect", visible = isRect }
+        dlg:modify { id = "padding", visible = (not isEdges) and (not isRect) }
     end
 }
 
@@ -42,6 +49,7 @@ dlg:number {
     decimals = 0,
     focus = false,
     visible = defaults.cropType == "EDGES"
+        or defaults.cropType == "RECT"
 }
 
 dlg:number {
@@ -50,6 +58,26 @@ dlg:number {
     decimals = 0,
     focus = false,
     visible = defaults.cropType == "EDGES"
+    or defaults.cropType == "RECT"
+}
+
+dlg:newrow { always = false }
+
+dlg:number {
+    id = "wRect",
+    label = "Size:",
+    text = string.format("%d", defaults.wRect),
+    decimals = 0,
+    focus = false,
+    visible = defaults.cropType == "RECTANGLE"
+}
+
+dlg:number {
+    id = "hRect",
+    text = string.format("%d", defaults.hRect),
+    decimals = 0,
+    focus = false,
+    visible = defaults.cropType == "RECTANGLE"
 }
 
 dlg:newrow { always = false }
@@ -80,6 +108,7 @@ dlg:slider {
     max = 32,
     value = defaults.padding,
     visible = defaults.cropType ~= "EDGES"
+        and defaults.cropType ~= "RECT"
 }
 
 dlg:newrow { always = false }
@@ -141,6 +170,7 @@ dlg:button {
 
         local useCrop <const> = cropType == "CROP"
         local useEdges <const> = cropType == "EDGES"
+        local useRect <const> = cropType == "RECTANGLE"
         local useExpand <const> = cropType == "EXPAND"
         local useSel <const> = cropType == "SELECTION"
 
@@ -182,6 +212,18 @@ dlg:button {
                 leftEdge, topEdge,
                 wSprite - (rightEdge + leftEdge),
                 hSprite - (bottomEdge + topEdge)))
+            isValid = not sel.isEmpty
+        elseif useRect then
+            local leftEdge <const> = args.leftEdge
+                or defaults.leftEdge --[[@as integer]]
+            local topEdge <const> = args.topEdge
+                or defaults.topEdge --[[@as integer]]
+            local wRect <const> = args.wRect
+                or defaults.wRect --[[@as integer]]
+            local hRect <const> = args.hRect
+                or defaults.hRect --[[@as integer]]
+
+            sel = Selection(Rectangle(leftEdge, topEdge, wRect, hRect))
             isValid = not sel.isEmpty
         end
 
