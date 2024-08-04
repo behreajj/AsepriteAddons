@@ -3,17 +3,20 @@ dofile("../../support/aseutilities.lua")
 local cropTypes <const> = { "CROP", "EDGES", "EXPAND", "RECTANGLE", "SELECTION" }
 
 local defaults <const> = {
-    -- TODO: Option to align rectangle top-left corner, top-right, top-center,
-    -- etc.
     cropType = "SELECTION",
-    includeLocked = false,
-    includeHidden = true,
+
     leftEdge = 0,
     topEdge = 0,
     rightEdge = 0,
     bottomEdge = 0,
+
+    xtlRect = 0,
+    ytlRect = 0,
     wRect = 0,
     hRect = 0,
+
+    includeLocked = false,
+    includeHidden = true,
     padding = 0,
     trimFrames = false
 }
@@ -30,12 +33,21 @@ dlg:combobox {
         local cropType <const> = args.cropType
         local isEdges <const> = cropType == "EDGES"
         local isRect <const> = cropType == "RECTANGLE"
-        dlg:modify { id = "leftEdge", visible = isEdges or isRect }
-        dlg:modify { id = "topEdge", visible = isEdges or isRect }
+        dlg:modify { id = "leftEdge", visible = isEdges }
+        dlg:modify { id = "topEdge", visible = isEdges }
         dlg:modify { id = "rightEdge", visible = isEdges }
         dlg:modify { id = "bottomEdge", visible = isEdges }
+
+        dlg:modify { id = "xtlRect", visible = isRect }
+        dlg:modify { id = "ytlRect", visible = isRect }
         dlg:modify { id = "wRect", visible = isRect }
         dlg:modify { id = "hRect", visible = isRect }
+
+        dlg:modify { id = "rectAlignTl", visible = isRect }
+        dlg:modify { id = "rectAlignTr", visible = isRect }
+        dlg:modify { id = "rectAlignBl", visible = isRect }
+        dlg:modify { id = "rectAlignBr", visible = isRect }
+
         dlg:modify { id = "padding", visible = (not isEdges) and (not isRect) }
     end
 }
@@ -49,7 +61,6 @@ dlg:number {
     decimals = 0,
     focus = false,
     visible = defaults.cropType == "EDGES"
-        or defaults.cropType == "RECT"
 }
 
 dlg:number {
@@ -58,7 +69,44 @@ dlg:number {
     decimals = 0,
     focus = false,
     visible = defaults.cropType == "EDGES"
-    or defaults.cropType == "RECT"
+}
+
+dlg:newrow { always = false }
+
+dlg:number {
+    id = "rightEdge",
+    label = "Bottom Right:",
+    text = string.format("%d", defaults.rightEdge),
+    decimals = 0,
+    focus = false,
+    visible = defaults.cropType == "EDGES"
+}
+
+dlg:number {
+    id = "bottomEdge",
+    text = string.format("%d", defaults.bottomEdge),
+    decimals = 0,
+    focus = false,
+    visible = defaults.cropType == "EDGES"
+}
+
+dlg:newrow { always = false }
+
+dlg:number {
+    id = "xtlRect",
+    label = "Top Left:",
+    text = string.format("%d", defaults.xtlRect),
+    decimals = 0,
+    focus = false,
+    visible = defaults.cropType == "RECTANGLE"
+}
+
+dlg:number {
+    id = "ytlRect",
+    text = string.format("%d", defaults.ytlRect),
+    decimals = 0,
+    focus = false,
+    visible = defaults.cropType == "RECTANGLE"
 }
 
 dlg:newrow { always = false }
@@ -82,21 +130,74 @@ dlg:number {
 
 dlg:newrow { always = false }
 
-dlg:number {
-    id = "rightEdge",
-    label = "Bottom Right:",
-    text = string.format("%d", defaults.rightEdge),
-    decimals = 0,
+dlg:button {
+    id = "rectAlignTl",
+    label = "Align:",
+    text = "TL",
     focus = false,
-    visible = defaults.cropType == "EDGES"
+    onclick = function()
+        local activeSprite <const> = app.sprite
+        if not activeSprite then return end
+        dlg:modify { id = "xtlRect", text = string.format("%d", 0) }
+        dlg:modify { id = "ytlRect", text = string.format("%d", 0) }
+    end,
+    visible = defaults.cropType == "RECTANGLE"
 }
 
-dlg:number {
-    id = "bottomEdge",
-    text = string.format("%d", defaults.bottomEdge),
-    decimals = 0,
+dlg:button {
+    id = "rectAlignTr",
+    text = "TR",
     focus = false,
-    visible = defaults.cropType == "EDGES"
+    onclick = function()
+        local activeSprite <const> = app.sprite
+        if not activeSprite then return end
+        local args <const> = dlg.data
+        local wRect <const> = args.wRect --[[@as integer]]
+        local wSprite <const> = activeSprite.width
+        local xtlRect <const> = (wSprite - 1) - (wRect - 1)
+        dlg:modify { id = "xtlRect", text = string.format("%d", xtlRect) }
+        dlg:modify { id = "ytlRect", text = string.format("%d", 0) }
+    end,
+    visible = defaults.cropType == "RECTANGLE"
+}
+
+dlg:newrow { always = false }
+
+dlg:button {
+    id = "rectAlignBl",
+    text = "BL",
+    focus = false,
+    onclick = function()
+        local activeSprite <const> = app.sprite
+        if not activeSprite then return end
+        local args <const> = dlg.data
+        local hRect <const> = args.hRect --[[@as integer]]
+        local hSprite <const> = activeSprite.height
+        local ytlRect <const> = (hSprite - 1) - (hRect - 1)
+        dlg:modify { id = "xtlRect", text = string.format("%d", 0) }
+        dlg:modify { id = "ytlRect", text = string.format("%d", ytlRect) }
+    end,
+    visible = defaults.cropType == "RECTANGLE"
+}
+
+dlg:button {
+    id = "rectAlignBr",
+    text = "BR",
+    focus = false,
+    onclick = function()
+        local activeSprite <const> = app.sprite
+        if not activeSprite then return end
+        local args <const> = dlg.data
+        local wRect <const> = args.wRect --[[@as integer]]
+        local hRect <const> = args.hRect --[[@as integer]]
+        local wSprite <const> = activeSprite.width
+        local hSprite <const> = activeSprite.height
+        local xtlRect <const> = (wSprite - 1) - (wRect - 1)
+        local ytlRect <const> = (hSprite - 1) - (hRect - 1)
+        dlg:modify { id = "xtlRect", text = string.format("%d", xtlRect) }
+        dlg:modify { id = "ytlRect", text = string.format("%d", ytlRect) }
+    end,
+    visible = defaults.cropType == "RECTANGLE"
 }
 
 dlg:newrow { always = false }
@@ -214,16 +315,16 @@ dlg:button {
                 hSprite - (bottomEdge + topEdge)))
             isValid = not sel.isEmpty
         elseif useRect then
-            local leftEdge <const> = args.leftEdge
-                or defaults.leftEdge --[[@as integer]]
-            local topEdge <const> = args.topEdge
-                or defaults.topEdge --[[@as integer]]
+            local xtlRect <const> = args.xtlRect
+                or defaults.xtlRect --[[@as integer]]
+            local ytlRect <const> = args.ytlRect
+                or defaults.ytlRect --[[@as integer]]
             local wRect <const> = args.wRect
                 or defaults.wRect --[[@as integer]]
             local hRect <const> = args.hRect
                 or defaults.hRect --[[@as integer]]
 
-            sel = Selection(Rectangle(leftEdge, topEdge, wRect, hRect))
+            sel = Selection(Rectangle(xtlRect, ytlRect, wRect, hRect))
             isValid = not sel.isEmpty
         end
 
