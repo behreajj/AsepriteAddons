@@ -56,7 +56,7 @@ dlg:combobox {
         dlg:modify { id = "rectAlignBc", visible = isRect }
         dlg:modify { id = "rectAlignBr", visible = isRect }
 
-        dlg:modify { id = "setSelection", visible = isRect }
+        -- dlg:modify { id = "setSelection", visible = isRect }
 
         dlg:modify { id = "padding", visible = (not isEdges) and (not isRect) }
     end
@@ -330,7 +330,8 @@ dlg:button {
             app.refresh()
         end
     end,
-    visible = defaults.cropType == "RECTANGLE"
+    -- visible = defaults.cropType == "RECTANGLE"
+    visible = false
 }
 
 dlg:newrow { always = false }
