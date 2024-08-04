@@ -1,9 +1,14 @@
 dofile("../../support/aseutilities.lua")
 
-local cropTypes <const> = { "CROP", "EDGES", "EXPAND", "RECTANGLE", "SELECTION" }
+local cropTypes <const> = {
+    "CROP",
+    "EDGES",
+    "EXPAND",
+    "RECTANGLE",
+    "SELECTION"
+}
 
 local defaults <const> = {
-    -- TODO: Option to set selection to rect?
     cropType = "SELECTION",
 
     leftEdge = 0,
