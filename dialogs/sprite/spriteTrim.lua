@@ -1,5 +1,28 @@
 dofile("../../support/aseutilities.lua")
 
+local wRectSet = 0
+local hRectSet = 0
+if app.sprite then
+    wRectSet = app.sprite.width
+    hRectSet = app.sprite.height
+else
+    local appPrefs <const> = app.preferences
+    if appPrefs then
+        local newFilePrefs <const> = appPrefs.new_file
+        if newFilePrefs then
+            local wCand <const> = newFilePrefs.width
+            if wCand and wCand > 0 then
+                wRectSet = wCand
+            end
+
+            local hCand <const> = newFilePrefs.height
+            if hCand and hCand > 0 then
+                hRectSet = hCand
+            end
+        end
+    end
+end
+
 local cropTypes <const> = {
     "CROP",
     "EDGES",
@@ -18,8 +41,6 @@ local defaults <const> = {
 
     xtlRect = 0,
     ytlRect = 0,
-    wRect = 0,
-    hRect = 0,
 
     includeLocked = false,
     includeHidden = true,
@@ -129,7 +150,7 @@ dlg:newrow { always = false }
 dlg:number {
     id = "wRect",
     label = "Size:",
-    text = string.format("%d", defaults.wRect),
+    text = string.format("%d", wRectSet),
     decimals = 0,
     focus = false,
     visible = defaults.cropType == "RECTANGLE"
@@ -137,7 +158,7 @@ dlg:number {
 
 dlg:number {
     id = "hRect",
-    text = string.format("%d", defaults.hRect),
+    text = string.format("%d", hRectSet),
     decimals = 0,
     focus = false,
     visible = defaults.cropType == "RECTANGLE"
@@ -460,9 +481,9 @@ dlg:button {
             local ytlRect <const> = args.ytlRect
                 or defaults.ytlRect --[[@as integer]]
             local wRect <const> = args.wRect
-                or defaults.wRect --[[@as integer]]
+                or wRectSet --[[@as integer]]
             local hRect <const> = args.hRect
-                or defaults.hRect --[[@as integer]]
+                or hRectSet --[[@as integer]]
 
             sel = Selection(Rectangle(xtlRect, ytlRect, wRect, hRect))
             isValid = not sel.isEmpty
