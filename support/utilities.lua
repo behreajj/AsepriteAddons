@@ -817,8 +817,7 @@ function Utilities.resizePixelsNearest(
         local yTrgi <const> = floor(yTrgf)
         if yTrgi >= 0 and yTrgi < hSrc
             and xTrgi >= 0 and xTrgi < wSrc then
-            local j <const> = yTrgi * wSrc + xTrgi
-            local jBpp <const> = j * bpp
+            local jBpp <const> = (yTrgi * wSrc + xTrgi) * bpp
             trgHex = strsub(source, 1 + jBpp, bpp + jBpp)
         end
 
@@ -1041,8 +1040,7 @@ function Utilities.rotatePixelsZ(
         local ySrci <const> = round(ySrcCenter + yRotf)
         if ySrci >= 0 and ySrci < hSrc
             and xSrci >= 0 and xSrci < wSrc then
-            local j <const> = ySrci * wSrc + xSrci
-            local jbpp <const> = j * bpp
+            local jbpp <const> = (ySrci * wSrc + xSrci) * bpp
             rotated[1 + i] = strsub(source, 1 + jbpp, bpp + jbpp)
         else
             rotated[1 + i] = alphaStr
@@ -1138,8 +1136,7 @@ function Utilities.skewPixelsX(
             + tana * (ySrci - ySrcCenter)
         local xSrci <const> = round(xSrcf)
         if xSrci >= 0 and xSrci < wSrc then
-            local j <const> = ySrci * wSrc + xSrci
-            local jbpp <const> = j * bpp
+            local jbpp <const> = (ySrci * wSrc + xSrci) * bpp
             skewed[1 + i] = strsub(source, 1 + jbpp, bpp + jbpp)
         else
             skewed[1 + i] = alphaStr
@@ -1172,10 +1169,9 @@ function Utilities.skewPixelsXInt(
 
     local absRun <const> = math.abs(run)
     local sgnRise <const> = run < 0 and -rise or rise
-    local absRise <const> = math.abs(sgnRise)
     local hn1Run <const> = (hSrc - 1) // absRun
     local offset <const> = sgnRise < 0 and 0 or hn1Run * sgnRise
-    local wTrg <const> = wSrc + hn1Run * absRise
+    local wTrg <const> = wSrc + hn1Run * math.abs(sgnRise)
     local lenTrg <const> = wTrg * hSrc
     local alphaStr <const> = string.pack("I" .. bpp, alphaIndex)
 
@@ -1185,8 +1181,7 @@ function Utilities.skewPixelsXInt(
         local shift <const> = sgnRise * (yTrg // absRun)
         local xSrc <const> = (i % wTrg) + shift - offset
         if xSrc >= 0 and xSrc < wSrc then
-            local j <const> = yTrg * wSrc + xSrc
-            local jbpp <const> = j * bpp
+            local jbpp <const> = (yTrg * wSrc + xSrc) * bpp
             skewed[1 + i] = strsub(source, 1 + jbpp, bpp + jbpp)
         else
             skewed[1 + i] = alphaStr
@@ -1231,8 +1226,7 @@ function Utilities.skewPixelsY(
             + tana * (xSrci - xSrcCenter)
         local ySrci <const> = round(ySrcf)
         if ySrci >= 0 and ySrci < hSrc then
-            local j <const> = ySrci * wSrc + xSrci
-            local jbpp <const> = j * bpp
+            local jbpp <const> = (ySrci * wSrc + xSrci) * bpp
             skewed[1 + i] = strsub(source, 1 + jbpp, bpp + jbpp)
         else
             skewed[1 + i] = alphaStr
@@ -1265,10 +1259,9 @@ function Utilities.skewPixelsYInt(
 
     local absRun <const> = math.abs(run)
     local sgnRise <const> = run < 0 and -rise or rise
-    local absRise <const> = math.abs(sgnRise)
     local wn1Run <const> = (wSrc - 1) // absRun
     local offset <const> = sgnRise < 0 and 0 or wn1Run * sgnRise
-    local hTrg <const> = hSrc + wn1Run * absRise
+    local hTrg <const> = hSrc + wn1Run * math.abs(sgnRise)
     local lenTrg <const> = wSrc * hTrg
     local alphaStr <const> = string.pack("I" .. bpp, alphaIndex)
 
@@ -1278,8 +1271,7 @@ function Utilities.skewPixelsYInt(
         local shift <const> = sgnRise * (xTrg // absRun)
         local ySrc <const> = (i // wSrc) + shift - offset
         if ySrc >= 0 and ySrc < hSrc then
-            local j <const> = ySrc * wSrc + xTrg
-            local jbpp <const> = j * bpp
+            local jbpp <const> = (ySrc * wSrc + xTrg) * bpp
             skewed[1 + i] = strsub(source, 1 + jbpp, bpp + jbpp)
         else
             skewed[1 + i] = alphaStr
@@ -1468,8 +1460,7 @@ function Utilities.wrapPixels(source, xt, yt, w, h, bpp)
     while i < len do
         local xShift <const> = (i % w - xt) % w
         local yShift <const> = (i // w + yt) % h
-        local j <const> = yShift * w + xShift
-        local jbpp <const> = j * bpp
+        local jbpp <const> = (yShift * w + xShift) * bpp
         wrapped[1 + i] = strsub(source, 1 + jbpp, bpp + jbpp)
         i = i + 1
     end
