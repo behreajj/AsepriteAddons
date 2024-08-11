@@ -1852,12 +1852,7 @@ function AseUtilities.flattenGroup(
     local wGroup <const> = 1 + xBrGroup - xTlGroup
     local hGroup <const> = 1 + yBrGroup - yTlGroup
     if wGroup > 0 and hGroup > 0 then
-        bounds = Rectangle {
-            x = xTlGroup,
-            y = yTlGroup,
-            width = wGroup,
-            height = hGroup
-        }
+        bounds = Rectangle(xTlGroup,yTlGroup,wGroup,hGroup)
 
         local compSpec <const> = ImageSpec {
             width = wGroup,
