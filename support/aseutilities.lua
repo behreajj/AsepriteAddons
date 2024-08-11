@@ -1102,16 +1102,11 @@ end
 ---@return Color
 ---@nodiscard
 function AseUtilities.clrToAseColor(clr)
-    local r <const> = math.min(math.max(clr.r, 0.0), 1.0)
-    local g <const> = math.min(math.max(clr.g, 0.0), 1.0)
-    local b <const> = math.min(math.max(clr.b, 0.0), 1.0)
-    local a <const> = math.min(math.max(clr.a, 0.0), 1.0)
-
     return Color {
-        r = math.floor(r * 255.0 + 0.5),
-        g = math.floor(g * 255.0 + 0.5),
-        b = math.floor(b * 255.0 + 0.5),
-        a = math.floor(a * 255.0 + 0.5)
+        r = math.floor(math.min(math.max(clr.r, 0.0), 1.0) * 255.0 + 0.5),
+        g = math.floor(math.min(math.max(clr.g, 0.0), 1.0) * 255.0 + 0.5),
+        b = math.floor(math.min(math.max(clr.b, 0.0), 1.0) * 255.0 + 0.5),
+        a = math.floor(math.min(math.max(clr.a, 0.0), 1.0) * 255.0 + 0.5)
     }
 end
 
@@ -1526,20 +1521,13 @@ function AseUtilities.drawCircleFill(
         if (x * x + y * y) < rsq then
             local xMark <const> = xc + x
             local yMark <const> = yc + y
-            local j <const> = yMark * wImage + xMark
-            local j4 <const> = j * 4
-
-            local rSrc <const> = pixels[1 + j4]
-            local gSrc <const> = pixels[2 + j4]
-            local bSrc <const> = pixels[3 + j4]
-            local aSrc <const> = pixels[4 + j4]
+            local j4 <const> = 4 * (yMark * wImage + xMark)
 
             local rTrg <const>,
             gTrg <const>,
             bTrg <const>,
-            aTrg <const> = blend(
-                rSrc, gSrc, bSrc, aSrc,
-                rFill, gFill, bFill, aFill)
+            aTrg <const> = blend(pixels[1 + j4], pixels[2 + j4],
+                pixels[3 + j4], pixels[4 + j4],rFill, gFill, bFill, aFill)
 
             pixels[1 + j4] = rTrg
             pixels[2 + j4] = gTrg
