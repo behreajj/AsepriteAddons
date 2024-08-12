@@ -395,10 +395,8 @@ function AseUtilities.asePaletteToHexArr(pal, startIndex, count)
     if pal then
         local lenPal <const> = #pal
 
-        local si = startIndex or 0
-        si = math.min(math.max(si, 0), lenPal - 1)
-        local vc = count or 256
-        vc = math.min(math.max(vc, 2), lenPal - si)
+        local si <const> = math.min(math.max(startIndex or 0, 0), lenPal - 1)
+        local vc <const> = math.min(math.max(count or 256, 2), lenPal - si)
 
         ---@type integer[]
         local hexes <const> = {}
@@ -595,10 +593,10 @@ function AseUtilities.averageColor(sprite, frObj)
     flatImage:drawSprite(sprite, frObj, Point(-xMouse, -yMouse))
 
     if colorMode == ColorMode.RGB then
-        local pixel <const> = string.unpack("I4", flatImage.bytes)
+        local pixel <const> = string.unpack(">I4", flatImage.bytes)
         return Clr.sRgbToSrLab2(Clr.fromHex(pixel))
     elseif colorMode == ColorMode.GRAY then
-        local pixel <const> = string.unpack("I2", flatImage.bytes)
+        local pixel <const> = string.unpack(">I2", flatImage.bytes)
         local a = (pixel >> 0x08) & 0xff
         local v <const> = (pixel & 0xff) / 255.0
         return Clr.sRgbToSrLab2(Clr.new(v, v, v, a / 255.0))
@@ -1527,7 +1525,7 @@ function AseUtilities.drawCircleFill(
             gTrg <const>,
             bTrg <const>,
             aTrg <const> = blend(pixels[1 + j4], pixels[2 + j4],
-                pixels[3 + j4], pixels[4 + j4],rFill, gFill, bFill, aFill)
+                pixels[3 + j4], pixels[4 + j4], rFill, gFill, bFill, aFill)
 
             pixels[1 + j4] = rTrg
             pixels[2 + j4] = gTrg
@@ -2218,7 +2216,7 @@ function AseUtilities.getSelectedTiles(
     local strsub <const> = string.sub
 
     local bpp <const> = tileMap.bytesPerPixel
-    local unpackFmt <const> = "I" .. bpp
+    local unpackFmt <const> = ">I" .. bpp
     local bytes <const> = tileMap.bytes
     local wMap <const> = tileMap.width
     local hMap <const> = tileMap.height
@@ -2943,7 +2941,7 @@ function AseUtilities.selectImage(image, xtl, ytl, tileSet, spriteBounds)
             while i < lenImage do
                 local ibpp <const> = i * bpp
                 local str <const> = strsub(bytes, 1 + ibpp, bpp + ibpp)
-                local mapIf <const> = strunpack("I4", str)
+                local mapIf <const> = strunpack(">I4", str)
                 local idx <const> = pxTilei(mapIf)
                 if idx == 0 then
                     pxRect.x = wTile * (i % wImage) + xtl
@@ -3310,7 +3308,7 @@ function AseUtilities.trimMapAlpha(
         while x < wSrcn1 and goTop do
             x = x + 1
             local iTop <const> = bpp * (x + wSrc * topSearch)
-            local mapif <const> = strunpack("I4", strsub(
+            local mapif <const> = strunpack(">I4", strsub(
                 bytes, 1 + iTop, bpp + iTop))
             if pxTilei(mapif) ~= 0 then
                 minRight = x
@@ -3329,7 +3327,7 @@ function AseUtilities.trimMapAlpha(
         while y > topSearch and goLft do
             y = y - 1
             local iLft <const> = bpp * (lftSearch + wSrc * y)
-            local mapif <const> = strunpack("I4", strsub(
+            local mapif <const> = strunpack(">I4", strsub(
                 bytes, 1 + iLft, bpp + iLft))
             if pxTilei(mapif) ~= 0 then
                 minBottom = y
@@ -3347,7 +3345,7 @@ function AseUtilities.trimMapAlpha(
         while x > lftSearch and goBtm do
             x = x - 1
             local iBtm <const> = bpp * (x + wSrc * btm)
-            local mapif <const> = strunpack("I4", strsub(
+            local mapif <const> = strunpack(">I4", strsub(
                 bytes, 1 + iBtm, bpp + iBtm))
             if pxTilei(mapif) ~= 0 then
                 minRight = x
@@ -3365,7 +3363,7 @@ function AseUtilities.trimMapAlpha(
         while y > topSearch and goRgt do
             y = y - 1
             local iRgt <const> = bpp * (rgt + wSrc * y)
-            local mapif <const> = strunpack("I4", strsub(
+            local mapif <const> = strunpack(">I4", strsub(
                 bytes, 1 + iRgt, bpp + iRgt))
             if pxTilei(mapif) ~= 0 then
                 goRgt = false

@@ -806,7 +806,7 @@ function Utilities.resizePixelsNearest(
     local ty <const> = hTrg > 0
         and hSrc / hTrg or 0.0
 
-    local zeroStr <const> = string.pack("I" .. bpp, alphaIndex)
+    local zeroStr <const> = string.pack(">I" .. bpp, alphaIndex)
     local lenTrg <const> = wTrg * hTrg
     local i = 0
     while i < lenTrg do
@@ -940,7 +940,7 @@ function Utilities.rotatePixelsX(
     if hTrgSigned == 0 then
         ---@type string[]
         local rotated <const> = {}
-        local alphaStr <const> = string.pack("I" .. bpp, alphaIndex)
+        local alphaStr <const> = string.pack(">I" .. bpp, alphaIndex)
         local i = 0
         while i < wSrc do
             i = i + 1
@@ -978,7 +978,7 @@ function Utilities.rotatePixelsY(
     if wTrgSigned == 0 then
         ---@type string[]
         local rotated <const> = {}
-        local alphaStr <const> = string.pack("I" .. bpp, alphaIndex)
+        local alphaStr <const> = string.pack(">I" .. bpp, alphaIndex)
         local i = 0
         while i < hSrc do
             i = i + 1
@@ -1023,7 +1023,7 @@ function Utilities.rotatePixelsZ(
     local wTrgi <const> = math.ceil(wTrgf)
     local hTrgi <const> = math.ceil(hTrgf)
     local lenTrg <const> = wTrgi * hTrgi
-    local alphaStr <const> = string.pack("I" .. bpp, alphaIndex)
+    local alphaStr <const> = string.pack(">I" .. bpp, alphaIndex)
 
     local xSrcCenter <const> = wSrc * 0.5
     local ySrcCenter <const> = hSrc * 0.5
@@ -1127,7 +1127,7 @@ function Utilities.skewPixelsX(
     local xDiff <const> = (wSrc - wTrgf) * 0.5
     local lenTrg <const> = wTrgi * hSrc
     local ySrcCenter <const> = hSrc * 0.5
-    local alphaStr <const> = string.pack("I" .. bpp, alphaIndex)
+    local alphaStr <const> = string.pack(">I" .. bpp, alphaIndex)
 
     local i = 0
     while i < lenTrg do
@@ -1173,7 +1173,7 @@ function Utilities.skewPixelsXInt(
     local offset <const> = sgnRise < 0 and 0 or hn1Run * sgnRise
     local wTrg <const> = wSrc + hn1Run * math.abs(sgnRise)
     local lenTrg <const> = wTrg * hSrc
-    local alphaStr <const> = string.pack("I" .. bpp, alphaIndex)
+    local alphaStr <const> = string.pack(">I" .. bpp, alphaIndex)
 
     local i = 0
     while i < lenTrg do
@@ -1217,7 +1217,7 @@ function Utilities.skewPixelsY(
     local yDiff <const> = (hSrc - hTrgf) * 0.5
     local lenTrg <const> = wSrc * hTrgi
     local xSrcCenter <const> = wSrc * 0.5
-    local alphaStr <const> = string.pack("I" .. bpp, alphaIndex)
+    local alphaStr <const> = string.pack(">I" .. bpp, alphaIndex)
 
     local i = 0
     while i < lenTrg do
@@ -1263,7 +1263,7 @@ function Utilities.skewPixelsYInt(
     local offset <const> = sgnRise < 0 and 0 or wn1Run * sgnRise
     local hTrg <const> = hSrc + wn1Run * math.abs(sgnRise)
     local lenTrg <const> = wSrc * hTrg
-    local alphaStr <const> = string.pack("I" .. bpp, alphaIndex)
+    local alphaStr <const> = string.pack(">I" .. bpp, alphaIndex)
 
     local i = 0
     while i < lenTrg do
