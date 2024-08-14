@@ -341,7 +341,7 @@ function Clr.lRgbToSrLab2Internal(c)
         or (z ^ 0.33333333333333) * 1.16 - 0.16
 
     return {
-        l = 37.0950 * x + 62.9054 * y - 0.0008 * z,
+        l = 37.095 * x + 62.9054 * y - 0.0008 * z,
         a = 663.4684 * x - 750.5078 * y + 87.0328 * z,
         b = 63.9569 * x + 108.4576 * y - 172.4152 * z,
         alpha = c.a
@@ -437,7 +437,6 @@ function Clr.mixNormal(o, d, t)
     local ox = o.r + o.r - 1.0
     local oy = o.g + o.g - 1.0
     local oz = o.b + o.b - 1.0
-    local oa <const> = o.a
     local omsq <const> = ox * ox + oy * oy + oz * oz
     if omsq > 0.0 then
         local omInv <const> = 1.0 / math.sqrt(omsq)
@@ -451,13 +450,12 @@ function Clr.mixNormal(o, d, t)
         return Clr.new(
             ox * 0.5 + 0.5,
             oy * 0.5 + 0.5,
-            oz * 0.5 + 0.5, oa)
+            oz * 0.5 + 0.5, o.a)
     end
 
     local dx = d.r + d.r - 1.0
     local dy = d.g + d.g - 1.0
     local dz = d.b + d.b - 1.0
-    local da <const> = d.a
     local dmsq <const> = dx * dx + dy * dy + dz * dz
     if dmsq > 0.0 then
         local dmInv <const> = 1.0 / math.sqrt(omsq)
@@ -470,7 +468,7 @@ function Clr.mixNormal(o, d, t)
         return Clr.new(
             dx * 0.5 + 0.5,
             dy * 0.5 + 0.5,
-            dz * 0.5 + 0.5, da)
+            dz * 0.5 + 0.5, d.a)
     end
 
     local odDot <const> = math.min(math.max(
@@ -487,7 +485,7 @@ function Clr.mixNormal(o, d, t)
     local cx <const> = oFac * ox + dFac * dx
     local cy <const> = oFac * oy + dFac * dy
     local cz <const> = oFac * oz + dFac * dz
-    local ca <const> = v * oa + u * da
+    local ca <const> = v * o.a + u * d.a
     local cmsq <const> = cx * cx + cy * cy + cz * cz
     if cmsq > 0.0 then
         local cmInv <const> = 0.5 / math.sqrt(cmsq)

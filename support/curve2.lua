@@ -57,24 +57,23 @@ function Curve2.arcLength(curve, sampleCount)
 
     local h = 0
     while h < countVrfp1 do
-        local hFac = h * hToFac
+        local hFac <const> = h * hToFac
         h = h + 1
         points[h] = Curve2.eval(curve, hFac)
     end
 
     ---@type number[]
     local arcLengths = {}
-    local totalLength = 0.0
+    local totLen = 0.0
     local i = 1
     while i < countVrfp1 do
         local prev <const> = points[i]
         local curr <const> = points[i + 1]
-        local d <const> = Vec2.dist(curr, prev)
-        totalLength = totalLength + d
-        arcLengths[i] = totalLength
+        totLen = totLen + Vec2.dist(curr, prev)
+        arcLengths[i] = totLen
         i = i + 1
     end
-    return totalLength, arcLengths
+    return totLen, arcLengths
 end
 
 ---Evaluates a curve by a step in [0.0, 1.0]. Returns a vector representing a
