@@ -172,17 +172,11 @@ function TextUtilities.drawGlyph(
             local j <const> = yMark * wImage + xMark
             local j4 <const> = j * 4
 
-            local rSrc <const> = pixels[1 + j4]
-            local gSrc <const> = pixels[2 + j4]
-            local bSrc <const> = pixels[3 + j4]
-            local aSrc <const> = pixels[4 + j4]
-
             local rTrg <const>,
             gTrg <const>,
             bTrg <const>,
-            aTrg <const> = blend(
-                rSrc, gSrc, bSrc, aSrc,
-                rMark, gMark, bMark, aMark)
+            aTrg <const> = blend(pixels[1 + j4], pixels[2 + j4],
+                pixels[3 + j4], pixels[4 + j4], rMark, gMark, bMark, aMark)
 
             pixels[1 + j4] = rTrg
             pixels[2 + j4] = gTrg
@@ -250,17 +244,11 @@ function TextUtilities.drawGlyphNearest(
             local j <const> = yMark * wImage + xMark
             local j4 <const> = j * 4
 
-            local rSrc <const> = pixels[1 + j4]
-            local gSrc <const> = pixels[2 + j4]
-            local bSrc <const> = pixels[3 + j4]
-            local aSrc <const> = pixels[4 + j4]
-
             local rTrg <const>,
             gTrg <const>,
             bTrg <const>,
-            aTrg <const> = blend(
-                rSrc, gSrc, bSrc, aSrc,
-                rMark, gMark, bMark, aMark)
+            aTrg <const> = blend(pixels[1 + j4], pixels[2 + j4],
+                pixels[3 + j4], pixels[4 + j4], rMark, gMark, bMark, aMark)
 
             pixels[1 + j4] = rTrg
             pixels[2 + j4] = gTrg

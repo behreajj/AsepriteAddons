@@ -159,7 +159,7 @@ function Utilities.flipPixelsX(source, w, h, bpp)
         i = i + 1
     end
 
-    return table.concat(flipped, "")
+    return table.concat(flipped)
 end
 
 ---Flips an image's bytes vertically.
@@ -187,7 +187,7 @@ function Utilities.flipPixelsY(source, w, h, bpp)
         i = i + 1
     end
 
-    return table.concat(flipped, "")
+    return table.concat(flipped)
 end
 
 ---Gets a pixel from an image's bytes, formatted as a string.
@@ -825,7 +825,7 @@ function Utilities.resizePixelsNearest(
         resized[i] = trgHex
     end
 
-    return table.concat(resized, "")
+    return table.concat(resized)
 end
 
 ---Reverses a table used as an array. Useful for rotating an array of pixels
@@ -946,7 +946,7 @@ function Utilities.rotatePixelsX(
             i = i + 1
             rotated[i] = alphaStr
         end
-        return table.concat(rotated, ""), wSrc, 1
+        return table.concat(rotated), wSrc, 1
     end
 
     local hTrgAbs <const> = math.abs(hTrgSigned)
@@ -984,7 +984,7 @@ function Utilities.rotatePixelsY(
             i = i + 1
             rotated[i] = alphaStr
         end
-        return table.concat(rotated, ""), 1, hSrc
+        return table.concat(rotated), 1, hSrc
     end
 
     local wTrgAbs <const> = math.abs(wTrgSigned)
