@@ -653,3 +653,23 @@ dlg:show {
     autoscrollbars = true,
     wait = false
 }
+
+local appPrefs <const> = app.preferences
+if appPrefs then
+    local genPrefs <const> = appPrefs.general
+    if genPrefs then
+        local posPrefs <const> = genPrefs.timeline_position --[[@as integer]]
+        if posPrefs then
+            local dlgBounds <const> = dlg.bounds
+            if posPrefs == 1 then
+                dlg.bounds = Rectangle(
+                    dlgBounds.x * 2 - 52, dlgBounds.y,
+                    dlgBounds.w, dlgBounds.h)
+            elseif posPrefs == 2 then
+                dlg.bounds = Rectangle(
+                    16, dlgBounds.y,
+                    dlgBounds.w, dlgBounds.h)
+            end
+        end
+    end
+end
