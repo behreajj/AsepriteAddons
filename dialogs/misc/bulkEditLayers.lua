@@ -1,10 +1,16 @@
 dofile("../../support/gradientutilities.lua")
 
+local blendModes <const> = {
+    "NORMAL", "DARKEN", "MULTIPLY", "COLOR_BURN",
+    "LIGHTEN", "SCREEN", "COLOR_DODGE", "ADDITION",
+    "OVERLAY", "SOFT_LIGHT", "HARD_LIGHT", "DIFFERENCE",
+    "EXCLUSION", "SUBTRACT", "DIVIDE", "HSL_HUE",
+    "HSL_SATURATION", "HSL_COLOR", "HSL_LUMINOSITY",
+}
+
 local defaults <const> = {
-    -- Blend mode is not included because it would require more
-    -- of the same as in multiProps file -- converting to and
-    -- from strings.
     nameEntry = "Layer",
+    blendMode = "NORMAL",
     reverse = false
 }
 
@@ -380,6 +386,65 @@ dlg:button {
                 layer.isContinuous = not layer.isContinuous
             end
         end
+
+        app.refresh()
+    end
+}
+
+dlg:separator { id = "blendSep" }
+
+dlg:combobox {
+    id = "blendMode",
+    label = "Blend:",
+    option = defaults.blendMode,
+    options = blendModes,
+    focus = false
+}
+
+dlg:newrow { always = false }
+
+dlg:button {
+    id = "blendButton",
+    text = "CHAN&GE",
+    focus = false,
+    onclick = function()
+        local sprite <const> = app.sprite
+        if not sprite then return end
+
+        local range <const> = app.range
+        if range.sprite ~= sprite then
+            app.alert {
+                title = "Error",
+                text = "Range sprite doesn't match active sprite."
+            }
+            return
+        end
+
+        local rangeLayers <const> = range.type == RangeType.FRAMES
+            and { app.layer or sprite.layers[1] }
+            or range.layers
+        local lenRangeLayers <const> = #rangeLayers
+
+        if lenRangeLayers <= 0 then
+            app.alert {
+                title = "Error",
+                text = "No layers selected."
+            }
+            return
+        end
+
+        local args <const> = dlg.data
+        local blendModeStr <const> = args.blendMode
+            or defaults.blendMode --[[@as string]]
+        local blendMode <const> = BlendMode[blendModeStr]
+
+        app.transaction("Set Blend Mode", function()
+            local i = 0
+            while i < lenRangeLayers do
+                i = i + 1
+                rangeLayers[i].blendMode = blendMode
+            end
+        end)
 
         app.refresh()
     end

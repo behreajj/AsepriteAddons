@@ -7,34 +7,15 @@ local aniDirs <const> = {
     "FORWARD",
     "REVERSE",
     "PING_PONG",
-    "PING_PONG_REVERSE"
+    "PING_PONG_REVERSE",
 }
 
 local blendModes <const> = {
-    "NORMAL",
-
-    "DARKEN",
-    "MULTIPLY",
-    "COLOR_BURN",
-
-    "LIGHTEN",
-    "SCREEN",
-    "COLOR_DODGE",
-    "ADDITION",
-
-    "OVERLAY",
-    "SOFT_LIGHT",
-    "HARD_LIGHT",
-
-    "DIFFERENCE",
-    "EXCLUSION",
-    "SUBTRACT",
-    "DIVIDE",
-
-    "HSL_HUE",
-    "HSL_SATURATION",
-    "HSL_COLOR",
-    "HSL_LUMINOSITY",
+    "NORMAL", "DARKEN", "MULTIPLY", "COLOR_BURN",
+    "LIGHTEN", "SCREEN", "COLOR_DODGE", "ADDITION",
+    "OVERLAY", "SOFT_LIGHT", "HARD_LIGHT", "DIFFERENCE",
+    "EXCLUSION", "SUBTRACT", "DIVIDE", "HSL_HUE",
+    "HSL_SATURATION", "HSL_COLOR", "HSL_LUMINOSITY",
 }
 
 ---@param aniDir AniDir
@@ -50,29 +31,13 @@ end
 ---@param bm BlendMode
 ---@return string
 local function blendModeToStr(bm)
-    if bm == BlendMode.DARKEN then return "DARKEN" end
-    if bm == BlendMode.MULTIPLY then return "MULTIPLY" end
-    if bm == BlendMode.COLOR_BURN then return "COLOR_BURN" end
-
-    if bm == BlendMode.LIGHTEN then return "LIGHTEN" end
-    if bm == BlendMode.SCREEN then return "SCREEN" end
-    if bm == BlendMode.COLOR_DODGE then return "COLOR_DODGE" end
-    if bm == BlendMode.ADDITION then return "ADDITION" end
-
-    if bm == BlendMode.OVERLAY then return "OVERLAY" end
-    if bm == BlendMode.SOFT_LIGHT then return "SOFT_LIGHT" end
-    if bm == BlendMode.HARD_LIGHT then return "HARD_LIGHT" end
-
-    if bm == BlendMode.DIFFERENCE then return "DIFFERENCE" end
-    if bm == BlendMode.EXCLUSION then return "EXCLUSION" end
-    if bm == BlendMode.SUBTRACT then return "SUBTRACT" end
-    if bm == BlendMode.DIVIDE then return "DIVIDE" end
-
-    if bm == BlendMode.HSL_HUE then return "HSL_HUE" end
-    if bm == BlendMode.HSL_SATURATION then return "HSL_SATURATION" end
-    if bm == BlendMode.HSL_COLOR then return "HSL_COLOR" end
-    if bm == BlendMode.HSL_LUMINOSITY then return "HSL_LUMINOSITY" end
-
+    local lenBlendModes <const> = #blendModes
+    local i = 0
+    while i < lenBlendModes do
+        i = i + 1
+        local strKey <const> = blendModes[i]
+        if bm == BlendMode[strKey] then return strKey end
+    end
     return "NORMAL"
 end
 
