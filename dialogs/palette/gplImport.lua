@@ -207,10 +207,9 @@ dlg:button {
             local lenFileData <const> = #fileData
             -- print(string.format("lenFileData: %d", lenFileData))
 
-            -- TODO: Make the endianness of these explicit with < or >
-            local magicWordRiff <const> = strunpack("I4",
+            local magicWordRiff <const> = strunpack("<I4",
                 strsub(fileData, 1, 4))
-            local magicCheckRiff <const> = strunpack("I4", "RIFF")
+            local magicCheckRiff <const> = strunpack("<I4", "RIFF")
             isValidRiff = magicWordRiff == magicCheckRiff
             -- print(string.format(
             --     "magicWordRiff: %d, magicCheckRiff: %d %s",
@@ -219,10 +218,10 @@ dlg:button {
 
             local i = 4
             local magicWordPal = 0
-            local magicCheckPal <const> = strunpack("I4", "PAL ")
+            local magicCheckPal <const> = strunpack("<I4", "PAL ")
             if isValidRiff then
                 while i < lenFileData and magicWordPal ~= magicCheckPal do
-                    magicWordPal = strunpack("I4",
+                    magicWordPal = strunpack("<I4",
                         strsub(fileData, 1 + i, 4 + i))
                     i = i + 1
                 end
@@ -234,10 +233,10 @@ dlg:button {
             --     magicWordPal == magicCheckPal and "MATCH" or "MISMATCH"))
 
             local magicWordData = 0
-            local magicCheckData <const> = strunpack("I4", "data")
+            local magicCheckData <const> = strunpack("<I4", "data")
             if isValidRiff then
                 while i < lenFileData and magicWordData ~= magicCheckData do
-                    magicWordData = strunpack("I4",
+                    magicWordData = strunpack("<I4",
                         strsub(fileData, 1 + i, 4 + i))
                     i = i + 1
                 end
@@ -250,11 +249,11 @@ dlg:button {
 
             -- print(isValidRiff and "Valid" or "Not valid")
             if isValidRiff then
-                -- local lenDataChunk <const> = strunpack("I4",
+                -- local lenDataChunk <const> = strunpack("<I4",
                 -- strsub(fileData, 4 + i, 7 + i))
-                -- local palVersion <const> = strunpack("I2",
+                -- local palVersion <const> = strunpack("<I2",
                 -- strsub(fileData, 8 + i, 9 + i))
-                local numColors <const> = strunpack("I2",
+                local numColors <const> = strunpack("<I2",
                     strsub(fileData, 10 + i, 11 + i))
                 -- print(string.format(
                 --     "lenDataChunk: %d, palVersion: %d, numColors: %d",

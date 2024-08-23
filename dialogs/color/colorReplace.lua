@@ -230,14 +230,6 @@ dlg:button {
         local exactSearch <const> = tolerance <= 0
         local switchVerif <const> = exactSearch and switchColors
 
-        local srcBpp = 1
-        if colorMode == ColorMode.RGB then
-            srcBpp = 4
-        elseif colorMode == ColorMode.GRAY then
-            srcBpp = 2
-        end
-        local bppFormatStr <const> = "<I" .. srcBpp
-
         local frInt <const> = AseUtilities.aseColorToHex(
             frColor, colorMode)
         local toInt <const> = AseUtilities.aseColorToHex(
@@ -256,6 +248,14 @@ dlg:button {
                 or (replaceTileSet or replaceAllTiles)) then
             return
         end
+
+        local srcBpp = 1
+        if colorMode == ColorMode.RGB then
+            srcBpp = 4
+        elseif colorMode == ColorMode.GRAY then
+            srcBpp = 2
+        end
+        local bppFormatStr <const> = "<I" .. srcBpp
 
         local frStr <const> = strpack(bppFormatStr, frInt)
         local toStr <const> = strpack(bppFormatStr, toInt)
