@@ -236,14 +236,18 @@ dlg:button {
         elseif colorMode == ColorMode.GRAY then
             srcBpp = 2
         end
-        local bppFormatStr <const> = "I" .. srcBpp
+        local bppFormatStr <const> = "<I" .. srcBpp
 
         local frInt <const> = AseUtilities.aseColorToHex(
             frColor, colorMode)
         local toInt <const> = AseUtilities.aseColorToHex(
             toColor, colorMode)
-        local frStr <const> = strpack(bppFormatStr, frInt)
-        local toStr <const> = strpack(bppFormatStr, toInt)
+
+        -- Indices may exceed a byte and throw an error when packed.
+        if colorMode == ColorMode.INDEXED
+            and (frInt < 0 or frInt > 255 or toInt < 0 or toInt > 255) then
+            return
+        end
 
         local replaceTileSet <const> = target == "TILE_SET"
         local replaceAllTiles <const> = target == "TILE_SETS"
@@ -252,6 +256,9 @@ dlg:button {
                 or (replaceTileSet or replaceAllTiles)) then
             return
         end
+
+        local frStr <const> = strpack(bppFormatStr, frInt)
+        local toStr <const> = strpack(bppFormatStr, toInt)
 
         if replaceTileSet or replaceAllTiles then
             ---@type Tileset[]
@@ -342,7 +349,7 @@ dlg:button {
             local lenTrgCels <const> = #trgCels
 
             if exactSearch then
-                local useExpand = (frInt == alphaIndex)
+                local useExpand <const> = (frInt == alphaIndex)
                     or (switchColors and (toInt == alphaIndex))
 
                 app.transaction("Replace Color Exact", function()

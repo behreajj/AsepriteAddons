@@ -235,11 +235,14 @@ end
 ---depends on the color mode: the RGB integer is 32 bits. GRAY, 16. INDEXED, 8.
 ---Returns zero if the color mode is not recognized.
 ---
----Uses modular arithmetic, i.e., does not check if red, green, blue and alpha
----channels are out of range [0, 255].
+---For RGB, uses modular arithmetic, i.e., does not check if red, green, blue
+---and alpha channels are out of range [0, 255].
 ---
 ---For grayscale, uses Aseprite's definition of relative luminance, not HSL
 ---lightness.
+---
+---For indexed, may return an index that is greater than the range of one byte,
+---[0, 255].
 ---@param clr Color aseprite color
 ---@param clrMode ColorMode color mode
 ---@return integer
