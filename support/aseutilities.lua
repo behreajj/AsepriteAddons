@@ -909,13 +909,13 @@ function AseUtilities.blendImage(
     local uStrs <const> = {}
     local uBytes <const> = under.bytes
     local uBpp <const> = under.bytesPerPixel
-    local uDefault <const> = string.pack(">I" .. uBpp, uMask)
+    local uDefault <const> = string.pack("<I" .. uBpp, uMask)
 
     ---@type string[]
     local oStrs <const> = {}
     local oBytes <const> = over.bytes
     local oBpp <const> = over.bytesPerPixel
-    local oDefault <const> = string.pack(">I" .. oBpp, oMask)
+    local oDefault <const> = string.pack("<I" .. oBpp, oMask)
 
     local getPixel <const> = Utilities.getPixelOmit
     local strbyte <const> = string.byte
@@ -2216,7 +2216,7 @@ function AseUtilities.getSelectedTiles(
     local strsub <const> = string.sub
 
     local bpp <const> = tileMap.bytesPerPixel
-    local unpackFmt <const> = ">I" .. bpp
+    local unpackFmt <const> = "<I" .. bpp
     local bytes <const> = tileMap.bytes
     local wMap <const> = tileMap.width
     local hMap <const> = tileMap.height
@@ -2941,7 +2941,7 @@ function AseUtilities.selectImage(image, xtl, ytl, tileSet, spriteBounds)
             while i < lenImage do
                 local ibpp <const> = i * bpp
                 local str <const> = strsub(bytes, 1 + ibpp, bpp + ibpp)
-                local mapIf <const> = strunpack(">I4", str)
+                local mapIf <const> = strunpack("<I4", str)
                 local idx <const> = pxTilei(mapIf)
                 if idx == 0 then
                     pxRect.x = wTile * (i % wImage) + xtl
@@ -3308,7 +3308,7 @@ function AseUtilities.trimMapAlpha(
         while x < wSrcn1 and goTop do
             x = x + 1
             local iTop <const> = bpp * (x + wSrc * topSearch)
-            local mapif <const> = strunpack(">I4", strsub(
+            local mapif <const> = strunpack("<I4", strsub(
                 bytes, 1 + iTop, bpp + iTop))
             if pxTilei(mapif) ~= 0 then
                 minRight = x
@@ -3327,7 +3327,7 @@ function AseUtilities.trimMapAlpha(
         while y > topSearch and goLft do
             y = y - 1
             local iLft <const> = bpp * (lftSearch + wSrc * y)
-            local mapif <const> = strunpack(">I4", strsub(
+            local mapif <const> = strunpack("<I4", strsub(
                 bytes, 1 + iLft, bpp + iLft))
             if pxTilei(mapif) ~= 0 then
                 minBottom = y
@@ -3345,7 +3345,7 @@ function AseUtilities.trimMapAlpha(
         while x > lftSearch and goBtm do
             x = x - 1
             local iBtm <const> = bpp * (x + wSrc * btm)
-            local mapif <const> = strunpack(">I4", strsub(
+            local mapif <const> = strunpack("<I4", strsub(
                 bytes, 1 + iBtm, bpp + iBtm))
             if pxTilei(mapif) ~= 0 then
                 minRight = x
@@ -3363,7 +3363,7 @@ function AseUtilities.trimMapAlpha(
         while y > topSearch and goRgt do
             y = y - 1
             local iRgt <const> = bpp * (rgt + wSrc * y)
-            local mapif <const> = strunpack(">I4", strsub(
+            local mapif <const> = strunpack("<I4", strsub(
                 bytes, 1 + iRgt, bpp + iRgt))
             if pxTilei(mapif) ~= 0 then
                 goRgt = false
