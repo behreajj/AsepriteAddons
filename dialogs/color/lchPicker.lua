@@ -292,14 +292,14 @@ dlg:entry {
     onchange = function()
         local args <const> = dlg.data
         local hexStr <const> = args.hexCode --[[@as string]]
-        -- if #hexStr > 5 then
+
+        -- TODO: Support alpha inputs?
         local srgb <const> = Clr.fromHexWeb(hexStr)
         local lch <const> = defaults.sRgbToLch(srgb)
         active.l = lch.l
         active.c = lch.c
         active.h = lch.h
         dlg:repaint()
-        -- end
     end
 }
 

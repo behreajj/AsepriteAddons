@@ -253,7 +253,7 @@ function AseUtilities.aseColorToHex(clr, clrMode)
     elseif clrMode == ColorMode.GRAY then
         -- Color:grayPixel depends on HSL lightness, not on the user gray
         -- conversion preference (HSL, HSV or luma). See
-        -- https://github.com/aseprite/aseprite/blob/main/src/app/color.cpp#L810
+        -- https://github.com/aseprite/aseprite/blob/main/src/app/color.cpp#L821
         -- https://github.com/aseprite/aseprite/blob/main/src/doc/color.h#L62
         -- and app.preferences.quantization.to_gray .
         local sr <const> = clr.red

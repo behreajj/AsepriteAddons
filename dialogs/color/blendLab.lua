@@ -748,13 +748,8 @@ dlg:button {
                             aLab.l, aLab.a, aLab.b, 1.0)
                         local bLch <const> = srLab2ToSrLch(
                             bLab.l, bLab.a, bLab.b, 1.0)
-
-                        local cc = 0.0
-                        local ch = 0.0
-
-                        cc = cBlendFunc(aLch.c, bLch.c, v, t)
-                        ch = hBlendFunc(aLch.h, bLch.h, t)
-
+                        local cc <const> = cBlendFunc(aLch.c, bLch.c, v, t)
+                        local ch <const> = hBlendFunc(aLch.h, bLch.h, t)
                         local cLab <const> = srLchToSrLab2(cl, cc, ch, 1.0)
                         ca = cLab.a
                         cb = cLab.b

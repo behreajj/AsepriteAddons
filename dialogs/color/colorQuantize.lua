@@ -11,6 +11,9 @@ local defaults <const> = {
     minBits = 1,
     maxBits = 8,
     target = "ACTIVE",
+    -- TODO: Abstract these dialog widgets to
+    -- a separate class then have color quantize
+    -- and dither both refer to them.
     levelsUni = 16,
     rLevels = 16,
     gLevels = 16,
