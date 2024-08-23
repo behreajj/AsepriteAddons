@@ -593,10 +593,10 @@ function AseUtilities.averageColor(sprite, frObj)
     flatImage:drawSprite(sprite, frObj, Point(-xMouse, -yMouse))
 
     if colorMode == ColorMode.RGB then
-        local pixel <const> = string.unpack(">I4", flatImage.bytes)
+        local pixel <const> = string.unpack("<I4", flatImage.bytes)
         return Clr.sRgbToSrLab2(Clr.fromHex(pixel))
     elseif colorMode == ColorMode.GRAY then
-        local pixel <const> = string.unpack(">I2", flatImage.bytes)
+        local pixel <const> = string.unpack("<I2", flatImage.bytes)
         local a = (pixel >> 0x08) & 0xff
         local v <const> = (pixel & 0xff) / 255.0
         return Clr.sRgbToSrLab2(Clr.new(v, v, v, a / 255.0))
