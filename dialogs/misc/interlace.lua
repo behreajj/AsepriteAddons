@@ -335,14 +335,17 @@ dlg:button {
                 local srcSpec <const> = imgSrc.spec
                 local wSrc <const> = srcSpec.width
                 local hSrc <const> = srcSpec.height
-                local alphaIndex <const> = srcSpec.transparentColor
+                local alphaIndex <const> = srcSpec.transparentColor < 256
+                    and srcSpec.transparentColor
+                    or 0
 
                 local lenSrc <const> = wSrc * hSrc
                 ---@type string[]
                 local pickByteArr <const> = {}
                 ---@type string[]
                 local skipByteArr <const> = {}
-                local bppFmtStr <const> = "I" .. srcBpp
+                local bppFmtStr <const> = "<I" .. srcBpp
+
                 local alphaStr <const> = strpack(bppFmtStr, alphaIndex)
 
                 local i = 0

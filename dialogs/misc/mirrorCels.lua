@@ -164,7 +164,9 @@ dlg:button {
         local wSprite <const> = spriteSpec.width
         local hSprite <const> = spriteSpec.height
         local colorMode <const> = spriteSpec.colorMode
-        local alphaIndex <const> = spriteSpec.transparentColor
+        local alphaIndex <const> = spriteSpec.transparentColor < 256
+            and spriteSpec.transparentColor
+            or 0
         local blendModeSrc <const> = BlendMode.SRC
 
         -- Calculate origin and destination.
@@ -273,7 +275,7 @@ dlg:button {
                 local flatBytes <const> = flatImg.bytes
                 local flatBpp <const> = flatImg.bytesPerPixel
                 local pxAlpha <const> = string.pack(
-                    "I" .. flatBpp, alphaIndex)
+                    "<I" .. flatBpp, alphaIndex)
 
                 local j = 0
                 while j < lenFlat do

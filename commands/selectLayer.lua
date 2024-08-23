@@ -36,7 +36,7 @@ local function eval(
     local dataIdx <const> = (y * wImage + x) * bpp
     local dataStr <const> = string.sub(bytesStr,
         1 + dataIdx, bpp + dataIdx)
-    local dataInt <const> = string.unpack("I" .. bpp, dataStr)
+    local dataInt <const> = string.unpack("<I" .. bpp, dataStr)
 
     if colorMode == ColorMode.RGB then
         local a8 <const> = (dataInt >> 0x18) & 0xff
@@ -142,7 +142,7 @@ while h > 1 do
                         local dataStr <const> = strsub(bytesStr,
                             1 + dataIdx, bpp + dataIdx)
 
-                        local tileEntry <const> = strunpack("I" .. bpp, dataStr)
+                        local tileEntry <const> = strunpack("<I" .. bpp, dataStr)
                         local tileIndex <const> = pxTilei(tileEntry)
 
                         if tileIndex > 0 and tileIndex < lenTileSet then

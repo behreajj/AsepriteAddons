@@ -344,7 +344,7 @@ local function transformCel(dialog, preset)
 
     local srcMap <const> = activeCel.image
     local srcBpp <const> = srcMap.bytesPerPixel
-    local packFmt <const> = "I" .. srcBpp
+    local packFmt <const> = "<I" .. srcBpp
     local srcBytes <const> = srcMap.bytes
     local srcSpec <const> = srcMap.spec
     local wSrcMap <const> = srcSpec.width

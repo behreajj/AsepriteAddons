@@ -2556,11 +2556,17 @@ function AseUtilities.resizeImageNearest(source, wTrg, hTrg)
         return source
     end
 
+    local colorMode <const> = srcSpec.colorMode
     local alphaIndex <const> = srcSpec.transparentColor
+    if colorMode == ColorMode.INDEXED
+        and (alphaIndex < 0 or alphaIndex > 255) then
+        return source
+    end
+
     local trgSpec <const> = ImageSpec {
         width = wVrf,
         height = hVrf,
-        colorMode = srcSpec.colorMode,
+        colorMode = colorMode,
         transparentColor = alphaIndex
     }
     trgSpec.colorSpace = srcSpec.colorSpace
@@ -2646,18 +2652,25 @@ function AseUtilities.rotateImageX(source, angle)
     end
 
     local srcSpec <const> = source.spec
+    local colorMode <const> = srcSpec.colorMode
+    local alphaIndex <const> = srcSpec.transparentColor
+    if colorMode == ColorMode.INDEXED
+        and (alphaIndex < 0 or alphaIndex > 255) then
+        return source
+    end
+
     local trgBytes <const>,
     wTrg <const>,
     hTrg <const> = Utilities.rotatePixelsX(
         source.bytes, srcSpec.width, srcSpec.height,
         math.cos(angle * 0.017453292519943), 0.0, source.bytesPerPixel,
-        srcSpec.transparentColor)
+        alphaIndex)
 
     local trgSpec <const> = ImageSpec {
         width = wTrg,
         height = hTrg,
-        colorMode = srcSpec.colorMode,
-        transparentColor = srcSpec.transparentColor
+        colorMode = colorMode,
+        transparentColor = alphaIndex
     }
     trgSpec.colorSpace = srcSpec.colorSpace
     local target <const> = Image(trgSpec)
@@ -2681,18 +2694,25 @@ function AseUtilities.rotateImageY(source, angle)
     end
 
     local srcSpec <const> = source.spec
+    local colorMode <const> = srcSpec.colorMode
+    local alphaIndex <const> = srcSpec.transparentColor
+    if colorMode == ColorMode.INDEXED
+        and (alphaIndex < 0 or alphaIndex > 255) then
+        return source
+    end
+
     local trgBytes <const>,
     wTrg <const>,
     hTrg <const> = Utilities.rotatePixelsY(
         source.bytes, srcSpec.width, srcSpec.height,
         math.cos(angle * 0.017453292519943), 0.0, source.bytesPerPixel,
-        srcSpec.transparentColor)
+        alphaIndex)
 
     local trgSpec <const> = ImageSpec {
         width = wTrg,
         height = hTrg,
-        colorMode = srcSpec.colorMode,
-        transparentColor = srcSpec.transparentColor
+        colorMode = colorMode,
+        transparentColor = alphaIndex
     }
     trgSpec.colorSpace = srcSpec.colorSpace
     local target <const> = Image(trgSpec)
@@ -2735,19 +2755,24 @@ end
 ---@nodiscard
 function AseUtilities.rotateImageZInternal(source, cosa, sina)
     local srcSpec <const> = source.spec
+    local colorMode <const> = srcSpec.colorMode
+    local alphaIndex <const> = srcSpec.transparentColor
+    if colorMode == ColorMode.INDEXED
+        and (alphaIndex < 0 or alphaIndex > 255) then
+        return source
+    end
 
     local trgBytes <const>,
     wTrg <const>,
     hTrg <const> = Utilities.rotatePixelsZ(
         source.bytes, srcSpec.width, srcSpec.height,
-        cosa, sina, source.bytesPerPixel,
-        srcSpec.transparentColor)
+        cosa, sina, source.bytesPerPixel, alphaIndex)
 
     local trgSpec <const> = ImageSpec {
         width = wTrg,
         height = hTrg,
-        colorMode = srcSpec.colorMode,
-        transparentColor = srcSpec.transparentColor
+        colorMode = colorMode,
+        transparentColor = alphaIndex
     }
     trgSpec.colorSpace = srcSpec.colorSpace
     local target <const> = Image(trgSpec)
@@ -2766,12 +2791,19 @@ end
 function AseUtilities.skewImageX(source, angle)
     -- This doesn't have an internal version because it's not worth making
     -- a separate method for skewing by integer rise and run.
+    local srcSpec <const> = source.spec
+    local srcAlphaIndex <const> = srcSpec.transparentColor
+
+    local srcColorMode <const> = srcSpec.colorMode
+    if srcColorMode == ColorMode.INDEXED
+        and (srcAlphaIndex < 0 or srcAlphaIndex > 255) then
+        return source
+    end
+
     local srcBytes <const> = source.bytes
     local srcBpp <const> = source.bytesPerPixel
-    local srcSpec <const> = source.spec
     local wSrc <const> = srcSpec.width
     local hSrc <const> = srcSpec.height
-    local srcAlphaIndex <const> = srcSpec.transparentColor
 
     local trgBytes = ""
     local wTrg = 0
@@ -2810,7 +2842,7 @@ function AseUtilities.skewImageX(source, angle)
     local trgSpec <const> = ImageSpec {
         width = wTrg,
         height = hTrg,
-        colorMode = srcSpec.colorMode,
+        colorMode = srcColorMode,
         transparentColor = srcAlphaIndex
     }
     trgSpec.colorSpace = srcSpec.colorSpace
@@ -2830,12 +2862,19 @@ end
 function AseUtilities.skewImageY(source, angle)
     -- This doesn't have an internal version because it's not worth making
     -- a separate method for skewing by integer rise and run.
+    local srcSpec <const> = source.spec
+    local srcAlphaIndex <const> = srcSpec.transparentColor
+
+    local srcColorMode <const> = srcSpec.colorMode
+    if srcColorMode == ColorMode.INDEXED
+        and (srcAlphaIndex < 0 or srcAlphaIndex > 255) then
+        return source
+    end
+
     local srcBytes <const> = source.bytes
     local srcBpp <const> = source.bytesPerPixel
-    local srcSpec <const> = source.spec
     local wSrc <const> = srcSpec.width
     local hSrc <const> = srcSpec.height
-    local srcAlphaIndex <const> = srcSpec.transparentColor
 
     local trgBytes = ""
     local wTrg = 0
@@ -2874,7 +2913,7 @@ function AseUtilities.skewImageY(source, angle)
     local trgSpec <const> = ImageSpec {
         width = wTrg,
         height = hTrg,
-        colorMode = srcSpec.colorMode,
+        colorMode = srcColorMode,
         transparentColor = srcAlphaIndex
     }
     trgSpec.colorSpace = srcSpec.colorSpace

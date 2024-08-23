@@ -975,7 +975,9 @@ dlg:button {
         ---@type Image[]
         local trgImages <const> = {}
         local lenPackets <const> = #packets
-        local alphaIndex <const> = srcSpec.transparentColor
+        local alphaIndex <const> = srcSpec.transparentColor < 256
+            and srcSpec.transparentColor
+            or 0
         local h = 0
         while h < lenPackets do
             h = h + 1
@@ -987,7 +989,7 @@ dlg:button {
             local srcBytes <const> = srcImg.bytes
             local srcBpp <const> = srcImg.bytesPerPixel
             local pxAlpha <const> = string.pack(
-                "I" .. srcBpp, alphaIndex)
+                "<I" .. srcBpp, alphaIndex)
 
             local wSrc <const> = srcImg.width
             local hSrc <const> = srcImg.height
