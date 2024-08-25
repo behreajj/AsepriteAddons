@@ -145,7 +145,7 @@ local function imgToSvgStr(
     local roundLtEq0 <const> = rounding <= 0.0
     local roundGtEq1 <const> = wPixel == hPixel
         and rounding >= math.min(wHalf, hHalf)
-    local frIdxShifted = ((frIdx - 1) & 0xff) << 0x20
+    local frIdxShifted <const> = ((frIdx - 1) & 0xff) << 0x20
 
     ---@type table<integer, integer[]>
     local pixelDict <const> = {}
