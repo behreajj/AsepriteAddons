@@ -107,6 +107,7 @@ end
 ---@param xOff integer x offset
 ---@param yOff integer y offset
 ---@param palette Palette palette
+---@param frIdx integer frame index
 ---@return string
 ---@return integer[]
 ---@return integer[][]
@@ -114,7 +115,7 @@ local function imgToSvgStr(
     img,
     border, padding, rounding,
     wPixel, hPixel, xOff, yOff,
-    palette)
+    palette, frIdx)
     -- https://github.com/aseprite/aseprite/issues/3561
     -- SVGs displayed in Firefox and Inkscape have thin gaps between squares at
     -- fractional zoom levels, e.g., 133%. Subtracting an epsilon from the left
@@ -313,15 +314,17 @@ local function imgToSvgStr(
             local webHex <const> = (hex & 0xff) << 0x10
                 | (hex & 0xff00)
                 | (hex >> 0x10 & 0xff)
-            local a <const> = hex >> 0x18 & 0xff
 
+            local a <const> = hex >> 0x18 & 0xff
             local alphaStr <const> = a < 0xff
                 and strfmt(" fill-opacity=\"%.3f\"", a / 255.0)
                 or ""
 
+            local id <const> = ((frIdx - 1) & 0xff) << 0x20 | hex
+
             pathsArr[#pathsArr + 1] = strfmt(
-                "<path id=\"%08x\" fill=\"#%06X\"%s d=\"%s\" />",
-                hex, webHex, alphaStr,
+                "<path id=\"%010x\" fill=\"#%06X\"%s d=\"%s\" />",
+                id, webHex, alphaStr,
                 tconcat(subPathsArr, " "))
         end
     end
@@ -400,7 +403,7 @@ local function genLabelSvgStr(
 end
 
 ---@param layer Layer
----@param frame Frame|integer
+---@param frIdx integer
 ---@param border integer
 ---@param padding integer
 ---@param rounding number
@@ -414,7 +417,7 @@ end
 ---@param palette Palette
 ---@param layersStrArr string[]
 local function layerToSvgStr(
-    layer, frame,
+    layer, frIdx,
     border, padding, rounding,
     wPixel, hPixel,
     includeLocked, includeHidden,
@@ -452,7 +455,7 @@ local function layerToSvgStr(
                     i = i + 1
                     local child <const> = children[i]
                     layerToSvgStr(
-                        child, frame, border, padding, rounding, wPixel, hPixel,
+                        child, frIdx, border, padding, rounding, wPixel, hPixel,
                         includeLocked, includeHidden,
                         includeTiles, includeBkg, colorMode, palette,
                         childStrs)
@@ -466,7 +469,7 @@ local function layerToSvgStr(
         elseif (not layer.isReference)
             and (includeTiles or (not isTilemap))
             and (includeBkg or (not layer.isBackground)) then
-            local cel <const> = layer:cel(frame)
+            local cel <const> = layer:cel(frIdx)
             if cel then
                 -- A definition could be created for tile sets, then accessed
                 -- with use xlink:href, but best to keep things simple for
@@ -504,7 +507,7 @@ local function layerToSvgStr(
                         celImg,
                         border, padding, rounding,
                         wPixel, hPixel, xCel, yCel,
-                        palette)
+                        palette, frIdx)
 
                     local grpStr <const> = string.format(
                         "<g id=\"%s\"%s style=\"mix-blend-mode: %s;\"%s>\n%s\n</g>",
@@ -1073,7 +1076,7 @@ dlg:button {
                         flatImg,
                         border, padding, rdVerif,
                         wPixel, hPixel, 0, 0,
-                        palette)
+                        palette, frIdx)
 
                     -- Create frame SVG string.
                     local durStr = "indefinite"
@@ -1095,11 +1098,11 @@ dlg:button {
 
                 layerStrsArr[1] = tconcat(pixelFrameStrs, "\n")
             else
-                local activeFrame = site.frame
+                local activeFrObj = site.frame
                 if lenChosenFrIdcs > 0 then
-                    activeFrame = activeSprite.frames[chosenFrIdcs[1]]
+                    activeFrObj = activeSprite.frames[chosenFrIdcs[1]]
                 end
-                if not activeFrame then
+                if not activeFrObj then
                     app.alert {
                         title = "Error",
                         text = "There is no active frame."
@@ -1108,17 +1111,17 @@ dlg:button {
                 end
 
                 local palette <const> = AseUtilities.getPalette(
-                    activeFrame, activeSprite.palettes)
+                    activeFrObj, activeSprite.palettes)
 
                 local flatImg <const> = Image(activeSpec)
-                flatImg:drawSprite(activeSprite, activeFrame)
+                flatImg:drawSprite(activeSprite, activeFrObj)
                 local layerStr <const>,
                 hexArr <const>,
                 idcsArr <const> = imgToSvgStr(
                     flatImg,
                     border, padding, rdVerif,
                     wPixel, hPixel, 0, 0,
-                    palette)
+                    palette, activeFrObj.frameNumber)
                 layerStrsArr[1] = layerStr
 
                 if usePixelLabels then
@@ -1135,24 +1138,25 @@ dlg:button {
             local spriteLayers <const> = activeSprite.layers
             local lenSpriteLayers <const> = #spriteLayers
 
-            local activeFrame <const> = site.frame
-            if not activeFrame then
+            local activeFrObj <const> = site.frame
+            if not activeFrObj then
                 app.alert {
                     title = "Error",
                     text = "There is no active frame."
                 }
                 return
             end
+            local activeFrIdx <const> = activeFrObj.frameNumber
 
             local palette <const> = AseUtilities.getPalette(
-                activeFrame, activeSprite.palettes)
+                activeFrObj, activeSprite.palettes)
 
             local j = 0
             while j < lenSpriteLayers do
                 j = j + 1
                 local layer <const> = spriteLayers[j]
                 layerToSvgStr(
-                    layer, activeFrame, border, padding, rdVerif,
+                    layer, activeFrIdx, border, padding, rdVerif,
                     wPixel, hPixel,
                     includeLocked, includeHidden, includeTiles,
                     includeBkg, colorMode, palette, layerStrsArr)

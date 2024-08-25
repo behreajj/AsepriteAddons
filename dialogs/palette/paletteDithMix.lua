@@ -501,8 +501,8 @@ dlg:button {
                             local xpx <const> = pixel.x
                             local ypx <const> = pixel.y
                             local midx <const> = 1 + (xpx % mw) + (ypx % mh) * mw
-                            local hex = colHex
-                            if 0.5 >= matrix[midx] then hex = rowHex end
+                            local hex <const> = 0.5 >= matrix[midx]
+                                and rowHex or colHex
                             pixel(hex)
                         end
 
