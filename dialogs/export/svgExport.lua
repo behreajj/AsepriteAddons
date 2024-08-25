@@ -145,6 +145,7 @@ local function imgToSvgStr(
     local roundLtEq0 <const> = rounding <= 0.0
     local roundGtEq1 <const> = wPixel == hPixel
         and rounding >= math.min(wHalf, hHalf)
+    local frIdxShifted = ((frIdx - 1) & 0xff) << 0x20
 
     ---@type table<integer, integer[]>
     local pixelDict <const> = {}
@@ -320,7 +321,7 @@ local function imgToSvgStr(
                 and strfmt(" fill-opacity=\"%.3f\"", a / 255.0)
                 or ""
 
-            local id <const> = ((frIdx - 1) & 0xff) << 0x20 | hex
+            local id <const> = frIdxShifted | hex
 
             pathsArr[#pathsArr + 1] = strfmt(
                 "<path id=\"%010x\" fill=\"#%06X\"%s d=\"%s\" />",
