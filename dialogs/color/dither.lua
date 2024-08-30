@@ -1,4 +1,5 @@
 dofile("../../support/aseutilities.lua")
+dofile("../../support/quantizeutilities.lua")
 dofile("../../support/octree.lua")
 
 local targets <const> = { "ACTIVE", "ALL", "RANGE" }
@@ -9,7 +10,6 @@ local palTypes <const> = { "ACTIVE", "FILE" }
 local defaults <const> = {
     target = "ACTIVE",
     ditherMode = "PALETTE",
-    levels = 16,
     greyMethod = "LUMINANCE",
     threshold = 50,
     pullFocus = false,
@@ -167,7 +167,35 @@ dlg:combobox {
         local isOne <const> = ditherMode == "ONE_BIT"
         local isPal <const> = ditherMode == "PALETTE"
 
-        dlg:modify { id = "levels", visible = isQnt }
+        local md <const> = args.levelsInput --[[@as string]]
+        local isu <const> = md == "UNIFORM"
+        local isnu <const> = md == "NON_UNIFORM"
+
+        local unit <const> = args.unitsInput --[[@as string]]
+        local isbit <const> = unit == "BITS"
+        local isint <const> = unit == "INTEGERS"
+
+        dlg:modify { id = "method", visible = isQnt }
+        dlg:modify { id = "levelsInput", visible = isQnt }
+        dlg:modify { id = "unitsInput", visible = isQnt }
+
+        dlg:modify { id = "rBits", visible = isQnt and isnu and isbit }
+        dlg:modify { id = "gBits", visible = isQnt and isnu and isbit }
+        dlg:modify { id = "bBits", visible = isQnt and isnu and isbit }
+        dlg:modify { id = "aBits", visible = isQnt and isnu and isbit }
+        dlg:modify {
+            id = "bitsUni",
+            visible = isQnt and isu and isbit
+        }
+
+        dlg:modify { id = "rLevels", visible = isQnt and isnu and isint }
+        dlg:modify { id = "gLevels", visible = isQnt and isnu and isint }
+        dlg:modify { id = "bLevels", visible = isQnt and isnu and isint }
+        dlg:modify { id = "aLevels", visible = isQnt and isnu and isint }
+        dlg:modify {
+            id = "levelsUni",
+            visible = isQnt and isu and isint
+        }
 
         dlg:modify { id = "aColor", visible = isOne }
         dlg:modify { id = "bColor", visible = isOne }
@@ -221,16 +249,8 @@ dlg:slider {
 
 dlg:newrow { always = false }
 
-dlg:slider {
-    id = "levels",
-    label = "Levels:",
-    min = 2,
-    max = 96,
-    value = defaults.levels,
-    visible = defaults.ditherMode == "QUANTIZE"
-}
-
-dlg:newrow { always = false }
+QuantizeUtilities.dialogWidgets(
+    dlg, defaults.ditherMode == "QUANTIZE")
 
 dlg:combobox {
     id = "palType",
@@ -428,27 +448,59 @@ dlg:button {
 
             dmStr = string.format("OneBit.%s.%03d", greyStr, thresh100)
         elseif ditherMode == "QUANTIZE" then
-            local levels <const> = args.levels
-                or defaults.levels --[[@as integer]]
-            local delta <const> = 1.0 / (levels - 1.0)
-            local quantize <const> = Utilities.quantizeUnsignedInternal
+            local method <const> = args.method --[[@as string]]
+
+            local rLevels = args.rLevels --[[@as integer]]
+            local gLevels = args.gLevels --[[@as integer]]
+            local bLevels = args.bLevels --[[@as integer]]
+            local aLevels = args.aLevels --[[@as integer]]
+
+            local aDelta = 0.0
+            local bDelta = 0.0
+            local gDelta = 0.0
+            local rDelta = 0.0
+
+            local quantize = Utilities.quantizeUnsignedInternal
+
+            if method == "UNSIGNED" then
+                quantize = Utilities.quantizeUnsignedInternal
+
+                aDelta = 1.0 / (aLevels - 1.0)
+                bDelta = 1.0 / (bLevels - 1.0)
+                gDelta = 1.0 / (gLevels - 1.0)
+                rDelta = 1.0 / (rLevels - 1.0)
+            else
+                quantize = Utilities.quantizeSignedInternal
+
+                aLevels = aLevels - 1
+                bLevels = bLevels - 1
+                gLevels = gLevels - 1
+                rLevels = rLevels - 1
+
+                aDelta = 1.0 / aLevels
+                bDelta = 1.0 / bLevels
+                gDelta = 1.0 / gLevels
+                rDelta = 1.0 / rLevels
+            end
+
             local floor <const> = math.floor
 
             closestFunc = function(rSrc, gSrc, bSrc, aSrc)
-                local aQtz <const> = quantize(aSrc / 255.0, levels, delta)
-                local bQtz <const> = quantize(bSrc / 255.0, levels, delta)
-                local gQtz <const> = quantize(gSrc / 255.0, levels, delta)
-                local rQtz <const> = quantize(rSrc / 255.0, levels, delta)
+                local aQtz <const> = quantize(aSrc / 255.0, aLevels, aDelta)
+                local bQtz <const> = quantize(bSrc / 255.0, bLevels, bDelta)
+                local gQtz <const> = quantize(gSrc / 255.0, gLevels, gDelta)
+                local rQtz <const> = quantize(rSrc / 255.0, rLevels, rDelta)
 
-                local a255 <const> = floor(aQtz * 255.0 + 0.5)
-                local b255 <const> = floor(bQtz * 255.0 + 0.5)
-                local g255 <const> = floor(gQtz * 255.0 + 0.5)
-                local r255 <const> = floor(rQtz * 255.0 + 0.5)
+                local a8 <const> = floor(aQtz * 255.0 + 0.5)
+                local b8 <const> = floor(bQtz * 255.0 + 0.5)
+                local g8 <const> = floor(gQtz * 255.0 + 0.5)
+                local r8 <const> = floor(rQtz * 255.0 + 0.5)
 
-                return a255 << 0x18 | b255 << 0x10 | g255 << 0x08 |  r255
+                return a8 << 0x18 | b8 << 0x10 | g8 << 0x08 |  r8
             end
 
-            dmStr = string.format("Quantize.%02d", levels)
+            dmStr = string.format("Quantized R%02d G%02d B%02d A%02d",
+                rLevels, gLevels, bLevels, aLevels)
         else
             local palType <const> = args.palType
                 or defaults.palType --[[@as string]]

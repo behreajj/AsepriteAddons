@@ -1,33 +1,10 @@
 dofile("../../support/aseutilities.lua")
+dofile("../../support/quantizeutilities.lua")
 
 local targets <const> = { "ACTIVE", "ALL", "PALETTE", "RANGE" }
-local methods <const> = { "SIGNED", "UNSIGNED" }
-local units <const> = { "BITS", "INTEGERS" }
-local levelsInputs <const> = { "NON_UNIFORM", "UNIFORM" }
 
 local defaults <const> = {
-    minLevels = 2,
-    maxLevels = 256,
-    minBits = 1,
-    maxBits = 8,
-    target = "ACTIVE",
-    -- TODO: Abstract these dialog widgets to
-    -- a separate class then have color quantize
-    -- and dither both refer to them.
-    levelsUni = 16,
-    rLevels = 16,
-    gLevels = 16,
-    bLevels = 16,
-    aLevels = 256,
-    bitsUni = 4,
-    rBits = 4,
-    gBits = 4,
-    bBits = 4,
-    aBits = 8,
-    unit = "BITS",
-    levelsInput = "UNIFORM",
-    method = "UNSIGNED",
-    pullFocus = false
+    target = "ACTIVE"
 }
 
 local dlg <const> = Dialog { title = "Quantize RGB" }
@@ -41,250 +18,12 @@ dlg:combobox {
 
 dlg:newrow { always = false }
 
-dlg:combobox {
-    id = "method",
-    label = "Method:",
-    option = defaults.method,
-    options = methods
-}
-
-dlg:newrow { always = false }
-
-dlg:combobox {
-    id = "levelsInput",
-    label = "Channels:",
-    option = defaults.levelsInput,
-    options = levelsInputs,
-    onchange = function()
-        local args <const> = dlg.data
-
-        local md <const> = args.levelsInput --[[@as string]]
-        local isu <const> = md == "UNIFORM"
-        local isnu <const> = md == "NON_UNIFORM"
-
-        local unit <const> = args.unitsInput --[[@as string]]
-        local isbit <const> = unit == "BITS"
-        local isint <const> = unit == "INTEGERS"
-
-        dlg:modify { id = "rBits", visible = isnu and isbit }
-        dlg:modify { id = "gBits", visible = isnu and isbit }
-        dlg:modify { id = "bBits", visible = isnu and isbit }
-        dlg:modify { id = "aBits", visible = isnu and isbit }
-        dlg:modify {
-            id = "bitsUni",
-            visible = isu and isbit
-        }
-
-        dlg:modify { id = "rLevels", visible = isnu and isint }
-        dlg:modify { id = "gLevels", visible = isnu and isint }
-        dlg:modify { id = "bLevels", visible = isnu and isint }
-        dlg:modify { id = "aLevels", visible = isnu and isint }
-        dlg:modify {
-            id = "levelsUni",
-            visible = isu and isint
-        }
-    end
-}
-
-dlg:newrow { always = false }
-
-dlg:slider {
-    id = "levelsUni",
-    label = "Levels:",
-    min = defaults.minLevels,
-    max = defaults.maxLevels,
-    value = defaults.levelsUni,
-    visible = defaults.levelsInput == "UNIFORM"
-        and defaults.unit == "INTEGERS",
-    onchange = function()
-        local args <const> = dlg.data
-        local uni <const> = args.levelsUni --[[@as integer]]
-        dlg:modify { id = "rLevels", value = uni }
-        dlg:modify { id = "gLevels", value = uni }
-        dlg:modify { id = "bLevels", value = uni }
-        dlg:modify { id = "aLevels", value = uni }
-    end
-}
-
-dlg:newrow { always = false }
-
-dlg:slider {
-    id = "rLevels",
-    label = "Red:",
-    min = defaults.minLevels,
-    max = defaults.maxLevels,
-    value = defaults.rLevels,
-    visible = defaults.levelsInput == "NON_UNIFORM"
-        and defaults.unit == "INTEGERS"
-}
-
-dlg:slider {
-    id = "gLevels",
-    label = "Green:",
-    min = defaults.minLevels,
-    max = defaults.maxLevels,
-    value = defaults.gLevels,
-    visible = defaults.levelsInput == "NON_UNIFORM"
-        and defaults.unit == "INTEGERS"
-}
-
-dlg:slider {
-    id = "bLevels",
-    label = "Blue:",
-    min = defaults.minLevels,
-    max = defaults.maxLevels,
-    value = defaults.bLevels,
-    visible = defaults.levelsInput == "NON_UNIFORM"
-        and defaults.unit == "INTEGERS"
-}
-
-dlg:slider {
-    id = "aLevels",
-    label = "Alpha:",
-    min = defaults.minLevels,
-    max = defaults.maxLevels,
-    value = defaults.aLevels,
-    visible = defaults.levelsInput == "NON_UNIFORM"
-        and defaults.unit == "INTEGERS"
-}
-
-dlg:newrow { always = false }
-
-dlg:slider {
-    id = "bitsUni",
-    label = "Bits:",
-    min = defaults.minBits,
-    max = defaults.maxBits,
-    value = defaults.bitsUni,
-    visible = defaults.levelsInput == "UNIFORM"
-        and defaults.unit == "BITS",
-    onchange = function()
-        local args <const> = dlg.data
-        local bd <const> = args.bitsUni --[[@as integer]]
-        dlg:modify { id = "rBits", value = bd }
-        dlg:modify { id = "gBits", value = bd }
-        dlg:modify { id = "bBits", value = bd }
-        dlg:modify { id = "aBits", value = bd }
-
-        local lv <const> = 1 << bd
-        dlg:modify { id = "levelsUni", value = lv }
-        dlg:modify { id = "rLevels", value = lv }
-        dlg:modify { id = "gLevels", value = lv }
-        dlg:modify { id = "bLevels", value = lv }
-        dlg:modify { id = "aLevels", value = lv }
-    end
-}
-
-dlg:newrow { always = false }
-
-dlg:slider {
-    id = "rBits",
-    label = "Red:",
-    min = defaults.minBits,
-    max = defaults.maxBits,
-    value = defaults.rBits,
-    visible = defaults.levelsInput == "NON_UNIFORM"
-        and defaults.unit == "BITS",
-    onchange = function()
-        local args <const> = dlg.data
-        local rBits <const> = args.rBits --[[@as integer]]
-        local lv <const> = 1 << rBits
-        dlg:modify { id = "rLevels", value = lv }
-    end
-}
-
-dlg:slider {
-    id = "gBits",
-    label = "Green:",
-    min = defaults.minBits,
-    max = defaults.maxBits,
-    value = defaults.gBits,
-    visible = defaults.levelsInput == "NON_UNIFORM"
-        and defaults.unit == "BITS",
-    onchange = function()
-        local args <const> = dlg.data
-        local gBits <const> = args.gBits --[[@as integer]]
-        local lv <const> = 1 << gBits
-        dlg:modify { id = "gLevels", value = lv }
-    end
-}
-
-dlg:slider {
-    id = "bBits",
-    label = "Blue:",
-    min = defaults.minBits,
-    max = defaults.maxBits,
-    value = defaults.bBits,
-    visible = defaults.levelsInput == "NON_UNIFORM"
-        and defaults.unit == "BITS",
-    onchange = function()
-        local args <const> = dlg.data
-        local bBits <const> = args.bBits --[[@as integer]]
-        local lv <const> = 1 << bBits
-        dlg:modify { id = "bLevels", value = lv }
-    end
-}
-
-dlg:slider {
-    id = "aBits",
-    label = "Alpha:",
-    min = defaults.minBits,
-    max = defaults.maxBits,
-    value = defaults.aBits,
-    visible = defaults.levelsInput == "NON_UNIFORM"
-        and defaults.unit == "BITS",
-    onchange = function()
-        local args <const> = dlg.data
-        local aBits <const> = args.aBits --[[@as integer]]
-        local lv <const> = 1 << aBits
-        dlg:modify { id = "aLevels", value = lv }
-    end
-}
-
-dlg:newrow { always = false }
-
-dlg:combobox {
-    id = "unitsInput",
-    label = "Units:",
-    option = defaults.unit,
-    options = units,
-    onchange = function()
-        local args <const> = dlg.data
-
-        local md <const> = args.levelsInput --[[@as string]]
-        local isnu <const> = md == "NON_UNIFORM"
-        local isu <const> = md == "UNIFORM"
-
-        local unit <const> = args.unitsInput --[[@as string]]
-        local isbit <const> = unit == "BITS"
-        local isint <const> = unit == "INTEGERS"
-
-        dlg:modify { id = "rBits", visible = isnu and isbit }
-        dlg:modify { id = "gBits", visible = isnu and isbit }
-        dlg:modify { id = "bBits", visible = isnu and isbit }
-        dlg:modify { id = "aBits", visible = isnu and isbit }
-        dlg:modify {
-            id = "bitsUni",
-            visible = isu and isbit
-        }
-
-        dlg:modify { id = "rLevels", visible = isnu and isint }
-        dlg:modify { id = "gLevels", visible = isnu and isint }
-        dlg:modify { id = "bLevels", visible = isnu and isint }
-        dlg:modify { id = "aLevels", visible = isnu and isint }
-        dlg:modify {
-            id = "levelsUni",
-            visible = isu and isint
-        }
-    end
-}
-
-dlg:newrow { always = false }
+QuantizeUtilities.dialogWidgets(dlg, true)
 
 dlg:button {
     id = "confirm",
     text = "&OK",
-    focus = defaults.pullFocus,
+    focus = true,
     onclick = function()
         -- Early returns.
         local site <const> = app.site
@@ -304,11 +43,11 @@ dlg:button {
         -- Unpack arguments.
         local args <const> = dlg.data
         local target <const> = args.target or defaults.target --[[@as string]]
-        local method <const> = args.method or defaults.method --[[@as string]]
-        local rLevels = args.rLevels or defaults.rLevels --[[@as integer]]
-        local gLevels = args.gLevels or defaults.gLevels --[[@as integer]]
-        local bLevels = args.bLevels or defaults.bLevels --[[@as integer]]
-        local aLevels = args.aLevels or defaults.aLevels --[[@as integer]]
+        local method <const> = args.method --[[@as string]]
+        local rLevels = args.rLevels --[[@as integer]]
+        local gLevels = args.gLevels --[[@as integer]]
+        local bLevels = args.bLevels --[[@as integer]]
+        local aLevels = args.aLevels --[[@as integer]]
 
         local aDelta = 0.0
         local bDelta = 0.0
