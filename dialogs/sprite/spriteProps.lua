@@ -329,14 +329,16 @@ dlg:slider {
     label = "Pixel Aspect:",
     min = defaults.minPxRatio,
     max = defaults.maxPxRatio,
-    value = pixelWidth
+    value = pixelWidth,
+    visible = false
 }
 
 dlg:slider {
     id = "bPxRatio",
     min = defaults.minPxRatio,
     max = defaults.maxPxRatio,
-    value = pixelHeight
+    value = pixelHeight,
+    visible = false
 }
 
 dlg:newrow { always = false }
@@ -422,9 +424,9 @@ dlg:button {
             wGridNew = math.max(1, math.abs(wGridNew))
             hGridNew = math.max(1, math.abs(hGridNew))
 
-            local aPxRatio = args.aPxRatio --[[@as integer]]
-            local bPxRatio = args.bPxRatio --[[@as integer]]
-            aPxRatio, bPxRatio = Utilities.reduceRatio(aPxRatio, bPxRatio)
+            -- local aPxRatio = args.aPxRatio --[[@as integer]]
+            -- local bPxRatio = args.bPxRatio --[[@as integer]]
+            -- aPxRatio, bPxRatio = Utilities.reduceRatio(aPxRatio, bPxRatio)
 
             app.transaction("Set Sprite Props", function()
                 sprite.gridBounds = Rectangle(
@@ -433,9 +435,8 @@ dlg:button {
                 sprite.color = AseUtilities.aseColorCopy(sprColor, "")
                 sprite.data = userDataNew
 
-                -- TODO: https://github.com/aseprite/aseprite/issues/4631 ,
-                -- https://github.com/aseprite/aseprite/issues/4632
-                sprite.pixelRatio = Size(aPxRatio, bPxRatio)
+                -- See https://github.com/aseprite/aseprite/issues/4632
+                -- sprite.pixelRatio = Size(aPxRatio, bPxRatio)
             end)
 
             if appPrefs then

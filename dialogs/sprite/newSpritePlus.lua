@@ -414,18 +414,6 @@ dlg:button {
             if newFilePrefs then
                 newFilePrefs.width = width
                 newFilePrefs.height = height
-
-                -- Maintain default pixel aspect ratio?
-                -- local pxRatioStr <const> = newFilePrefs.pixel_ratio
-                -- if pxRatioStr ~= "1:1" then
-                --     app.transaction("Set Pixel Aspect", function()
-                --         if pxRatioStr == "2:1" then
-                --             newSprite.pixelRatio = Size(2, 1)
-                --         elseif pxRatioStr == "1:2" then
-                --             newSprite.pixelRatio = Size(1, 2)
-                --         end
-                --     end)
-                -- end
             end
         end
 
