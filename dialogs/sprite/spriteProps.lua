@@ -430,9 +430,12 @@ dlg:button {
                 sprite.gridBounds = Rectangle(
                     xGridNew, yGridNew,
                     wGridNew, hGridNew)
-                sprite.pixelRatio = Size(aPxRatio, bPxRatio)
                 sprite.color = AseUtilities.aseColorCopy(sprColor, "")
                 sprite.data = userDataNew
+
+                -- TODO: https://github.com/aseprite/aseprite/issues/4631 ,
+                -- https://github.com/aseprite/aseprite/issues/4632
+                sprite.pixelRatio = Size(aPxRatio, bPxRatio)
             end)
 
             if appPrefs then
@@ -451,8 +454,7 @@ dlg:button {
                 end
             end
 
-            -- Refresh command cannot be used to update sprite tab color
-            -- because it crashes older versions of Aseprite.
+            app.refresh()
             dlg:close()
         else
             app.alert {

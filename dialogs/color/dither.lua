@@ -385,6 +385,7 @@ dlg:button {
         local frames <const> = Utilities.flatArr2(
             AseUtilities.getFrames(activeSprite, target))
 
+        -- TODO: closestFunc should return r,g,b,a tuple, not a single hex
         -- Choose function based on dither mode.
         local closestFunc = nil
         local dmStr = ""
