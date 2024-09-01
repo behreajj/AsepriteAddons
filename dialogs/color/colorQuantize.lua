@@ -4,7 +4,8 @@ dofile("../../support/quantizeutilities.lua")
 local targets <const> = { "ACTIVE", "ALL", "PALETTE", "RANGE" }
 
 local defaults <const> = {
-    target = "ACTIVE"
+    target = "ACTIVE",
+    genPalette = false
 }
 
 local dlg <const> = Dialog { title = "Quantize RGB" }
@@ -13,12 +14,29 @@ dlg:combobox {
     id = "target",
     label = "Target:",
     option = defaults.target,
-    options = targets
+    options = targets,
+    onchange = function()
+        local args <const> = dlg.data
+        local target <const> = args.target
+        local notPalette <const> = target ~= "PALETTE"
+        dlg:modify { id = "genPalette", visible = notPalette }
+    end
 }
 
 dlg:newrow { always = false }
 
 QuantizeUtilities.dialogWidgets(dlg, true)
+
+dlg:check {
+    id = "genPalette",
+    label = "Create:",
+    text = "Palette",
+    selected = defaults.genPalette,
+    visible = defaults.target ~= "PALETTE",
+    focus = false
+}
+
+dlg:newrow { always = false }
 
 dlg:button {
     id = "confirm",
@@ -43,6 +61,8 @@ dlg:button {
         -- Unpack arguments.
         local args <const> = dlg.data
         local target <const> = args.target or defaults.target --[[@as string]]
+        local genPalette <const> = args.genPalette --[[@as boolean]]
+
         local method <const> = args.method --[[@as string]]
         local rLevels = args.rLevels --[[@as integer]]
         local gLevels = args.gLevels --[[@as integer]]
@@ -262,6 +282,39 @@ dlg:button {
                         trgCel.opacity = srcCel.opacity
                     end)
             end
+        end
+
+        if genPalette then
+            local trgLenPalette <const> = math.min(
+                65535, 1 + rLevels * gLevels * bLevels)
+            local palettes <const> = activeSprite.palettes
+            local frObj <const> = site.frame or activeSprite.frames[1]
+            local palette <const> = AseUtilities.getPalette(frObj, palettes)
+
+            local rgLevels <const> = rLevels * gLevels
+            local rto8 <const> = 255.0 / (rLevels - 1.0)
+            local gto8 <const> = 255.0 / (gLevels - 1.0)
+            local bto8 <const> = 255.0 / (bLevels - 1.0)
+
+            app.transaction("Create Palette", function()
+                palette:resize(trgLenPalette)
+                palette:setColor(0, Color { r = 0, g = 0, b = 0, a = 0 })
+                local k = 0
+                while k < trgLenPalette - 1 do
+                    local bx <const> = k // rgLevels
+                    local m <const> = k - bx * rgLevels
+                    local gx <const> = m // rLevels
+                    local rx <const> = m % rLevels
+
+                    local r8 <const> = floor(rx * rto8 + 0.5)
+                    local g8 <const> = floor(gx * gto8 + 0.5)
+                    local b8 <const> = floor(bx * bto8 + 0.5)
+
+                    local c <const> = Color { r = r8, g = g8, b = b8, a = 255 }
+                    palette:setColor(1 + k, c)
+                    k = k + 1
+                end
+            end)
         end
 
         app.layer = trgLayer
