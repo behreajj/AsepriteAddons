@@ -296,6 +296,7 @@ dlg:button {
             local gto8 <const> = 255.0 / (gLevels - 1.0)
             local bto8 <const> = 255.0 / (bLevels - 1.0)
 
+            -- Could use Clr.gridsRgb for this.
             app.transaction("Create Palette", function()
                 palette:resize(trgLenPalette)
                 palette:setColor(0, Color { r = 0, g = 0, b = 0, a = 0 })

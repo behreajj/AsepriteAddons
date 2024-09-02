@@ -162,7 +162,6 @@ dlg:button {
         local y <const> = args.yTranslate
             or defaults.yTranslate --[[@as integer]]
 
-        local alphaIndex <const> = activeSprite.transparentColor
         local cels <const> = AseUtilities.filterCels(
             activeSprite, activeLayer, filterFrames, target,
             false, false, false, false)

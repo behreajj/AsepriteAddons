@@ -1,6 +1,6 @@
 dofile("../../support/aseutilities.lua")
 
-local targets <const> = { "FORE_TILE", "BACK_TILE", "TILES", "TILE_MAP" }
+local targets <const> = { "CURSOR", "FORE_TILE", "BACK_TILE", "TILES", "TILE_MAP" }
 local selModes <const> = { "REPLACE", "ADD", "SUBTRACT", "INTERSECT" }
 
 local defaults <const> = {
@@ -286,8 +286,8 @@ local function transformCel(dialog, preset)
 
     local lenTileSet <const> = #tileSet
     local tileDim <const> = tileSet.grid.tileSize
-    local wTile <const> = tileDim.width
-    local hTile <const> = tileDim.height
+    local wTile <const> = math.max(1, math.abs(tileDim.width))
+    local hTile <const> = math.max(1, math.abs(tileDim.height))
     if wTile ~= hTile
         and (preset == "90" or preset == "270") then
         app.alert {
@@ -343,12 +343,41 @@ local function transformCel(dialog, preset)
     if not activeLayer.isEditable then return end
 
     local srcMap <const> = activeCel.image
-    local srcBpp <const> = srcMap.bytesPerPixel
-    local packFmt <const> = "<I" .. srcBpp
-    local srcBytes <const> = srcMap.bytes
     local srcSpec <const> = srcMap.spec
     local wSrcMap <const> = srcSpec.width
     local hSrcMap <const> = srcSpec.height
+
+    if target == "CURSOR" then
+        local editor <const> = app.editor
+        if not editor then return end
+
+        local mouse <const> = editor.spritePos
+        local xMouse <const> = mouse.x
+        local yMouse <const> = mouse.y
+
+        if xMouse < xtlCel or yMouse < ytlCel then return end
+
+        local xbrCel <const> = xtlCel + wSrcMap * wTile - 1
+        local ybrCel <const> = ytlCel + hSrcMap * hTile - 1
+
+        if xMouse > xbrCel or yMouse > ybrCel then return end
+
+        local xGrid <const> = (xMouse - xtlCel) // wTile
+        local yGrid <const> = (yMouse - ytlCel) // hTile
+
+        local srcMapif <const> = srcMap:getPixel(xGrid, yGrid)
+        local srcIdx <const> = pxTilei(srcMapif)
+        local trgFlags <const> = flgTrFunc(pxTilef(srcMapif))
+        local trgMapif <const> = pxTileCompose(srcIdx, trgFlags)
+        srcMap:drawPixel(xGrid, yGrid, trgMapif)
+
+        app.refresh()
+        return
+    end
+
+    local srcBpp <const> = srcMap.bytesPerPixel
+    local packFmt <const> = "<I" .. srcBpp
+    local srcBytes <const> = srcMap.bytes
     local lenSrcMap <const> = wSrcMap * hSrcMap
 
     if target == "TILE_MAP" then
