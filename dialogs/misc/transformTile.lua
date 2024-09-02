@@ -110,9 +110,9 @@ local function moveMap(xShift, yShift)
     if activeLayer.isTilemap then
         local tileSet <const> = activeLayer.tileset
         if tileSet then
-            local tileDim <const> = tileSet.grid.tileSize
-            local wTile <const> = tileDim.width
-            local hTile <const> = tileDim.height
+            local tileSize <const> = tileSet.grid.tileSize
+            local wTile <const> = tileSize.width
+            local hTile <const> = tileSize.height
             xShScl = xShScl * wTile
             yShScl = yShScl * hTile
         end
@@ -290,9 +290,9 @@ local function transformCel(dialog, preset)
     local ytlCel <const> = celPos.y
 
     local lenTileSet <const> = #tileSet
-    local tileDim <const> = tileSet.grid.tileSize
-    local wTile <const> = math.max(1, math.abs(tileDim.width))
-    local hTile <const> = math.max(1, math.abs(tileDim.height))
+    local tileSize <const> = tileSet.grid.tileSize
+    local wTile <const> = math.max(1, math.abs(tileSize.width))
+    local hTile <const> = math.max(1, math.abs(tileSize.height))
     if wTile ~= hTile
         and (preset == "90" or preset == "270") then
         app.alert {
@@ -713,7 +713,11 @@ dlg:button {
 
         local tileSet <const> = activeLayer.tileset
         if not tileSet then return end
+
         local lenTileSet <const> = #tileSet
+        local tileSize <const> = tileSet.grid.tileSize
+        local wTile <const> = math.max(1, math.abs(tileSize.width))
+        local hTile <const> = math.max(1, math.abs(tileSize.height))
 
         local args <const> = dlg.data
         local target <const> = args.target
@@ -736,6 +740,41 @@ dlg:button {
                 tiBack = 0
             end
             selIndices[1] = tiBack
+        elseif target == "CURSOR" then
+            local tiCursor = 0
+            local editor <const> = app.editor
+            local activeFrame <const> = site.frame
+            if editor and activeFrame then
+                local activeCel <const> = activeLayer:cel(activeFrame)
+                if activeCel then
+                    local mouse <const> = editor.spritePos
+                    local xMouse <const> = mouse.x
+                    local yMouse <const> = mouse.y
+
+                    local celPos <const> = activeCel.position
+                    local xtlCel <const> = celPos.x
+                    local ytlCel <const> = celPos.y
+
+                    local tileMap <const> = activeCel.image
+                    local wSrcMap <const> = tileMap.width
+                    local hSrcMap <const> = tileMap.height
+
+                    local xbrCel <const> = xtlCel + wSrcMap * wTile - 1
+                    local ybrCel <const> = ytlCel + hSrcMap * hTile - 1
+
+                    if xMouse >= xtlCel
+                        and yMouse >= ytlCel
+                        and xMouse <= xbrCel
+                        and yMouse <= ybrCel then
+                        local xGrid <const> = (xMouse - xtlCel) // wTile
+                        local yGrid <const> = (yMouse - ytlCel) // hTile
+                        local srcMapif <const> = tileMap:getPixel(xGrid, yGrid)
+                        local srcIdx <const> = app.pixelColor.tileI(srcMapif)
+                        tiCursor = srcIdx
+                    end
+                end
+            end
+            selIndices[1] = tiCursor
         else
             -- Default to "TILE_MAP" or "TILES"
             local rangeStr <const> = args.rangeStr
@@ -776,10 +815,6 @@ dlg:button {
             local celPos <const> = activeCel.position
             local xTopLeft <const> = celPos.x
             local yTopLeft <const> = celPos.y
-
-            local tileSize <const> = tileSet.grid.tileSize
-            local wTile <const> = tileSize.width
-            local hTile <const> = tileSize.height
 
             local trgSel <const> = Selection()
             local selRect <const> = Rectangle(0, 0, wTile, hTile)
