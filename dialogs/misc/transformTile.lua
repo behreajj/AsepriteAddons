@@ -4,6 +4,9 @@ local targets <const> = { "CURSOR", "FORE_TILE", "BACK_TILE", "TILES", "TILE_MAP
 local selModes <const> = { "REPLACE", "ADD", "SUBTRACT", "INTERSECT" }
 
 local defaults <const> = {
+    -- TODO: Could target cursor support shifting
+    -- the tile over by one?
+
     -- Built-in Image:flip method has not been adopted here due to issues with
     -- undo history.
 
@@ -126,7 +129,9 @@ local function moveMap(xShift, yShift)
     end
 
     local currPos <const> = activeCel.position
-    activeCel.position = Point(currPos.x + xShScl, currPos.y + yShScl)
+    app.transaction("Move Map", function()
+        activeCel.position = Point(currPos.x + xShScl, currPos.y + yShScl)
+    end)
     app.refresh()
 end
 
@@ -492,7 +497,7 @@ local function transformCel(dialog, preset)
 
         local trgMap <const> = Image(srcSpec)
         trgMap.bytes = tconcat(trgByteStrs)
-        app.transaction("Update Map", function()
+        app.transaction("Transform Map", function()
             activeCel.image = trgMap
         end)
     end
