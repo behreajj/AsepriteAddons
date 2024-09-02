@@ -13,6 +13,7 @@ local importFileExts <const> = {
     "gif",
     "ham",  -- IFF Hold-And-Modify
     "hex",
+    "icc",  -- Color profile
     "ico",  -- Windows icon
     "iff",
     "ilbm", -- Interleaved Bitmap
