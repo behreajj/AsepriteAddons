@@ -5,7 +5,6 @@ local selModes <const> = { "REPLACE", "ADD", "SUBTRACT", "INTERSECT" }
 
 local defaults <const> = {
     -- TODO: Could target cursor support shifting the tile over by one?
-    -- TODO: Make cursor the default setting?
 
     -- Built-in Image:flip method has not been adopted here due to issues with
     -- undo history.
@@ -165,6 +164,9 @@ local function moveMap(xShift, yShift)
 
     local activeLayer <const> = site.layer
     if not activeLayer then return end
+
+    if not activeLayer.isEditable then return end
+    if not activeLayer.isVisible then return end
 
     local activeCel <const> = activeLayer:cel(activeFrame)
     if not activeCel then return end
