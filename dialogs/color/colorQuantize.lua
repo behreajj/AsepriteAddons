@@ -64,10 +64,15 @@ dlg:button {
         local genPalette <const> = args.genPalette --[[@as boolean]]
 
         local method <const> = args.method --[[@as string]]
-        local rLevels = args.rLevels --[[@as integer]]
-        local gLevels = args.gLevels --[[@as integer]]
-        local bLevels = args.bLevels --[[@as integer]]
-        local aLevels = args.aLevels --[[@as integer]]
+        local rLevels <const> = args.rLevels --[[@as integer]]
+        local gLevels <const> = args.gLevels --[[@as integer]]
+        local bLevels <const> = args.bLevels --[[@as integer]]
+        local aLevels <const> = args.aLevels --[[@as integer]]
+
+        local rLvVrf = rLevels
+        local gLvVrf = gLevels
+        local bLvVrf = bLevels
+        local aLvVrf = aLevels
 
         local aDelta = 0.0
         local bDelta = 0.0
@@ -87,10 +92,10 @@ dlg:button {
             gqFunc = Utilities.quantizeUnsignedInternal
             rqFunc = Utilities.quantizeUnsignedInternal
 
-            aDelta = 1.0 / (aLevels - 1.0)
-            bDelta = 1.0 / (bLevels - 1.0)
-            gDelta = 1.0 / (gLevels - 1.0)
-            rDelta = 1.0 / (rLevels - 1.0)
+            aDelta = 1.0 / (aLvVrf - 1.0)
+            bDelta = 1.0 / (bLvVrf - 1.0)
+            gDelta = 1.0 / (gLvVrf - 1.0)
+            rDelta = 1.0 / (rLvVrf - 1.0)
         else
             -- print("SIGNED")
 
@@ -99,15 +104,15 @@ dlg:button {
             gqFunc = Utilities.quantizeSignedInternal
             rqFunc = Utilities.quantizeSignedInternal
 
-            aLevels = aLevels - 1
-            bLevels = bLevels - 1
-            gLevels = gLevels - 1
-            rLevels = rLevels - 1
+            aLvVrf = aLvVrf - 1
+            bLvVrf = bLvVrf - 1
+            gLvVrf = gLvVrf - 1
+            rLvVrf = rLvVrf - 1
 
-            aDelta = 1.0 / aLevels
-            bDelta = 1.0 / bLevels
-            gDelta = 1.0 / gLevels
-            rDelta = 1.0 / rLevels
+            aDelta = 1.0 / aLvVrf
+            bDelta = 1.0 / bLvVrf
+            gDelta = 1.0 / gLvVrf
+            rDelta = 1.0 / rLvVrf
         end
 
         -- print(string.format(
@@ -140,10 +145,10 @@ dlg:button {
                     local g <const> = aseColor.green
                     local r <const> = aseColor.red
 
-                    local aQtz <const> = aqFunc(a / 255.0, aLevels, aDelta)
-                    local bQtz <const> = bqFunc(b / 255.0, bLevels, bDelta)
-                    local gQtz <const> = gqFunc(g / 255.0, gLevels, gDelta)
-                    local rQtz <const> = rqFunc(r / 255.0, rLevels, rDelta)
+                    local aQtz <const> = aqFunc(a / 255.0, aLvVrf, aDelta)
+                    local bQtz <const> = bqFunc(b / 255.0, bLvVrf, bDelta)
+                    local gQtz <const> = gqFunc(g / 255.0, gLvVrf, gDelta)
+                    local rQtz <const> = rqFunc(r / 255.0, rLvVrf, rDelta)
 
                     local a8 <const> = floor(aQtz * 255.0 + 0.5)
                     local b8 <const> = floor(bQtz * 255.0 + 0.5)
@@ -250,10 +255,10 @@ dlg:button {
                     -- Do not cache the division in a variable
                     -- as 1.0 / 255.0. It leads to precision errors
                     -- which impact alpha during unsigned quantize.
-                    local aQtz <const> = aqFunc(a / 255.0, aLevels, aDelta)
-                    local bQtz <const> = bqFunc(b / 255.0, bLevels, bDelta)
-                    local gQtz <const> = gqFunc(g / 255.0, gLevels, gDelta)
-                    local rQtz <const> = rqFunc(r / 255.0, rLevels, rDelta)
+                    local aQtz <const> = aqFunc(a / 255.0, aLvVrf, aDelta)
+                    local bQtz <const> = bqFunc(b / 255.0, bLvVrf, bDelta)
+                    local gQtz <const> = gqFunc(g / 255.0, gLvVrf, gDelta)
+                    local rQtz <const> = rqFunc(r / 255.0, rLvVrf, rDelta)
 
                     local a8 <const> = floor(aQtz * 255.0 + 0.5)
                     local b8 <const> = floor(bQtz * 255.0 + 0.5)
@@ -285,34 +290,21 @@ dlg:button {
         end
 
         if genPalette then
-            local trgLenPalette <const> = math.min(
-                65535, 1 + rLevels * gLevels * bLevels)
             local palettes <const> = activeSprite.palettes
             local frObj <const> = site.frame or activeSprite.frames[1]
             local palette <const> = AseUtilities.getPalette(frObj, palettes)
 
-            local rgLevels <const> = rLevels * gLevels
-            local rto8 <const> = 255.0 / (rLevels - 1.0)
-            local gto8 <const> = 255.0 / (gLevels - 1.0)
-            local bto8 <const> = 255.0 / (bLevels - 1.0)
+            local grid <const> = Clr.gridsRgb(rLevels, gLevels, bLevels, 1.0)
+            local clrToAseColor <const> = AseUtilities.clrToAseColor
 
-            -- Could use Clr.gridsRgb for this.
+            local trgLenPalette <const> = math.min(
+                65535, rLevels * gLevels * bLevels)
+
             app.transaction("Create Palette", function()
                 palette:resize(trgLenPalette)
-                palette:setColor(0, Color { r = 0, g = 0, b = 0, a = 0 })
                 local k = 0
-                while k < trgLenPalette - 1 do
-                    local bx <const> = k // rgLevels
-                    local m <const> = k - bx * rgLevels
-                    local gx <const> = m // rLevels
-                    local rx <const> = m % rLevels
-
-                    local r8 <const> = floor(rx * rto8 + 0.5)
-                    local g8 <const> = floor(gx * gto8 + 0.5)
-                    local b8 <const> = floor(bx * bto8 + 0.5)
-
-                    local c <const> = Color { r = r8, g = g8, b = b8, a = 255 }
-                    palette:setColor(1 + k, c)
+                while k < trgLenPalette do
+                    palette:setColor(k, clrToAseColor(grid[1 + k]))
                     k = k + 1
                 end
             end)

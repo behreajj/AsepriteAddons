@@ -4,8 +4,8 @@ local targets <const> = { "CURSOR", "FORE_TILE", "BACK_TILE", "TILES", "TILE_MAP
 local selModes <const> = { "REPLACE", "ADD", "SUBTRACT", "INTERSECT" }
 
 local defaults <const> = {
-    -- TODO: Could target cursor support shifting
-    -- the tile over by one?
+    -- TODO: Could target cursor support shifting the tile over by one?
+    -- TODO: Make cursor the default setting?
 
     -- Built-in Image:flip method has not been adopted here due to issues with
     -- undo history.
@@ -769,8 +769,7 @@ dlg:button {
                         local xGrid <const> = (xMouse - xtlCel) // wTile
                         local yGrid <const> = (yMouse - ytlCel) // hTile
                         local srcMapif <const> = tileMap:getPixel(xGrid, yGrid)
-                        local srcIdx <const> = app.pixelColor.tileI(srcMapif)
-                        tiCursor = srcIdx
+                        tiCursor = app.pixelColor.tileI(srcMapif)
                     end
                 end
             end
