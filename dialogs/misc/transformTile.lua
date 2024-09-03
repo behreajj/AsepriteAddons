@@ -48,6 +48,72 @@ local function updateSel(sprite, trgSel, selMode)
     end
 end
 
+---@return boolean isValid
+---@return integer mapIndex
+---@return integer mapFlags
+---@return integer xGrid
+---@return integer yGrid
+local function getIndexAtCursor()
+    local editor <const> = app.editor
+    if not editor then return false, 0, 0, -1, -1 end
+
+    local site <const> = app.site
+    local activeSprite <const> = site.sprite
+    if not activeSprite then return false, 0, 0, -1, -1 end
+
+    local activeLayer <const> = site.layer
+    if not activeLayer then return false, 0, 0, -1, -1 end
+    if not activeLayer.isTilemap then return false, 0, 0, -1, -1 end
+    if not activeLayer.isEditable then return false, 0, 0, -1, -1 end
+    if not activeLayer.isVisible then return false, 0, 0, -1, -1 end
+
+    local activeFrame <const> = site.frame
+    if not activeFrame then return false, 0, 0, -1, -1 end
+
+    local activeCel <const> = activeLayer:cel(activeFrame)
+    if not activeCel then return false, 0, 0, -1, -1 end
+
+    local mouse <const> = editor.spritePos
+    local xMouse <const> = mouse.x
+    local yMouse <const> = mouse.y
+
+    local celPos <const> = activeCel.position
+    local xtlCel <const> = celPos.x
+    local ytlCel <const> = celPos.y
+
+    if xMouse < xtlCel or yMouse < ytlCel then
+        return false, 0, 0, -1, -1
+    end
+
+    local tileMap <const> = activeCel.image
+    local wSrcMap <const> = tileMap.width
+    local hSrcMap <const> = tileMap.height
+
+    local tileSet <const> = activeLayer.tileset
+    if not tileSet then return false, 0, 0, -1, -1 end
+
+    local tileSize <const> = tileSet.grid.tileSize
+    local wTile <const> = math.max(1, math.abs(tileSize.width))
+    local hTile <const> = math.max(1, math.abs(tileSize.height))
+
+    local xbrCel <const> = xtlCel + wSrcMap * wTile - 1
+    local ybrCel <const> = ytlCel + hSrcMap * hTile - 1
+
+    if xMouse > xbrCel or yMouse > ybrCel then
+        return false, 0, 0, -1, -1
+    end
+
+    local xGrid <const> = (xMouse - xtlCel) // wTile
+    local yGrid <const> = (yMouse - ytlCel) // hTile
+    local mapEntry <const> = tileMap:getPixel(xGrid, yGrid)
+    local mapIndex <const> = app.pixelColor.tileI(mapEntry)
+    local mapFlags <const> = app.pixelColor.tileF(mapEntry)
+    local lenTileSet <const> = #tileSet
+    local isValid <const> = mapIndex >= 0 and mapIndex < lenTileSet
+
+    return isValid, mapIndex, mapFlags, xGrid, yGrid
+end
+
 ---@param target "FORE_TILE"|"BACK_TILE"
 ---@param shift integer
 local function cycleActive(target, shift)
@@ -353,28 +419,17 @@ local function transformCel(dialog, preset)
     local hSrcMap <const> = srcSpec.height
 
     if target == "CURSOR" then
-        local editor <const> = app.editor
-        if not editor then return end
+        local isValid <const>,
+        mapIndex <const>,
+        mapFlags <const>,
+        xGrid <const>,
+        yGrid <const> = getIndexAtCursor()
 
-        local mouse <const> = editor.spritePos
-        local xMouse <const> = mouse.x
-        local yMouse <const> = mouse.y
-
-        if xMouse < xtlCel or yMouse < ytlCel then return end
-
-        local xbrCel <const> = xtlCel + wSrcMap * wTile - 1
-        local ybrCel <const> = ytlCel + hSrcMap * hTile - 1
-
-        if xMouse > xbrCel or yMouse > ybrCel then return end
-
-        local xGrid <const> = (xMouse - xtlCel) // wTile
-        local yGrid <const> = (yMouse - ytlCel) // hTile
-
-        local srcMapif <const> = srcMap:getPixel(xGrid, yGrid)
-        local srcIdx <const> = pxTilei(srcMapif)
-        local trgFlags <const> = flgTrFunc(pxTilef(srcMapif))
-        local trgMapif <const> = pxTileCompose(srcIdx, trgFlags)
-        srcMap:drawPixel(xGrid, yGrid, trgMapif)
+        if isValid then
+            local trgFlags <const> = flgTrFunc(mapFlags)
+            local trgMapif <const> = pxTileCompose(mapIndex, trgFlags)
+            srcMap:drawPixel(xGrid, yGrid, trgMapif)
+        end
 
         app.refresh()
         return
@@ -741,39 +796,12 @@ dlg:button {
             end
             selIndices[1] = tiBack
         elseif target == "CURSOR" then
-            local tiCursor = 0
-            local editor <const> = app.editor
-            local activeFrame <const> = site.frame
-            if editor and activeFrame then
-                local activeCel <const> = activeLayer:cel(activeFrame)
-                if activeCel then
-                    local mouse <const> = editor.spritePos
-                    local xMouse <const> = mouse.x
-                    local yMouse <const> = mouse.y
-
-                    local celPos <const> = activeCel.position
-                    local xtlCel <const> = celPos.x
-                    local ytlCel <const> = celPos.y
-
-                    local tileMap <const> = activeCel.image
-                    local wSrcMap <const> = tileMap.width
-                    local hSrcMap <const> = tileMap.height
-
-                    local xbrCel <const> = xtlCel + wSrcMap * wTile - 1
-                    local ybrCel <const> = ytlCel + hSrcMap * hTile - 1
-
-                    if xMouse >= xtlCel
-                        and yMouse >= ytlCel
-                        and xMouse <= xbrCel
-                        and yMouse <= ybrCel then
-                        local xGrid <const> = (xMouse - xtlCel) // wTile
-                        local yGrid <const> = (yMouse - ytlCel) // hTile
-                        local srcMapif <const> = tileMap:getPixel(xGrid, yGrid)
-                        tiCursor = app.pixelColor.tileI(srcMapif)
-                    end
-                end
-            end
-            selIndices[1] = tiCursor
+            local isValid <const>,
+            mapIndex <const>,
+            _ <const>,
+            _ <const>,
+            _ <const> = getIndexAtCursor()
+            if isValid then selIndices[1] = mapIndex else selIndices[1] = 0 end
         else
             -- Default to "TILE_MAP" or "TILES"
             local rangeStr <const> = args.rangeStr
