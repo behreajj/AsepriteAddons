@@ -64,8 +64,6 @@ local function getIndexAtCursor()
     local activeLayer <const> = site.layer
     if not activeLayer then return false, 0, 0, -1, -1 end
     if not activeLayer.isTilemap then return false, 0, 0, -1, -1 end
-    if not activeLayer.isEditable then return false, 0, 0, -1, -1 end
-    if not activeLayer.isVisible then return false, 0, 0, -1, -1 end
 
     local activeFrame <const> = site.frame
     if not activeFrame then return false, 0, 0, -1, -1 end
