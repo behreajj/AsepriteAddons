@@ -154,49 +154,6 @@ end
 
 ---@param xShift integer
 ---@param yShift integer
-local function moveTile(xShift, yShift)
-    local isValid <const>,
-    mapIndexSrc <const>,
-    mapFlagsSrc <const>,
-    xGridSrc <const>,
-    yGridSrc <const> = getIndexAtCursor()
-
-    if isValid then
-        local site <const> = app.site
-        -- local activeSprite <const> = site.sprite
-        -- if not activeSprite then return end
-
-        local activeFrame <const> = site.frame
-        if not activeFrame then return end
-
-        local activeLayer <const> = site.layer
-        if not activeLayer then return end
-
-        if not activeLayer.isEditable then return end
-        if not activeLayer.isVisible then return end
-
-        local activeCel <const> = activeLayer:cel(activeFrame)
-        if not activeCel then return end
-
-        local tileMap <const> = activeCel.image
-        local wGrid <const> = tileMap.width
-        local hGrid <const> = tileMap.height
-
-        local xGridTrg <const> = (xGridSrc + xShift) % wGrid
-        local yGridTrg <const> = (yGridSrc + yShift) % hGrid
-
-        local mapEntryTrg <const> = tileMap:getPixel(xGridTrg, yGridTrg)
-        local mapEntrySrc <const> = app.pixelColor.tile(mapIndexSrc, mapFlagsSrc)
-
-        tileMap:drawPixel(xGridSrc, yGridSrc, mapEntryTrg)
-        tileMap:drawPixel(xGridTrg, yGridTrg, mapEntrySrc)
-
-        app.refresh()
-    end
-end
-
----@param xShift integer
----@param yShift integer
 local function moveMap(xShift, yShift)
     local site <const> = app.site
     local activeSprite <const> = site.sprite
@@ -616,13 +573,12 @@ dlg:combobox {
 
         local isTiles <const> = target == "TILES"
         local isTileMap <const> = target == "TILE_MAP"
-        local isCursor<const> = target == "CURSOR"
         local isRange <const> = isTileMap or isTiles
 
-        dlg:modify { id = "iMove", visible = isTileMap or isCursor }
-        dlg:modify { id = "jMove", visible = isTileMap or isCursor }
-        dlg:modify { id = "kMove", visible = isTileMap or isCursor }
-        dlg:modify { id = "lMove", visible = isTileMap or isCursor }
+        dlg:modify { id = "iMove", visible = isTileMap }
+        dlg:modify { id = "jMove", visible = isTileMap }
+        dlg:modify { id = "kMove", visible = isTileMap }
+        dlg:modify { id = "lMove", visible = isTileMap }
         dlg:modify { id = "inPlace", visible = isTiles }
         dlg:modify { id = "selMode", visible = not isTiles }
         dlg:modify { id = "useXFlip", visible = not isTiles }
@@ -701,16 +657,9 @@ dlg:button {
     label = "Move:",
     text = "&I",
     focus = false,
-    visible = defaults.target == "TILE_MAP"
-        or defaults.target == "CURSOR",
+    visible = defaults.target == "TILE_MAP",
     onclick = function()
-        local args <const> = dlg.data
-        local target <const> = args.target
-        if target == "CURSOR" then
-            moveTile(0, -1)
-        else
-            moveMap(0, -1)
-        end
+        moveMap(0, -1)
     end
 }
 
@@ -718,16 +667,9 @@ dlg:button {
     id = "jMove",
     text = "&J",
     focus = false,
-    visible = defaults.target == "TILE_MAP"
-        or defaults.target == "CURSOR",
+    visible = defaults.target == "TILE_MAP",
     onclick = function()
-        local args <const> = dlg.data
-        local target <const> = args.target
-        if target == "CURSOR" then
-            moveTile(-1, 0)
-        else
-            moveMap(-1, 0)
-        end
+        moveMap(-1, 0)
     end
 }
 
@@ -735,16 +677,9 @@ dlg:button {
     id = "kMove",
     text = "&K",
     focus = false,
-    visible = defaults.target == "TILE_MAP"
-        or defaults.target == "CURSOR",
+    visible = defaults.target == "TILE_MAP",
     onclick = function()
-        local args <const> = dlg.data
-        local target <const> = args.target
-        if target == "CURSOR" then
-            moveTile(0, 1)
-        else
-            moveMap(0, 1)
-        end
+        moveMap(0, 1)
     end
 }
 
@@ -752,16 +687,9 @@ dlg:button {
     id = "lMove",
     text = "&L",
     focus = false,
-    visible = defaults.target == "TILE_MAP"
-        or defaults.target == "CURSOR",
+    visible = defaults.target == "TILE_MAP",
     onclick = function()
-        local args <const> = dlg.data
-        local target <const> = args.target
-        if target == "CURSOR" then
-            moveTile(1, 0)
-        else
-            moveMap(1, 0)
-        end
+        moveMap(1, 0)
     end
 }
 
