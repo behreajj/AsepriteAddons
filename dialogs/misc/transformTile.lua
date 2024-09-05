@@ -4,10 +4,11 @@ local targets <const> = { "CURSOR", "FORE_TILE", "BACK_TILE", "TILES", "TILE_MAP
 local selModes <const> = { "REPLACE", "ADD", "SUBTRACT", "INTERSECT" }
 
 local defaults <const> = {
-    -- TODO: Could target cursor support shifting the tile over by one?
-
     -- Built-in Image:flip method has not been adopted here due to issues with
     -- undo history.
+
+    -- Tried shifting tile at the mouse cursor with IJKL keys in commit
+    -- 3506d221cb6574dadb80c3a568517aa722552f9b .
 
     -- Size of tiles in color bar is determined by
     -- app.preferences.color_bar.tiles_box_size . Without a command, however,

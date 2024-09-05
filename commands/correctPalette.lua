@@ -4,6 +4,8 @@ dofile("../support/aseutilities.lua")
 local activeSprite <const> = app.site.sprite
 if not activeSprite then return end
 
+AseUtilities.preserveForeBack()
+
 local oldColorMode <const> = activeSprite.colorMode
 app.command.ChangePixelFormat { format = "rgb" }
 
