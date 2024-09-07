@@ -290,6 +290,8 @@ dlg:button {
         end
 
         if genPalette then
+            AseUtilities.preserveForeBack()
+
             local palettes <const> = activeSprite.palettes
             local frObj <const> = site.frame or activeSprite.frames[1]
             local palette <const> = AseUtilities.getPalette(frObj, palettes)
