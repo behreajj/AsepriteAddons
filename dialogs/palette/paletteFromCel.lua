@@ -369,6 +369,8 @@ dlg:button {
             return
         end
 
+        AseUtilities.preserveForeBack()
+
         -- Unpack arguments.
         local target <const> = args.target
             or defaults.target --[[@as string]]
