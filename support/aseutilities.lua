@@ -1081,9 +1081,8 @@ function AseUtilities.blendRgba(
     return cr, cg, cb, tuv
 end
 
----Wrapper for app.command.ChangePixelFormat which accepts an integer constant
----as an input. The constant should be included in the ColorMode enum:
----INDEXED, GRAY or RGB. Does nothing if the constant is invalid.
+---Wrapper for app.command.ChangePixelFormat to accept ColorMode
+---as an input.
 ---@param format ColorMode format constant
 function AseUtilities.changePixelFormat(format)
     if format == ColorMode.INDEXED then

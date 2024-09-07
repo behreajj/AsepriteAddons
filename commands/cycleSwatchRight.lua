@@ -4,6 +4,7 @@ if not sprite then return end
 local frame <const> = site.frame
 if not frame then return end
 
+-- Preserving fore and background color interferes with range.
 local palette <const> = AseUtilities.getPalette(frame, sprite.palettes)
 
 local range <const> = app.range
