@@ -136,13 +136,7 @@ dlg:button {
         if not activeSprite then
             local newSpec <const> = AseUtilities.createSpec()
             activeSprite = AseUtilities.createSprite(newSpec, "Palettes")
-            -- local defaultPalette <const> = app.defaultPalette
-            -- if defaultPalette then
-            -- activeSprite:setPalette(defaultPalette)
-            -- else
-            AseUtilities.setPalette(
-                AseUtilities.DEFAULT_PAL_ARR, activeSprite, 1)
-            -- end
+            AseUtilities.setPalette({ 0x00000000 }, activeSprite, 1)
         end
 
         local spec <const> = activeSprite.spec
@@ -154,6 +148,8 @@ dlg:button {
             }
             return
         end
+
+        AseUtilities.preserveForeBack()
 
         local spriteFrames <const> = activeSprite.frames
         local spritePalettes <const> = activeSprite.palettes
