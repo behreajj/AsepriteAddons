@@ -20,7 +20,6 @@ local maxint64 <const> = 0x7fffffffffffffff
 local uniques <const> = {}
 
 app.transaction("Correct tile sets", function()
-    -- local tileSum = 0
     local i = 0
     while i < lenTileSets do
         i = i + 1
@@ -48,14 +47,6 @@ app.transaction("Correct tile sets", function()
 
         uniques[tsNameVerif] = true
         tileSet.name = tsNameVerif
-
-        -- Because Tiled uses a firstgid offset based on count of tile set
-        -- references in a map, not in the tile set file itself, it's not as
-        -- necessary to do this.
-        -- Even were it done, this would need to be a separate loop after
-        -- unused tile sets are deleted, since that would shift the sum.
-        -- tileSet.baseIndex = 1 + tileSum
-        -- tileSum = tileSum + #tileSet
     end
 end)
 

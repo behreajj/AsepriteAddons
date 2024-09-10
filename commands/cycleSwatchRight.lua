@@ -59,14 +59,5 @@ else
 
             app.fgColor = matchColor
         end)
-    else
-        -- The problem is that this becomes confusing when a color is outside
-        -- the palette, then after shift is inside the palette.
-        -- app.fgColor = Color {
-        --     hue = (fgColor.hslHue + 1.0) % 360.0,
-        --     saturation = fgColor.hslSaturation,
-        --     lightness = fgColor.hslLightness,
-        --     alpha = fgColor.alpha
-        -- }
     end
 end

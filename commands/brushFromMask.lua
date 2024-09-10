@@ -28,12 +28,14 @@ image:drawSprite(sprite, frame, Point(-xMask, -yMask))
 
 -- Alpha index can behave funnily when palette is malformed, but
 -- not sure what can be done about it.
-local pxItr <const> = image:pixels()
-for pixel in pxItr do
-    if not mask:contains(
-            xMask + pixel.x,
-            yMask + pixel.y) then
-        pixel(alphaIndex)
+if alphaIndex >= 0 and alphaIndex < 256 then
+    local pxItr <const> = image:pixels()
+    for pixel in pxItr do
+        if not mask:contains(
+                xMask + pixel.x,
+                yMask + pixel.y) then
+            pixel(alphaIndex)
+        end
     end
 end
 
