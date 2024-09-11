@@ -885,7 +885,9 @@ function AseUtilities.blendImage(
     end
 
     local trgMask = 0
-    if uMask == oMask then trgMask = uMask end
+    if uMask == oMask and uMask >= 0 and uMask < 256 then
+        trgMask = uMask
+    end
     local modeTarget <const> = ucm
 
     local trgSpec <const> = ImageSpec {
@@ -912,13 +914,19 @@ function AseUtilities.blendImage(
     local uStrs <const> = {}
     local uBytes <const> = under.bytes
     local uBpp <const> = under.bytesPerPixel
-    local uDefault <const> = string.pack("<I" .. uBpp, uMask)
+    local uDefault <const> = (ucm == ColorMode.INDEXED
+            and (uMask < 0 or uMask > 255))
+        and string.pack("<I" .. uBpp, 0)
+        or string.pack("<I" .. uBpp, uMask)
 
     ---@type string[]
     local oStrs <const> = {}
     local oBytes <const> = over.bytes
     local oBpp <const> = over.bytesPerPixel
-    local oDefault <const> = string.pack("<I" .. oBpp, oMask)
+    local oDefault <const> = (ocm == ColorMode.INDEXED
+            and (oMask < 0 or oMask > 255))
+        and string.pack("<I" .. oBpp, 0)
+        or string.pack("<I" .. oBpp, oMask)
 
     local getPixel <const> = Utilities.getPixelOmit
     local strbyte <const> = string.byte
