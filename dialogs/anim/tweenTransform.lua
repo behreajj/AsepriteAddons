@@ -121,15 +121,10 @@ local function getCelDataAtFrame(axis)
     local pxWidth = wSprite
     local pxHeight = hSprite
     local rotDeg = -1
-    local xCenter = pxWidth * 0.5
-    local yCenter = pxHeight * 0.5
 
-    local appEditor <const> = app.editor
-    if appEditor then
-        local spritePos <const> = appEditor.spritePos
-        xCenter = spritePos.x
-        yCenter = spritePos.y
-    end
+    local xMouse <const>, yMouse <const> = AseUtilities.getMouse()
+    local xCenter = xMouse + 0.0
+    local yCenter = yMouse + 0.0
 
     local activeFrame <const> = site.frame or activeSprite.frames[1]
     frIdx = activeFrame.frameNumber + frameUiOffset

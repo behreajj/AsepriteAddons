@@ -574,15 +574,7 @@ function AseUtilities.averageColor(sprite, frObj)
         end
     end
 
-    local editor <const> = app.editor
-    if not editor then
-        return { l = 0.0, a = 0.0, b = 0.0, alpha = 0.0 }
-    end
-
-    local mouse <const> = editor.spritePos
-    local xMouse <const> = mouse.x
-    local yMouse <const> = mouse.y
-
+    local xMouse <const>, yMouse <const> = AseUtilities.getMouse()
     local wSprite <const> = sprSpec.width
     local hSprite <const> = sprSpec.height
 
@@ -691,13 +683,7 @@ function AseUtilities.averageNormal(sprite, frObj)
         return Vec3.up()
     end
 
-    local editor <const> = app.editor
-    if not editor then return Vec3.up() end
-
-    local mouse <const> = editor.spritePos
-    local xMouse <const> = mouse.x
-    local yMouse <const> = mouse.y
-
+    local xMouse <const>, yMouse <const> = AseUtilities.getMouse()
     local wSprite <const> = sprSpec.width
     local hSprite <const> = sprSpec.height
 
@@ -2115,6 +2101,51 @@ function AseUtilities.getLayerHierarchy(
             includeBkg)
     end
     return array
+end
+
+---Gets the mouse cursor position relative to the canvas.
+---@return integer x
+---@return integer y
+---@nodiscard
+function AseUtilities.getMouse()
+    -- With View > Tiled Mode, the sprite position shifts to
+    -- the top-left corner tile, not the center tile.
+    -- See https://github.com/aseprite/aseprite/issues/4659 .
+
+    local editor <const> = app.editor
+    if not editor then return -1, -1 end
+
+    -- TODO: Replace all instances of spritePos with this.
+    local sprite <const> = editor.sprite
+    local mouse <const> = editor.spritePos
+
+    local tiledMode = 0
+    local appPrefs <const> = app.preferences
+    if appPrefs then
+        local docPrefs <const> = appPrefs.document(sprite)
+        if docPrefs then
+            local tiledPrefs <const> = docPrefs.tiled
+            if tiledPrefs then
+                tiledMode = tiledPrefs.mode or 0
+            end
+        end
+    end
+
+    local xMouse = mouse.x
+    local yMouse = mouse.y
+    if tiledMode == 3 then
+        -- Tiling on both axes.
+        xMouse = xMouse % sprite.width
+        yMouse = yMouse % sprite.height
+    elseif tiledMode == 2 then
+        -- Vertical tiling.
+        yMouse = yMouse % sprite.height
+    elseif tiledMode == 1 then
+        -- Horizontal tiling.
+        xMouse = xMouse % sprite.width
+    end
+
+    return xMouse, yMouse
 end
 
 ---For sprites with multiple palettes, tries to get a palette from an Aseprite

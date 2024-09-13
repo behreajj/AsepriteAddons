@@ -54,9 +54,6 @@ end
 ---@return integer xGrid
 ---@return integer yGrid
 local function getIndexAtCursor()
-    local editor <const> = app.editor
-    if not editor then return false, 0, 0, -1, -1 end
-
     local site <const> = app.site
     local activeSprite <const> = site.sprite
     if not activeSprite then return false, 0, 0, -1, -1 end
@@ -71,9 +68,7 @@ local function getIndexAtCursor()
     local activeCel <const> = activeLayer:cel(activeFrame)
     if not activeCel then return false, 0, 0, -1, -1 end
 
-    local mouse <const> = editor.spritePos
-    local xMouse <const> = mouse.x
-    local yMouse <const> = mouse.y
+    local xMouse <const>, yMouse <const> = AseUtilities.getMouse()
 
     local celPos <const> = activeCel.position
     local xtlCel <const> = celPos.x

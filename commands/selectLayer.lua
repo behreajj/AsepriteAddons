@@ -6,12 +6,7 @@ if not sprite then return end
 local frObj <const> = app.frame
 if not frObj then return end
 
-local editor <const> = app.editor
-if not editor then return end
-
-local mouse <const> = editor.spritePos
-local xMouse <const> = mouse.x
-local yMouse <const> = mouse.y
+local xMouse <const>, yMouse <const> = AseUtilities.getMouse()
 
 if xMouse < 0 or yMouse < 0 then return end
 

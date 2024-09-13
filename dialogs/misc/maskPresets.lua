@@ -513,12 +513,7 @@ dlg:button {
         local activeSprite <const> = site.sprite
         if not activeSprite then return end
 
-        local editor <const> = app.editor
-        if not editor then return end
-
-        local mouse <const> = editor.spritePos
-        local xMouse <const> = mouse.x
-        local yMouse <const> = mouse.y
+        local xMouse <const>, yMouse <const> = AseUtilities.getMouse()
 
         local args <const> = dlg.data
         local selMode <const> = args.selMode
