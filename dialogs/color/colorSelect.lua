@@ -1,10 +1,13 @@
 dofile("../../support/aseutilities.lua")
 
-local uiModes <const> = { "COLOR", "CRITERIA" }
+local uiModes <const> = { "COLOR", "CRITERIA", "CURSOR" }
 local selModes <const> = { "REPLACE", "ADD", "SUBTRACT", "INTERSECT" }
 local sampleModes <const> = { "ACTIVE", "COMPOSITE" }
+local connections <const> = { "DIAMOND", "SQUARE" }
 
 local defaults <const> = {
+    -- TODO: Add option to select from text input coords, that
+    -- simulates magic wand?
     uiMode = "COLOR",
     selMode = "INTERSECT",
     sampleMode = "ACTIVE",
@@ -21,7 +24,7 @@ local defaults <const> = {
     useAlpha = false,
     minAlpha = 1,
     maxAlpha = 255,
-    pullFocus = true
+    connection = "SQUARE"
 }
 
 ---@param lab { l: number, a: number, b: number, alpha: number }
@@ -124,6 +127,7 @@ dlg:combobox {
 
         local isCriteria <const> = uiMode == "CRITERIA"
         local isColor <const> = uiMode == "COLOR"
+        local isCursor <const> = uiMode == "CURSOR"
 
         dlg:modify { id = "useLight", visible = isCriteria }
         dlg:modify { id = "minLight", visible = isCriteria and useLight }
@@ -141,7 +145,9 @@ dlg:combobox {
         dlg:modify { id = "minAlpha", visible = isCriteria and useAlpha }
         dlg:modify { id = "maxAlpha", visible = isCriteria and useAlpha }
 
-        dlg:modify { id = "refColor", visible = isColor }
+        dlg:modify { id = "connection", visible = isCursor }
+
+        dlg:modify { id = "refColor", visible = isColor or isCursor }
         dlg:modify { id = "tolerance", visible = isColor }
 
         -- This needs to be copied by value, not by reference, to avoid
@@ -161,9 +167,9 @@ dlg:newrow { always = false }
 dlg:color {
     id = "refColor",
     label = "Color:",
-    -- color = app.preferences.color_bar.fg_color,
     color = Color { r = 0, g = 0, b = 0, a = 0 },
     visible = defaults.uiMode == "COLOR"
+        or defaults.uiMode == "CURSOR"
 }
 
 dlg:newrow { always = false }
@@ -175,6 +181,16 @@ dlg:slider {
     max = 255,
     value = defaults.tolerance,
     visible = defaults.uiMode == "COLOR"
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "connection",
+    label = "Matrix:",
+    option = defaults.connection,
+    options = connections,
+    visible = defaults.uiMode == "CURSOR"
 }
 
 dlg:newrow { always = false }
@@ -323,7 +339,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "ok",
     text = "&OK",
-    focus = defaults.pullFocus,
+    focus = true,
     onclick = function()
         local site <const> = app.site
         local activeSprite <const> = site.sprite
@@ -529,7 +545,7 @@ dlg:button {
                 minAlpha = refColor.alpha - tol255
                 maxAlpha = refColor.alpha + tol255
             end
-        else
+        elseif uiMode == "CRITERIA" then
             useLight = args.useLight --[[@as boolean]]
             usec = args.usec --[[@as boolean]]
             useh = args.useh --[[@as boolean]]
@@ -586,7 +602,64 @@ dlg:button {
         local trgSel <const> = Selection()
         local pxRect <const> = Rectangle(0, 0, 1, 1)
 
-        if exactSearch then
+        if uiMode == "CURSOR" then
+            local wImage <const> = image.width
+            local hImage <const> = image.height
+            local wSprite <const> = spriteSpec.width
+
+            local xMouse <const>, yMouse <const> = AseUtilities.getMouse()
+
+            ---@type table<integer, boolean>
+            local visited <const> = {}
+            ---@type integer[]
+            local neighbors <const> = { yMouse * wSprite + xMouse }
+
+            local connection <const> = args.connection
+                or defaults.connection --[[@as string]]
+            local useConnect8 <const> = connection == "SQUARE"
+            local tremove <const> = table.remove
+
+            while #neighbors > 0 do
+                local coord <const> = tremove(neighbors, 1)
+                if not visited[coord] then
+                    visited[coord] = true
+
+                    local xNgbr <const> = coord % wSprite
+                    local yNgbr <const> = coord // wSprite
+
+                    local xLocal <const> = xNgbr - xtl
+                    local yLocal <const> = yNgbr - ytl
+
+                    if xLocal >= 0 and xLocal < wImage
+                        and yLocal >= 0 and yLocal < hImage then
+                        -- TODO: Replace with your own methods. Maybe use Utilities.getPixelOmit
+                        -- then remove the in bounds check above?
+                        local comparisand <const> = image:getPixel(xLocal, yLocal)
+                        if comparisand == refInt then
+                            pxRect.x = xNgbr
+                            pxRect.y = yNgbr
+                            trgSel:add(pxRect)
+
+                            local yn1wSprite <const> = (yNgbr - 1) * wSprite
+                            local ywSprite <const> = yNgbr * wSprite
+                            local yp1wSprite <const> = (yNgbr + 1) * wSprite
+
+                            neighbors[#neighbors + 1] = yn1wSprite + xNgbr
+                            neighbors[#neighbors + 1] = ywSprite + xNgbr - 1
+                            neighbors[#neighbors + 1] = ywSprite + xNgbr + 1
+                            neighbors[#neighbors + 1] = yp1wSprite + xNgbr
+
+                            if useConnect8 then
+                                neighbors[#neighbors + 1] = yn1wSprite + xNgbr - 1
+                                neighbors[#neighbors + 1] = yn1wSprite + xNgbr + 1
+                                neighbors[#neighbors + 1] = yp1wSprite + xNgbr - 1
+                                neighbors[#neighbors + 1] = yp1wSprite + xNgbr + 1
+                            end -- Connect 8 check.
+                        end     -- Exact equality check.
+                    end         -- In bounds check.
+                end             -- Not visited check.
+            end                 -- Neighbor loop.
+        elseif exactSearch then
             for pixel in pxItr do
                 if pixel() == refInt then
                     pxRect.x = xtl + pixel.x
