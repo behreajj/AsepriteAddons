@@ -917,7 +917,7 @@ function AseUtilities.blendImage(
     local getPixel <const> = Utilities.getPixelOmit
     local strbyte <const> = string.byte
 
-    local lenFlat = wTarget * hTarget
+    local lenFlat <const> = wTarget * hTarget
     local i = 0
     while i < lenFlat do
         local xPixel <const> = i % wTarget
@@ -2103,19 +2103,20 @@ function AseUtilities.getLayerHierarchy(
     return array
 end
 
----Gets the mouse cursor position relative to the canvas.
----@return integer x
----@return integer y
+---Gets the mouse cursor position relative to the sprite canvas.
+---If view tiled mode is enabled, wraps one or both coordinates.
+---Returns (-1, -1) if the editor is nil.
+---@return integer
+---@return integer
 ---@nodiscard
 function AseUtilities.getMouse()
-    -- With View > Tiled Mode, the sprite position shifts to
-    -- the top-left corner tile, not the center tile.
+    -- With View Tiled Mode, the sprite position shifts to
+    -- the top left corner tile, not the center tile.
     -- See https://github.com/aseprite/aseprite/issues/4659 .
 
     local editor <const> = app.editor
     if not editor then return -1, -1 end
 
-    -- TODO: Replace all instances of spritePos with this.
     local sprite <const> = editor.sprite
     local mouse <const> = editor.spritePos
 
@@ -2126,7 +2127,10 @@ function AseUtilities.getMouse()
         if docPrefs then
             local tiledPrefs <const> = docPrefs.tiled
             if tiledPrefs then
-                tiledMode = tiledPrefs.mode or 0
+                local tPrefsMode <const> = tiledPrefs.mode --[[@as integer]]
+                if tPrefsMode then
+                    tiledMode = tPrefsMode
+                end
             end
         end
     end

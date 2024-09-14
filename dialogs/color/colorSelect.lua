@@ -142,8 +142,17 @@ dlg:combobox {
         dlg:modify { id = "maxAlpha", visible = isCriteria and useAlpha }
 
         dlg:modify { id = "refColor", visible = isColor }
-        dlg:modify { id = "refColor", color = app.preferences.color_bar.fg_color }
         dlg:modify { id = "tolerance", visible = isColor }
+
+        -- This needs to be copied by value, not by reference, to avoid
+        -- intereference from color mode.
+        local fgColorRef <const> = app.preferences.color_bar.fg_color
+        dlg:modify { id = "refColor", color = Color {
+            r = fgColorRef.red,
+            g = fgColorRef.green,
+            b = fgColorRef.blue,
+            a = fgColorRef.alpha
+        } }
     end
 }
 
