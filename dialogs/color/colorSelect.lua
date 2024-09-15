@@ -810,7 +810,9 @@ dlg:button {
                 local tremove <const> = table.remove
 
                 while #neighbors > 0 do
-                    local coord <const> = tremove(neighbors, 1)
+                    -- Removing from the back may be slightly faster than from
+                    -- the front.
+                    local coord <const> = tremove(neighbors)
                     if not visited[coord] then
                         visited[coord] = true
 
@@ -819,6 +821,7 @@ dlg:button {
                         local xLocal <const> = xNgbr - xtl
                         local yLocal <const> = yNgbr - ytl
 
+                        -- TODO: Is there a more efficient implementation?
                         if xLocal >= 0 and xLocal < wImage
                             and yLocal >= 0 and yLocal < hImage then
                             local lookup <const> = srcBpp * (yLocal * wImage + xLocal)
