@@ -1,6 +1,6 @@
 dofile("../../support/aseutilities.lua")
 
-local uiModes <const> = { "COLOR", "CRITERIA", "CURSOR" }
+local uiModes <const> = { "COLOR", "COORD", "CRITERIA", "CURSOR" }
 local selModes <const> = { "REPLACE", "ADD", "SUBTRACT", "INTERSECT" }
 local sampleModes <const> = { "ACTIVE", "COMPOSITE" }
 local connections <const> = { "DIAMOND", "SQUARE" }
@@ -10,6 +10,7 @@ local defaults <const> = {
     selMode = "INTERSECT",
     sampleMode = "ACTIVE",
     tolerance = 0,
+    ignoreAlpha = false,
     useLight = true,
     minLight = 33,
     maxLight = 67,
@@ -22,6 +23,8 @@ local defaults <const> = {
     useAlpha = false,
     minAlpha = 1,
     maxAlpha = 255,
+    xCoord = 0,
+    yCoord = 0,
     connection = "SQUARE"
 }
 
@@ -89,6 +92,30 @@ local function critEval(
     return include
 end
 
+---@param a { l: number, a: number, b: number, alpha: number }
+---@param b { l: number, a: number, b: number, alpha: number }
+---@param alphaScale number
+---@return number
+local function distSqInclAlpha(a, b, alphaScale)
+    -- Scale alpha to be at least somewhat
+    -- proportional to other channels.
+    local dt <const> = alphaScale * (b.alpha - a.alpha)
+    local dl <const> = b.l - a.l
+    local da <const> = b.a - a.a
+    local db <const> = b.b - a.b
+    return dt * dt + dl * dl + da * da + db * db
+end
+
+---@param a { l: number, a: number, b: number, alpha: number }
+---@param b { l: number, a: number, b: number, alpha: number }
+---@return number
+local function distSqNoAlpha(a, b)
+    local dl <const> = b.l - a.l
+    local da <const> = b.a - a.a
+    local db <const> = b.b - a.b
+    return dl * dl + da * da + db * db
+end
+
 local dlg <const> = Dialog { title = "Select Color" }
 
 dlg:combobox {
@@ -121,10 +148,12 @@ dlg:combobox {
         local usec <const> = args.usec --[[@as boolean]]
         local useh <const> = args.useh --[[@as boolean]]
         local useAlpha <const> = args.useAlpha --[[@as boolean]]
+        local tolerance <const> = args.tolerance --[[@as integer]]
 
         local isCriteria <const> = uiMode == "CRITERIA"
         local isColor <const> = uiMode == "COLOR"
         local isCursor <const> = uiMode == "CURSOR"
+        local isCoord <const> = uiMode == "COORD"
 
         dlg:modify { id = "useLight", visible = isCriteria }
         dlg:modify { id = "minLight", visible = isCriteria and useLight }
@@ -142,21 +171,52 @@ dlg:combobox {
         dlg:modify { id = "minAlpha", visible = isCriteria and useAlpha }
         dlg:modify { id = "maxAlpha", visible = isCriteria and useAlpha }
 
-        dlg:modify { id = "connection", visible = isCursor }
+        dlg:modify { id = "refColor", visible = isColor }
+        dlg:modify { id = "tolerance", visible = isColor or isCursor or isCoord }
+        dlg:modify { id = "ignoreAlpha", visible = (isColor or isCursor or isCoord) and tolerance > 0 }
 
-        dlg:modify { id = "refColor", visible = isColor or isCursor }
-        dlg:modify { id = "tolerance", visible = isColor }
+        dlg:modify { id = "connection", visible = isCursor or isCoord }
+
+        dlg:modify { id = "xCoord", visible = isCoord }
+        dlg:modify { id = "yCoord", visible = isCoord }
 
         -- This needs to be copied by value, not by reference, to avoid
         -- intereference from color mode.
-        local fgColorRef <const> = app.preferences.color_bar.fg_color
-        dlg:modify { id = "refColor", color = Color {
-            r = fgColorRef.red,
-            g = fgColorRef.green,
-            b = fgColorRef.blue,
-            a = fgColorRef.alpha
-        } }
+        local appPrefs <const> = app.preferences
+        if appPrefs then
+            local colorBarPrefs <const> = appPrefs.color_bar
+            if colorBarPrefs then
+                local fgColor <const> = colorBarPrefs.fg_color --[[@as Color]]
+                if fgColor then
+                    dlg:modify { id = "refColor", color = Color {
+                        r = fgColor.red,
+                        g = fgColor.green,
+                        b = fgColor.blue,
+                        a = fgColor.alpha
+                    } }
+                end
+            end
+        end
     end
+}
+
+dlg:newrow { always = false }
+
+dlg:number {
+    id = "xCoord",
+    label = "Coord:",
+    text = string.format("%d", defaults.xCoord),
+    decimals = 0,
+    visible = defaults.uiMode == "COORD",
+    focus = false
+}
+
+dlg:number {
+    id = "yCoord",
+    text = string.format("%d", defaults.yCoord),
+    decimals = 0,
+    visible = defaults.uiMode == "COORD",
+    focus = false
 }
 
 dlg:newrow { always = false }
@@ -166,7 +226,6 @@ dlg:color {
     label = "Color:",
     color = Color { r = 0, g = 0, b = 0, a = 0 },
     visible = defaults.uiMode == "COLOR"
-        or defaults.uiMode == "CURSOR"
 }
 
 dlg:newrow { always = false }
@@ -178,6 +237,26 @@ dlg:slider {
     max = 255,
     value = defaults.tolerance,
     visible = defaults.uiMode == "COLOR"
+        or defaults.uiMode == "CURSOR"
+        or defaults.uiMode == "COORD",
+    onchange = function()
+        local args <const> = dlg.data
+        local tolerance <const> = args.tolerance --[[@as integer]]
+        dlg:modify { id = "ignoreAlpha", visible = tolerance > 0 }
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "ignoreAlpha",
+    label = "Ignore:",
+    text = "&Alpha",
+    selected = defaults.ignoreAlpha,
+    visible = (defaults.uiMode == "COLOR"
+            or defaults.uiMode == "CURSOR"
+            or defaults.uiMode == "COORD")
+        and defaults.tolerance > 0
 }
 
 dlg:newrow { always = false }
@@ -188,6 +267,7 @@ dlg:combobox {
     option = defaults.connection,
     options = connections,
     visible = defaults.uiMode == "CURSOR"
+        or defaults.uiMode == "COORD"
 }
 
 dlg:newrow { always = false }
@@ -357,26 +437,22 @@ dlg:button {
             return
         end
 
+        -- Get the current selection.
+        local activeSel <const>, selIsValid = AseUtilities.getSelection(activeSprite)
+        local selBounds <const> = activeSel.bounds
+
         -- Unpack sprite spec.
         local spriteSpec <const> = activeSprite.spec
         local colorMode <const> = spriteSpec.colorMode
         local colorSpace <const> = spriteSpec.colorSpace
         local alphaIndex <const> = spriteSpec.transparentColor
+        local wSprite <const> = spriteSpec.width
+        local hSprite <const> = spriteSpec.height
 
-        -- Get the current selection.
-        local activeSel <const>, selIsValid = AseUtilities.getSelection(activeSprite)
-        local selBounds <const> = activeSel.bounds
-
-        -- Unpack arguments.
         local args <const> = dlg.data
+
         local selMode <const> = args.selMode
             or defaults.selMode --[[@as string]]
-        local sampleMode <const> = args.sampleMode
-            or defaults.sampleMode --[[@as string]]
-        local uiMode <const> = args.uiMode
-            or defaults.uiMode --[[@as string]]
-        local refColor <const> = args.refColor --[[@as Color]]
-
         local selIsInter <const> = selMode == "INTERSECT"
         local selIsSub <const> = selMode == "SUBTRACT"
         local selIsReplace <const> = selMode == "REPLACE"
@@ -388,19 +464,24 @@ dlg:button {
         local image = nil
         local xtl = 0
         local ytl = 0
+        local wImage = wSprite
+        local hImage = hSprite
 
+        local sampleMode <const> = args.sampleMode
+            or defaults.sampleMode --[[@as string]]
         if sampleMode == "COMPOSITE" then
             if blitIntersect then
-                local selSpec <const> = AseUtilities.createSpec(
-                    selBounds.width, selBounds.height,
-                    colorMode, colorSpace, alphaIndex)
-                image = Image(selSpec)
-                image:drawSprite(activeSprite, activeFrame,
-                    Point(-selBounds.x, -selBounds.y))
                 xtl = selBounds.x
                 ytl = selBounds.y
+                wImage = selBounds.width
+                hImage = selBounds.height
+
+                local selSpec <const> = AseUtilities.createSpec(
+                    wImage, hImage, colorMode, colorSpace, alphaIndex)
+                image = Image(selSpec)
+                image:drawSprite(activeSprite, activeFrame, Point(-xtl, -ytl))
             else
-                image = Image(activeSprite.spec)
+                image = Image(spriteSpec)
                 image:drawSprite(activeSprite, activeFrame)
             end
         else
@@ -429,6 +510,8 @@ dlg:button {
                 image = flat
                 xtl = rect.x
                 ytl = rect.y
+                wImage = rect.width
+                hImage = rect.height
             else
                 local activeCel <const> = activeLayer:cel(activeFrame)
                 if not activeCel then
@@ -447,6 +530,8 @@ dlg:button {
                 local celPos <const> = activeCel.position
                 xtl = celPos.x
                 ytl = celPos.y
+                wImage = image.width
+                hImage = image.height
             end
 
             if blitIntersect then
@@ -466,101 +551,72 @@ dlg:button {
                 -- equal to alpha index? Could return early?
                 if wInter > 0 or hInter > 0 then
                     local interSpec <const> = AseUtilities.createSpec(
-                        wInter, hInter,
-                        colorMode, colorSpace, alphaIndex)
+                        wInter, hInter, colorMode, colorSpace, alphaIndex)
                     local interImg <const> = Image(interSpec)
                     interImg:drawImage(image, Point(xtl - xtlMax, ytl - ytlMax))
 
                     image = interImg
                     xtl = xtlMax
                     ytl = ytlMax
+                    wImage = image.width
+                    hImage = image.height
                 end
             end
         end
 
-        local useLight = false
-        local usea = false
-        local useb = false
-        local usec = false
-        local useh = false
-        local useAlpha = false
-
-        local minLight = 0.0
-        local mina = -111.0
-        local minb = -111.0
-        local minc = 0.0
-        local minh = 0.0
-        local minAlpha = 1.0
-
-        local maxLight = 100.0
-        local maxa = 111.0
-        local maxb = 111.0
-        local maxc = 135.0
-        local maxh = 360.0
-        local maxAlpha = 255.0
+        local uiMode <const> = args.uiMode
+            or defaults.uiMode --[[@as string]]
+        local uiIsCursor <const> = uiMode == "CURSOR"
+        local uiIsCriteria <const> = uiMode == "CRITERIA"
+        local isMagicWand <const> = uiIsCursor or uiMode == "COORD"
 
         -- Cache global methods.
         local fromHex <const> = Clr.fromHex
         local sRgbaToLab <const> = Clr.sRgbToSrLab2
         local aseColorToClr <const> = AseUtilities.aseColorToClr
         local aseColorToHex <const> = AseUtilities.aseColorToHex
+        local strunpack <const> = string.unpack
+        local strsub <const> = string.sub
 
-        -- TODO: Subtracting mask color from selection.
-        -- See https://community.aseprite.org/t/the-tool-select-color-range-does-not-subtract-mask-color/ .
-        local refClr <const> = aseColorToClr(refColor)
-        local refInt <const> = aseColorToHex(refColor, colorMode)
-        local refLab <const> = sRgbaToLab(refClr)
+        local trgSel <const> = Selection()
+        local pxRect <const> = Rectangle(0, 0, 1, 1)
+        local srcBpp <const> = image.bytesPerPixel
+        local packFmt <const> = "<I" .. srcBpp
+        local srcBytes <const> = image.bytes
 
-        local exactSearch = false
+        if uiIsCriteria then
+            local useLight = args.useLight --[[@as boolean]]
+            local usec = args.usec --[[@as boolean]]
+            local useh = args.useh --[[@as boolean]]
+            local useAlpha = args.useAlpha --[[@as boolean]]
+            local usea = false
+            local useb = false
 
-        if uiMode == "COLOR" then
-            local tolerance <const> = args.tolerance
-                or defaults.tolerance --[[@as integer]]
-            exactSearch = tolerance == 0
+            local minLight = args.minLight
+                or defaults.minLight --[[@as number]]
+            local minc = args.minc
+                or defaults.minc --[[@as number]]
+            local minh = args.minh
+                or defaults.minh --[[@as number]]
+            local mina = -111.0
+            local minb = -111.0
 
-            if not exactSearch then
-                useLight = true
-                usea = true
-                useb = true
-                useAlpha = true
+            local maxLight = args.maxLight
+                or defaults.maxLight --[[@as number]]
+            local maxc = args.maxc
+                or defaults.maxc --[[@as number]]
+            local maxh = args.maxh
+                or defaults.maxh --[[@as number]]
+            local maxa = 111.0
+            local maxb = 111.0
 
-                local tol100 <const> = math.max(0.000001,
-                    tolerance * 0.5)
-                minLight = refLab.l - tol100
-                maxLight = refLab.l + tol100
-
-                local tol111 <const> = math.max(0.000001,
-                    tolerance * (50.0 / 111.0))
-                mina = refLab.a - tol111
-                maxa = refLab.a + tol111
-
-                minb = refLab.b - tol111
-                maxb = refLab.b + tol111
-
-                local tol255 <const> = math.max(0.000001,
-                    tolerance * (50.0 / 255.0))
-                minAlpha = refColor.alpha - tol255
-                maxAlpha = refColor.alpha + tol255
-            end
-        elseif uiMode == "CRITERIA" then
-            useLight = args.useLight --[[@as boolean]]
-            usec = args.usec --[[@as boolean]]
-            useh = args.useh --[[@as boolean]]
-            useAlpha = args.useAlpha --[[@as boolean]]
-
-            minLight = args.minLight --[[@as number]]
-            minc = args.minc --[[@as number]]
-            minh = args.minh --[[@as number]]
-
-            maxLight = args.maxLight --[[@as number]]
-            maxc = args.maxc --[[@as number]]
-            maxh = args.maxh --[[@as number]]
-
-            minAlpha = 1.0
-            maxAlpha = 255.0
+            local minAlpha = 1.0
+            local maxAlpha = 255.0
             if useAlpha then
-                minAlpha = args.minAlpha --[[@as number]]
-                maxAlpha = args.maxAlpha --[[@as number]]
+                minAlpha = args.minAlpha
+                    or defaults.minAlpha --[[@as number]]
+                maxAlpha = args.maxAlpha
+                    or defaults.maxAlpha --[[@as number]]
             end
 
             -- Disable criteria if minimum is equal to maximum.
@@ -593,78 +649,7 @@ dlg:button {
                 }
                 return
             end
-        end
 
-        local pxItr <const> = image:pixels()
-        local trgSel <const> = Selection()
-        local pxRect <const> = Rectangle(0, 0, 1, 1)
-
-        if uiMode == "CURSOR" then
-            local wImage <const> = image.width
-            local hImage <const> = image.height
-            local wSprite <const> = spriteSpec.width
-
-            local xMouse <const>, yMouse <const> = AseUtilities.getMouse()
-
-            ---@type table<integer, boolean>
-            local visited <const> = {}
-            ---@type integer[]
-            local neighbors <const> = { yMouse * wSprite + xMouse }
-
-            local connection <const> = args.connection
-                or defaults.connection --[[@as string]]
-            local useConnect8 <const> = connection == "SQUARE"
-            local tremove <const> = table.remove
-
-            while #neighbors > 0 do
-                local coord <const> = tremove(neighbors, 1)
-                if not visited[coord] then
-                    visited[coord] = true
-
-                    local xNgbr <const> = coord % wSprite
-                    local yNgbr <const> = coord // wSprite
-
-                    local xLocal <const> = xNgbr - xtl
-                    local yLocal <const> = yNgbr - ytl
-
-                    if xLocal >= 0 and xLocal < wImage
-                        and yLocal >= 0 and yLocal < hImage then
-                        -- TODO: Replace with your own methods. Maybe use Utilities.getPixelOmit
-                        -- then remove the in bounds check above?
-                        local comparisand <const> = image:getPixel(xLocal, yLocal)
-                        if comparisand == refInt then
-                            pxRect.x = xNgbr
-                            pxRect.y = yNgbr
-                            trgSel:add(pxRect)
-
-                            local yn1wSprite <const> = (yNgbr - 1) * wSprite
-                            local ywSprite <const> = yNgbr * wSprite
-                            local yp1wSprite <const> = (yNgbr + 1) * wSprite
-
-                            neighbors[#neighbors + 1] = yn1wSprite + xNgbr
-                            neighbors[#neighbors + 1] = ywSprite + xNgbr - 1
-                            neighbors[#neighbors + 1] = ywSprite + xNgbr + 1
-                            neighbors[#neighbors + 1] = yp1wSprite + xNgbr
-
-                            if useConnect8 then
-                                neighbors[#neighbors + 1] = yn1wSprite + xNgbr - 1
-                                neighbors[#neighbors + 1] = yn1wSprite + xNgbr + 1
-                                neighbors[#neighbors + 1] = yp1wSprite + xNgbr - 1
-                                neighbors[#neighbors + 1] = yp1wSprite + xNgbr + 1
-                            end -- Connect 8 check.
-                        end     -- Exact equality check.
-                    end         -- In bounds check.
-                end             -- Not visited check.
-            end                 -- Neighbor loop.
-        elseif exactSearch then
-            for pixel in pxItr do
-                if pixel() == refInt then
-                    pxRect.x = xtl + pixel.x
-                    pxRect.y = ytl + pixel.y
-                    trgSel:add(pxRect)
-                end
-            end
-        else
             -- Alpha is listed in [0, 255] but compared in [0.0, 1.0].
             -- Chroma is compared in magnitude squared.
             -- Hue is listed in [0, 360] but compared in [0, tau].
@@ -676,80 +661,207 @@ dlg:button {
             local minhrd <const> = minh * 0.017453292519943
             local maxhrd <const> = maxh * 0.017453292519943
 
-            -- When a color mode convert to to RGB is attempted,
-            -- there's either a crash or nothing is selected.
-            if colorMode == ColorMode.INDEXED then
-                local palette <const> = AseUtilities.getPalette(
-                    activeFrame, activeSprite.palettes)
-                local lenPalette <const> = #palette
-                ---@type boolean[]
-                local includes <const> = {}
-                local j = 0
-                while j < lenPalette do
-                    local aseColor <const> = palette:getColor(j)
-                    local clr <const> = aseColorToClr(aseColor)
-                    local lab <const> = sRgbaToLab(clr)
-
-                    j = j + 1
-                    includes[j] = critEval(
+            local areaImage <const> = wImage * hImage
+            local i = 0
+            while i < areaImage do
+                -- TODO: Create a dictionary of previously evaluated to speed this up.
+                local lookup <const> = srcBpp * i
+                local c <const> = strunpack(packFmt, strsub(
+                    srcBytes, 1 + lookup, srcBpp + lookup))
+                local srgb <const> = fromHex(c)
+                local lab <const> = sRgbaToLab(srgb)
+                if critEval(
                         lab, mint01, maxt01,
                         useLight, minLight, maxLight,
                         usea, mina, maxa,
                         useb, minb, maxb,
                         usePolar,
                         usec, mincsq, maxcsq,
-                        useh, minhrd, maxhrd)
+                        useh, minhrd, maxhrd) then
+                    pxRect.x = xtl + i % wImage
+                    pxRect.y = ytl + i // wImage
+                    trgSel:add(pxRect)
                 end
 
-                for pixel in pxItr do
-                    local idx <const> = pixel()
-                    if includes[1 + idx] then
-                        pxRect.x = xtl + pixel.x
-                        pxRect.y = ytl + pixel.y
-                        trgSel:add(pxRect)
-                    end
-                end
-            else
-                local parseHex = nil
-                if colorMode == ColorMode.GRAY then
-                    parseHex = function(x)
-                        local a = (x >> 0x08) & 0xff
-                        local v = x & 0xff
-                        return a << 0x18 | v << 0x10 | v << 0x08 | v
+                i = i + 1
+            end
+        else
+            -- Default to search by Euclidean distance.
+
+            local refColor <const> = args.refColor --[[@as Color]]
+            local tolerance <const> = args.tolerance
+                or defaults.tolerance --[[@as integer]]
+            local ignoreAlpha <const> = args.ignoreAlpha --[[@as boolean]]
+
+            local xMouse = args.xCoord
+                or defaults.xCoord --[[@as integer]]
+            local yMouse = args.yCoord
+                or defaults.yCoord --[[@as integer]]
+            if uiIsCursor then
+                xMouse, yMouse = AseUtilities.getMouse()
+            end
+
+            -- print(string.format(
+            --     "xMouse: %d, yMouse: %d",
+            --     xMouse, yMouse))
+
+            local refClr = aseColorToClr(refColor)
+            local refInt = aseColorToHex(refColor, colorMode)
+            local palette <const> = AseUtilities.getPalette(
+                activeFrame, activeSprite.palettes)
+            local lenPalette <const> = #palette
+
+            if isMagicWand then
+                local xLocal <const> = xMouse - xtl
+                local yLocal <const> = yMouse - ytl
+                if xLocal >= 0 and xLocal < wImage
+                    and yLocal >= 0 and yLocal < hImage then
+                    local lookup <const> = srcBpp * (yLocal * wImage + xLocal)
+                    local c <const> = strunpack(packFmt, strsub(
+                        srcBytes, 1 + lookup, srcBpp + lookup))
+                    if colorMode == ColorMode.INDEXED then
+                        refInt = c
+                        if c >= 0 and c < lenPalette then
+                            local aseColor <const> = palette:getColor(c)
+                            refClr = aseColorToClr(aseColor)
+                        end
+                    elseif colorMode == ColorMode.GRAY then
+                        local a8 <const> = (c >> 0x08) & 0xff
+                        local v8 <const> = c & 0xff
+                        local c32 <const> = a8 << 0x18 | v8 << 0x10 | v8 << 0x08 | v8
+                        refInt = c
+                        refClr = fromHex(c32)
+                    else
+                        refInt = c
+                        refClr = fromHex(c)
                     end
                 else
-                    -- Default to RGB
-                    parseHex = function(x) return x end
+                    return
+                    -- if colorMode == ColorMode.INDEXED then
+                    --     refInt = alphaIndex
+                    --     if alphaIndex >= 0 and alphaIndex < lenPalette then
+                    --         local aseColor <const> = palette:getColor(alphaIndex)
+                    --         refClr = aseColorToClr(aseColor)
+                    --     else
+                    --         refClr = Clr.new(0, 0, 0, 0)
+                    --     end
+                    -- else
+                    --     refInt = 0
+                    --     refClr = Clr.new(0, 0, 0, 0)
+                    -- end
                 end
+            end
+
+            local distSq <const> = ignoreAlpha
+                and distSqNoAlpha
+                or distSqInclAlpha
+
+            local eval = function(c) return c == refInt end
+
+            local useExactSearch <const> = (not uiIsCriteria)
+                and tolerance == 0
+            if not useExactSearch then
+                local refLab <const> = sRgbaToLab(refClr)
+                local tScl <const> = 100.0
+                local tolsq <const> = tolerance * tolerance
+
+                if colorMode == ColorMode.INDEXED then
+                    eval = function(c8)
+                        if c8 >= 0 and c8 < lenPalette then
+                            local aseColor <const> = palette:getColor(c8)
+                            local srgb <const> = aseColorToClr(aseColor)
+                            local lab <const> = sRgbaToLab(srgb)
+                            return distSq(lab, refLab, tScl) <= tolsq
+                        end
+                        return false
+                    end
+                elseif colorMode == ColorMode.GRAY then
+                    eval = function(c16)
+                        local a8 <const> = (c16 >> 0x08) & 0xff
+                        local v8 <const> = c16 & 0xff
+                        local c32 <const> = a8 << 0x18 | v8 << 0x10 | v8 << 0x08 | v8
+                        local srgb <const> = fromHex(c32)
+                        local lab <const> = sRgbaToLab(srgb)
+                        return distSq(lab, refLab, tScl) <= tolsq
+                    end
+                else
+                    -- Default to RGB color mode.
+                    eval = function(c32)
+                        local srgb <const> = fromHex(c32)
+                        local lab <const> = sRgbaToLab(srgb)
+                        return distSq(lab, refLab, tScl) <= tolsq
+                    end
+                end
+            end
+
+            if isMagicWand then
+                local connection <const> = args.connection
+                    or defaults.connection --[[@as string]]
+                local useConnect8 <const> = connection == "SQUARE"
 
                 ---@type table<integer, boolean>
                 local visited <const> = {}
-                ---@type table<integer, boolean>
-                local filtered <const> = {}
-                for pixel in pxItr do
-                    local hex <const> = parseHex(pixel())
-                    local include = false
-                    if visited[hex] then
-                        include = filtered[hex]
-                    else
-                        local lab <const> = sRgbaToLab(fromHex(hex))
-                        include = critEval(
-                            lab, mint01, maxt01,
-                            useLight, minLight, maxLight,
-                            usea, mina, maxa,
-                            useb, minb, maxb,
-                            usePolar,
-                            usec, mincsq, maxcsq,
-                            useh, minhrd, maxhrd)
-                        visited[hex] = true
-                        filtered[hex] = include
-                    end
+                ---@type integer[]
+                local neighbors <const> = { yMouse * wSprite + xMouse }
 
-                    if include then
-                        pxRect.x = xtl + pixel.x
-                        pxRect.y = ytl + pixel.y
+                local tremove <const> = table.remove
+
+                while #neighbors > 0 do
+                    local coord <const> = tremove(neighbors, 1)
+                    if not visited[coord] then
+                        visited[coord] = true
+
+                        local xNgbr <const> = coord % wSprite
+                        local yNgbr <const> = coord // wSprite
+                        local xLocal <const> = xNgbr - xtl
+                        local yLocal <const> = yNgbr - ytl
+
+                        if xLocal >= 0 and xLocal < wImage
+                            and yLocal >= 0 and yLocal < hImage then
+                            local lookup <const> = srcBpp * (yLocal * wImage + xLocal)
+                            local comparisand <const> = strunpack(packFmt, strsub(
+                                srcBytes, 1 + lookup, srcBpp + lookup))
+
+                            if eval(comparisand) then
+                                pxRect.x = xNgbr
+                                pxRect.y = yNgbr
+                                trgSel:add(pxRect)
+
+                                local ywSprite <const> = yNgbr * wSprite
+                                local yn1wSprite <const> = ywSprite - wSprite
+                                local yp1wSprite <const> = ywSprite + wSprite
+
+                                neighbors[#neighbors + 1] = yn1wSprite + xNgbr
+                                neighbors[#neighbors + 1] = ywSprite + xNgbr - 1
+                                neighbors[#neighbors + 1] = ywSprite + xNgbr + 1
+                                neighbors[#neighbors + 1] = yp1wSprite + xNgbr
+
+                                if useConnect8 then
+                                    neighbors[#neighbors + 1] = yn1wSprite + xNgbr - 1
+                                    neighbors[#neighbors + 1] = yn1wSprite + xNgbr + 1
+                                    neighbors[#neighbors + 1] = yp1wSprite + xNgbr - 1
+                                    neighbors[#neighbors + 1] = yp1wSprite + xNgbr + 1
+                                end -- Connect 8 check.
+                            end     -- Exact equality check.
+                        end         -- In bounds check.
+                    end             -- Not visited check.
+                end                 -- Neighbor loop.
+            else
+                -- Default to searching the entire image.
+
+                local areaImage <const> = wImage * hImage
+                local i = 0
+                while i < areaImage do
+                    local lookup <const> = srcBpp * i
+                    local comparisand <const> = strunpack(packFmt, strsub(
+                        srcBytes, 1 + lookup, srcBpp + lookup))
+                    -- TODO: Create a dictionary of previously evaluated to speed this up.
+                    if eval(comparisand) then
+                        pxRect.x = xtl + i % wImage
+                        pxRect.y = ytl + i // wImage
                         trgSel:add(pxRect)
                     end
+                    i = i + 1
                 end
             end
         end
