@@ -28,7 +28,7 @@ local defaults <const> = {
     maxAlpha = 255,
     xCoord = 0,
     yCoord = 0,
-    connection = "SQUARE"
+    connection = "DIAMOND"
 }
 
 ---@param lab { l: number, a: number, b: number, alpha: number }
@@ -783,15 +783,13 @@ dlg:button {
                         local a8 <const> = (c16 >> 0x08) & 0xff
                         local v8 <const> = c16 & 0xff
                         local c32 <const> = a8 << 0x18 | v8 << 0x10 | v8 << 0x08 | v8
-                        local srgb <const> = fromHex(c32)
-                        local lab <const> = sRgbaToLab(srgb)
+                        local lab <const> = sRgbaToLab(fromHex(c32))
                         return distSq(lab, refLab, tScl) <= tolsq
                     end
                 else
                     -- Default to RGB color mode.
                     eval = function(c32)
-                        local srgb <const> = fromHex(c32)
-                        local lab <const> = sRgbaToLab(srgb)
+                        local lab <const> = sRgbaToLab(fromHex(c32))
                         return distSq(lab, refLab, tScl) <= tolsq
                     end
                 end
@@ -822,8 +820,8 @@ dlg:button {
                         local yLocal <const> = yNgbr - ytl
 
                         -- TODO: Is there a more efficient implementation?
-                        if xLocal >= 0 and xLocal < wImage
-                            and yLocal >= 0 and yLocal < hImage then
+                        if yLocal >= 0 and yLocal < hImage
+                            and xLocal >= 0 and xLocal < wImage then
                             local lookup <const> = srcBpp * (yLocal * wImage + xLocal)
                             local cNgbr <const> = strunpack(packFmt, strsub(
                                 srcBytes, 1 + lookup, srcBpp + lookup))
