@@ -2229,13 +2229,13 @@ end
 ---association.
 ---@param tileMap Image tile map, an image
 ---@param tileSet Tileset tile set
----@param selection Selection selection
+---@param mask Selection selection mask
 ---@param xtlCel integer? cel top left corner x
 ---@param ytlCel integer? cel top left corner y
 ---@return table<integer, Tile> tiles
 ---@return integer[] coords
 function AseUtilities.getSelectedTiles(
-    tileMap, tileSet, selection, xtlCel, ytlCel)
+    tileMap, tileSet, mask, xtlCel, ytlCel)
     ---@type table<integer, Tile>
     local tiles <const> = {}
     ---@type integer[]
@@ -2284,8 +2284,7 @@ function AseUtilities.getSelectedTiles(
             while isContained and j < flatDimTile do
                 local xPixel <const> = xtlTile + j % wTile
                 local yPixel <const> = ytlTile + j // wTile
-                isContained = isContained and selection:contains(
-                    Point(xPixel, yPixel))
+                isContained = isContained and mask:contains(xPixel, yPixel)
                 j = j + 1
             end
 
