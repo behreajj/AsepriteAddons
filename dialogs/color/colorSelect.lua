@@ -37,12 +37,6 @@ local defaults <const> = {
 ---@param useLight boolean
 ---@param minLight number
 ---@param maxLight number
----@param usea boolean
----@param mina number
----@param maxa number
----@param useb boolean
----@param minb number
----@param maxb number
 ---@param usePolar boolean
 ---@param usec boolean
 ---@param mincsq number
@@ -54,8 +48,6 @@ local defaults <const> = {
 local function critEval(
     lab, mint01, maxt01,
     useLight, minLight, maxLight,
-    usea, mina, maxa,
-    useb, minb, maxb,
     usePolar,
     usec, mincsq, maxcsq,
     useh, minhrd, maxhrd)
@@ -66,12 +58,6 @@ local function critEval(
 
     local include = t >= mint01 and t <= maxt01
     if useLight and (l < minLight or l > maxLight) then
-        include = false
-    end
-    if usea and (a < mina or a > maxa) then
-        include = false
-    end
-    if useb and (b < minb or b > maxb) then
         include = false
     end
 
@@ -573,6 +559,9 @@ dlg:button {
         local uiIsCriteria <const> = uiMode == "CRITERIA"
         local isMagicWand <const> = uiIsCursor or uiMode == "COORD"
 
+        local cmIsIdx <const> = colorMode == ColorMode.INDEXED
+        local cmIsGry <const> = colorMode == ColorMode.GRAY
+
         -- Cache global methods.
         local fromHex <const> = Clr.fromHex
         local sRgbaToLab <const> = Clr.sRgbToSrLab2
@@ -580,6 +569,10 @@ dlg:button {
         local aseColorToHex <const> = AseUtilities.aseColorToHex
         local strunpack <const> = string.unpack
         local strsub <const> = string.sub
+
+        local palette <const> = AseUtilities.getPalette(
+            activeFrame, activeSprite.palettes)
+        local lenPalette <const> = #palette
 
         local trgSel <const> = Selection()
         local pxRect <const> = Rectangle(0, 0, 1, 1)
@@ -592,8 +585,6 @@ dlg:button {
             local usec = args.usec --[[@as boolean]]
             local useh = args.useh --[[@as boolean]]
             local useAlpha = args.useAlpha --[[@as boolean]]
-            local usea = false
-            local useb = false
 
             local minLight = args.minLight
                 or defaults.minLight --[[@as number]]
@@ -601,8 +592,6 @@ dlg:button {
                 or defaults.minc --[[@as number]]
             local minh = args.minh
                 or defaults.minh --[[@as number]]
-            local mina = -111.0
-            local minb = -111.0
 
             local maxLight = args.maxLight
                 or defaults.maxLight --[[@as number]]
@@ -610,8 +599,6 @@ dlg:button {
                 or defaults.maxc --[[@as number]]
             local maxh = args.maxh
                 or defaults.maxh --[[@as number]]
-            local maxa = 111.0
-            local maxb = 111.0
 
             local minAlpha = 1.0
             local maxAlpha = 255.0
@@ -627,6 +614,10 @@ dlg:button {
             if minc == maxc then usec = false end
             if minh == maxh then useh = false end
             if minAlpha == maxAlpha then useAlpha = false end
+
+            -- Disable criteria if grayscale.
+            if cmIsGry then usec = false end
+            if cmIsGry then useh = false end
 
             -- Swap minimum and maximum if invalid.
             if minLight > maxLight then
@@ -669,20 +660,30 @@ dlg:button {
             local areaImage <const> = wImage * hImage
             local i = 0
             while i < areaImage do
-                -- TODO: Create a dictionary of previously evaluated.
                 local lookup <const> = srcBpp * i
                 local c <const> = strunpack(packFmt, strsub(
                     srcBytes, 1 + lookup, srcBpp + lookup))
 
                 local include = evaluated[c]
                 if include == nil then
-                    local srgb <const> = fromHex(c)
+                    local c32 = c
+                    if cmIsIdx then
+                        if c >= 0 and c < lenPalette then
+                            local aseColor <const> = palette:getColor(c)
+                            c32 = aseColorToHex(aseColor, ColorMode.RGB)
+                        else
+                            c32 = 0
+                        end
+                    elseif cmIsGry then
+                        local a8 <const> = (c >> 0x08) & 0xff
+                        local v8 <const> = c & 0xff
+                        c32 = a8 << 0x18 | v8 << 0x10 | v8 << 0x08 | v8
+                    end
+                    local srgb <const> = fromHex(c32)
                     local lab <const> = sRgbaToLab(srgb)
                     include = critEval(
                         lab, mint01, maxt01,
                         useLight, minLight, maxLight,
-                        usea, mina, maxa,
-                        useb, minb, maxb,
                         usePolar,
                         usec, mincsq, maxcsq,
                         useh, minhrd, maxhrd)
@@ -718,9 +719,6 @@ dlg:button {
 
             local refClr = aseColorToClr(refColor)
             local refInt = aseColorToHex(refColor, colorMode)
-            local palette <const> = AseUtilities.getPalette(
-                activeFrame, activeSprite.palettes)
-            local lenPalette <const> = #palette
 
             if isMagicWand then
                 local xLocal <const> = xMouse - xtl
@@ -730,7 +728,7 @@ dlg:button {
                     local lookup <const> = srcBpp * (yLocal * wImage + xLocal)
                     local c <const> = strunpack(packFmt, strsub(
                         srcBytes, 1 + lookup, srcBpp + lookup))
-                    if colorMode == ColorMode.INDEXED then
+                    if cmIsIdx then
                         refInt = c
                         if c >= 0 and c < lenPalette then
                             local aseColor <const> = palette:getColor(c)
@@ -738,7 +736,7 @@ dlg:button {
                         else
                             refClr = Clr.new(0, 0, 0, 0)
                         end
-                    elseif colorMode == ColorMode.GRAY then
+                    elseif cmIsGry then
                         local a8 <const> = (c >> 0x08) & 0xff
                         local v8 <const> = c & 0xff
                         local c32 <const> = a8 << 0x18 | v8 << 0x10 | v8 << 0x08 | v8
