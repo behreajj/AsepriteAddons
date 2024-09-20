@@ -290,7 +290,7 @@ if lenFrObjs > 1 then
         durSum = durSum + frObjs[i].duration
     end
     local durStr <const> = string.format("%d ms",
-        math.floor(0.5 + durSum * 1000.0))
+        math.floor(durSum * 1000.0 + 0.5))
 
     dlg:label {
         id = "durationLabel",

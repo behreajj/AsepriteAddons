@@ -194,6 +194,7 @@ end
 ---@return Clr
 ---@nodiscard
 function Clr.fromHex(c)
+    -- TODO: Consider a variant for 16 bit grayscale?
     return Clr.new(
         (c & 0xff) / 255.0,
         (c >> 0x08 & 0xff) / 255.0,

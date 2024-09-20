@@ -314,10 +314,29 @@ if tag then
     -- that begins as the active will no longer be as its range moves.
     local toFrObj <const> = tag.toFrame
     local fromFrObj <const> = tag.fromFrame
+
+    local spriteFrames <const> = sprite.frames
+    local lenSpriteFrames <const> = #spriteFrames
+
+    local toFrIdx <const> = toFrObj and toFrObj.frameNumber or 1
+    local fromFrIdx <const> = fromFrObj and fromFrObj.frameNumber or 1
+    local toFrIdxVrf <const> = math.min(math.max(toFrIdx, 1), lenSpriteFrames)
+    local fromFrIdxVrf <const> = math.min(math.max(fromFrIdx, 1), lenSpriteFrames)
+
+    local tagDurSecs = 0.0
+    local i = fromFrIdxVrf
+    while i <= toFrIdxVrf do
+        local duration <const> = spriteFrames[i].duration
+        tagDurSecs = tagDurSecs + duration
+        i = i + 1
+    end
+    local tagDurMillis <const> = math.floor(tagDurSecs * 1000.0 + 0.5)
+
     local tagText <const> = (toFrObj and fromFrObj)
-        and string.format("Tag %02d to %02d",
-            fromFrObj.frameNumber + frameUiOffset,
-            toFrObj.frameNumber + frameUiOffset)
+        and string.format("Tag %02d to %02d (%d ms)",
+            fromFrIdx + frameUiOffset,
+            toFrIdx + frameUiOffset,
+            tagDurMillis)
         or "Tag"
 
     dlg:separator {
