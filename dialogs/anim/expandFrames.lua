@@ -1,26 +1,304 @@
 dofile("../../support/aseutilities.lua")
 
-local targets <const> = { "ALL", "AFTER", "BEFORE" }
-local fillOpts <const> = { "CROSS_FADE", "EMPTY", "SUSTAIN" }
+-- Can range be supported?
+local frameTargets <const> = {
+    "ACTIVE",
+    "ALL",
+    "TAG"
+}
+
+local fillOpts <const> = {
+    "CROSS_FADE",
+    "EMPTY",
+    "SUSTAIN"
+}
 
 local defaults <const> = {
-    target = "ALL",
+    frameTarget = "ALL", -- supply to AseUtilities.getFrames
     isLoop = false,
     fillOpt = "SUSTAIN",
-    inbetweens = 1
+    inbetweens = 1,
+    matchTime = false,
 }
+
+---@param activeSprite Sprite
+---@param leaf Layer
+---@param frIdxNewPrev integer
+---@param frIdxNewNext integer
+---@param frameUiOffset integer
+---@param inbetweens integer
+local function crossFade(
+    activeSprite,
+    leaf,
+    frIdxNewPrev,
+    frIdxNewNext,
+    frameUiOffset,
+    inbetweens)
+    local spriteSpec <const> = activeSprite.spec
+
+    local imgNext = nil
+    local opacNext = 0
+    local xtlNext = 0
+    local ytlNext = 0
+    local zIdxNext = 0
+    local idNext = -1
+
+    local celNext <const> = leaf:cel(frIdxNewNext)
+    if celNext then
+        local posNext <const> = celNext.position
+        imgNext = celNext.image
+        opacNext = celNext.opacity
+        xtlNext = posNext.x
+        ytlNext = posNext.y
+        zIdxNext = celNext.zIndex
+        idNext = imgNext.id
+    else
+        imgNext = Image(spriteSpec)
+    end
+
+    -- print(string.format(
+    --     "opacNext: %d, xtlNext: %d, ytlNext: %d, zIdxNext: %d, idNext: %d",
+    --     opacNext, xtlNext, ytlNext, zIdxNext, idNext))
+
+    local imgPrev = nil
+    local opacPrev = 0
+    local xtlPrev = 0
+    local ytlPrev = 0
+    local zIdxPrev = 0
+    local idPrev = -1
+
+    local celPrev <const> = leaf:cel(frIdxNewPrev)
+    if celPrev then
+        local posPrev <const> = celPrev.position
+        imgPrev = celPrev.image
+        opacPrev = celPrev.opacity
+        xtlPrev = posPrev.x
+        ytlPrev = posPrev.y
+        zIdxPrev = celPrev.zIndex
+        idPrev = imgPrev.id
+    else
+        imgPrev = Image(spriteSpec)
+    end
+
+    -- print(string.format(
+    --     "opacPrev: %d, xtlPrev: %d, ytlPrev: %d, zIdxPrev: %d, idPrev: %d",
+    --     opacPrev, xtlPrev, ytlPrev, zIdxPrev, idPrev))
+
+    -- Cache methods used in loops.
+    local floor <const> = math.floor
+    local max <const> = math.max
+    local min <const> = math.min
+    local strpack <const> = string.pack
+    local tconcat <const> = table.concat
+    local round <const> = Utilities.round
+    local clrnew <const> = Clr.new
+    local mixSrLab2 <const> = Clr.mixSrLab2
+
+    local leafName <const> = leaf.name
+    local trName <const> = string.format("Fade from %d to %d on %s",
+        frIdxNewPrev + frameUiOffset, frIdxNewNext, leafName)
+    local jToFac <const> = 1.0 / (inbetweens + 1.0)
+
+    -- Check to see if cels are linked, and thus don't need to be blended.
+    if idPrev == idNext then
+        local posPrev <const> = Point(xtlPrev, ytlPrev)
+        app.transaction(trName, function()
+            local j = 0
+            while j < inbetweens do
+                j = j + 1
+                local trgFrIdx <const> = frIdxNewPrev + j
+                local trgCel <const> = activeSprite:newCel(
+                    leaf, trgFrIdx, imgPrev, posPrev)
+                trgCel.opacity = opacPrev
+
+                -- zIndex is always interpolated, even for linked cels.
+                local t <const> = j * jToFac
+                trgCel.zIndex = round((1.0 - t) * zIdxPrev + t * zIdxNext)
+            end
+        end)
+    else
+        local wPrev <const> = imgPrev.width
+        local hPrev <const> = imgPrev.height
+        local xbrPrev <const> = xtlPrev + wPrev - 1
+        local ybrPrev <const> = ytlPrev + hPrev - 1
+
+        local wNext <const> = imgNext.width
+        local hNext <const> = imgNext.height
+        local xbrNext <const> = xtlNext + wNext - 1
+        local ybrNext <const> = ytlNext + hNext - 1
+
+        local xtlComp <const> = math.min(xtlNext, xtlPrev)
+        local ytlComp <const> = math.min(ytlNext, ytlPrev)
+        local xbrComp <const> = math.max(xbrNext, xbrPrev)
+        local ybrComp <const> = math.max(ybrNext, ybrPrev)
+
+        -- print(string.format(
+        --     "xtlComp: %d, ytlComp: %d, xbrComp: %d, ybrComp: %d",
+        --     xtlComp, ytlComp, xbrComp, ybrComp))
+
+        if xtlComp <= xbrComp and ytlComp <= ybrComp then
+            -- print("valid comp space")
+
+            local opacPrev01 <const> = opacPrev / 255.0
+            local opacNext01 <const> = opacNext / 255.0
+
+            local xtlDiffNext <const> = xtlComp - xtlNext
+            local ytlDiffNext <const> = ytlComp - ytlNext
+            local xtlDiffPrev <const> = xtlComp - xtlPrev
+            local ytlDiffPrev <const> = ytlComp - ytlPrev
+
+            local colorMode <const> = spriteSpec.colorMode
+            local alphaIndex <const> = spriteSpec.transparentColor
+            local colorSpace <const> = spriteSpec.colorSpace
+
+            local pointComp <const> = Point(xtlComp, ytlComp)
+            local wComp <const> = 1 + xbrComp - xtlComp
+            local hComp <const> = 1 + ybrComp - ytlComp
+            local flatLenComp <const> = wComp * hComp
+            local specComp <const> = AseUtilities.createSpec(
+                wComp, hComp,
+                colorMode, colorSpace, alphaIndex)
+
+            local bytesPrev <const> = AseUtilities.getPixels(imgPrev)
+            local bytesNext <const> = AseUtilities.getPixels(imgNext)
+            local packZero <const> = string.pack("B B B B", 0, 0, 0, 0)
+
+            app.transaction(trName, function()
+                local j = 0
+                while j < inbetweens do
+                    j = j + 1
+                    local trgFrIdx <const> = frIdxNewPrev + j
+                    local t <const> = j * jToFac
+                    local u <const> = 1.0 - t
+
+                    ---@type string[]
+                    local bytesComp <const> = {}
+                    local k = 0
+                    while k < flatLenComp do
+                        local xComp <const> = k % wComp
+                        local yComp <const> = k // wComp
+
+                        local rComp = 0
+                        local gComp = 0
+                        local bComp = 0
+                        local aComp = 0
+
+                        local rNext = 0
+                        local gNext = 0
+                        local bNext = 0
+                        local aNext = 0
+
+                        local xNext <const> = xComp + xtlDiffNext
+                        local yNext <const> = yComp + ytlDiffNext
+                        if yNext >= 0 and yNext < hNext
+                            and xNext >= 0 and xNext < wNext then
+                            local kn4 <const> = (yNext * wNext + xNext) * 4
+
+                            rNext = bytesNext[1 + kn4]
+                            gNext = bytesNext[2 + kn4]
+                            bNext = bytesNext[3 + kn4]
+                            aNext = bytesNext[4 + kn4]
+                        end
+
+                        local rPrev = 0
+                        local gPrev = 0
+                        local bPrev = 0
+                        local aPrev = 0
+
+                        local xPrev <const> = xComp + xtlDiffPrev
+                        local yPrev <const> = yComp + ytlDiffPrev
+                        if yPrev >= 0 and yPrev < hPrev
+                            and xPrev >= 0 and xPrev < wPrev then
+                            local kp4 <const> = (yPrev * wPrev + xPrev) * 4
+
+                            rPrev = bytesPrev[1 + kp4]
+                            gPrev = bytesPrev[2 + kp4]
+                            bPrev = bytesPrev[3 + kp4]
+                            aPrev = bytesPrev[4 + kp4]
+                        end
+
+                        local angt0 <const> = aNext > 0
+                        local apgt0 <const> = aPrev > 0
+                        local packedStr = packZero
+                        if angt0 or apgt0 then
+                            if not angt0 then
+                                rNext = rPrev
+                                gNext = gPrev
+                                bNext = bPrev
+                            end
+
+                            if not apgt0 then
+                                rPrev = rNext
+                                gPrev = gNext
+                                bPrev = bNext
+                            end
+
+                            local ap01 <const> = aPrev / 255.0
+                            local an01 <const> = aNext / 255.0
+                            local ac01 <const> = u * ap01 + t * an01
+                            aComp = floor(ac01 * 255.0 + 0.5)
+
+                            rComp = rNext
+                            gComp = gNext
+                            bComp = bNext
+
+                            if rPrev ~= rNext
+                                or gPrev ~= gNext
+                                or bPrev ~= bNext then
+                                local clrNext <const> = clrnew(
+                                    rNext / 255.0,
+                                    gNext / 255.0,
+                                    bNext / 255.0,
+                                    1.0)
+
+                                local clrPrev <const> = clrnew(
+                                    rPrev / 255.0,
+                                    gPrev / 255.0,
+                                    bPrev / 255.0,
+                                    1.0)
+
+                                local clrComp <const> = mixSrLab2(clrPrev, clrNext, t)
+                                rComp = floor(min(max(clrComp.r, 0.0), 1.0) * 255.0 + 0.5)
+                                gComp = floor(min(max(clrComp.g, 0.0), 1.0) * 255.0 + 0.5)
+                                bComp = floor(min(max(clrComp.b, 0.0), 1.0) * 255.0 + 0.5)
+                            end
+
+                            packedStr = strpack("B B B B",
+                                rComp, gComp, bComp, aComp)
+                        end
+
+                        k = k + 1
+                        bytesComp[k] = packedStr
+                    end
+
+                    local opacComp01 <const> = u * opacPrev01 + t * opacNext01
+                    local opacComp <const> = floor(opacComp01 * 255.0 + 0.5)
+                    local zIdxComp <const> = round(u * zIdxPrev + t * zIdxNext)
+
+                    local imgComp <const> = Image(specComp)
+                    imgComp.bytes = tconcat(bytesComp)
+
+                    local trgCel <const> = activeSprite:newCel(
+                        leaf, trgFrIdx, imgComp, pointComp)
+                    trgCel.opacity = opacComp
+                    trgCel.zIndex = zIdxComp
+                end -- End inbetweens loop.
+            end)
+        end         -- End valid bounds check.
+    end             -- End linked cels check.
+end
 
 local dlg <const> = Dialog { title = "Expand Frames" }
 
 dlg:combobox {
-    id = "target",
+    id = "frameTarget",
     label = "Target:",
-    option = defaults.target,
-    options = targets,
+    option = defaults.frameTarget,
+    options = frameTargets,
     onchange = function()
         local args <const> = dlg.data
-        local target <const> = args.target --[[@as string]]
-        local isAll <const> = target == "ALL"
+        local frameTarget <const> = args.frameTarget --[[@as string]]
+        local isAll <const> = frameTarget == "ALL"
         dlg:modify { id = "isLoop", visible = isAll }
     end
 }
@@ -31,7 +309,7 @@ dlg:check {
     id = "isLoop",
     label = "Loop:",
     selected = defaults.isLoop,
-    visible = defaults.target == "ALL"
+    visible = defaults.frameTarget == "ALL"
 }
 
 dlg:newrow { always = false }
@@ -54,9 +332,21 @@ dlg:combobox {
     onchange = function()
         local args <const> = dlg.data
         local fillOpt <const> = args.fillOpt
-        local notEmpty <const> = fillOpt ~= "EMPTY"
-        dlg:modify { id = "tilemapWarn", visible = notEmpty }
+        local isFade <const> = fillOpt == "CROSS_FADE"
+        local isSustain <const> = fillOpt == "SUSTAIN"
+        dlg:modify { id = "matchTime", visible = isSustain }
+        dlg:modify { id = "tilemapWarn", visible = isFade }
     end
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "matchTime",
+    label = "Match:",
+    text = "Time",
+    selected = defaults.matchTime,
+    visible = defaults.fillOpt == "SUSTAIN"
 }
 
 dlg:newrow { always = false }
@@ -65,7 +355,7 @@ dlg:label {
     id = "tilemapWarn",
     label = "Note:",
     text = "Tile maps excluded.",
-    visible = defaults.fillOpt ~= "EMPTY"
+    visible = defaults.fillOpt == "CROSS_FADE"
 }
 
 dlg:newrow { always = false }
@@ -84,429 +374,271 @@ dlg:button {
             return
         end
 
-        local docPrefs <const> = app.preferences.document(activeSprite)
-        local tlPrefs <const> = docPrefs.timeline
-        local frameUiOffset <const> = tlPrefs.first_frame - 1 --[[@as integer]]
-
         -- Unpack arguments.
         local args <const> = dlg.data
-        local target <const> = args.target
-            or defaults.target --[[@as string]]
+        local frameTarget <const> = args.frameTarget
+            or defaults.frameTarget --[[@as string]]
         local isLoop <const> = args.isLoop --[[@as boolean]]
         local inbetweens <const> = args.inbetweens
             or defaults.inbetweens --[[@as integer]]
         local fillOpt <const> = args.fillOpt
             or defaults.fillOpt --[[@as string]]
+        local matchTime <const> = args.matchTime --[[@as boolean]]
 
-        local isAll <const> = target == "ALL"
-        local isLoopVerif <const> = isLoop and isAll
-        local frObjsBefore <const> = activeSprite.frames
-        local lenFrObjsBefore <const> = #frObjsBefore
+        --Unpack sprite spec.
+        local spriteSpec <const> = activeSprite.spec
+        local colorMode <const> = spriteSpec.colorMode
 
-        local oldActFrObj <const> = app.frame --[[@as Frame]]
-        local oldActFrIdx = 1
-        if oldActFrObj then
-            oldActFrIdx = oldActFrObj.frameNumber
+        local isCrossFade <const> = fillOpt == "CROSS_FADE"
+
+        if isCrossFade and colorMode ~= ColorMode.RGB then
+            app.alert {
+                title = "Error",
+                text = "Only RGB color mode is supported."
+            }
+            return
         end
 
-        ---@type integer[]
-        local frIdcs = {}
-        if target == "BEFORE" then
-            if not oldActFrObj then
-                app.alert {
-                    title = "Error",
-                    text = "There is no active frame."
-                }
-                return
-            end
-
-            if oldActFrObj.frameNumber <= 1 then
-                app.alert {
-                    title = "Error",
-                    text = "There is no prior frame."
-                }
-                return
-            end
-
-            frIdcs[1] = oldActFrIdx - 1
-            frIdcs[2] = oldActFrIdx
-        elseif target == "AFTER" then
-            if not oldActFrObj then
-                app.alert {
-                    title = "Error",
-                    text = "There is no active frame."
-                }
-                return
-            end
-
-            if oldActFrObj.frameNumber >= lenFrObjsBefore then
-                app.alert {
-                    title = "Error",
-                    text = "There is no next frame."
-                }
-                return
-            end
-
-            frIdcs[1] = oldActFrIdx
-            frIdcs[2] = oldActFrIdx + 1
-        else
-            frIdcs = AseUtilities.frameObjsToIdcs(frObjsBefore)
+        local frIdcs <const> = Utilities.flatArr2(AseUtilities.getFrames(
+            activeSprite, frameTarget))
+        if #frIdcs <= 0 then
+            app.alert {
+                title = "Error",
+                text = "No frames were selected."
+            }
+            return
         end
 
-        ---@type table<integer, integer>
-        local frIdxDict <const> = {}
-        local jToFac <const> = 1.0 / (inbetweens + 1.0)
-        local lenChosenFrames = #frIdcs
+        -- Cross fade requires at least two frames to interpolate between,
+        -- so the active target needs to append the frame to the right.
+        if isCrossFade then
+            local lenFrObjs <const> = #activeSprite.frames
+            if lenFrObjs <= 1 then
+                app.alert {
+                    title = "Error",
+                    text = "Sprite must have more than 1 frame."
+                }
+                return
+            end
 
-        app.transaction("Create New Frames", function()
-            local i = lenChosenFrames + 1
-            while i > 2 do
-                i = i - 1
-
-                local frIdxNext <const> = frIdcs[i]
-                local frObjNext <const> = frObjsBefore[frIdxNext]
-
-                local frIdxPrev <const> = frIdcs[i - 1]
-                local frObjPrev <const> = frObjsBefore[frIdxPrev]
-
-                frIdxDict[frIdxPrev] = frIdxPrev
-                frIdxDict[frIdxNext] = frIdxNext + inbetweens * (i - 1)
-
-                local durNext <const> = frObjNext.duration
-                local durPrev <const> = frObjPrev.duration
-
-                local j = inbetweens + 1
-                while j > 1 do
-                    j = j - 1
-                    local jFac <const> = j * jToFac
-                    local dur <const> = (1.0 - jFac) * durPrev + jFac * durNext
-                    -- print(string.format("%.3f: %.3f", jFac, dur))
-                    local btwn <const> = activeSprite:newEmptyFrame(frIdxNext)
-                    btwn.duration = dur
+            if frameTarget == "ACTIVE" then
+                if frIdcs[1] == lenFrObjs then
+                    frIdcs[2] = frIdcs[1]
+                    frIdcs[1] = frIdcs[2] - 1
+                else
+                    frIdcs[2] = frIdcs[1] + 1
                 end
             end
+        end
 
-            if isLoopVerif then
-                local durPrev <const> = activeSprite.frames[#activeSprite.frames].duration
-                local durNext <const> = activeSprite.frames[1].duration
+        -- Cache global methods to local.
+        local floor <const> = math.floor
+        local max <const> = math.max
+        local strfmt <const> = string.format
+        local transact <const> = app.transaction
 
+        local lenFrIdcs <const> = #frIdcs
+        local oldActiveFrObj <const> = site.frame or activeSprite.frames[1]
+        local oldActiveFrIdx <const> = oldActiveFrObj.frameNumber
+        local newActiveFrIdx <const> = oldActiveFrIdx > frIdcs[1]
+            and oldActiveFrIdx + (oldActiveFrIdx - frIdcs[1]) * inbetweens
+            or oldActiveFrIdx
+
+        -- print(string.format(
+        --     "oldActiveFrIdx: %d, newActiveFrIdx: %d",
+        --     oldActiveFrIdx, newActiveFrIdx))
+
+        local isAll <const> = frameTarget == "ALL"
+        local isLoopVerif <const> = isLoop and isAll
+
+        app.transaction("Create New Frames", function()
+            if isLoopVerif or (not isCrossFade) then
+                -- For sustain, empty and cross fade with a loop,
+                -- add extra frames to the end of the sprite.
+                local idxInsert <const> = frIdcs[lenFrIdcs] + 1
                 local j = 0
                 while j < inbetweens do
                     j = j + 1
-                    local jFac <const> = j * jToFac
-                    local dur <const> = (1.0 - jFac) * durPrev + jFac * durNext
-                    local btwn <const> = activeSprite:newEmptyFrame()
-                    btwn.duration = dur
+                    activeSprite:newEmptyFrame(idxInsert)
                 end
+            end
 
-                lenChosenFrames = lenChosenFrames + 1
-                frIdcs[#frIdcs + 1] = 1
+            local i = lenFrIdcs + 1
+            while i > 2 do
+                i = i - 1
+                local frIdx <const> = frIdcs[i]
+                local j = inbetweens + 1
+                while j > 1 do
+                    j = j - 1
+                    activeSprite:newEmptyFrame(frIdx)
+                end
             end
         end)
 
-        if fillOpt ~= "EMPTY" then
-            local useCross <const> = fillOpt == "CROSS_FADE"
-            local useSustain <const> = fillOpt == "SUSTAIN"
-            local tlHidden <const> = not app.preferences.general.visible_timeline
-            if tlHidden then
-                app.command.Timeline { open = true }
-            end
+        local frObjsAfter <const> = activeSprite.frames
+        if isCrossFade then
+            local jToFac <const> = 1.0 / (inbetweens + 1)
 
-            local spriteSpec <const> = activeSprite.spec
-            local colorMode <const> = spriteSpec.colorMode
-            if useCross and colorMode ~= ColorMode.RGB then
-                app.alert {
-                    title = "Error",
-                    text = "Only RGB color mode is supported."
-                }
-                return
-            end
+            app.transaction("Cross Fade Frame Durations", function()
+                local i = 0
+                while i < lenFrIdcs - 1 do
+                    local frIdxOldPrev <const> = frIdcs[1 + i]
+                    local frIdxNewPrev <const> = frIdxOldPrev + i * inbetweens
+                    local durPrev <const> = frObjsAfter[frIdxNewPrev].duration
 
-            local floor <const> = math.floor
-            local max <const> = math.max
-            local min <const> = math.min
-            local tconcat <const> = table.concat
-            local strpack <const> = string.pack
-            local strfmt <const> = string.format
-            local round <const> = Utilities.round
-            local createSpec <const> = AseUtilities.createSpec
-            local getPixels <const> = AseUtilities.getPixels
-            local clrnew <const> = Clr.new
-            local mixSrLab2 <const> = Clr.mixSrLab2
-            local transact <const> = app.transaction
+                    local frIdxOldNext <const> = frIdcs[2 + i]
+                    local frIdxNewNext <const> = frIdxOldNext + (1 + i) * inbetweens
+                    local durNext <const> = frObjsAfter[frIdxNewNext].duration
 
-            local packZero <const> = strpack("B B B B", 0, 0, 0, 0)
-            local colorSpace <const> = spriteSpec.colorSpace
-            local alphaIndex <const> = spriteSpec.transparentColor
+                    -- print(string.format(
+                    --     "frIdxPrev: %d, durPrev: %.3f, frIdxNext: %d, durNext: %.3f",
+                    --     frIdxNewPrev, durPrev, frIdxNewNext, durNext))
 
-            local leaves = AseUtilities.getLayerHierarchy(activeSprite,
-                true, true, false, true)
-            local lenLeaves = #leaves
+                    local j = 0
+                    while j < inbetweens do
+                        j = j + 1
+                        local jFac <const> = j * jToFac
+                        local trgDur <const> = max((1.0 - jFac) * durPrev
+                            + jFac * durNext, 0.001)
+                        local trgFrObj <const> = frObjsAfter[frIdxNewPrev + j]
+                        trgFrObj.duration = trgDur
+
+                        -- print(string.format(
+                        --     "frIdx: %d, jFac: %.3f, trgDur: %.3f",
+                        --     frIdxNewPrev + j, jFac, trgDur))
+                    end
+
+                    i = i + 1
+                end
+
+                if isLoop then
+                    local frIdxOldPrev <const> = frIdcs[lenFrIdcs]
+                    local frIdxNewPrev <const> = frIdxOldPrev + (lenFrIdcs - 1) * inbetweens
+                    local durPrev <const> = frObjsAfter[frIdxNewPrev].duration
+                    local durNext <const> = frObjsAfter[1].duration
+
+                    local j = 0
+                    while j < inbetweens do
+                        j = j + 1
+                        local jFac <const> = j * jToFac
+                        local trgDur <const> = max((1.0 - jFac) * durPrev
+                            + jFac * durNext, 0.001)
+                        local frObj <const> = frObjsAfter[frIdxNewPrev + j]
+                        frObj.duration = trgDur
+                    end
+                end
+            end)
+        else
+            app.transaction("Sustain Frame Durations", function()
+                local durScalar <const> = matchTime
+                    and 1.0 / (inbetweens + 1.0)
+                    or 1.0
+
+                local i = 0
+                while i < lenFrIdcs do
+                    local frIdxOld <const> = frIdcs[1 + i]
+                    local frIdxNew <const> = frIdxOld + i * inbetweens
+                    local srcDur <const> = frObjsAfter[frIdxNew].duration
+
+                    -- This needs to be rounded due to precision differences
+                    -- between seconds (internal) and milliseconds (UI).
+                    local trgDur <const> = srcDur * durScalar
+                    local trgDurMs <const> = floor(trgDur * 1000.0 + 0.5)
+                    local trgDurRd <const> = max(trgDurMs * 0.001, 0.001)
+
+                    local j = 0
+                    while j < inbetweens + 1 do
+                        -- This includes the original frame because
+                        -- sustain may scale the original's duration.
+                        local frObj <const> = frObjsAfter[frIdxNew + j]
+                        frObj.duration = trgDurRd
+                        j = j + 1
+                    end
+
+                    i = i + 1
+                end
+            end)
+        end
+
+        if fillOpt == "EMPTY" then
+            app.frame = frObjsAfter[newActiveFrIdx]
+            app.refresh()
+            return
+        end
+
+        -- Exclude tile map layers from cross fading.
+        local leaves <const> = AseUtilities.getLayerHierarchy(activeSprite,
+            true, true, not isCrossFade, true)
+        local lenLeaves <const> = #leaves
+
+        local docPrefs <const> = app.preferences.document(activeSprite)
+        local tlPrefs <const> = docPrefs.timeline
+        local frameUiOffset <const> = tlPrefs.first_frame - 1 --[[@as integer]]
+
+        if isCrossFade then
             local h = 0
             while h < lenLeaves do
                 h = h + 1
                 local leaf <const> = leaves[h]
 
-                local i = lenChosenFrames + 1
-                while i > 2 do
-                    i = i - 1
+                local i = 0
+                while i < lenFrIdcs - 1 do
+                    local frIdxOldPrev <const> = frIdcs[1 + i]
+                    local frIdxNewPrev <const> = frIdxOldPrev + i * inbetweens
 
-                    local frIdxNextBefore <const> = frIdcs[i]
-                    local frIdxNextAfter <const> = frIdxDict[frIdxNextBefore]
-                    local celNext <const> = leaf:cel(frIdxNextAfter)
+                    local frIdxOldNext <const> = frIdcs[2 + i]
+                    local frIdxNewNext <const> = frIdxOldNext + (1 + i) * inbetweens
 
-                    -- print(strfmt("frIdxNext: %d, %d", frIdxNextBefore, frIdxNextAfter))
+                    crossFade(activeSprite, leaf, frIdxNewPrev, frIdxNewNext,
+                        frameUiOffset, inbetweens)
 
-                    local frIdxPrevBefore <const> = frIdcs[i - 1]
-                    local frIdxPrevAfter <const> = frIdxDict[frIdxPrevBefore]
-                    local celPrev <const> = leaf:cel(frIdxPrevAfter)
+                    i = i + 1
+                end
 
-                    -- print(strfmt("frIdxPrev: %d, %d", frIdxPrevBefore, frIdxPrevAfter))
+                if isLoop then
+                    local frIdxOldPrev <const> = frIdcs[lenFrIdcs]
+                    local frIdxNewPrev <const> = frIdxOldPrev + (lenFrIdcs - 1) * inbetweens
+                    crossFade(activeSprite, leaf, frIdxNewPrev, 1,
+                        frameUiOffset, inbetweens)
+                end
+            end
+        else
+            -- Default to sustain.
+            local h = 0
+            while h < lenLeaves do
+                h = h + 1
+                local leaf <const> = leaves[h]
+                local leafName <const> = leaf.name
 
-                    if celNext and celPrev then
-                        local imgNext <const> = celNext.image
-                        local idNext <const> = imgNext.id
+                local i = 0
+                while i < lenFrIdcs do
+                    i = i + 1
+                    local frIdxOld <const> = frIdcs[i]
+                    local frIdxNew <const> = frIdxOld + (i - 1) * inbetweens
+                    local cel <const> = leaf:cel(frIdxNew)
+                    if cel then
+                        local srcImg <const> = cel.image
+                        local srcOpacity <const> = cel.opacity
+                        local srcPos <const> = cel.position
+                        local srcZIndex <const> = cel.zIndex
 
-                        local imgPrev <const> = celPrev.image
-                        local idPrev <const> = imgPrev.id
-
-                        -- print(strfmt("idNext: %d, idPrev: %d", idNext, idPrev))
-
-                        if useSustain or idNext == idPrev then
-                            local opacPrev <const> = celPrev.opacity
-                            local posPrev <const> = celPrev.position
-                            local zIdxPrev <const> = celPrev.zIndex
-
-                            transact(strfmt("Sustain %d to %d",
-                                frIdxPrevAfter + frameUiOffset,
-                                frIdxNextAfter + frameUiOffset), function()
-                                local j = frIdxPrevAfter
-                                while j < frIdxNextAfter - 1 do
-                                    j = j + 1
-                                    local celSust <const> = activeSprite:newCel(
-                                        leaf, j, imgPrev, posPrev)
-                                    celSust.opacity = opacPrev
-                                    celSust.zIndex = zIdxPrev
-                                end
-                            end)
-                        else
-                            local wNext <const> = imgNext.width
-                            local hNext <const> = imgNext.height
-                            local bytesNext <const> = getPixels(imgNext)
-
-                            local posNext <const> = celNext.position
-                            local xtlNext <const> = posNext.x
-                            local ytlNext <const> = posNext.y
-                            local xbrNext <const> = xtlNext + wNext - 1
-                            local ybrNext <const> = ytlNext + hNext - 1
-
-                            local wPrev <const> = imgPrev.width
-                            local hPrev <const> = imgPrev.height
-                            local bytesPrev <const> = getPixels(imgPrev)
-
-                            local posPrev <const> = celPrev.position
-                            local xtlPrev <const> = posPrev.x
-                            local ytlPrev <const> = posPrev.y
-                            local xbrPrev <const> = xtlPrev + wPrev - 1
-                            local ybrPrev <const> = ytlPrev + hPrev - 1
-
-                            local xtlComp <const> = min(xtlNext, xtlPrev)
-                            local ytlComp <const> = min(ytlNext, ytlPrev)
-                            local xbrComp <const> = max(xbrNext, xbrPrev)
-                            local ybrComp <const> = max(ybrNext, ybrPrev)
-
-                            if xtlComp < xbrComp and ytlComp < ybrComp then
-                                local xtlDiffNext <const> = xtlComp - xtlNext
-                                local ytlDiffNext <const> = ytlComp - ytlNext
-                                local xtlDiffPrev <const> = xtlComp - xtlPrev
-                                local ytlDiffPrev <const> = ytlComp - ytlPrev
-
-                                local pointComp <const> = Point(xtlComp, ytlComp)
-                                local wComp <const> = 1 + xbrComp - xtlComp
-                                local hComp <const> = 1 + ybrComp - ytlComp
-                                local flatLenComp <const> = wComp * hComp
-                                local specComp <const> = createSpec(
-                                    wComp, hComp,
-                                    colorMode, colorSpace, alphaIndex)
-
-                                local opacNext01 <const> = celNext.opacity / 255.0
-                                local opacPrev01 <const> = celPrev.opacity / 255.0
-
-                                local zIdxNext <const> = celNext.zIndex
-                                local zIdxPrev <const> = celPrev.zIndex
-
-                                transact(strfmt("Cross Fade %d to %d",
-                                    frIdxPrevAfter, frIdxNextAfter), function()
-                                    local j = inbetweens + 1
-                                    while j > 1 do
-                                        j = j - 1
-
-                                        local t <const> = j * jToFac
-                                        -- t = t * t * (3.0 - (t + t))
-                                        local u <const> = 1.0 - t
-
-                                        ---@type string[]
-                                        local bytesComp <const> = {}
-                                        local k = 0
-                                        while k < flatLenComp do
-                                            local xComp <const> = k % wComp
-                                            local yComp <const> = k // wComp
-
-                                            local rComp = 0
-                                            local gComp = 0
-                                            local bComp = 0
-                                            local aComp = 0
-
-                                            local rNext = 0
-                                            local gNext = 0
-                                            local bNext = 0
-                                            local aNext = 0
-
-                                            local xNext <const> = xComp + xtlDiffNext
-                                            local yNext <const> = yComp + ytlDiffNext
-                                            if yNext >= 0 and yNext < hNext
-                                                and xNext >= 0 and xNext < wNext then
-                                                local kn4 <const> = (yNext * wNext + xNext) * 4
-
-                                                rNext = bytesNext[1 + kn4]
-                                                gNext = bytesNext[2 + kn4]
-                                                bNext = bytesNext[3 + kn4]
-                                                aNext = bytesNext[4 + kn4]
-                                            end
-
-                                            local rPrev = 0
-                                            local gPrev = 0
-                                            local bPrev = 0
-                                            local aPrev = 0
-
-                                            local xPrev <const> = xComp + xtlDiffPrev
-                                            local yPrev <const> = yComp + ytlDiffPrev
-                                            if yPrev >= 0 and yPrev < hPrev
-                                                and xPrev >= 0 and xPrev < wPrev then
-                                                local kp4 <const> = (yPrev * wPrev + xPrev) * 4
-
-                                                rPrev = bytesPrev[1 + kp4]
-                                                gPrev = bytesPrev[2 + kp4]
-                                                bPrev = bytesPrev[3 + kp4]
-                                                aPrev = bytesPrev[4 + kp4]
-                                            end
-
-                                            local opacNext <const> = aNext > 0
-                                            local opacPrev <const> = aPrev > 0
-                                            local packedStr = packZero
-                                            if opacNext or opacPrev then
-                                                if not opacNext then
-                                                    rNext = rPrev
-                                                    gNext = gPrev
-                                                    bNext = bPrev
-                                                end
-
-                                                if not opacPrev then
-                                                    rPrev = rNext
-                                                    gPrev = gNext
-                                                    bPrev = bNext
-                                                end
-
-                                                local ap01 <const> = aPrev / 255.0
-                                                local an01 <const> = aNext / 255.0
-                                                local ac01 <const> = u * ap01 + t * an01
-                                                aComp = floor(ac01 * 255.0 + 0.5)
-
-                                                rComp = rNext
-                                                gComp = gNext
-                                                bComp = bNext
-
-                                                if rPrev ~= rNext
-                                                    or gPrev ~= gNext
-                                                    or bPrev ~= bNext then
-                                                    local clrNext <const> = clrnew(
-                                                        rNext / 255.0,
-                                                        gNext / 255.0,
-                                                        bNext / 255.0,
-                                                        1.0)
-
-                                                    local clrPrev <const> = clrnew(
-                                                        rPrev / 255.0,
-                                                        gPrev / 255.0,
-                                                        bPrev / 255.0,
-                                                        1.0)
-
-                                                    local clrComp <const> = mixSrLab2(clrPrev, clrNext, t)
-                                                    rComp = floor(min(max(clrComp.r, 0.0), 1.0) * 255.0 + 0.5)
-                                                    gComp = floor(min(max(clrComp.g, 0.0), 1.0) * 255.0 + 0.5)
-                                                    bComp = floor(min(max(clrComp.b, 0.0), 1.0) * 255.0 + 0.5)
-                                                end
-
-                                                packedStr = strpack("B B B B",
-                                                    rComp, gComp, bComp, aComp)
-                                            end
-
-                                            k = k + 1
-                                            bytesComp[k] = packedStr
-                                        end
-
-                                        local imageComp <const> = Image(specComp)
-                                        imageComp.bytes = tconcat(bytesComp)
-
-                                        local opacComp01 <const> = u * opacPrev01 + t * opacNext01
-                                        local opacComp <const> = floor(opacComp01 * 255.0 + 0.5)
-                                        local zIdxComp <const> = round(u * zIdxPrev + t * zIdxNext)
-
-                                        local frIdxComp <const> = frIdxPrevAfter + j
-                                        local celComp <const> = activeSprite:newCel(
-                                            leaf, frIdxComp, imageComp, pointComp)
-                                        celComp.opacity = opacComp
-                                        celComp.zIndex = zIdxComp
-                                    end -- End inbetweens loop.
-                                end)    -- End cross fades transaction.
-                            end         -- Check valid composite bounds.
-                        end             -- End equal image IDs check.
-                    end                 -- End previous and next cel exist.
-                end                     -- End chosen frames loop.
-
-                if isAll and useSustain and isLoopVerif then
-                    -- In loop case, the first frame will be appended to the
-                    -- chosen frames, so the last sprite frame is one less.
-                    local lastIdx <const> = lenChosenFrames - 1
-                    local frIdxPrevBefore <const> = frIdcs[lastIdx]
-                    local frIdxPrevAfter <const> = frIdxDict[frIdxPrevBefore]
-                    local frIdxNextAfter <const> = #activeSprite.frames
-
-                    local celPrev <const> = leaf:cel(frIdxPrevAfter)
-                    if celPrev then
-                        local imgPrev <const> = celPrev.image
-                        local opacPrev <const> = celPrev.opacity
-                        local posPrev <const> = celPrev.position
-                        local zIdxPrev <const> = celPrev.zIndex
-
-                        transact(strfmt("Sustain %d to %d",
-                            frIdxPrevAfter + frameUiOffset,
-                            frIdxNextAfter + frameUiOffset), function()
-                            local j = frIdxPrevAfter
-                            while j < frIdxNextAfter do
+                        transact(strfmt("Sustain %d on %s", frIdxOld + frameUiOffset, leafName), function()
+                            local j = 0
+                            while j < inbetweens do
                                 j = j + 1
-                                local celSust <const> = activeSprite:newCel(
-                                    leaf, j, imgPrev, posPrev)
-                                celSust.opacity = opacPrev
-                                celSust.zIndex = zIdxPrev
+                                local trgFrIdx <const> = frIdxNew + j
+                                local trgCel <const> = activeSprite:newCel(
+                                    leaf, trgFrIdx, srcImg, srcPos)
+                                trgCel.opacity = srcOpacity
+                                trgCel.zIndex = srcZIndex
                             end
                         end)
-                    end
-                end -- End sustain link check.
-            end     -- End leaf layers loop.
+                    end -- End cel exists check.
+                end     -- End old frames loop.
+            end         -- End leaves loop.
+        end             -- End fill type check.
 
-            app.range:clear()
-            if tlHidden then
-                app.command.Timeline { close = true }
-            end
-        end
-
-        local frObjsAfter <const> = activeSprite.frames
-        if oldActFrObj then
-            app.frame = frObjsAfter[frIdxDict[oldActFrIdx]]
-        else
-            app.frame = frObjsAfter[1]
-        end
+        app.frame = frObjsAfter[newActiveFrIdx]
         app.refresh()
     end
 }
