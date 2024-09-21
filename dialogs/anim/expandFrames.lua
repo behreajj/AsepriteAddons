@@ -1,25 +1,27 @@
 dofile("../../support/aseutilities.lua")
 
--- Can range be supported?
-local frameTargets <const> = {
-    "ACTIVE",
-    "ALL",
-    "TAG"
-}
-
-local fillOpts <const> = {
-    "CROSS_FADE",
-    "EMPTY",
-    "SUSTAIN"
-}
+local frameTargets <const> = { "ACTIVE", "ALL", "TAG" }
+local fillOpts <const> = { "CROSS_FADE", "EMPTY", "SUSTAIN" }
 
 local defaults <const> = {
-    frameTarget = "ALL", -- supply to AseUtilities.getFrames
+    frameTarget = "ALL",
     isLoop = false,
     fillOpt = "SUSTAIN",
     inbetweens = 1,
     matchTime = false,
 }
+
+---Durations need to be rounded after scaling due to precision differences
+---between seconds (internal) and milliseconds (UI).
+---@param duration number
+---@param scalar number
+---@return number
+---@nodiscard
+local function mulRoundDur(duration, scalar)
+    local durNew <const> = duration * scalar
+    local durNewMs <const> = math.floor(durNew * 1000.0 + 0.5)
+    return math.min(math.max(durNewMs * 0.001, 0.001), 65.535)
+end
 
 ---@param activeSprite Sprite
 ---@param leaf Layer
@@ -333,8 +335,6 @@ dlg:combobox {
         local args <const> = dlg.data
         local fillOpt <const> = args.fillOpt
         local isFade <const> = fillOpt == "CROSS_FADE"
-        local isSustain <const> = fillOpt == "SUSTAIN"
-        dlg:modify { id = "matchTime", visible = isSustain }
         dlg:modify { id = "tilemapWarn", visible = isFade }
     end
 }
@@ -345,8 +345,7 @@ dlg:check {
     id = "matchTime",
     label = "Match:",
     text = "Time",
-    selected = defaults.matchTime,
-    visible = defaults.fillOpt == "SUSTAIN"
+    selected = defaults.matchTime
 }
 
 dlg:newrow { always = false }
@@ -434,6 +433,7 @@ dlg:button {
         -- Cache global methods to local.
         local floor <const> = math.floor
         local max <const> = math.max
+        local min <const> = math.min
         local strfmt <const> = string.format
         local transact <const> = app.transaction
 
@@ -498,8 +498,8 @@ dlg:button {
                     while j < inbetweens do
                         j = j + 1
                         local jFac <const> = j * jToFac
-                        local trgDur <const> = max((1.0 - jFac) * durPrev
-                            + jFac * durNext, 0.001)
+                        local trgDur <const> = min(max((1.0 - jFac) * durPrev
+                            + jFac * durNext, 0.001), 65.535)
                         local trgFrObj <const> = frObjsAfter[frIdxNewPrev + j]
                         trgFrObj.duration = trgDur
 
@@ -509,7 +509,7 @@ dlg:button {
                     end
 
                     i = i + 1
-                end
+                end -- End frame loop.
 
                 if isLoop then
                     local frIdxOldPrev <const> = frIdcs[lenFrIdcs]
@@ -521,13 +521,92 @@ dlg:button {
                     while j < inbetweens do
                         j = j + 1
                         local jFac <const> = j * jToFac
-                        local trgDur <const> = max((1.0 - jFac) * durPrev
-                            + jFac * durNext, 0.001)
+                        local trgDur <const> = min(max((1.0 - jFac) * durPrev
+                            + jFac * durNext, 0.001), 65.535)
                         local frObj <const> = frObjsAfter[frIdxNewPrev + j]
                         frObj.duration = trgDur
+                    end -- End inbetweens loop.
+                end     -- End is loop check.
+            end)
+
+            if matchTime then
+                local totDurOld = 0.0
+                local totDurNew = 0.0
+
+                local i = 0
+                while i < lenFrIdcs - 1 do
+                    local frIdxOld <const> = frIdcs[1 + i]
+                    local frIdxNew <const> = frIdxOld + i * inbetweens
+                    local frObjOld <const> = frObjsAfter[frIdxNew]
+                    local durOld <const> = frObjOld.duration
+
+                    totDurOld = totDurOld + durOld
+                    totDurNew = totDurNew + durOld
+
+                    local j = 0
+                    while j < inbetweens do
+                        j = j + 1
+                        local frObjNew <const> = frObjsAfter[frIdxNew + j]
+                        local durNew <const> = frObjNew.duration
+                        totDurNew = totDurNew + durNew
+                    end
+
+                    i = i + 1
+                end
+
+                if isLoop then
+                    local frIdxOld <const> = frIdcs[lenFrIdcs]
+                    local frIdxNew <const> = frIdxOld + (lenFrIdcs - 1) * inbetweens
+                    local frObjOld <const> = frObjsAfter[frIdxNew]
+                    local durOld <const> = frObjOld.duration
+
+                    totDurOld = totDurOld + durOld
+                    totDurNew = totDurNew + durOld
+
+                    local j = 0
+                    while j < inbetweens do
+                        j = j + 1
+                        local frObjNew <const> = frObjsAfter[frIdxNew + j]
+                        local durNew <const> = frObjNew.duration
+                        totDurNew = totDurNew + durNew
                     end
                 end
-            end)
+
+                local ratio <const> = totDurNew ~= 0.0
+                    and totDurOld / totDurNew
+                    or 0.0
+
+                app.transaction("Match Time", function()
+                    local k = 0
+                    while k < lenFrIdcs - 1 do
+                        local frIdxOld <const> = frIdcs[1 + k]
+                        local frIdxNew <const> = frIdxOld + k * inbetweens
+                        local frObjOld <const> = frObjsAfter[frIdxNew]
+                        frObjOld.duration = mulRoundDur(frObjOld.duration, ratio)
+
+                        local j = 0
+                        while j < inbetweens do
+                            j = j + 1
+                            local frObjNew <const> = frObjsAfter[frIdxNew + j]
+                            frObjNew.duration = mulRoundDur(frObjNew.duration, ratio)
+                        end
+
+                        k = k + 1
+                    end
+
+                    if isLoop then
+                        local frIdxOld <const> = frIdcs[lenFrIdcs]
+                        local frIdxNew <const> = frIdxOld + (lenFrIdcs - 1) * inbetweens
+
+                        local j = 0
+                        while j < inbetweens do
+                            j = j + 1
+                            local frObjNew <const> = frObjsAfter[frIdxNew + j]
+                            frObjNew.duration = mulRoundDur(frObjNew.duration, ratio)
+                        end -- End of inbetweens loop.
+                    end     -- End of loop check.
+                end)        -- End of match time transaction.
+            end             -- End of match time check.
         else
             app.transaction("Sustain Frame Durations", function()
                 local durScalar <const> = matchTime
@@ -539,19 +618,14 @@ dlg:button {
                     local frIdxOld <const> = frIdcs[1 + i]
                     local frIdxNew <const> = frIdxOld + i * inbetweens
                     local srcDur <const> = frObjsAfter[frIdxNew].duration
-
-                    -- This needs to be rounded due to precision differences
-                    -- between seconds (internal) and milliseconds (UI).
-                    local trgDur <const> = srcDur * durScalar
-                    local trgDurMs <const> = floor(trgDur * 1000.0 + 0.5)
-                    local trgDurRd <const> = max(trgDurMs * 0.001, 0.001)
+                    local trgDur <const> = mulRoundDur(srcDur, durScalar)
 
                     local j = 0
                     while j < inbetweens + 1 do
                         -- This includes the original frame because
                         -- sustain may scale the original's duration.
                         local frObj <const> = frObjsAfter[frIdxNew + j]
-                        frObj.duration = trgDurRd
+                        frObj.duration = trgDur
                         j = j + 1
                     end
 
