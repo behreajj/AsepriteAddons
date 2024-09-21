@@ -190,17 +190,9 @@ local function crossFade(
                     while k < flatLenComp do
                         local xComp <const> = k % wComp
                         local yComp <const> = k // wComp
+                        local rComp, gComp, bComp, aComp = 0, 0, 0, 0
 
-                        local rComp = 0
-                        local gComp = 0
-                        local bComp = 0
-                        local aComp = 0
-
-                        local rNext = 0
-                        local gNext = 0
-                        local bNext = 0
-                        local aNext = 0
-
+                        local rNext, gNext, bNext, aNext = 0, 0, 0, 0
                         local xNext <const> = xComp + xtlDiffNext
                         local yNext <const> = yComp + ytlDiffNext
                         if yNext >= 0 and yNext < hNext
@@ -213,11 +205,7 @@ local function crossFade(
                             aNext = bytesNext[4 + kn4]
                         end
 
-                        local rPrev = 0
-                        local gPrev = 0
-                        local bPrev = 0
-                        local aPrev = 0
-
+                        local rPrev, gPrev, bPrev, aPrev = 0, 0, 0, 0
                         local xPrev <const> = xComp + xtlDiffPrev
                         local yPrev <const> = yComp + ytlDiffPrev
                         if yPrev >= 0 and yPrev < hPrev
@@ -318,15 +306,6 @@ dlg:combobox {
 
 dlg:newrow { always = false }
 
-dlg:check {
-    id = "isLoop",
-    label = "Loop:",
-    selected = defaults.isLoop,
-    visible = defaults.frameTarget == "ALL"
-}
-
-dlg:newrow { always = false }
-
 dlg:slider {
     id = "inbetweens",
     label = "Expand:",
@@ -345,7 +324,10 @@ dlg:combobox {
     onchange = function()
         local args <const> = dlg.data
         local fillOpt <const> = args.fillOpt
+        local frameTarget <const> = args.frameTarget
         local isFade <const> = fillOpt == "CROSS_FADE"
+        local isAll <const> = frameTarget == "ALL"
+        dlg:modify { id = "isLoop", visible = isFade and isAll }
         dlg:modify { id = "tilemapWarn", visible = isFade }
     end
 }
@@ -357,6 +339,16 @@ dlg:check {
     label = "Match:",
     text = "Time",
     selected = defaults.matchTime
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "isLoop",
+    label = "Loop:",
+    selected = defaults.isLoop,
+    visible = defaults.frameTarget == "ALL"
+        and defaults.fillOpt == "CROSS_FADE"
 }
 
 dlg:newrow { always = false }
