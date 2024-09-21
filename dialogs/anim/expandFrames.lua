@@ -40,6 +40,8 @@ local function crossFade(
     local celPrev <const> = leaf:cel(frIdxNewPrev)
     if (not celNext) and (not celPrev) then return end
 
+    local spriteSpec <const> = activeSprite.spec
+
     local imgNext = nil
     local opacNext = 255
     local xtlNext = 0
@@ -55,6 +57,8 @@ local function crossFade(
         ytlNext = posNext.y
         zIdxNext = celNext.zIndex
         imgIdNext = imgNext.id
+    else
+        imgNext = Image(spriteSpec)
     end
 
     -- print(string.format(
@@ -76,26 +80,16 @@ local function crossFade(
         ytlPrev = posPrev.y
         zIdxPrev = celPrev.zIndex
         imgIdPrev = imgPrev.id
+    else
+        imgPrev = Image(spriteSpec)
     end
 
     -- print(string.format(
     --     "opacPrev: %d, xtlPrev: %d, ytlPrev: %d, zIdxPrev: %d",
     --     opacPrev, xtlPrev, ytlPrev, zIdxPrev))
 
-    local spriteSpec <const> = activeSprite.spec
-    if not imgNext then
-        imgNext = imgPrev and Image(imgPrev.spec) or Image(spriteSpec)
-        xtlNext = xtlPrev
-        ytlNext = ytlPrev
-        opacNext = opacPrev
-    end
-
-    if not imgPrev then
-        imgPrev = imgNext and Image(imgNext.spec) or Image(spriteSpec)
-        xtlPrev = xtlNext
-        ytlPrev = ytlNext
-        opacPrev = opacNext
-    end
+    if imgIdNext == -1 then opacNext = opacPrev end
+    if imgIdPrev == -1 then opacPrev = opacNext end
 
     -- Cache methods used in loops.
     local floor <const> = math.floor
