@@ -422,7 +422,7 @@ dlg:button {
                 return
             end
 
-            if #frIdcs == 1 and frameTarget == "ACTIVE" then
+            if #frIdcs == 1 then
                 if frIdcs[1] == lenFrObjs then
                     frIdcs[2] = lenFrObjs
                     frIdcs[1] = lenFrObjs - 1
