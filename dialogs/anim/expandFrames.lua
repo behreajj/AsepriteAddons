@@ -512,7 +512,7 @@ dlg:button {
                     i = i + 1
                 end
 
-                if isLoop then
+                if isLoopVerif then
                     local frIdxOldPrev <const> = frIdcs[lenFrIdcs]
                     local frIdxNewPrev <const> = frIdxOldPrev + (lenFrIdcs - 1) * inbetweens
                     local durPrev <const> = frObjsAfter[frIdxNewPrev].duration
@@ -554,7 +554,7 @@ dlg:button {
                     i = i + 1
                 end
 
-                if isLoop then
+                if isLoopVerif then
                     local frIdxOld <const> = frIdcs[lenFrIdcs]
                     local frIdxNew <const> = frIdxOld + (lenFrIdcs - 1) * inbetweens
                     local frObjOld <const> = frObjsAfter[frIdxNew]
@@ -593,7 +593,7 @@ dlg:button {
                         k = k + 1
                     end
 
-                    if isLoop then
+                    if isLoopVerif then
                         local frIdxOld <const> = frIdcs[lenFrIdcs]
                         local frIdxNew <const> = frIdxOld + (lenFrIdcs - 1) * inbetweens
                         local frObjOld <const> = frObjsAfter[frIdxNew]
@@ -667,7 +667,7 @@ dlg:button {
                     i = i + 1
                 end
 
-                if isLoop then
+                if isLoopVerif then
                     local frIdxOldPrev <const> = frIdcs[lenFrIdcs]
                     local frIdxNewPrev <const> = frIdxOldPrev + (lenFrIdcs - 1) * inbetweens
                     crossFade(activeSprite, leaf, frIdxNewPrev, 1,
