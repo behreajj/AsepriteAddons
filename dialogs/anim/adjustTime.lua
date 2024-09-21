@@ -3,10 +3,13 @@ dofile("../../support/canvasutilities.lua")
 dofile("../../support/clrgradient.lua")
 
 local modes <const> = {
+    -- TODO: Add a remap mode, which remaps the animation's total time to
+    -- a target time, similiar to expandFrames cross fade match time.
     "ADD",
     "DIVIDE",
     "MIX",
     "MULTIPLY",
+    "REMAP",
     "SET",
     "SUBTRACT"
 }
@@ -37,6 +40,18 @@ if app.theme then
             end
         end
     end
+end
+
+---Durations need to be rounded after scaling due to precision differences
+---between seconds (internal) and milliseconds (UI).
+---@param duration number
+---@param scalar number
+---@return number
+---@nodiscard
+local function mulRoundDur(duration, scalar)
+    local durNew <const> = duration * scalar
+    local durNewMs <const> = math.floor(durNew * 1000.0 + 0.5)
+    return math.min(math.max(durNewMs * 0.001, 0.001), 65.535)
 end
 
 local defaults <const> = {
@@ -90,6 +105,7 @@ dlg:combobox {
         local target <const> = args.target --[[@as string]]
         local isManual <const> = target == "MANUAL"
         local isMix <const> = mode == "MIX"
+        local notRemap <const> = mode ~= "REMAP"
         local isOp <const> = not isMix
 
         dlg:modify { id = "easeCurve", visible = isMix }
@@ -103,9 +119,9 @@ dlg:combobox {
         dlg:modify { id = "durDest", visible = isMix }
         dlg:modify { id = "getDest", visible = isMix }
 
-        dlg:modify { id = "target", visible = isOp }
         dlg:modify { id = "opNum", visible = isOp }
-        dlg:modify { id = "rangeStr", visible = isOp and isManual }
+        dlg:modify { id = "target", visible = isOp and notRemap }
+        dlg:modify { id = "rangeStr", visible = isOp and notRemap and isManual }
         dlg:modify { id = "strExample", visible = false }
     end
 }
@@ -196,7 +212,8 @@ dlg:combobox {
     option = defaults.target,
     options = targets,
     focus = false,
-    visible = defaults.mode ~= "MIX",
+    visible = defaults.mode ~= "MIX"
+        and defaults.mode ~= "REMAP",
     onchange = function()
         local args <const> = dlg.data
         local target <const> = args.target --[[@as string]]
@@ -213,7 +230,9 @@ dlg:entry {
     label = "Frames:",
     text = defaults.rangeStr,
     focus = false,
-    visible = defaults.target == "MANUAL",
+    visible = defaults.mode ~= "MIX"
+        and defaults.mode ~= "REMAP"
+        and defaults.target == "MANUAL",
     onchange = function()
         dlg:modify { id = "strExample", visible = true }
     end
@@ -365,7 +384,7 @@ dlg:button {
         local eval <const> = Curve2.eval
 
         local frObjs <const> = activeSprite.frames
-        local lenFrames <const> = #frObjs
+        local lenFrObjs <const> = #frObjs
 
         local args <const> = dlg.data
         local mode <const> = args.mode
@@ -389,9 +408,9 @@ dlg:button {
                 durDestMillis * 0.001, 0.001), 65.535)
 
             local frIdxOrigVerif = math.min(math.max(
-                frIdxOrig - frameUiOffset, 1), lenFrames)
+                frIdxOrig - frameUiOffset, 1), lenFrObjs)
             local frIdxDestVerif = math.min(math.max(
-                frIdxDest - frameUiOffset, 1), lenFrames)
+                frIdxDest - frameUiOffset, 1), lenFrObjs)
 
             -- Unlike tween functions, do not assume all sprite
             -- frames when origin and destination are equal.
@@ -448,6 +467,39 @@ dlg:button {
                     frObj.duration = dur
 
                     j = j + 1
+                end
+            end)
+        elseif mode == "REMAP" then
+            -- TODO: Implement.
+            local opNum <const> = args.opNum --[[@as number]]
+            local opNumVerif <const> = math.floor(math.abs(opNum) + 0.5)
+            if opNumVerif < lenFrObjs then
+                app.alert {
+                    title = "Error",
+                    text = "Each frame must be at least 1 millisecond."
+                }
+                return
+            end
+            local opNumSecs <const> = opNumVerif * 0.001
+
+            local totalDuration = 0.0
+            local i = 0
+            while i < lenFrObjs do
+                i = i + 1
+                local frObj <const> = frObjs[i]
+                local duration <const> = frObj.duration
+                totalDuration = totalDuration + duration
+            end
+
+            local ratio <const> = opNumSecs / totalDuration
+
+            app.transaction("Remap Duration", function()
+                local j = 0
+                while j < lenFrObjs do
+                    j = j + 1
+                    local frObj <const> = frObjs[j]
+                    -- frObj.duration = frObj.duration * ratio
+                    frObj.duration = mulRoundDur(frObj.duration, ratio)
                 end
             end)
         else
