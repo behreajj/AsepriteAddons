@@ -535,7 +535,7 @@ dlg:button {
                 local totDurNew = 0.0
 
                 local i = 0
-                while i < lenFrIdcs - 1 do
+                while i < lenFrIdcs do
                     local frIdxOld <const> = frIdcs[1 + i]
                     local frIdxNew <const> = frIdxOld + i * inbetweens
                     local frObjOld <const> = frObjsAfter[frIdxNew]
@@ -544,31 +544,16 @@ dlg:button {
                     totDurOld = totDurOld + durOld
                     totDurNew = totDurNew + durOld
 
-                    local j = 0
-                    while j < inbetweens do
-                        j = j + 1
-                        local frObjNew <const> = frObjsAfter[frIdxNew + j]
-                        totDurNew = totDurNew + frObjNew.duration
+                    if isLoopVerif or (i < lenFrIdcs - 1) then
+                        local j = 0
+                        while j < inbetweens do
+                            j = j + 1
+                            local frObjNew <const> = frObjsAfter[frIdxNew + j]
+                            totDurNew = totDurNew + frObjNew.duration
+                        end
                     end
 
                     i = i + 1
-                end
-
-                if isLoopVerif then
-                    local frIdxOld <const> = frIdcs[lenFrIdcs]
-                    local frIdxNew <const> = frIdxOld + (lenFrIdcs - 1) * inbetweens
-                    local frObjOld <const> = frObjsAfter[frIdxNew]
-                    local durOld <const> = frObjOld.duration
-
-                    totDurOld = totDurOld + durOld
-                    totDurNew = totDurNew + durOld
-
-                    local j = 0
-                    while j < inbetweens do
-                        j = j + 1
-                        local frObjNew <const> = frObjsAfter[frIdxNew + j]
-                        totDurNew = totDurNew + frObjNew.duration
-                    end
                 end
 
                 local ratio <const> = totDurNew ~= 0.0
@@ -577,37 +562,25 @@ dlg:button {
 
                 app.transaction("Match Time", function()
                     local k = 0
-                    while k < lenFrIdcs - 1 do
+                    while k < lenFrIdcs do
                         local frIdxOld <const> = frIdcs[1 + k]
                         local frIdxNew <const> = frIdxOld + k * inbetweens
                         local frObjOld <const> = frObjsAfter[frIdxNew]
                         frObjOld.duration = mulRoundDur(frObjOld.duration, ratio)
 
-                        local j = 0
-                        while j < inbetweens do
-                            j = j + 1
-                            local frObjNew <const> = frObjsAfter[frIdxNew + j]
-                            frObjNew.duration = mulRoundDur(frObjNew.duration, ratio)
+                        if isLoopVerif or (k < lenFrIdcs - 1) then
+                            local j = 0
+                            while j < inbetweens do
+                                j = j + 1
+                                local frObjNew <const> = frObjsAfter[frIdxNew + j]
+                                frObjNew.duration = mulRoundDur(frObjNew.duration, ratio)
+                            end
                         end
 
                         k = k + 1
-                    end
-
-                    if isLoopVerif then
-                        local frIdxOld <const> = frIdcs[lenFrIdcs]
-                        local frIdxNew <const> = frIdxOld + (lenFrIdcs - 1) * inbetweens
-                        local frObjOld <const> = frObjsAfter[frIdxNew]
-                        frObjOld.duration = mulRoundDur(frObjOld.duration, ratio)
-
-                        local j = 0
-                        while j < inbetweens do
-                            j = j + 1
-                            local frObjNew <const> = frObjsAfter[frIdxNew + j]
-                            frObjNew.duration = mulRoundDur(frObjNew.duration, ratio)
-                        end -- End of inbetweens loop.
-                    end     -- End of loop check.
-                end)        -- End of match time transaction.
-            end             -- End of match time check.
+                    end -- End of frames loop.
+                end)    -- End of match time transaction.
+            end         -- End of match time check.
         else
             app.transaction("Sustain Frame Durations", function()
                 local durScalar <const> = matchTime
