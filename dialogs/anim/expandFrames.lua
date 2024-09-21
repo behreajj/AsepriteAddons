@@ -36,16 +36,17 @@ local function crossFade(
     frIdxNewNext,
     frameUiOffset,
     inbetweens)
-    local spriteSpec <const> = activeSprite.spec
+    local celNext <const> = leaf:cel(frIdxNewNext)
+    local celPrev <const> = leaf:cel(frIdxNewPrev)
+    if (not celNext) and (not celPrev) then return end
 
     local imgNext = nil
-    local opacNext = 0
+    local opacNext = 255
     local xtlNext = 0
     local ytlNext = 0
     local zIdxNext = 0
-    local idNext = -1
+    local imgIdNext = -1
 
-    local celNext <const> = leaf:cel(frIdxNewNext)
     if celNext then
         local posNext <const> = celNext.position
         imgNext = celNext.image
@@ -53,23 +54,20 @@ local function crossFade(
         xtlNext = posNext.x
         ytlNext = posNext.y
         zIdxNext = celNext.zIndex
-        idNext = imgNext.id
-    else
-        imgNext = Image(spriteSpec)
+        imgIdNext = imgNext.id
     end
 
     -- print(string.format(
-    --     "opacNext: %d, xtlNext: %d, ytlNext: %d, zIdxNext: %d, idNext: %d",
-    --     opacNext, xtlNext, ytlNext, zIdxNext, idNext))
+    --     "opacNext: %d, xtlNext: %d, ytlNext: %d, zIdxNext: %d",
+    --     opacNext, xtlNext, ytlNext, zIdxNext))
 
     local imgPrev = nil
-    local opacPrev = 0
+    local opacPrev = 255
     local xtlPrev = 0
     local ytlPrev = 0
     local zIdxPrev = 0
-    local idPrev = -1
+    local imgIdPrev = -1
 
-    local celPrev <const> = leaf:cel(frIdxNewPrev)
     if celPrev then
         local posPrev <const> = celPrev.position
         imgPrev = celPrev.image
@@ -77,14 +75,27 @@ local function crossFade(
         xtlPrev = posPrev.x
         ytlPrev = posPrev.y
         zIdxPrev = celPrev.zIndex
-        idPrev = imgPrev.id
-    else
-        imgPrev = Image(spriteSpec)
+        imgIdPrev = imgPrev.id
     end
 
     -- print(string.format(
-    --     "opacPrev: %d, xtlPrev: %d, ytlPrev: %d, zIdxPrev: %d, idPrev: %d",
-    --     opacPrev, xtlPrev, ytlPrev, zIdxPrev, idPrev))
+    --     "opacPrev: %d, xtlPrev: %d, ytlPrev: %d, zIdxPrev: %d",
+    --     opacPrev, xtlPrev, ytlPrev, zIdxPrev))
+
+    local spriteSpec <const> = activeSprite.spec
+    if not imgNext then
+        imgNext = imgPrev and Image(imgPrev.spec) or Image(spriteSpec)
+        xtlNext = xtlPrev
+        ytlNext = ytlPrev
+        opacNext = opacPrev
+    end
+
+    if not imgPrev then
+        imgPrev = imgNext and Image(imgNext.spec) or Image(spriteSpec)
+        xtlPrev = xtlNext
+        ytlPrev = ytlNext
+        opacPrev = opacNext
+    end
 
     -- Cache methods used in loops.
     local floor <const> = math.floor
@@ -102,7 +113,7 @@ local function crossFade(
     local jToFac <const> = 1.0 / (inbetweens + 1.0)
 
     -- Check to see if cels are linked, and thus don't need to be blended.
-    if idPrev == idNext then
+    if imgIdPrev == imgIdNext then
         local posPrev <const> = Point(xtlPrev, ytlPrev)
         app.transaction(trName, function()
             local j = 0
@@ -389,7 +400,6 @@ dlg:button {
         local colorMode <const> = spriteSpec.colorMode
 
         local isCrossFade <const> = fillOpt == "CROSS_FADE"
-
         if isCrossFade and colorMode ~= ColorMode.RGB then
             app.alert {
                 title = "Error",
@@ -431,7 +441,6 @@ dlg:button {
         end
 
         -- Cache global methods to local.
-        local floor <const> = math.floor
         local max <const> = math.max
         local min <const> = math.min
         local strfmt <const> = string.format
@@ -509,7 +518,7 @@ dlg:button {
                     end
 
                     i = i + 1
-                end -- End frame loop.
+                end
 
                 if isLoop then
                     local frIdxOldPrev <const> = frIdcs[lenFrIdcs]
@@ -547,8 +556,7 @@ dlg:button {
                     while j < inbetweens do
                         j = j + 1
                         local frObjNew <const> = frObjsAfter[frIdxNew + j]
-                        local durNew <const> = frObjNew.duration
-                        totDurNew = totDurNew + durNew
+                        totDurNew = totDurNew + frObjNew.duration
                     end
 
                     i = i + 1
@@ -567,8 +575,7 @@ dlg:button {
                     while j < inbetweens do
                         j = j + 1
                         local frObjNew <const> = frObjsAfter[frIdxNew + j]
-                        local durNew <const> = frObjNew.duration
-                        totDurNew = totDurNew + durNew
+                        totDurNew = totDurNew + frObjNew.duration
                     end
                 end
 
