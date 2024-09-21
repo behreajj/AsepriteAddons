@@ -597,6 +597,8 @@ dlg:button {
                     if isLoop then
                         local frIdxOld <const> = frIdcs[lenFrIdcs]
                         local frIdxNew <const> = frIdxOld + (lenFrIdcs - 1) * inbetweens
+                        local frObjOld <const> = frObjsAfter[frIdxNew]
+                        frObjOld.duration = mulRoundDur(frObjOld.duration, ratio)
 
                         local j = 0
                         while j < inbetweens do
@@ -617,15 +619,14 @@ dlg:button {
                 while i < lenFrIdcs do
                     local frIdxOld <const> = frIdcs[1 + i]
                     local frIdxNew <const> = frIdxOld + i * inbetweens
-                    local srcDur <const> = frObjsAfter[frIdxNew].duration
-                    local trgDur <const> = mulRoundDur(srcDur, durScalar)
+                    local trgDur <const> = mulRoundDur(
+                        frObjsAfter[frIdxNew].duration, durScalar)
 
                     local j = 0
                     while j < inbetweens + 1 do
                         -- This includes the original frame because
                         -- sustain may scale the original's duration.
-                        local frObj <const> = frObjsAfter[frIdxNew + j]
-                        frObj.duration = trgDur
+                        frObjsAfter[frIdxNew + j].duration = trgDur
                         j = j + 1
                     end
 
@@ -659,10 +660,8 @@ dlg:button {
                 while i < lenFrIdcs - 1 do
                     local frIdxOldPrev <const> = frIdcs[1 + i]
                     local frIdxNewPrev <const> = frIdxOldPrev + i * inbetweens
-
                     local frIdxOldNext <const> = frIdcs[2 + i]
                     local frIdxNewNext <const> = frIdxOldNext + (1 + i) * inbetweens
-
                     crossFade(activeSprite, leaf, frIdxNewPrev, frIdxNewNext,
                         frameUiOffset, inbetweens)
 
