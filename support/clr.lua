@@ -211,22 +211,6 @@ function Clr.fromHexAv16(c)
         (c >> 0x08 & 0xff) / 255.0)
 end
 
----Converts an array of hexadecimal values to an array of colors.
----@param arr integer[] hexadecimal array
----@return Clr[]
----@nodiscard
-function Clr.fromHexArray(arr)
-    ---@type Clr[]
-    local result <const> = {}
-    local i = 0
-    local len <const> = #arr
-    while i < len do
-        i = i + 1
-        result[i] = Clr.fromHexAbgr32(arr[i])
-    end
-    return result
-end
-
 ---Converts from a web-friendly hexadecimal string, such as #AABBCC, to a color.
 ---@param hexstr string web string
 ---@return Clr
