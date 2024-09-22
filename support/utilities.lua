@@ -419,33 +419,6 @@ function Utilities.lerpAngleNear(origin, dest, t, range)
     end
 end
 
----Multiplies a Mat3 with a Curve2. Changes the curve in place.
----@param a Mat3 matrix
----@param b Curve2 curve
----@return Curve2
-function Utilities.mulMat3Curve2(a, b)
-    local kns <const> = b.knots
-    local knsLen <const> = #kns
-    local i = 0
-    -- Knot is changed in place.
-    while i < knsLen do
-        i = i + 1
-        Utilities.mulMat3Knot2(a, kns[i])
-    end
-    return b
-end
-
----Multiplies a Mat3 with a Knot2. Changes the knot in place.
----@param a Mat3 matrix
----@param b Knot2 knot
----@return Knot2
-function Utilities.mulMat3Knot2(a, b)
-    b.co = Utilities.mulMat3Point2(a, b.co)
-    b.fh = Utilities.mulMat3Point2(a, b.fh)
-    b.rh = Utilities.mulMat3Point2(a, b.rh)
-    return b
-end
-
 ---Multiplies a Mat3 with a Mesh2. Changes the mesh in place.
 ---@param a Mat3 matrix
 ---@param b Mesh2 mesh
@@ -476,50 +449,6 @@ function Utilities.mulMat3Point2(a, b)
     else
         return Vec2.new(0.0, 0.0)
     end
-end
-
----Multiplies a Mat4 with a Curve3. Changes the curve in place.
----@param a Mat4 matrix
----@param b Curve3 curve
----@return Curve3
-function Utilities.mulMat4Curve3(a, b)
-    local kns <const> = b.knots
-    local knsLen <const> = #kns
-    local i = 0
-    -- Knot is changed in place.
-    while i < knsLen do
-        i = i + 1
-        Utilities.mulMat4Knot3(a, kns[i])
-    end
-    return b
-end
-
----Multiplies a Mat4 with a Knot3. Changes the knot in place.
----@param a Mat4 matrix
----@param b Knot3 knot
----@return Knot3
-function Utilities.mulMat4Knot3(a, b)
-    b.co = Utilities.mulMat4Point3(a, b.co)
-    b.fh = Utilities.mulMat4Point3(a, b.fh)
-    b.rh = Utilities.mulMat4Point3(a, b.rh)
-    return b
-end
-
----Multiplies a Mat4 with a Vec3. The vector is treated as a point.
----@param a Mat4 matrix
----@param b Vec3 vector
----@return Vec3
----@nodiscard
-function Utilities.mulMat4Point3(a, b)
-    local w <const> = a.m30 * b.x + a.m31 * b.y + a.m33
-    if w ~= 0.0 then
-        local wInv <const> = 1.0 / w
-        return Vec3.new(
-            (a.m00 * b.x + a.m01 * b.y + a.m03) * wInv,
-            (a.m10 * b.x + a.m11 * b.y + a.m13) * wInv,
-            (a.m20 * b.x + a.m21 * b.y + a.m23) * wInv)
-    end
-    return Vec3.new(0.0, 0.0, 0.0)
 end
 
 ---Multiplies a Mat4 with a Vec4.
