@@ -24,6 +24,8 @@ local importFileExts <const> = {
     "pbm", -- B&W PNM
     "pgm", -- Gray PNM
     "ppm", -- Color PNM
+    "tif",
+    "tiff",
     "txt"
 }
 
