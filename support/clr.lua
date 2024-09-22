@@ -194,12 +194,21 @@ end
 ---@return Clr
 ---@nodiscard
 function Clr.fromHexAbgr32(c)
-    -- TODO: Consider a variant for 16 bit grayscale?
     return Clr.new(
         (c & 0xff) / 255.0,
         (c >> 0x08 & 0xff) / 255.0,
         (c >> 0x10 & 0xff) / 255.0,
         (c >> 0x18 & 0xff) / 255.0)
+end
+
+---Converts from a hexadecimal representation of a grayscale stored as 0xAAVV.
+---@param c integer hexadecimal color
+---@return Clr
+---@nodiscard
+function Clr.fromHexAv16(c)
+    local v <const> = (c & 0xff) / 255.0
+    return Clr.new(v, v, v,
+        (c >> 0x08 & 0xff) / 255.0)
 end
 
 ---Converts an array of hexadecimal values to an array of colors.
