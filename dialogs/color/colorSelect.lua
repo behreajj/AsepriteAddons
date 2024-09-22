@@ -563,7 +563,7 @@ dlg:button {
         local cmIsGry <const> = colorMode == ColorMode.GRAY
 
         -- Cache global methods.
-        local fromHex <const> = Clr.fromHex
+        local fromHex <const> = Clr.fromHexAbgr32
         local sRgbaToLab <const> = Clr.sRgbToSrLab2
         local aseColorToClr <const> = AseUtilities.aseColorToClr
         local aseColorToHex <const> = AseUtilities.aseColorToHex

@@ -545,7 +545,7 @@ function AseUtilities.averageColor(sprite, frObj)
         end
 
         -- Cache methods used in loop.
-        local fromHex <const> = Clr.fromHex
+        local fromHex <const> = Clr.fromHexAbgr32
         local sRgbToLab <const> = Clr.sRgbToSrLab2
 
         local lSum, aSum, bSum, alphaSum = 0.0, 0.0, 0.0, 0.0
@@ -586,7 +586,7 @@ function AseUtilities.averageColor(sprite, frObj)
 
     if colorMode == ColorMode.RGB then
         local pixel <const> = string.unpack("<I4", flatImage.bytes)
-        return Clr.sRgbToSrLab2(Clr.fromHex(pixel))
+        return Clr.sRgbToSrLab2(Clr.fromHexAbgr32(pixel))
     elseif colorMode == ColorMode.GRAY then
         local pixel <const> = string.unpack("<I2", flatImage.bytes)
         local a = (pixel >> 0x08) & 0xff

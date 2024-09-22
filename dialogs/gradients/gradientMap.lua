@@ -84,7 +84,7 @@ dlg:button {
         -- Cache methods.
         local abs <const> = math.abs
         local min <const> = math.min
-        local fromHex <const> = Clr.fromHex
+        local fromHex <const> = Clr.fromHexAbgr32
         local toHex <const> = Clr.toHex
         local sRgbToLab <const> = Clr.sRgbToSrLab2
         local quantize <const> = Utilities.quantizeUnsigned

@@ -395,7 +395,7 @@ dlg:button {
         -- Cache functions used in loop.
         local tilesToImage <const> = AseUtilities.tileMapToImage
         local trimAlpha <const> = AseUtilities.trimImageAlpha
-        local fromHex <const> = Clr.fromHex
+        local fromHex <const> = Clr.fromHexAbgr32
         local sRgbaToLab <const> = Clr.sRgbToSrLab2
         local floor <const> = math.floor
         -- local flattenGroup = AseUtilities.flattenGroup

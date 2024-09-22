@@ -268,7 +268,7 @@ dlg:button {
         local sin <const> = math.sin
         local floor <const> = math.floor
         local sRgbToLab <const> = Clr.sRgbToSrLab2
-        local fromHex <const> = Clr.fromHex
+        local fromHex <const> = Clr.fromHexAbgr32
         local rotax <const> = Vec3.rotateInternal
         local v3hash <const> = Vec3.hashCode
         local v3new <const> = Vec3.new

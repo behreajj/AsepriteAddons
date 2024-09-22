@@ -285,7 +285,7 @@ dlg:button {
                 uniqueHexes[lenUniqueHexes] = hexProfile
 
                 local hexSrgb <const> = hexesSrgb[g]
-                local clr <const> = Clr.fromHex(hexSrgb)
+                local clr <const> = Clr.fromHexAbgr32(hexSrgb)
                 local lab <const> = Clr.sRgbToSrLab2(clr)
                 hexLabDict[hexProfile] = lab
                 hexWebDict[hexProfile] = Clr.toHexWeb(clr)

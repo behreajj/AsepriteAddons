@@ -231,7 +231,7 @@ dlg:button {
         end
 
         -- Cache global methods.
-        local fromHex <const> = Clr.fromHex
+        local fromHex <const> = Clr.fromHexAbgr32
         local v3Hash <const> = Vec3.hashCode
         local octInsert <const> = Octree.insert
         local search <const> = Octree.queryInternal

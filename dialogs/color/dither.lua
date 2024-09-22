@@ -529,7 +529,7 @@ dlg:button {
             local sqrt <const> = math.sqrt
             local abs <const> = math.abs
             local cnew <const> = Clr.new
-            local fromHex <const> = Clr.fromHex
+            local fromHex <const> = Clr.fromHexAbgr32
             local sRgbaToLab <const> = Clr.sRgbToSrLab2
             local octins <const> = Octree.insert
             local octquery <const> = Octree.queryInternal

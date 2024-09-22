@@ -250,7 +250,7 @@ dlg:button {
 
                     local lum = 0.0
                     if alpha > 0 then
-                        local clr <const> = Clr.fromHex(hex)
+                        local clr <const> = Clr.fromHexAbgr32(hex)
                         local lab <const> = Clr.sRgbToSrLab2(clr)
                         lum = lab.l * 0.01
                     end

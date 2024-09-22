@@ -193,7 +193,7 @@ end
 ---@param c integer hexadecimal color
 ---@return Clr
 ---@nodiscard
-function Clr.fromHex(c)
+function Clr.fromHexAbgr32(c)
     -- TODO: Consider a variant for 16 bit grayscale?
     return Clr.new(
         (c & 0xff) / 255.0,
@@ -213,7 +213,7 @@ function Clr.fromHexArray(arr)
     local len <const> = #arr
     while i < len do
         i = i + 1
-        result[i] = Clr.fromHex(arr[i])
+        result[i] = Clr.fromHexAbgr32(arr[i])
     end
     return result
 end

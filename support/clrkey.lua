@@ -55,7 +55,7 @@ function ClrKey.newByVal(step, clr)
     if clr then
         if type(clr) == "number"
             and math.type(clr) == "integer" then
-            inst.clr = Clr.fromHex(clr)
+            inst.clr = Clr.fromHexAbgr32(clr)
         else
             inst.clr = Clr.new(clr.r, clr.g, clr.b, clr.a)
         end

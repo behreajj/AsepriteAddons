@@ -491,7 +491,7 @@ dlg:button {
                 or defaults.clrSpacePreset --[[@as string]]
 
             -- Cache methods to local.
-            local fromHex <const> = Clr.fromHex
+            local fromHex <const> = Clr.fromHexAbgr32
             local toHex <const> = Clr.toHex
             local octins <const> = Octree.insert
             local clrV3Func <const> = clrToV3FuncFromPreset(clrSpacePreset)

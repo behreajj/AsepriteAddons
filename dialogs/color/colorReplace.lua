@@ -400,7 +400,7 @@ dlg:button {
                 end)    -- End exact transaction.
             else
                 -- Fuzzy tolerance search.
-                local fromHex <const> = Clr.fromHex
+                local fromHex <const> = Clr.fromHexAbgr32
                 local sRgbaToLab <const> = Clr.sRgbToSrLab2
                 local strunpack <const> = string.unpack
                 local distSq <const> = tIgnoreVerif
