@@ -197,7 +197,8 @@ end
 ---@return Vec2
 ---@nodiscard
 function Vec2.copySign(a, b)
-    local cx = 0.0
+    local cx, cy = 0.0, 0.0
+
     local axAbs <const> = math.abs(a.x)
     if b.x < -0.0 then
         cx = -axAbs
@@ -205,7 +206,6 @@ function Vec2.copySign(a, b)
         cx = axAbs
     end
 
-    local cy = 0.0
     local ayAbs <const> = math.abs(a.y)
     if b.y < -0.0 then
         cy = -ayAbs
@@ -398,14 +398,14 @@ end
 ---@return Vec2
 ---@nodiscard
 function Vec2.linearstep(edge0, edge1, x)
-    local cx = 0.0
+    local cx, cy = 0.0, 0.0
+
     local xDenom <const> = edge1.x - edge0.x
     if xDenom ~= 0.0 then
         cx = math.min(1.0, math.max(0.0,
             (x.x - edge0.x) / xDenom))
     end
 
-    local cy = 0.0
     local yDenom <const> = edge1.y - edge0.y
     if yDenom ~= 0.0 then
         cy = math.min(1.0, math.max(0.0,
@@ -670,7 +670,8 @@ end
 ---@return Vec2
 ---@nodiscard
 function Vec2.smoothstep(edge0, edge1, x)
-    local cx = 0.0
+    local cx, cy = 0.0, 0.0
+
     local xDenom <const> = edge1.x - edge0.x
     if xDenom ~= 0.0 then
         cx = math.min(1.0, math.max(0.0,
@@ -678,7 +679,6 @@ function Vec2.smoothstep(edge0, edge1, x)
         cx = cx * cx * (3.0 - (cx + cx))
     end
 
-    local cy = 0.0
     local yDenom <const> = edge1.y - edge0.y
     if yDenom ~= 0.0 then
         cy = math.min(1.0, math.max(0.0,

@@ -193,7 +193,8 @@ end
 ---@return Vec4
 ---@nodiscard
 function Vec4.copySign(a, b)
-    local cx = 0.0
+    local cx, cy, cz, cw = 0.0, 0.0, 0.0, 0.0
+
     local axAbs <const> = math.abs(a.x)
     if b.x < -0.0 then
         cx = -axAbs
@@ -201,7 +202,6 @@ function Vec4.copySign(a, b)
         cx = axAbs
     end
 
-    local cy = 0.0
     local ayAbs <const> = math.abs(a.y)
     if b.y < -0.0 then
         cy = -ayAbs
@@ -209,7 +209,6 @@ function Vec4.copySign(a, b)
         cy = ayAbs
     end
 
-    local cz = 0.0
     local azAbs <const> = math.abs(a.z)
     if b.z < -0.0 then
         cz = -azAbs
@@ -217,7 +216,6 @@ function Vec4.copySign(a, b)
         cz = azAbs
     end
 
-    local cw = 0.0
     local awAbs <const> = math.abs(a.w)
     if b.w < -0.0 then
         cw = -awAbs
@@ -347,28 +345,26 @@ end
 ---@return Vec4
 ---@nodiscard
 function Vec4.linearstep(edge0, edge1, x)
-    local cx = 0.0
+    local cx, cy, cz, cw = 0.0, 0.0, 0.0, 0.0
+
     local xDenom <const> = edge1.x - edge0.x
     if xDenom ~= 0.0 then
         cx = math.min(1.0, math.max(0.0,
             (x.x - edge0.x) / xDenom))
     end
 
-    local cy = 0.0
     local yDenom <const> = edge1.y - edge0.y
     if yDenom ~= 0.0 then
         cy = math.min(1.0, math.max(0.0,
             (x.y - edge0.y) / yDenom))
     end
 
-    local cz = 0.0
     local zDenom <const> = edge1.z - edge0.z
     if zDenom ~= 0.0 then
         cz = math.min(1.0, math.max(0.0,
             (x.z - edge0.z) / zDenom))
     end
 
-    local cw = 0.0
     local wDenom <const> = edge1.w - edge0.w
     if wDenom ~= 0.0 then
         cw = math.min(1.0, math.max(0.0,
@@ -635,7 +631,8 @@ end
 ---@return Vec4
 ---@nodiscard
 function Vec4.smoothstep(edge0, edge1, x)
-    local cx = 0.0
+    local cx, cy, cz, cw = 0.0, 0.0, 0.0, 0.0
+
     local xDenom <const> = edge1.x - edge0.x
     if xDenom ~= 0.0 then
         cx = math.min(1.0, math.max(0.0,
@@ -643,7 +640,6 @@ function Vec4.smoothstep(edge0, edge1, x)
         cx = cx * cx * (3.0 - (cx + cx))
     end
 
-    local cy = 0.0
     local yDenom <const> = edge1.y - edge0.y
     if yDenom ~= 0.0 then
         cy = math.min(1.0, math.max(0.0,
@@ -651,7 +647,6 @@ function Vec4.smoothstep(edge0, edge1, x)
         cy = cy * cy * (3.0 - (cy + cy))
     end
 
-    local cz = 0.0
     local zDenom <const> = edge1.z - edge0.z
     if zDenom ~= 0.0 then
         cz = math.min(1.0, math.max(0.0,
@@ -659,7 +654,6 @@ function Vec4.smoothstep(edge0, edge1, x)
         cz = cz * cz * (3.0 - (cz + cz))
     end
 
-    local cw = 0.0
     local wDenom <const> = edge1.w - edge0.w
     if wDenom ~= 0.0 then
         cw = math.min(1.0, math.max(0.0,

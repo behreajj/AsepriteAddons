@@ -184,9 +184,11 @@ local function crossFade(
                     while k < flatLenComp do
                         local xComp <const> = k % wComp
                         local yComp <const> = k // wComp
-                        local rComp, gComp, bComp, aComp = 0, 0, 0, 0
 
+                        local rComp, gComp, bComp, aComp = 0, 0, 0, 0
                         local rNext, gNext, bNext, aNext = 0, 0, 0, 0
+                        local rPrev, gPrev, bPrev, aPrev = 0, 0, 0, 0
+
                         local xNext <const> = xComp + xtlDiffNext
                         local yNext <const> = yComp + ytlDiffNext
                         if yNext >= 0 and yNext < hNext
@@ -199,7 +201,6 @@ local function crossFade(
                             aNext = bytesNext[4 + kn4]
                         end
 
-                        local rPrev, gPrev, bPrev, aPrev = 0, 0, 0, 0
                         local xPrev <const> = xComp + xtlDiffPrev
                         local yPrev <const> = yComp + ytlDiffPrev
                         if yPrev >= 0 and yPrev < hPrev

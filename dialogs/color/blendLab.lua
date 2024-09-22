@@ -660,10 +660,8 @@ dlg:button {
                 local x = j % cWidth
                 local y = j // cWidth
 
-                local aRed = 0
-                local aGreen = 0
-                local aBlue = 0
-                local aAlpha = 0
+                local aRed, aGreen, aBlue, aAlpha = 0, 0, 0, 0
+                local bRed, bGreen, bBlue, bAlpha = 0, 0, 0, 0
 
                 local axs <const> = x - axud
                 local ays <const> = y - ayud
@@ -672,11 +670,6 @@ dlg:button {
                     local aIdx <const> = (ays * aWidth + axs) * abpp
                     aRed, aGreen, aBlue, aAlpha = strbyte(apx, 1 + aIdx, 4 + aIdx)
                 end
-
-                local bRed = 0
-                local bGreen = 0
-                local bBlue = 0
-                local bAlpha = 0
 
                 local bxs <const> = x - bxud
                 local bys <const> = y - byud
@@ -723,10 +716,6 @@ dlg:button {
                 if t <= 0.0 then bLab = aLab end
 
                 local u <const> = 1.0 - t
-                local cl = 0.0
-                local ca = 0.0
-                local cb = 0.0
-
                 local tuv = t + u * v
                 if useAlphaOver then
                     tuv = t
@@ -740,6 +729,7 @@ dlg:button {
 
                 -- Timeline overlays display colors that are transparent,
                 -- but have non-zero RGB channels.
+                local cl, ca, cb = 0.0, 0.0, 0.0
                 if tuv > 0.0 then
                     cl = lBlendFunc(aLab.l, bLab.l, v, t)
 

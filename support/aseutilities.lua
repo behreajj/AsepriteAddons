@@ -548,10 +548,7 @@ function AseUtilities.averageColor(sprite, frObj)
         local fromHex <const> = Clr.fromHex
         local sRgbToLab <const> = Clr.sRgbToSrLab2
 
-        local lSum = 0.0
-        local aSum = 0.0
-        local bSum = 0.0
-        local alphaSum = 0.0
+        local lSum, aSum, bSum, alphaSum = 0.0, 0.0, 0.0, 0.0
         local count = 0
 
         for hex, tally in pairs(hexDict) do
@@ -643,10 +640,7 @@ function AseUtilities.averageNormal(sprite, frObj)
         flatImage:drawSprite(sprite, frObj, Point(-xSel, -ySel))
         local lenSel <const> = wSel * hSel
 
-        local xSum = 0.0
-        local ySum = 0.0
-        local zSum = 0.0
-
+        local xSum, ySum, zSum = 0.0, 0.0, 0.0
         local bytes = flatImage.bytes
         local i = 0
         while i < lenSel do

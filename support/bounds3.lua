@@ -125,21 +125,20 @@ end
 ---@return boolean
 ---@nodiscard
 function Bounds3.intersectsSphereInternal(a, center, rsq)
-    local xd = 0.0
+    local xd, yd, zd = 0.0, 0.0, 0.0
+
     if center.x < a.mn.x then
         xd = center.x - a.mn.x
     elseif center.x > a.mx.x then
         xd = center.x - a.mx.x
     end
 
-    local yd = 0.0
     if center.y < a.mn.y then
         yd = center.y - a.mn.y
     elseif center.y > a.mx.y then
         yd = center.y - a.mx.y
     end
 
-    local zd = 0.0
     if center.z < a.mn.z then
         zd = center.z - a.mn.z
     elseif center.z > a.mx.z then
