@@ -876,11 +876,7 @@ dlg:button {
                         local j4 <const> = j * 4
                         local r8 <const>, g8 <const>, b8 <const>, a8 <const> = strbyte(
                             srcBytes, 1 + j4, 4 + j4)
-
-                        local h32 <const> = a8 << 0x18
-                            | b8 << 0x10
-                            | g8 << 0x08
-                            | r8
+                        local h32 <const> = a8 << 0x18 | b8 << 0x10 | g8 << 0x08 | r8
 
                         if not srcLabDict[h32] then
                             srcLabDict[h32] = labZero
@@ -950,10 +946,7 @@ dlg:button {
             local bSrc <const> = srcLab.b
             local tSrc <const> = srcLab.alpha
 
-            local lTrg = lSrc
-            local aTrg = aSrc
-            local bTrg = bSrc
-            local tTrg = tSrc
+            local lTrg, aTrg, bTrg, tTrg = lSrc, aSrc, bSrc, tSrc
 
             if useNormalize and tTrg > 0.0 then
                 if normGtZero then

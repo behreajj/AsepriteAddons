@@ -3,15 +3,13 @@ dofile("../../support/jsonutilities.lua")
 
 local targets <const> = {
     -- TODO: Support slice properties?
-    -- TODO: Unset button.
-    -- TODO: Option to choose integer format?
     "CEL",
     "FORE_TILE",
     "BACK_TILE",
     "LAYER",
     "SPRITE",
     "TAG",
-    "TILE_SET"
+    "TILE_SET",
 }
 
 local dataTypes <const> = {
@@ -141,6 +139,7 @@ dlg:combobox {
         dlg:modify { id = "boolValue", visible = isBool }
         dlg:modify { id = "colorValue", visible = isColor }
         dlg:modify { id = "intValue", visible = isInt }
+        dlg:modify { id = "hexLabel", visible = isInt }
         dlg:modify { id = "numValue", visible = isNum }
         dlg:modify { id = "stringValue", visible = isStr }
     end
@@ -161,6 +160,7 @@ dlg:check {
     id = "boolValue",
     label = "Boolean:",
     selected = defaults.boolValue,
+    text = "&True",
     visible = defaults.dataType == "BOOLEAN",
     focus = false
 }
@@ -183,7 +183,21 @@ dlg:number {
     text = string.format("%d", defaults.intValue),
     decimals = 0,
     visible = defaults.dataType == "INTEGER",
-    focus = false
+    focus = false,
+    onchange = function()
+        local args <const> = dlg.data
+        local intValue <const> = args.intValue --[[@as integer]]
+        dlg:modify { id = "hexLabel", text = string.format("0x%X", intValue) }
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:label {
+    id = "hexLabel",
+    label = "Hex:",
+    text = string.format("0x%X", defaults.intValue),
+    visible = defaults.dataType == "INTEGER"
 }
 
 dlg:newrow { always = false }
@@ -227,38 +241,36 @@ dlg:button {
             return
         end
 
+        dlg:modify { id = "boolValue", visible = false }
+        dlg:modify { id = "colorValue", visible = false }
+        dlg:modify { id = "intValue", visible = false }
+        dlg:modify { id = "hexLabel", visible = false }
+        dlg:modify { id = "numValue", visible = false }
+        dlg:modify { id = "stringValue", visible = false }
+
         local query <const> = properties[propName]
         local typeQuery <const> = type(query)
         if typeQuery == "boolean" then
             dlg:modify { id = "dataType", option = "BOOLEAN" }
-
             dlg:modify { id = "boolValue", visible = true }
-            dlg:modify { id = "colorValue", visible = false }
-            dlg:modify { id = "intValue", visible = false }
-            dlg:modify { id = "numValue", visible = false }
-            dlg:modify { id = "stringValue", visible = false }
-
             dlg:modify { id = "boolValue", selected = query }
         elseif typeQuery == "number" then
-            dlg:modify { id = "boolValue", visible = false }
-            dlg:modify { id = "stringValue", visible = false }
-
             if math.type(query) == "integer" then
-                dlg:modify { id = "numValue", visible = false }
                 if dataType ~= "COLOR" or (query >> 0x20 ~= 0) then
                     dlg:modify { id = "dataType", option = "INTEGER" }
-
-                    dlg:modify { id = "colorValue", visible = false }
                     dlg:modify { id = "intValue", visible = true }
-
+                    dlg:modify { id = "hexLabel", visible = true }
                     dlg:modify {
                         id = "intValue",
                         text = string.format("%d", query)
                     }
+                    dlg:modify {
+                        id = "hexLabel",
+                        text = string.format("0x%X", query)
+                    }
                 else
+                    dlg:modify { id = "dataType", option = "COLOR" }
                     dlg:modify { id = "colorValue", visible = true }
-                    dlg:modify { id = "intValue", visible = false }
-
                     dlg:modify {
                         id = "colorValue",
                         color = AseUtilities.hexToAseColor(query)
@@ -266,11 +278,7 @@ dlg:button {
                 end
             else
                 dlg:modify { id = "dataType", option = "NUMBER" }
-
-                dlg:modify { id = "colorValue", visible = false }
-                dlg:modify { id = "intValue", visible = false }
                 dlg:modify { id = "numValue", visible = true }
-
                 dlg:modify {
                     id = "numValue",
                     text = string.format("%.6f", query)
@@ -278,15 +286,13 @@ dlg:button {
             end
         elseif typeQuery == "string" then
             dlg:modify { id = "dataType", option = "STRING" }
-
-            dlg:modify { id = "boolValue", visible = false }
-            dlg:modify { id = "colorValue", visible = false }
-            dlg:modify { id = "intValue", visible = false }
-            dlg:modify { id = "numValue", visible = false }
             dlg:modify { id = "stringValue", visible = true }
-
             dlg:modify { id = "stringValue", text = query }
         elseif typeQuery == "nil" then
+            dlg:modify { id = "dataType", option = "STRING" }
+            dlg:modify { id = "stringValue", visible = true }
+            dlg:modify { id = "stringValue", text = "nil" }
+
             app.alert {
                 title = "Error",
                 text = string.format(
@@ -295,6 +301,10 @@ dlg:button {
             }
             return
         else
+            dlg:modify { id = "dataType", option = "STRING" }
+            dlg:modify { id = "stringValue", visible = true }
+            dlg:modify { id = "stringValue", text = "nil" }
+
             app.alert {
                 title = "Error",
                 text = "Unsupported data type."

@@ -668,6 +668,7 @@ dlg:button {
                 if include == nil then
                     local c32 = c
                     if cmIsIdx then
+                        -- TODO: Use AseUtilities convert.
                         if c >= 0 and c < lenPalette then
                             local aseColor <const> = palette:getColor(c)
                             c32 = aseColorToHex(aseColor, ColorMode.RGB)
@@ -675,6 +676,7 @@ dlg:button {
                             c32 = 0
                         end
                     elseif cmIsGry then
+                        -- TODO: Use Clr.fromHexAv16
                         local a8 <const> = (c >> 0x08) & 0xff
                         local v8 <const> = c & 0xff
                         c32 = a8 << 0x18 | v8 << 0x10 | v8 << 0x08 | v8

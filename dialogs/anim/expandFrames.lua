@@ -4,6 +4,9 @@ local frameTargets <const> = { "ACTIVE", "ALL", "TAG" }
 local fillOpts <const> = { "CROSS_FADE", "EMPTY", "SUSTAIN" }
 
 local defaults <const> = {
+    -- TODO: Option to manually set duration for empty frames rather than
+    -- assuming it's the same as SUSTAIN. This'd mean matchTime is no longer
+    -- an option for empty.
     frameTarget = "ALL",
     isLoop = false,
     fillOpt = "SUSTAIN",
