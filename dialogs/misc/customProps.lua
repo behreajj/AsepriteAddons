@@ -29,8 +29,8 @@ local defaults <const> = {
     boolValue = false,
     intValue = 0,
     numValue = 0.0,
-    ptxValue = 0.0,
-    ptyValue = 0.0,
+    ptxValue = 0,
+    ptyValue = 0,
     stringValue = "",
 }
 
@@ -58,6 +58,18 @@ local function getProperties(target)
             return nil, false, "There is no active cel."
         end
         return activeCel.properties, true, ""
+    elseif target == "SPRITE" then
+        local activeSprite <const> = app.sprite
+        if not activeSprite then
+            return nil, false, "There is no active sprite."
+        end
+        return activeSprite.properties, true, ""
+    elseif target == "TAG" then
+        local activeTag <const> = app.tag
+        if not activeTag then
+            return nil, false, "There is no active tag."
+        end
+        return activeTag.properties, true, ""
     elseif target == "LAYER"
         or target == "TILE_SET"
         or target == "FORE_TILE"
@@ -76,7 +88,7 @@ local function getProperties(target)
 
             local tileSet <const> = activeLayer.tileset
             if not tileSet then
-                return nil, false, "The active tile set could not be found."
+                return nil, false, "Tile set could not be found."
             end
 
             if target == "TILE_SET" then
@@ -96,30 +108,17 @@ local function getProperties(target)
 
                 if tiCurr < 0 or tiCurr >= #tileSet then
                     return nil, false, string.format(
-                        "The tile index %d is out of bounds.",
+                        "Tile index %d is out of bounds.",
                         tiCurr)
                 end
 
                 local tile <const> = tileSet:tile(tiCurr)
                 if not tile then
-                    return nil, false, "The active tile could not be found."
+                    return nil, false, "Tile could not be found."
                 end
                 return tile.properties, true, ""
             end
         end
-    elseif target == "SPRITE" then
-        local activeSprite <const> = app.sprite
-        if not activeSprite then
-            return nil, false, "There is no active sprite."
-        end
-        return activeSprite.properties, true, ""
-    elseif target == "TAG" then
-        local activeTag <const> = app.tag
-        if not activeTag then
-            return nil, false, "There is no active tag."
-        end
-
-        return activeTag.properties, true, ""
     end
 
     return nil, false, "Unrecognized target."
@@ -236,16 +235,16 @@ dlg:newrow { always = false }
 dlg:number {
     id = "ptxValue",
     label = "Point:",
-    text = string.format("%.6f", defaults.ptxValue),
-    decimals = 6,
+    text = string.format("%d", defaults.ptxValue),
+    decimals = 0,
     visible = defaults.dataType == "POINT",
     focus = false
 }
 
 dlg:number {
     id = "ptyValue",
-    text = string.format("%.6f", defaults.ptyValue),
-    decimals = 6,
+    text = string.format("%d", defaults.ptyValue),
+    decimals = 0,
     visible = defaults.dataType == "POINT",
     focus = false
 }
@@ -352,13 +351,13 @@ dlg:button {
                 local xQuery <const> = (query["x"] or query[1]) or 0
                 local yQuery <const> = (query["y"] or query[2]) or 0
 
-                local x <const> = type(xQuery) == "number" and xQuery or 0.0
-                local y <const> = type(yQuery) == "number" and yQuery or 0.0
+                local x <const> = type(xQuery) == "number" and xQuery or 0
+                local y <const> = type(yQuery) == "number" and yQuery or 0
 
                 dlg:modify { id = "ptxValue", visible = true }
                 dlg:modify { id = "ptyValue", visible = true }
-                dlg:modify { id = "ptxValue", text = string.format("%.6f", x) }
-                dlg:modify { id = "ptyValue", text = string.format("%.6f", y) }
+                dlg:modify { id = "ptxValue", text = string.format("%d", x) }
+                dlg:modify { id = "ptyValue", text = string.format("%d", y) }
             else
                 dlg:modify { id = "dataType", option = "STRING" }
                 dlg:modify { id = "stringValue", visible = true }
