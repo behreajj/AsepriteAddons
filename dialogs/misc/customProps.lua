@@ -323,12 +323,12 @@ dlg:button {
                     color = Color { r = r8, g = g8, b = b8, a = a8 }
                 }
             else
-                dlg:modify { id = "dataType", option = "NIL" }
-                app.alert {
-                    title = "Error",
-                    text = "Unsupported data type."
+                dlg:modify { id = "dataType", option = "STRING" }
+                dlg:modify { id = "stringValue", visible = true }
+                dlg:modify {
+                    id = "stringValue",
+                    text = JsonUtilities.propsToJson(query)
                 }
-                return
             end
         else
             dlg:modify { id = "dataType", option = "NIL" }
@@ -440,6 +440,17 @@ dlg:button {
                 "The property \"%s\" in %s has been unset.",
                 propName, target)
         }
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:button {
+    id = "openConsole",
+    text = "CO&NSOLE",
+    focus = false,
+    onclick = function()
+        app.command.DeveloperConsole()
     end
 }
 
