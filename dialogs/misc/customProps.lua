@@ -64,16 +64,10 @@ local function getProperties(target)
             return nil, false, "There is no active sprite."
         end
 
-        local spriteSlices <const> = activeSprite.slices
-        local lenSpriteSlices <const> = #spriteSlices
-        if lenSpriteSlices <= 0 then
-            return nil, false, "Sprite contains no slices."
-        end
-
         local oldTool <const> = app.tool.id
         app.tool = "slice"
-        local range <const> = app.range
 
+        local range <const> = app.range
         if range.sprite ~= activeSprite then
             app.tool = oldTool
             return nil, false, "Range doesn't belong to sprite."
@@ -133,7 +127,7 @@ local function getProperties(target)
                 if tiCurr == 0 then
                     -- Tiles at index 0 have the same properties as the
                     -- tile sets that contain them.
-                    return nil, false, "Tile set index 0 is reserved."
+                    return nil, false, "Tile index 0 is reserved."
                 end
 
                 if tiCurr < 0 or tiCurr >= #tileSet then
@@ -328,26 +322,17 @@ dlg:button {
             dlg:modify { id = "dataType", option = "NIL" }
         elseif typeQuery == "number" then
             if math.type(query) == "integer" then
-                if dataType ~= "COLOR" or (query >> 0x20 ~= 0) then
-                    dlg:modify { id = "dataType", option = "INTEGER" }
-                    dlg:modify { id = "intValue", visible = true }
-                    dlg:modify { id = "hexLabel", visible = true }
-                    dlg:modify {
-                        id = "intValue",
-                        text = string.format("%d", query)
-                    }
-                    dlg:modify {
-                        id = "hexLabel",
-                        text = string.format("0x%X", query)
-                    }
-                else
-                    dlg:modify { id = "dataType", option = "COLOR" }
-                    dlg:modify { id = "colorValue", visible = true }
-                    dlg:modify {
-                        id = "colorValue",
-                        color = AseUtilities.hexToAseColor(query)
-                    }
-                end
+                dlg:modify { id = "dataType", option = "INTEGER" }
+                dlg:modify { id = "intValue", visible = true }
+                dlg:modify { id = "hexLabel", visible = true }
+                dlg:modify {
+                    id = "intValue",
+                    text = string.format("%d", query)
+                }
+                dlg:modify {
+                    id = "hexLabel",
+                    text = string.format("0x%X", query)
+                }
             else
                 dlg:modify { id = "dataType", option = "NUMBER" }
                 dlg:modify { id = "numValue", visible = true }
