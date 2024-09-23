@@ -2,11 +2,11 @@ dofile("../../support/aseutilities.lua")
 dofile("../../support/jsonutilities.lua")
 
 local targets <const> = {
-    -- TODO: Support slice properties?
     "CEL",
     "FORE_TILE",
     "BACK_TILE",
     "LAYER",
+    "SLICE",
     "SPRITE",
     "TAG",
     "TILE_SET",
@@ -58,6 +58,36 @@ local function getProperties(target)
             return nil, false, "There is no active cel."
         end
         return activeCel.properties, true, ""
+    elseif target == "SLICE" then
+        local activeSprite <const> = app.sprite
+        if not activeSprite then
+            return nil, false, "There is no active sprite."
+        end
+
+        local spriteSlices <const> = activeSprite.slices
+        local lenSpriteSlices <const> = #spriteSlices
+        if lenSpriteSlices <= 0 then
+            return nil, false, "Sprite contains no slices."
+        end
+
+        local oldTool <const> = app.tool.id
+        app.tool = "slice"
+        local range <const> = app.range
+
+        if range.sprite ~= activeSprite then
+            app.tool = oldTool
+            return nil, false, "Range doesn't belong to sprite."
+        end
+
+        local rangeSlices <const> = range.slices
+        local lenRangeSlices <const> = #rangeSlices
+        if lenRangeSlices <= 0 then
+            app.tool = oldTool
+            return nil, false, "No slices were selected."
+        end
+
+        app.tool = oldTool
+        return rangeSlices[1].properties, true, ""
     elseif target == "SPRITE" then
         local activeSprite <const> = app.sprite
         if not activeSprite then
