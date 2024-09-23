@@ -16,6 +16,7 @@ local dataTypes <const> = {
     "BOOLEAN",
     "COLOR",
     "INTEGER",
+    "NIL",
     "NUMBER",
     "STRING",
 }
@@ -29,6 +30,18 @@ local defaults <const> = {
     numValue = 0.0,
     stringValue = "",
 }
+
+---@param x any
+---@return integer
+local function parseColorChannel(x)
+    if type(x) == "number" then
+        if math.type(x) == "integer" then
+            return x
+        end
+        return math.floor(255.0 * x + 0.5)
+    end
+    return 0
+end
 
 ---@param target string
 ---@return table<string, any>|nil properties
@@ -135,13 +148,14 @@ dlg:combobox {
         local isInt <const> = dataType == "INTEGER"
         local isNum <const> = dataType == "NUMBER"
         local isStr <const> = dataType == "STRING"
+        local notNil <const> = dataType ~= "NIL"
 
-        dlg:modify { id = "boolValue", visible = isBool }
-        dlg:modify { id = "colorValue", visible = isColor }
-        dlg:modify { id = "intValue", visible = isInt }
-        dlg:modify { id = "hexLabel", visible = isInt }
-        dlg:modify { id = "numValue", visible = isNum }
-        dlg:modify { id = "stringValue", visible = isStr }
+        dlg:modify { id = "boolValue", visible = isBool and notNil }
+        dlg:modify { id = "colorValue", visible = isColor and notNil }
+        dlg:modify { id = "intValue", visible = isInt and notNil }
+        dlg:modify { id = "hexLabel", visible = isInt and notNil }
+        dlg:modify { id = "numValue", visible = isNum and notNil }
+        dlg:modify { id = "stringValue", visible = isStr and notNil }
     end
 }
 
@@ -254,6 +268,8 @@ dlg:button {
             dlg:modify { id = "dataType", option = "BOOLEAN" }
             dlg:modify { id = "boolValue", visible = true }
             dlg:modify { id = "boolValue", selected = query }
+        elseif typeQuery == "nil" then
+            dlg:modify { id = "dataType", option = "NIL" }
         elseif typeQuery == "number" then
             if math.type(query) == "integer" then
                 if dataType ~= "COLOR" or (query >> 0x20 ~= 0) then
@@ -288,23 +304,34 @@ dlg:button {
             dlg:modify { id = "dataType", option = "STRING" }
             dlg:modify { id = "stringValue", visible = true }
             dlg:modify { id = "stringValue", text = query }
-        elseif typeQuery == "nil" then
-            dlg:modify { id = "dataType", option = "STRING" }
-            dlg:modify { id = "stringValue", visible = true }
-            dlg:modify { id = "stringValue", text = "nil" }
+        elseif typeQuery == "table" then
+            if dataType == "COLOR" then
+                local rQuery <const> = query["r"] or 0
+                local gQuery <const> = query["g"] or 0
+                local bQuery <const> = query["b"] or 0
+                local aQuery <const> = query["a"] or 0
 
-            app.alert {
-                title = "Error",
-                text = string.format(
-                    "The property \"%s\" in %s is nil.",
-                    propName, target)
-            }
-            return
+                local r8 <const> = parseColorChannel(rQuery)
+                local g8 <const> = parseColorChannel(gQuery)
+                local b8 <const> = parseColorChannel(bQuery)
+                local a8 <const> = parseColorChannel(aQuery)
+
+                dlg:modify { id = "dataType", option = "COLOR" }
+                dlg:modify { id = "colorValue", visible = true }
+                dlg:modify {
+                    id = "colorValue",
+                    color = Color { r = r8, g = g8, b = b8, a = a8 }
+                }
+            else
+                dlg:modify { id = "dataType", option = "NIL" }
+                app.alert {
+                    title = "Error",
+                    text = "Unsupported data type."
+                }
+                return
+            end
         else
-            dlg:modify { id = "dataType", option = "STRING" }
-            dlg:modify { id = "stringValue", visible = true }
-            dlg:modify { id = "stringValue", text = "nil" }
-
+            dlg:modify { id = "dataType", option = "NIL" }
             app.alert {
                 title = "Error",
                 text = "Unsupported data type."
@@ -337,12 +364,20 @@ dlg:button {
             assignment = args.boolValue --[[@as boolean]]
         elseif dataType == "COLOR" then
             local aseColor <const> = args.colorValue --[[@as Color]]
-            assignment = AseUtilities.aseColorToHex(
-                aseColor, ColorMode.RGB)
+            -- assignment = AseUtilities.aseColorToHex(
+            --     aseColor, ColorMode.RGB)
+            assignment = {
+                r = aseColor.red,
+                g = aseColor.green,
+                b = aseColor.blue,
+                a = aseColor.alpha
+            }
         elseif dataType == "INTEGER" then
             assignment = args.intValue --[[@as integer]]
         elseif dataType == "NUMBER" then
             assignment = args.numValue --[[@as number]]
+        elseif dataType == "NIL" then
+            assignment = nil
         elseif dataType == "STRING" then
             assignment = args.stringValue --[[@as string]]
         else
