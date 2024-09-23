@@ -10,6 +10,7 @@ local targets <const> = {
     "SPRITE",
     "TAG",
     "TILE_SET",
+    "TILES",
 }
 
 local dataTypes <const> = {
@@ -47,7 +48,7 @@ local function parseColorChannel(x)
 end
 
 ---@param target string
----@return table<string, any>|nil properties
+---@return table<string, any>[]|nil properties
 ---@return boolean success
 ---@return string errMsg
 ---@nodiscard
@@ -57,7 +58,7 @@ local function getProperties(target)
         if not activeCel then
             return nil, false, "There is no active cel."
         end
-        return activeCel.properties, true, ""
+        return { activeCel.properties }, true, ""
     elseif target == "SLICE" then
         local activeSprite <const> = app.sprite
         if not activeSprite then
@@ -81,21 +82,22 @@ local function getProperties(target)
         end
 
         app.tool = oldTool
-        return rangeSlices[1].properties, true, ""
+        return { rangeSlices[1].properties }, true, ""
     elseif target == "SPRITE" then
         local activeSprite <const> = app.sprite
         if not activeSprite then
             return nil, false, "There is no active sprite."
         end
-        return activeSprite.properties, true, ""
+        return { activeSprite.properties }, true, ""
     elseif target == "TAG" then
         local activeTag <const> = app.tag
         if not activeTag then
             return nil, false, "There is no active tag."
         end
-        return activeTag.properties, true, ""
+        return { activeTag.properties }, true, ""
     elseif target == "LAYER"
         or target == "TILE_SET"
+        or target == "TILES"
         or target == "FORE_TILE"
         or target == "BACK_TILE" then
         local activeLayer <const> = app.layer
@@ -104,50 +106,65 @@ local function getProperties(target)
         end
 
         if target == "LAYER" then
-            return activeLayer.properties, true, ""
-        else
-            if not activeLayer.isTilemap then
-                return nil, false, "Active layer is not a tile map."
-            end
-
-            local tileSet <const> = activeLayer.tileset
-            if not tileSet then
-                return nil, false, "Tile set could not be found."
-            end
-
-            if target == "TILE_SET" then
-                return tileSet.properties, true, ""
-            else
-                local colorBarPrefs <const> = app.preferences.color_bar
-                local tifCurr <const> = target == "BACK_TILE"
-                    and colorBarPrefs["bg_tile"]
-                    or colorBarPrefs["fg_tile"] --[[@as integer]]
-
-                local tiCurr <const> = app.pixelColor.tileI(tifCurr)
-                if tiCurr == 0 then
-                    -- Tiles at index 0 have the same properties as the
-                    -- tile sets that contain them.
-                    return nil, false, "Tile index 0 is reserved."
-                end
-
-                if tiCurr < 0 or tiCurr >= #tileSet then
-                    return nil, false, string.format(
-                        "Tile index %d is out of bounds.",
-                        tiCurr)
-                end
-
-                local tile <const> = tileSet:tile(tiCurr)
-                if not tile then
-                    return nil, false, "Tile could not be found."
-                end
-                return tile.properties, true, ""
-            end
+            return { activeLayer.properties }, true, ""
         end
+
+        if not activeLayer.isTilemap then
+            return nil, false, "Active layer is not a tile map."
+        end
+
+        local tileSet <const> = activeLayer.tileset
+        if not tileSet then
+            return nil, false, "Tile set could not be found."
+        end
+
+        if target == "TILE_SET" then
+            return { tileSet.properties }, true, ""
+        end
+
+        local lenTileSet <const> = #tileSet
+        if target == "TILES" then
+            ---@type table<string, any>[]
+            local properties <const> = {}
+            local i = 1
+            while i < lenTileSet do
+                local tile <const> = tileSet:tile(i)
+                if tile then
+                    properties[#properties + 1] = tile.properties
+                end
+                i = i + 1
+            end
+            return properties, true, ""
+        end
+
+        local colorBarPrefs <const> = app.preferences.color_bar
+        local tifCurr <const> = target == "BACK_TILE"
+            and colorBarPrefs["bg_tile"]
+            or colorBarPrefs["fg_tile"] --[[@as integer]]
+
+        local tiCurr <const> = app.pixelColor.tileI(tifCurr)
+        if tiCurr == 0 then
+            -- Tiles at index 0 have the same properties as the
+            -- tile sets that contain them.
+            return nil, false, "Tile index 0 is reserved."
+        end
+
+        if tiCurr < 0 or tiCurr >= lenTileSet then
+            return nil, false, string.format(
+                "Tile index %d is out of bounds.",
+                tiCurr)
+        end
+
+        local tile <const> = tileSet:tile(tiCurr)
+        if not tile then
+            return nil, false, "Tile could not be found."
+        end
+
+        return { tile.properties }, true, ""
     end
 
     return nil, false, "Unrecognized target."
 end
-
 
 local dlg <const> = Dialog { title = "Custom Properties" }
 
@@ -312,7 +329,7 @@ dlg:button {
         dlg:modify { id = "ptyValue", visible = false }
         dlg:modify { id = "stringValue", visible = false }
 
-        local query <const> = properties[propName]
+        local query <const> = properties[1][propName]
         local typeQuery <const> = type(query)
         if typeQuery == "boolean" then
             dlg:modify { id = "dataType", option = "BOOLEAN" }
@@ -415,8 +432,6 @@ dlg:button {
             assignment = args.boolValue --[[@as boolean]]
         elseif dataType == "COLOR" then
             local aseColor <const> = args.colorValue --[[@as Color]]
-            -- assignment = AseUtilities.aseColorToHex(
-            --     aseColor, ColorMode.RGB)
             assignment = {
                 r = aseColor.red,
                 g = aseColor.green,
@@ -431,8 +446,8 @@ dlg:button {
             assignment = nil
         elseif dataType == "POINT" then
             assignment = {
-                x = args.ptxValue --[[@as number]],
-                y = args.ptyValue --[[@as number]]
+                x = args.ptxValue --[[@as integer]],
+                y = args.ptyValue --[[@as integer]]
             }
         elseif dataType == "STRING" then
             assignment = args.stringValue --[[@as string]]
@@ -452,7 +467,12 @@ dlg:button {
             return
         end
 
-        properties[propName] = assignment
+        local lenProperties <const> = #properties
+        local i = 0
+        while i < lenProperties do
+            i = i + 1
+            properties[i][propName] = assignment
+        end
 
         app.alert {
             title = "Success",
@@ -488,7 +508,12 @@ dlg:button {
             return
         end
 
-        properties[propName] = nil
+        local lenProperties <const> = #properties
+        local i = 0
+        while i < lenProperties do
+            i = i + 1
+            properties[i][propName] = nil
+        end
 
         app.alert {
             title = "Success",
@@ -526,7 +551,8 @@ dlg:button {
             return
         end
 
-        print(JsonUtilities.propsToJson(properties))
+        -- TODO: Should this print all the properties?
+        print(JsonUtilities.propsToJson(properties[1]))
     end
 }
 

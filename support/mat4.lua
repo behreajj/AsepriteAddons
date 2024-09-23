@@ -673,27 +673,6 @@ function Mat4.toJson(a)
     return m0 .. m1 .. m2 .. m3
 end
 
----Returns a console print friendly string of a matrix, where each row is
----separated by a line break, '\n', and each column is separated by 3 spaces.
----@param a Mat4 matrix
----@return string
----@nodiscard
-function Mat4.toStringCol(a)
-    local m0 <const> = string.format(
-        "%+3.4f   %+3.4f   %+3.4f   %+3.4f\n",
-        a.m00, a.m01, a.m02, a.m03)
-    local m1 <const> = string.format(
-        "%+3.4f   %+3.4f   %+3.4f   %+3.4f\n",
-        a.m10, a.m11, a.m12, a.m13)
-    local m2 <const> = string.format(
-        "%+3.4f   %+3.4f   %+3.4f   %+3.4f\n",
-        a.m20, a.m21, a.m22, a.m23)
-    local m3 <const> = string.format(
-        "%+3.4f   %+3.4f   %+3.4f   %+3.4f\n",
-        a.m30, a.m31, a.m32, a.m33)
-    return m0 .. m1 .. m2 .. m3
-end
-
 ---Creates the identity matrix.
 ---@return Mat4
 ---@nodiscard

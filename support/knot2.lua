@@ -169,34 +169,6 @@ function Knot2.bezierPoint(a, b, step)
     return Vec2.bezierPoint(a.co, a.fh, b.rh, b.co, step)
 end
 
----Forms a knot to be used in arcs and circles at an origin with a given radius.
----For internal use only. Does not validate arguments.
----@param cosa number cosine of an angle
----@param sina number sine of an angle
----@param radius number radius
----@param handleMag number handle magnitude
----@param xCenter number x center
----@param yCenter number y center
----@return Knot2
----@nodiscard
-function Knot2.fromPolarInternal(
-    cosa, sina, radius, handleMag, xCenter, yCenter)
-    local hmsina <const> = sina * handleMag
-    local hmcosa <const> = cosa * handleMag
-
-    local co <const> = Vec2.new(
-        xCenter + radius * cosa,
-        yCenter + radius * sina)
-    local fh <const> = Vec2.new(
-        co.x - hmsina,
-        co.y + hmcosa)
-    local rh <const> = Vec2.new(
-        co.x + hmsina,
-        co.y - hmcosa)
-
-    return Knot2.new(co, fh, rh)
-end
-
 ---Returns a JSON string of a knot.
 ---@param knot Knot2 knot
 ---@return string

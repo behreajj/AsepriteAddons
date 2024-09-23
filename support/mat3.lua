@@ -254,24 +254,6 @@ function Mat3.toJson(a)
     return m0 .. m1 .. m2
 end
 
----Returns a console print friendly string of a matrix, where each row is
----separated by a line break, '\n', and each column is separated by 3 spaces.
----@param a Mat3 matrix
----@return string
----@nodiscard
-function Mat3.toStringCol(a)
-    local m0 <const> = string.format(
-        "%+3.4f   %+3.4f   %+3.4f\n",
-        a.m00, a.m01, a.m02)
-    local m1 <const> = string.format(
-        "%+3.4f   %+3.4f   %+3.4f\n",
-        a.m10, a.m11, a.m12)
-    local m2 <const> = string.format(
-        "%+3.4f   %+3.4f   %+3.4f\n",
-        a.m20, a.m21, a.m22)
-    return m0 .. m1 .. m2
-end
-
 ---Creates the identity matrix.
 ---@return Mat3
 ---@nodiscard
