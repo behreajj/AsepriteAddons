@@ -18,6 +18,7 @@ local dataTypes <const> = {
     "INTEGER",
     "NIL",
     "NUMBER",
+    "POINT",
     "STRING",
 }
 
@@ -28,6 +29,8 @@ local defaults <const> = {
     boolValue = false,
     intValue = 0,
     numValue = 0.0,
+    ptxValue = 0.0,
+    ptyValue = 0.0,
     stringValue = "",
 }
 
@@ -147,6 +150,7 @@ dlg:combobox {
         local isColor <const> = dataType == "COLOR"
         local isInt <const> = dataType == "INTEGER"
         local isNum <const> = dataType == "NUMBER"
+        local isPt <const> = dataType == "POINT"
         local isStr <const> = dataType == "STRING"
         local notNil <const> = dataType ~= "NIL"
 
@@ -155,6 +159,8 @@ dlg:combobox {
         dlg:modify { id = "intValue", visible = isInt and notNil }
         dlg:modify { id = "hexLabel", visible = isInt and notNil }
         dlg:modify { id = "numValue", visible = isNum and notNil }
+        dlg:modify { id = "ptxValue", visible = isPt and notNil }
+        dlg:modify { id = "ptyValue", visible = isPt and notNil }
         dlg:modify { id = "stringValue", visible = isStr and notNil }
     end
 }
@@ -227,6 +233,25 @@ dlg:number {
 
 dlg:newrow { always = false }
 
+dlg:number {
+    id = "ptxValue",
+    label = "Point:",
+    text = string.format("%.6f", defaults.ptxValue),
+    decimals = 6,
+    visible = defaults.dataType == "POINT",
+    focus = false
+}
+
+dlg:number {
+    id = "ptyValue",
+    text = string.format("%.6f", defaults.ptyValue),
+    decimals = 6,
+    visible = defaults.dataType == "POINT",
+    focus = false
+}
+
+dlg:newrow { always = false }
+
 dlg:entry {
     id = "stringValue",
     label = "String:",
@@ -260,6 +285,8 @@ dlg:button {
         dlg:modify { id = "intValue", visible = false }
         dlg:modify { id = "hexLabel", visible = false }
         dlg:modify { id = "numValue", visible = false }
+        dlg:modify { id = "ptxValue", visible = false }
+        dlg:modify { id = "ptyValue", visible = false }
         dlg:modify { id = "stringValue", visible = false }
 
         local query <const> = properties[propName]
@@ -306,22 +333,32 @@ dlg:button {
             dlg:modify { id = "stringValue", text = query }
         elseif typeQuery == "table" then
             if dataType == "COLOR" then
-                local rQuery <const> = query["r"] or 0
-                local gQuery <const> = query["g"] or 0
-                local bQuery <const> = query["b"] or 0
-                local aQuery <const> = query["a"] or 0
+                local rQuery <const> = (query["r"] or query[1]) or 0
+                local gQuery <const> = (query["g"] or query[2]) or 0
+                local bQuery <const> = (query["b"] or query[3]) or 0
+                local aQuery <const> = (query["a"] or query[4]) or 0
 
                 local r8 <const> = parseColorChannel(rQuery)
                 local g8 <const> = parseColorChannel(gQuery)
                 local b8 <const> = parseColorChannel(bQuery)
                 local a8 <const> = parseColorChannel(aQuery)
 
-                dlg:modify { id = "dataType", option = "COLOR" }
                 dlg:modify { id = "colorValue", visible = true }
                 dlg:modify {
                     id = "colorValue",
                     color = Color { r = r8, g = g8, b = b8, a = a8 }
                 }
+            elseif dataType == "POINT" then
+                local xQuery <const> = (query["x"] or query[1]) or 0
+                local yQuery <const> = (query["y"] or query[2]) or 0
+
+                local x <const> = type(xQuery) == "number" and xQuery or 0.0
+                local y <const> = type(yQuery) == "number" and yQuery or 0.0
+
+                dlg:modify { id = "ptxValue", visible = true }
+                dlg:modify { id = "ptyValue", visible = true }
+                dlg:modify { id = "ptxValue", text = string.format("%.6f", x) }
+                dlg:modify { id = "ptyValue", text = string.format("%.6f", y) }
             else
                 dlg:modify { id = "dataType", option = "STRING" }
                 dlg:modify { id = "stringValue", visible = true }
@@ -378,6 +415,11 @@ dlg:button {
             assignment = args.numValue --[[@as number]]
         elseif dataType == "NIL" then
             assignment = nil
+        elseif dataType == "POINT" then
+            assignment = {
+                x = args.ptxValue --[[@as number]],
+                y = args.ptyValue --[[@as number]]
+            }
         elseif dataType == "STRING" then
             assignment = args.stringValue --[[@as string]]
         else
