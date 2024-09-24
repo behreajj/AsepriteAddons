@@ -8,6 +8,8 @@ local colorSpaces <const> = {
 }
 
 local defaults <const> = {
+    -- TODO: Refactor.
+    -- TODO: Allow pulling from a selection.
     removeAlpha = true,
     clampTo256 = true,
     printElapsed = false,

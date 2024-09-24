@@ -1,4 +1,3 @@
-local inputTypes <const> = { "CEL", "COMPOSITE", "FILE", "PALETTE" }
 local importFileExts <const> = {
     "acbm", -- Amiga Continuous Bitmap
     "acb",  -- Adobe Color Book
@@ -17,21 +16,19 @@ local importFileExts <const> = {
     "ico",  -- Windows icon
     "iff",
     "ilbm", -- Interleaved Bitmap
-    "jpeg",
-    "jpg",
-    "lbm", -- IFF image
-    "pal", -- RIFF binary palette
-    "pbm", -- B&W PNM
-    "pgm", -- Gray PNM
-    "ppm", -- Color PNM
+    "lbm",  -- IFF image
+    "pal",  -- RIFF binary palette
+    "pbm",  -- B&W PNM
+    "pgm",  -- Gray PNM
+    "ppm",  -- Color PNM
     "tif",
     "tiff",
     "txt"
 }
-
-local outputTypes <const> = { "FILE", "PRINT" }
 local exportFileExts <const> = { "c", "csv", "md", "txt" }
 
+local inputTypes <const> = { "CEL", "COMPOSITE", "FILE", "PALETTE" }
+local outputTypes <const> = { "FILE", "PRINT" }
 local rgbaFormats <const> = { "ABGR", "BGR", "RGB", "RGBA" }
 
 local defaults <const> = {
