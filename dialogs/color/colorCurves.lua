@@ -127,10 +127,10 @@ local function setInputFromColor(coPostfix)
     local site <const> = app.site
     local sprite <const> = site.sprite
     if not sprite then return end
-    local frame <const> = site.frame
-    if not frame then return end
+    local frObj <const> = site.frame
+    if not frObj then return end
 
-    local lab <const> = AseUtilities.averageColor(sprite, frame)
+    local lab <const> = AseUtilities.averageColor(sprite, frObj.frameNumber)
 
     local args <const> = dlg.data
     local channel <const> = args.channel --[[@as string]]

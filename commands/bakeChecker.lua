@@ -14,6 +14,7 @@ local bAse = Color { r = 10, g = 10, b = 10, a = 255 }
 
 local appPrefs <const> = app.preferences
 if appPrefs then
+    -- TODO: Abstract this to an AseUtilites method?
     local docPrefs <const> = appPrefs.document(activeSprite)
     if docPrefs then
         -- https://github.com/aseprite/aseprite/blob/main/data/pref.xml#L521

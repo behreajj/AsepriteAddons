@@ -4,40 +4,12 @@ local site <const> = app.site
 local sprite <const> = site.sprite
 if not sprite then return end
 
-local mask <const>, isValid <const> = AseUtilities.getSelection(sprite)
+local sel <const>, isValid <const> = AseUtilities.getSelection(sprite)
 if not isValid then return end
 
 local frame <const> = site.frame or sprite.frames[1]
-
-local maskBounds <const> = mask.bounds
-local xMask <const> = maskBounds.x
-local yMask <const> = maskBounds.y
-local wMask <const> = math.max(1, math.abs(maskBounds.width))
-local hMask <const> = math.max(1, math.abs(maskBounds.height))
-
-local spriteSpec <const> = sprite.spec
-local colorMode <const> = spriteSpec.colorMode
-local colorSpace <const> = spriteSpec.colorSpace
-local alphaIndex <const> = spriteSpec.transparentColor
-
-local imageSpec <const> = AseUtilities.createSpec(
-    wMask, hMask,
-    colorMode, colorSpace, alphaIndex)
-local image <const> = Image(imageSpec)
-image:drawSprite(sprite, frame, Point(-xMask, -yMask))
-
--- Alpha index can behave funnily when palette is malformed, but
--- not sure what can be done about it.
-if alphaIndex >= 0 and alphaIndex < 256 then
-    local pxItr <const> = image:pixels()
-    for pixel in pxItr do
-        if not mask:contains(
-                xMask + pixel.x,
-                yMask + pixel.y) then
-            pixel(alphaIndex)
-        end
-    end
-end
+local image <const>, xSel <const>, ySel <const> = AseUtilities.imageFromSel(
+    sel, sprite, frame.frameNumber)
 
 local appPrefs <const> = app.preferences
 local useSnap = false
@@ -66,7 +38,9 @@ if site.layer and site.layer.isTilemap then
     end
 end
 
-local center = Point(wMask // 2, hMask // 2)
+local wImage <const> = image.width
+local hImage <const> = image.height
+local center = Point(wImage // 2, hImage // 2)
 if useSnap then
     center = Point(0, 0)
 else
@@ -78,21 +52,21 @@ else
             if maskPivot == 0 then
                 center = Point(0, 0)
             elseif maskPivot == 1 then
-                center = Point(wMask // 2, 0)
+                center = Point(wImage // 2, 0)
             elseif maskPivot == 2 then
-                center = Point(wMask - 1, 0)
+                center = Point(wImage - 1, 0)
             elseif maskPivot == 3 then
-                center = Point(0, hMask // 2)
+                center = Point(0, hImage // 2)
             elseif maskPivot == 4 then
-                center = Point(wMask // 2, hMask // 2)
+                center = Point(wImage // 2, hImage // 2)
             elseif maskPivot == 5 then
-                center = Point(wMask - 1, hMask // 2)
+                center = Point(wImage - 1, hImage // 2)
             elseif maskPivot == 6 then
-                center = Point(0, hMask - 1)
+                center = Point(0, hImage - 1)
             elseif maskPivot == 7 then
-                center = Point(wMask // 2, hMask - 1)
+                center = Point(wImage // 2, hImage - 1)
             elseif maskPivot == 8 then
-                center = Point(wMask - 1, hMask - 1)
+                center = Point(wImage - 1, hImage - 1)
             end
         end
     end
@@ -112,7 +86,7 @@ app.transaction("Brush From Mask", function()
         image = image,
         center = center,
         pattern = brushPattern,
-        patternOrigin = Point(xMask, yMask),
+        patternOrigin = Point(xSel, ySel),
     }
     app.tool = "pencil"
 end)

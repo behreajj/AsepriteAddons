@@ -363,7 +363,9 @@ local function genLabelSvgStr(
     local wScalePad <const> = wScale + padding
     local hScalePad <const> = hScale + padding
 
-    labelsArr[#labelsArr + 1] = strfmt("\n<g id=\"%s\">", id)
+    local labelsIdx = 0
+    labelsIdx = labelsIdx + 1
+    labelsArr[labelsIdx] = strfmt("\n<g id=\"%s\">", id)
 
     local lenUniques = math.min(#hexArr, #idcsArr)
     local h = 0
@@ -377,7 +379,8 @@ local function genLabelSvgStr(
             + (hex & 0xff)) / 3.0
         local webHex <const> = hsi > 127 and 0 or 0xffffff
 
-        labelsArr[#labelsArr + 1] = strfmt(
+        labelsIdx = labelsIdx + 1
+        labelsArr[labelsIdx] = strfmt(
             "<g id=\"color%d\" fill=\"#%06X\">",
             h - 1, webHex)
         local lenIdcs <const> = #idcs
@@ -394,11 +397,15 @@ local function genLabelSvgStr(
             local textStr <const> = strfmt(
                 "<text id=\"pixel%d_%d_%d\" x=\"%.1f\" y=\"%.1f\">%d</text>",
                 h - 1, x0, y0, cx, cy, h)
-            labelsArr[#labelsArr + 1] = textStr
+
+            labelsIdx = labelsIdx + 1
+            labelsArr[labelsIdx] = textStr
         end
-        labelsArr[#labelsArr + 1] = "</g>"
+        labelsIdx = labelsIdx + 1
+        labelsArr[labelsIdx] = "</g>"
     end
-    labelsArr[#labelsArr + 1] = "</g>"
+    labelsIdx = labelsIdx + 1
+    labelsArr[labelsIdx] = "</g>"
 
     return table.concat(labelsArr, "\n")
 end
@@ -881,6 +888,7 @@ dlg:button {
             local aAse = Color { r = 28, g = 28, b = 28, a = 255 }
             local bAse = Color { r = 10, g = 10, b = 10, a = 255 }
 
+            -- TODO: Make this an AseUtilites method?
             -- https://github.com/aseprite/aseprite/blob/main/data/pref.xml#L521
             local bgPref <const> = docPrefs.bg
             if bgPref then

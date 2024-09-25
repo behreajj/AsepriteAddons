@@ -171,9 +171,9 @@ end
 
 ---@param dialog Dialog
 ---@param sprite Sprite
----@param frame integer|Frame
-local function updateFromSelect(dialog, sprite, frame)
-    local v = AseUtilities.averageNormal(sprite, frame)
+---@param frIdx integer
+local function updateFromSelect(dialog, sprite, frIdx)
+    local v = AseUtilities.averageNormal(sprite, frIdx)
     dialog:modify { id = "x", text = string.format("%.3f", v.x) }
     dialog:modify { id = "y", text = string.format("%.3f", v.y) }
     dialog:modify { id = "z", text = string.format("%.3f", v.z) }
@@ -293,8 +293,8 @@ dlg:button {
     onclick = function()
         local site <const> = app.site
         local sprite <const> = site.sprite
-        local frame <const> = site.frame
-        if sprite and frame then
+        local frObj <const> = site.frame
+        if sprite and frObj then
             if sprite.colorMode ~= ColorMode.RGB then
                 app.alert {
                     title = "Error",
@@ -302,7 +302,7 @@ dlg:button {
                 }
                 return
             end
-            updateFromSelect(dlg, sprite, frame)
+            updateFromSelect(dlg, sprite, frObj.frameNumber)
         end
     end
 }

@@ -114,9 +114,9 @@ end
 
 ---@param dialog Dialog
 ---@param sprite Sprite
----@param frame integer|Frame
-local function setFromSelect(dialog, sprite, frame)
-    local lab <const> = AseUtilities.averageColor(sprite, frame)
+---@param frIdx integer
+local function setFromSelect(dialog, sprite, frIdx)
+    local lab <const> = AseUtilities.averageColor(sprite, frIdx)
     if lab.alpha > 0.0 then
         -- Average color uses SR LAB 2.
         local lch <const> = Clr.srLab2ToSrLch(
@@ -275,9 +275,9 @@ dlg:button {
     onclick = function()
         local site <const> = app.site
         local sprite <const> = site.sprite
-        local frame <const> = site.frame
-        if sprite and frame then
-            setFromSelect(dlg, sprite, frame)
+        local frObj <const> = site.frame
+        if sprite and frObj then
+            setFromSelect(dlg, sprite, frObj.frameNumber)
         end
     end
 }
