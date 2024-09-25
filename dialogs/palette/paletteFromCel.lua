@@ -1,15 +1,18 @@
 dofile("../../support/aseutilities.lua")
 dofile("../../support/octree.lua")
 
+local areaTargets <const> = { "ACTIVE", "SELECTION" }
 local colorSpaces <const> = {
     "LINEAR_RGB",
     "S_RGB",
     "SR_LAB_2"
 }
+local palTargets <const> = { "ACTIVE", "SAVE" }
 
 local defaults <const> = {
-    -- TODO: Refactor.
-    -- TODO: Allow pulling from a selection.
+    -- Last commit with older paletteFromCel:
+    -- cc630e248ff36932387f9adfdf56925e53463c0b .
+    areaTarget = "ACTIVE",
     removeAlpha = true,
     clampTo256 = true,
     printElapsed = false,
@@ -24,7 +27,7 @@ local defaults <const> = {
     minRefine = -256,
     maxRefine = 256,
     prependMask = true,
-    target = "ACTIVE",
+    palTarget = "ACTIVE",
     paletteIndex = 1,
     clrSpacePreset = "LINEAR_RGB",
     pullFocus = false
@@ -126,6 +129,16 @@ local function v3ToClrFuncFromPreset(preset)
 end
 
 local dlg <const> = Dialog { title = "Palette From Cel" }
+
+dlg:combobox {
+    id = "areaTarget",
+    label = "Area:",
+    option = defaults.areaTarget,
+    options = areaTargets,
+    focus = false
+}
+
+dlg:newrow { always = false }
 
 dlg:check {
     id = "prependMask",
@@ -271,21 +284,11 @@ dlg:combobox {
 
 dlg:newrow { always = false }
 
-dlg:check {
-    id = "printElapsed",
-    label = "Print:",
-    text = "Diagnostic",
-    selected = defaults.printElapsed,
-    visible = defaults.clampTo256
-}
-
-dlg:newrow { always = false }
-
 dlg:combobox {
-    id = "target",
+    id = "palTarget",
     label = "Target:",
-    option = defaults.target,
-    options = { "ACTIVE", "SAVE" },
+    option = defaults.palTarget,
+    options = palTargets,
     onchange = function()
         local args <const> = dlg.data
         local md <const> = args.target --[[@as string]]
@@ -318,8 +321,17 @@ dlg:file {
     id = "filepath",
     filetypes = AseUtilities.FILE_FORMATS_PAL,
     save = true,
-
     visible = defaults.target == "SAVE"
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "printElapsed",
+    label = "Print:",
+    text = "Diagnostic",
+    selected = defaults.printElapsed,
+    visible = defaults.clampTo256
 }
 
 dlg:newrow { always = false }
@@ -327,7 +339,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "confirm",
     text = "&OK",
-    focus = defaults.pullFocus,
+    focus = true,
     onclick = function()
         -- Begin measuring elapsed time.
         local args <const> = dlg.data
@@ -354,135 +366,176 @@ dlg:button {
             return
         end
 
-        local srcLayer <const> = site.layer
-        if not srcLayer then
-            app.alert {
-                title = "Error",
-                text = "There is no active layer."
-            }
-            return
-        end
-
-        if srcLayer.isReference then
-            app.alert {
-                title = "Error",
-                text = "Reference layers are not supported."
-            }
-            return
-        end
-
-        AseUtilities.preserveForeBack()
-
-        -- Unpack arguments.
-        local target <const> = args.target
-            or defaults.target --[[@as string]]
-        local ocThreshold <const> = args.octThreshold
-            or defaults.octThreshold --[[@as integer]]
-        local clampTo256 <const> = args.clampTo256 --[[@as boolean]]
-        local prependMask <const> = args.prependMask --[[@as boolean]]
-        local removeAlpha <const> = args.removeAlpha --[[@as boolean]]
-        local octCapBits <const> = args.octCapacity
-            or defaults.octCapacityBits --[[@as integer]]
-        local refineCap <const> = args.refineCapacity
-            or defaults.refineCapacity --[[@as integer]]
+        local spriteSpec <const> = activeSprite.spec
+        local colorMode <const> = spriteSpec.colorMode
+        local colorSpace <const> = spriteSpec.colorSpace
+        local alphaIndex <const> = spriteSpec.transparentColor
 
         local srcImg = nil
-        local spriteSpec <const> = activeSprite.spec
-        local spriteColorMode <const> = spriteSpec.colorMode
-        if srcLayer.isGroup then
-            local groupRect = nil
-            srcImg, groupRect = AseUtilities.flattenGroup(
-                srcLayer, srcFrame,
-                spriteColorMode,
-                spriteSpec.colorSpace,
-                spriteSpec.transparentColor,
-                true, true, true, true)
-        else
-            local srcCel <const> = srcLayer:cel(srcFrame)
-            if not srcCel then
+        local xtl = 0
+        local ytl = 0
+
+        local areaTarget <const> = args.areaTarget
+            or defaults.areaTarget --[[@as string]]
+        if areaTarget == "SELECTION" then
+            local mask <const>, isValid <const> = AseUtilities.getSelection(
+                activeSprite)
+            if not isValid then
                 app.alert {
                     title = "Error",
-                    text = "There is no active cel."
+                    text = "There is no valid selection."
                 }
                 return
             end
-            srcImg = srcCel.image
-            if srcLayer.isTilemap then
-                srcImg = AseUtilities.tileMapToImage(
-                    srcImg, srcLayer.tileset, spriteColorMode)
+            srcImg, xtl, ytl = AseUtilities.imageFromSel(
+                mask, activeSprite, srcFrame.frameNumber)
+        else
+            -- Default to active layer.
+            local srcLayer <const> = site.layer
+            if not srcLayer then
+                app.alert {
+                    title = "Error",
+                    text = "There is no active layer."
+                }
+                return
             end
-        end
 
-        -- Determine alpha mask according to color mode.
-        local alphaMask = 0
-        if removeAlpha then
-            if spriteColorMode == ColorMode.GRAY then
-                alphaMask = 0xff00
+            if srcLayer.isReference then
+                app.alert {
+                    title = "Error",
+                    text = "Reference layers are not supported."
+                }
+                return
+            end
+
+            if srcLayer.isGroup then
+                local includeLocked <const> = true
+                local includeHidden <const> = true
+                local includeTiles <const> = true
+                local includeBkg <const> = true
+                local boundingRect = Rectangle()
+                srcImg, boundingRect = AseUtilities.flattenGroup(
+                    srcLayer, srcFrame,
+                    colorMode, colorSpace, alphaIndex,
+                    includeLocked, includeHidden, includeTiles, includeBkg)
+                xtl = boundingRect.x
+                ytl = boundingRect.y
             else
-                alphaMask = 0xff000000
-            end
-        end
+                local srcCel <const> = srcLayer:cel(srcFrame)
+                if not srcCel then
+                    app.alert {
+                        title = "Error",
+                        text = "There is no active cel."
+                    }
+                    return
+                end
 
-        local idx = 0
+                if srcLayer.isTilemap then
+                    srcImg = AseUtilities.tileMapToImage(
+                        srcCel.image, srcLayer.tileset, colorMode)
+                else
+                    srcImg = srcCel.image
+                end
+
+                local srcPos <const> = srcCel.position
+                xtl = srcPos.x
+                ytl = srcPos.y
+            end -- End group layer check.
+        end     -- End area target type.
+
+        local srcBytes <const> = srcImg.bytes
+        local wSrcImg <const> = srcImg.width
+        local hSrcImg <const> = srcImg.height
+        local areaSrcImg <const> = wSrcImg * hSrcImg
+
         ---@type table<integer, integer>
-        local dictionary <const> = {}
-        local pxItr <const> = srcImg:pixels()
+        local hexDict <const> = {}
+        local lenHexDict = 0
+        local removeAlpha <const> = args.removeAlpha --[[@as boolean]]
+        local a32Mask <const> = removeAlpha and 0xff000000 or 0
 
-        if spriteColorMode == ColorMode.RGB then
-            for pixel in pxItr do
-                local hex = pixel()
-                if ((hex >> 0x18) & 0xff) > 0 then
-                    hex = alphaMask | hex
-                    if not dictionary[hex] then
-                        idx = idx + 1
-                        dictionary[hex] = idx
-                    end
-                end
-            end
-        elseif spriteColorMode == ColorMode.INDEXED then
-            local srcPal <const> = AseUtilities.getPalette(
-                srcFrame, activeSprite.palettes)
-            local aseToHex <const> = AseUtilities.aseColorToHex
-            local rgbColorMode <const> = ColorMode.RGB
-            local lenSrcPal <const> = #srcPal
-            for pixel in pxItr do
-                local srcIndex <const> = pixel()
-                if srcIndex > -1 and srcIndex < lenSrcPal then
-                    local aseColor <const> = srcPal:getColor(srcIndex)
+        -- Cache methods used in loops.
+        local strbyte <const> = string.byte
+        local strsub <const> = string.sub
+        local strunpack <const> = string.unpack
+        local aseToHex <const> = AseUtilities.aseColorToHex
+
+        -- Code is similar to AseUtilities.averageColor, but hex dict value
+        -- is slightly different.
+        if colorMode == ColorMode.INDEXED then
+            local palette <const> = AseUtilities.getPalette(
+                srcFrame.frameNumber, activeSprite.palettes)
+            local lenPalette <const> = #palette
+            local cmRgb <const> = ColorMode.RGB
+
+            local i = 0
+            while i < areaSrcImg do
+                i = i + 1
+                local idx <const> = strbyte(srcBytes, i)
+                if idx >= 0 and idx < lenPalette then
+                    local aseColor <const> = palette:getColor(idx)
                     if aseColor.alpha > 0 then
-                        local hex = aseToHex(aseColor, rgbColorMode)
-                        hex = alphaMask | hex
-                        if not dictionary[hex] then
-                            idx = idx + 1
-                            dictionary[hex] = idx
+                        local abgr32 = aseToHex(aseColor, cmRgb)
+                        abgr32 = a32Mask | abgr32
+                        if not hexDict[abgr32] then
+                            lenHexDict = lenHexDict + 1
+                            hexDict[abgr32] = lenHexDict
                         end
+                    end -- End color alpha gt zero.
+                end     -- End map index is in bounds.
+            end         -- End pixel loop.
+        elseif colorMode == ColorMode.GRAY then
+            local i = 0
+            while i < areaSrcImg do
+                local i2 <const> = i * 2
+                local av16 <const> = strunpack("<I2", strsub(
+                    srcBytes, 1 + i2, 2 + i2))
+                local a8 <const> = av16 >> 0x08 & 0xff
+                if a8 > 0 then
+                    local v8 <const> = av16 & 0xff
+                    local abgr32 = a8 << 0x18 | v8 << 0x10 | v8 << 0x08 | v8
+                    abgr32 = a32Mask | abgr32
+                    if not hexDict[abgr32] then
+                        lenHexDict = lenHexDict + 1
+                        hexDict[abgr32] = lenHexDict
                     end
                 end
+                i = i + 1
             end
-        elseif spriteColorMode == ColorMode.GRAY then
-            for pixel in pxItr do
-                local hexGray = pixel()
-                if ((hexGray >> 0x08) & 0xff) > 0 then
-                    hexGray = alphaMask | hexGray
-                    local a <const> = (hexGray >> 0x08) & 0xff
-                    local v <const> = hexGray & 0xff
-                    local h <const> = a << 0x18 | v << 0x10 | v << 0x08 | v
-                    if not dictionary[h] then
-                        idx = idx + 1
-                        dictionary[h] = idx
+        else
+            -- Default to RGB color mode.
+            local i = 0
+            while i < areaSrcImg do
+                local i4 <const> = i * 4
+                local abgr32 = strunpack("<I4", strsub(
+                    srcBytes, 1 + i4, 4 + i4))
+                if (abgr32 & 0xff000000) ~= 0 then
+                    abgr32 = a32Mask | abgr32
+                    if not hexDict[abgr32] then
+                        lenHexDict = lenHexDict + 1
+                        hexDict[abgr32] = lenHexDict
                     end
                 end
+                i = i + 1
             end
         end
 
         -- Convert dictionary to set.
         ---@type integer[]
         local hexes = {}
-        for k, v in pairs(dictionary) do
+        for k, v in pairs(hexDict) do
             hexes[v] = k
         end
 
-        -- The oldHexesLen and centersLen need to be
+        local octCapBits <const> = args.octCapacity
+            or defaults.octCapacityBits --[[@as integer]]
+        local refineCap <const> = args.refineCapacity
+            or defaults.refineCapacity --[[@as integer]]
+        local ocThreshold <const> = args.octThreshold
+            or defaults.octThreshold --[[@as integer]]
+        local clampTo256 <const> = args.clampTo256 --[[@as boolean]]
+
+        -- The oldLenHexes and centersLen need to be
         -- set here for print diagnostic purposes.
         local oldLenHexes <const> = #hexes
         local lenCenters = 0
@@ -534,11 +587,14 @@ dlg:button {
             lenHexes = #hexes
         end
 
+        local prependMask <const> = args.prependMask --[[@as boolean]]
         if prependMask then
             Utilities.prependMask(hexes)
         end
 
-        if target == "SAVE" then
+        local palTarget <const> = args.palTarget
+            or defaults.palTarget --[[@as string]]
+        if palTarget == "SAVE" then
             local filepath <const> = args.filepath --[[@as string]]
             local palette <const> = Palette(lenHexes)
             local k = 0
@@ -551,25 +607,23 @@ dlg:button {
             palette:saveAs(filepath)
             app.alert { title = "Success", text = "Palette saved." }
         else
-            -- How to handle out of bounds palette index?
             local palIdx <const> = args.paletteIndex
                 or defaults.paletteIndex --[[@as integer]]
-            if palIdx > #activeSprite.palettes then
-                app.alert {
-                    title = "Error",
-                    text = "Palette index is out of bounds."
-                }
-                return
+            local palIdxVerif = 1
+            if palIdx <= #activeSprite.palettes then
+                palIdxVerif = palIdx
             end
 
-            if spriteColorMode == ColorMode.INDEXED then
+            if colorMode == ColorMode.INDEXED then
                 app.command.ChangePixelFormat { format = "rgb" }
-                AseUtilities.setPalette(hexes, activeSprite, palIdx)
+                AseUtilities.setPalette(hexes, activeSprite, palIdxVerif)
                 app.command.ChangePixelFormat { format = "indexed" }
             else
-                AseUtilities.setPalette(hexes, activeSprite, palIdx)
+                AseUtilities.setPalette(hexes, activeSprite, palIdxVerif)
             end
         end
+
+        app.refresh()
 
         if printElapsed then
             local endTime <const> = os.clock()
@@ -583,16 +637,12 @@ dlg:button {
             }
 
             if clampTo256 and lenCenters > 0 then
-                table.insert(txtArr,
-                    string.format("Capacity: %d", octCapacity))
-                table.insert(txtArr,
-                    string.format("Octree Colors: %d", lenCenters))
+                txtArr[#txtArr + 1] = string.format("Capacity: %d", octCapacity)
+                txtArr[#txtArr + 1] = string.format("Octree Colors: %d", lenCenters)
             end
 
             app.alert { title = "Diagnostic", text = txtArr }
         end
-
-        app.refresh()
     end
 }
 
