@@ -486,11 +486,15 @@ function AseUtilities.averageColor(sprite, frIdx)
         flat, _, _ = AseUtilities.imageFromSel(
             sel, sprite, frIdx)
     else
-        -- TODO: Inline createSpec within AseUtilites methods
-        -- where possible to reduce overhead.
         local x <const>, y <const> = AseUtilities.getMouse()
-        flat = Image(AseUtilities.createSpec(
-            1, 1, colorMode, colorSpace, alphaIndex))
+        local mouseSpec <const> = ImageSpec {
+            width = 1,
+            height = 1,
+            colorMode = colorMode,
+            transparentColor = alphaIndex
+        }
+        mouseSpec.colorSpace = colorSpace
+        flat = Image(mouseSpec)
         flat:drawSprite(sprite, frIdx, Point(-x, -y))
     end
 
@@ -605,11 +609,15 @@ function AseUtilities.averageNormal(sprite, frIdx)
         flat, _, _ = AseUtilities.imageFromSel(
             sel, sprite, frIdx)
     else
-        -- TODO: Inline createSpec within AseUtilites methods
-        -- where possible to reduce overhead.
         local x <const>, y <const> = AseUtilities.getMouse()
-        flat = Image(AseUtilities.createSpec(
-            1, 1, colorMode, colorSpace, alphaIndex))
+        local mouseSpec <const> = ImageSpec {
+            width = 1,
+            height = 1,
+            colorMode = colorMode,
+            transparentColor = alphaIndex
+        }
+        mouseSpec.colorSpace = colorSpace
+        flat = Image(mouseSpec)
         flat:drawSprite(sprite, frIdx, Point(-x, -y))
     end
 
@@ -3109,24 +3117,34 @@ function AseUtilities.tileMapToImage(imgSrc, tileSet, sprClrMode)
     -- Assigning 4 to the target image when the sprite color
     -- mode is 2 (indexed) crashes Aseprite.
     local srcSpec <const> = imgSrc.spec
+    local wSrc <const> = srcSpec.width
+    local hSrc <const> = srcSpec.height
+    local alphaIndex <const> = srcSpec.transparentColor
+    local colorSpace <const> = srcSpec.colorSpace
 
-    -- TODO: Inline createSpec within AseUtilities methods
-    -- where possible to reduce overhead.
     if not tileSet then
-        return Image(AseUtilities.createSpec(srcSpec.width, srcSpec.height,
-            sprClrMode, srcSpec.colorSpace, srcSpec.transparentColor))
+        local imageSpec <const> = ImageSpec {
+            width = wSrc,
+            height = hSrc,
+            colorMode = sprClrMode,
+            transparentColor = alphaIndex,
+        }
+        imageSpec.colorSpace = colorSpace
+        return Image(imageSpec)
     end
 
     local tileDim <const> = tileSet.grid.tileSize
-    local tileWidth <const> = tileDim.width
-    local tileHeight <const> = tileDim.height
+    local tileWidth <const> = math.max(1, math.abs(tileDim.width))
+    local tileHeight <const> = math.max(1, math.abs(tileDim.height))
 
-    local imgTrg <const> = Image(AseUtilities.createSpec(
-        srcSpec.width * tileWidth,
-        srcSpec.height * tileHeight,
-        sprClrMode,
-        srcSpec.colorSpace,
-        srcSpec.transparentColor))
+    local trgSpec <const> = ImageSpec {
+        width = wSrc * tileWidth,
+        height = hSrc * tileHeight,
+        colorMode = sprClrMode,
+        transparentColor = alphaIndex,
+    }
+    trgSpec.colorSpace = colorSpace
+    local imgTrg <const> = Image(trgSpec)
     local blendModeSrc <const> = BlendMode.SRC
 
     local pixelColor <const> = app.pixelColor
