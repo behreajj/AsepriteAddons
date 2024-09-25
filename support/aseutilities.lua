@@ -469,10 +469,10 @@ end
 ---tries getting the color at the editor mouse position. Calculates the average
 ---in the SR LAB 2 color space.
 ---@param sprite Sprite
----@param frIdx integer
+---@param frame Frame|integer
 ---@return { l: number, a: number, b: number, alpha: number }
 ---@nodiscard
-function AseUtilities.averageColor(sprite, frIdx)
+function AseUtilities.averageColor(sprite, frame)
     local sprSpec <const> = sprite.spec
     local colorMode <const> = sprSpec.colorMode
     local alphaIndex <const> = sprSpec.transparentColor
@@ -484,7 +484,7 @@ function AseUtilities.averageColor(sprite, frIdx)
     local flat = nil
     if isValid then
         flat, _, _ = AseUtilities.imageFromSel(
-            sel, sprite, frIdx)
+            sel, sprite, frame)
     else
         local x <const>, y <const> = AseUtilities.getMouse()
         local mouseSpec <const> = ImageSpec {
@@ -495,7 +495,7 @@ function AseUtilities.averageColor(sprite, frIdx)
         }
         mouseSpec.colorSpace = colorSpace
         flat = Image(mouseSpec)
-        flat:drawSprite(sprite, frIdx, Point(-x, -y))
+        flat:drawSprite(sprite, frame, Point(-x, -y))
     end
 
     local flatBytes <const> = flat.bytes
@@ -511,11 +511,12 @@ function AseUtilities.averageColor(sprite, frIdx)
     ---@type table<integer, integer>
     local hd <const> = {}
     if colorMode == ColorMode.INDEXED then
-        local toHex <const> = AseUtilities.aseColorToHex
+        local aseToHex <const> = AseUtilities.aseColorToHex
         local strbyte <const> = string.byte
 
-        local palette <const> = AseUtilities.getPalette(frIdx, sprite.palettes)
+        local palette <const> = AseUtilities.getPalette(frame, sprite.palettes)
         local lenPalette <const> = #palette
+        local cmRgb <const> = ColorMode.RGB
 
         local i = 0
         while i < areaFlat do
@@ -524,12 +525,12 @@ function AseUtilities.averageColor(sprite, frIdx)
             if idx >= 0 and idx < lenPalette then
                 local aseColor <const> = palette:getColor(idx)
                 if aseColor.alpha > 0 then
-                    local abgr32 <const> = toHex(aseColor, ColorMode.RGB)
+                    local abgr32 <const> = aseToHex(aseColor, cmRgb)
                     local q <const> = hd[abgr32]
                     if q then hd[abgr32] = q + 1 else hd[abgr32] = 1 end
-                end
-            end
-        end
+                end -- End color alpha gt zero.
+            end     -- End map index is in bounds.
+        end         -- End pixel loop.
     elseif colorMode == ColorMode.GRAY then
         local i = 0
         while i < areaFlat do
@@ -591,10 +592,10 @@ end
 ---normal used in a normal map. If the sprite color mode is not RGB, returns
 ---up direction.
 ---@param sprite Sprite
----@param frIdx integer
+---@param frame Frame|integer
 ---@return Vec3
 ---@nodiscard
-function AseUtilities.averageNormal(sprite, frIdx)
+function AseUtilities.averageNormal(sprite, frame)
     local sprSpec <const> = sprite.spec
     local colorMode <const> = sprSpec.colorMode
     if colorMode ~= ColorMode.RGB then return Vec3.up() end
@@ -607,7 +608,7 @@ function AseUtilities.averageNormal(sprite, frIdx)
     local flat = nil
     if isValid then
         flat, _, _ = AseUtilities.imageFromSel(
-            sel, sprite, frIdx)
+            sel, sprite, frame)
     else
         local x <const>, y <const> = AseUtilities.getMouse()
         local mouseSpec <const> = ImageSpec {
@@ -618,7 +619,7 @@ function AseUtilities.averageNormal(sprite, frIdx)
         }
         mouseSpec.colorSpace = colorSpace
         flat = Image(mouseSpec)
-        flat:drawSprite(sprite, frIdx, Point(-x, -y))
+        flat:drawSprite(sprite, frame, Point(-x, -y))
     end
 
     local flatBytes <const> = flat.bytes
