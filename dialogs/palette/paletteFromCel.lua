@@ -291,15 +291,15 @@ dlg:combobox {
     options = palTargets,
     onchange = function()
         local args <const> = dlg.data
-        local md <const> = args.target --[[@as string]]
+        local palTarget <const> = args.palTarget --[[@as string]]
 
         dlg:modify {
             id = "paletteIndex",
-            visible = md == "ACTIVE"
+            visible = palTarget == "ACTIVE"
         }
         dlg:modify {
             id = "filepath",
-            visible = md == "SAVE"
+            visible = palTarget == "SAVE"
         }
     end
 }
@@ -312,7 +312,7 @@ dlg:slider {
     min = 1,
     max = 96,
     value = defaults.paletteIndex,
-    visible = defaults.target == "ACTIVE"
+    visible = defaults.palTarget == "ACTIVE"
 }
 
 dlg:newrow { always = false }
@@ -321,7 +321,7 @@ dlg:file {
     id = "filepath",
     filetypes = AseUtilities.FILE_FORMATS_PAL,
     save = true,
-    visible = defaults.target == "SAVE"
+    visible = defaults.palTarget == "SAVE"
 }
 
 dlg:newrow { always = false }
