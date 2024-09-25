@@ -93,6 +93,7 @@ end
 ---@nodiscard
 function Utilities.flatArr2(arr2)
     local flat <const> = {}
+    local lenFlat = 0
     local lenOuter <const> = #arr2
     local i = 0
     while i < lenOuter do
@@ -102,7 +103,8 @@ function Utilities.flatArr2(arr2)
         local j = 0
         while j < lenInner do
             j = j + 1
-            flat[#flat + 1] = arr1[j]
+            lenFlat = lenFlat + 1
+            flat[lenFlat] = arr1[j]
         end
     end
     return flat
@@ -1008,6 +1010,7 @@ function Utilities.sequential(arr)
 
     ---@type integer[][]
     local seqs <const> = {}
+    local lenSeqs = 0
     local start = 0
     local i = 1
     while i <= lenArr do
@@ -1022,7 +1025,8 @@ function Utilities.sequential(arr)
                 j = j + 1
                 seq[j] = arr[start + j]
             end
-            seqs[#seqs + 1] = seq
+            lenSeqs = lenSeqs + 1
+            seqs[lenSeqs] = seq
             start = i
         end
         i = i + 1
@@ -1235,10 +1239,12 @@ end
 function Utilities.stringToCharArr(str)
     ---@type string[]
     local chars <const> = {}
+    local lenChars = 0
     local utf8codes <const> = utf8.codes
     local utf8char <const> = utf8.char
     for _, c in utf8codes(str) do
-        chars[#chars + 1] = utf8char(c)
+        lenChars = lenChars + 1
+        chars[lenChars] = utf8char(c)
     end
     return chars
 end

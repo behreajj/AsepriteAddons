@@ -1626,6 +1626,7 @@ function AseUtilities.filterLayers(
                 trgLayers = AseUtilities.getLayerHierarchy(sprite,
                     includeLocked, includeHidden, includeTiles, includeBkg)
             else
+                local lenTrgLayers = 0
                 local rangeLayers <const> = range.layers
                 local lenRangeLayers <const> = #rangeLayers
                 local i = 0
@@ -1638,7 +1639,8 @@ function AseUtilities.filterLayers(
                         and (includeLocked or rangeLayer.isEditable)
                         and (includeTiles or (not rangeLayer.isTilemap))
                         and (includeBkg or (not rangeLayer.isBackground)) then
-                        trgLayers[#trgLayers + 1] = rangeLayer
+                        lenTrgLayers = lenTrgLayers + 1
+                        trgLayers[lenTrgLayers] = rangeLayer
                     end
                 end
             end
@@ -2187,6 +2189,7 @@ function AseUtilities.getSelectedTiles(
     local wMap <const> = tileMap.width
     local hMap <const> = tileMap.height
     local lenMap <const> = wMap * hMap
+    local lenCoords = 0
 
     local i = 0
     while i < lenMap do
@@ -2215,7 +2218,8 @@ function AseUtilities.getSelectedTiles(
 
             if isContained then
                 if not tiles[idx] then tiles[idx] = tileSet:tile(idx) end
-                coords[#coords + 1] = i
+                lenCoords = lenCoords + 1
+                coords[lenCoords] = i
             end
         end
         i = i + 1
@@ -2268,8 +2272,10 @@ function AseUtilities.getUniqueCelsFromLeaves(leaves, frames)
 
     ---@type Cel[]
     local celsArr <const> = {}
+    local lenCelsArr = 0
     for _, cel in pairs(uniqueCels) do
-        celsArr[#celsArr + 1] = cel
+        lenCelsArr = lenCelsArr + 1
+        celsArr[lenCelsArr] = cel
     end
     return celsArr
 end
