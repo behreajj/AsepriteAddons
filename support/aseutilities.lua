@@ -486,6 +486,8 @@ function AseUtilities.averageColor(sprite, frIdx)
         flat, _, _ = AseUtilities.imageFromSel(
             sel, sprite, frIdx)
     else
+        -- TODO: Inline createSpec within AseUtilites methods
+        -- where possible to reduce overhead.
         local x <const>, y <const> = AseUtilities.getMouse()
         flat = Image(AseUtilities.createSpec(
             1, 1, colorMode, colorSpace, alphaIndex))
@@ -603,6 +605,8 @@ function AseUtilities.averageNormal(sprite, frIdx)
         flat, _, _ = AseUtilities.imageFromSel(
             sel, sprite, frIdx)
     else
+        -- TODO: Inline createSpec within AseUtilites methods
+        -- where possible to reduce overhead.
         local x <const>, y <const> = AseUtilities.getMouse()
         flat = Image(AseUtilities.createSpec(
             1, 1, colorMode, colorSpace, alphaIndex))
@@ -1534,22 +1538,9 @@ function AseUtilities.filterCels(
         return AseUtilities.getUniqueCelsFromLeaves(leaves, frIdcs)
     elseif target == "SELECTION" then
         local trgCels <const> = {}
-
+        local lenTrgCels = 0
         local sel <const>, _ <const> = AseUtilities.getSelection(sprite)
-        local selBounds <const> = sel.bounds
-        local xSel <const> = selBounds.x
-        local ySel <const> = selBounds.y
-
-        local spriteSpec <const> = sprite.spec
-        local alphaIndex <const> = spriteSpec.transparentColor
-
-        local selSpec <const> = ImageSpec {
-            width = math.max(1, math.abs(selBounds.width)),
-            height = math.max(1, math.abs(selBounds.height)),
-            colorMode = spriteSpec.colorMode,
-            transparentColor = alphaIndex
-        }
-        selSpec.colorSpace = spriteSpec.colorSpace
+        local imageFromSel <const> = AseUtilities.imageFromSel
 
         app.transaction("Selection Layer", function()
             local srcLayer <const> = sprite:newLayer()
@@ -1559,29 +1550,18 @@ function AseUtilities.filterCels(
             local i = 0
             while i < lenFrames do
                 i = i + 1
-
-                -- Blit flattened sprite to image.
                 local srcFrame <const> = frames[i]
-                local selImage <const> = Image(selSpec)
-                selImage:drawSprite(
-                    sprite, srcFrame, Point(-xSel, -ySel))
-
-                -- Set pixels not in selection to alpha.
-                local pxItr <const> = selImage:pixels()
-                for pixel in pxItr do
-                    local x <const> = pixel.x + xSel
-                    local y <const> = pixel.y + ySel
-                    if not sel:contains(x, y) then
-                        pixel(alphaIndex)
-                    end
-                end
+                local selImage <const>,
+                xSel <const>,
+                ySel <const> = imageFromSel(sel, sprite, srcFrame)
 
                 -- Avoid containing extraneous cels.
                 if not selImage:isEmpty() then
                     local trgCel <const> = sprite:newCel(
                         srcLayer, srcFrame,
                         selImage, Point(xSel, ySel))
-                    trgCels[#trgCels + 1] = trgCel
+                    lenTrgCels = lenTrgCels + 1
+                    trgCels[lenTrgCels] = trgCel
                 end
             end
         end)
@@ -2362,13 +2342,15 @@ function AseUtilities.hideSource(sprite, layer, frames, preset)
     return false
 end
 
+---Creates an image from the flattened sprite that is contained by the
+---selection mask.
 ---@param sel Selection selection mask
 ---@param sprite Sprite sprite
----@param frIdx integer frame index
+---@param frame Frame|integer frame index
 ---@return Image
 ---@return integer xtl
 ---@return integer ytl
-function AseUtilities.imageFromSel(sel, sprite, frIdx)
+function AseUtilities.imageFromSel(sel, sprite, frame)
     local selBounds <const> = sel.bounds
     local xSel <const> = selBounds.x
     local ySel <const> = selBounds.y
@@ -2377,14 +2359,17 @@ function AseUtilities.imageFromSel(sel, sprite, frIdx)
 
     local spriteSpec <const> = sprite.spec
     local colorMode <const> = spriteSpec.colorMode
-    local colorSpace <const> = spriteSpec.colorSpace
     local alphaIndex <const> = spriteSpec.transparentColor
 
-    local imageSpec <const> = AseUtilities.createSpec(
-        wSel, hSel,
-        colorMode, colorSpace, alphaIndex)
+    local imageSpec <const> = ImageSpec {
+        width = wSel,
+        height = hSel,
+        colorMode = colorMode,
+        transparentColor = alphaIndex
+    }
+    imageSpec.colorSpace = spriteSpec.colorSpace
     local image <const> = Image(imageSpec)
-    image:drawSprite(sprite, frIdx, Point(-xSel, -ySel))
+    image:drawSprite(sprite, frame, Point(-xSel, -ySel))
 
     local validAlpha <const> = colorMode ~= ColorMode.INDEXED
         or (alphaIndex >= 0 and alphaIndex < 256)
@@ -3125,6 +3110,8 @@ function AseUtilities.tileMapToImage(imgSrc, tileSet, sprClrMode)
     -- mode is 2 (indexed) crashes Aseprite.
     local srcSpec <const> = imgSrc.spec
 
+    -- TODO: Inline createSpec within AseUtilities methods
+    -- where possible to reduce overhead.
     if not tileSet then
         return Image(AseUtilities.createSpec(srcSpec.width, srcSpec.height,
             sprClrMode, srcSpec.colorSpace, srcSpec.transparentColor))
