@@ -146,6 +146,7 @@ dlg:button {
     text = "CO&NSOLE",
     focus = true,
     onclick = function()
+        AseUtilities.preserveForeBack()
         app.command.DeveloperConsole()
     end
 }
