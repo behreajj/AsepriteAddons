@@ -1,13 +1,10 @@
-dofile("../../support/aseutilities.lua")
-dofile("../../support/octree.lua")
-
-local palTypes <const> = { "ACTIVE", "FILE" }
+local areaTargets <const> = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
 local colorSpaces <const> = { "LINEAR_RGB", "S_RGB", "SR_LAB_2" }
-local targets <const> = { "ACTIVE", "ALL", "RANGE" }
+local palTargets <const> = { "ACTIVE", "SAVE" }
 
 local defaults <const> = {
-    target = "ACTIVE",
-    palType = "ACTIVE",
+    areaTarget = "ACTIVE",
+    palTarget = "ACTIVE",
     cvgLabRad = 175,
     cvgNormRad = 120,
     octCapacityBits = 4,
@@ -63,25 +60,25 @@ end
 local dlg <const> = Dialog { title = "Palette To Cel" }
 
 dlg:combobox {
-    id = "target",
+    id = "areaTarget",
     label = "Target:",
-    option = defaults.target,
-    options = targets
+    option = defaults.areaTarget,
+    options = areaTargets
 }
 
 dlg:newrow { always = false }
 
 dlg:combobox {
-    id = "palType",
+    id = "palTarget",
     label = "Palette:",
-    option = defaults.palType,
-    options = palTypes,
+    option = defaults.palTarget,
+    options = palTargets,
     onchange = function()
         local args <const> = dlg.data
-        local palType <const> = args.palType --[[@as string]]
+        local palTarget <const> = args.palTarget --[[@as string]]
         dlg:modify {
             id = "palFile",
-            visible = palType == "FILE"
+            visible = palTarget == "FILE"
         }
     end
 }
@@ -92,7 +89,7 @@ dlg:file {
     id = "palFile",
     filetypes = AseUtilities.FILE_FORMATS_PAL,
     open = true,
-    visible = defaults.palType == "FILE"
+    visible = defaults.palTarget == "FILE"
 }
 
 dlg:newrow { always = false }
@@ -169,9 +166,6 @@ dlg:button {
     text = "&OK",
     focus = false,
     onclick = function()
-        -- Begin timing the function elapsed.
-        local args <const> = dlg.data
-        local printElapsed <const> = args.printElapsed --[[@as boolean]]
         local startTime <const> = os.clock()
 
         -- Early returns.
@@ -185,33 +179,12 @@ dlg:button {
             return
         end
 
-        local srcLayer <const> = site.layer
-        if not srcLayer then
-            app.alert {
-                title = "Error",
-                text = "There is no active layer."
-            }
-            return
-        end
+        local spriteSpec <const> = activeSprite.spec
+        local colorMode <const> = spriteSpec.colorMode
 
-        if srcLayer.isGroup then
-            app.alert {
-                title = "Error",
-                text = "Group layers are not supported."
-            }
-            return
-        end
-
-        if srcLayer.isReference then
-            app.alert {
-                title = "Error",
-                text = "Reference layers are not supported."
-            }
-            return
-        end
-
-        local oldMode <const> = activeSprite.colorMode
-        if oldMode ~= ColorMode.RGB then
+        local cmRgb <const> = ColorMode.RGB
+        local cmIsRgb <const> = colorMode == cmRgb
+        if not cmIsRgb then
             app.alert {
                 title = "Error",
                 text = "Only RGB color mode is supported."
@@ -219,33 +192,69 @@ dlg:button {
             return
         end
 
-        local docPrefs <const> = app.preferences.document(activeSprite)
-        local tlPrefs <const> = docPrefs.timeline
-        local frameUiOffset <const> = tlPrefs.first_frame - 1 --[[@as integer]]
+        local args <const> = dlg.data
+        local areaTarget <const> = args.areaTarget
+            or defaults.areaTarget --[[@as string]]
 
-        -- Check for tile maps.
-        local isTilemap <const> = srcLayer.isTilemap
+        -- This needs to be done first, otherwise range will be lost.
+        local isSelect <const> = areaTarget == "SELECTION"
+        local frIdcs <const> = Utilities.flatArr2(
+            AseUtilities.getFrames(activeSprite,
+                isSelect and "ALL" or areaTarget))
+        local lenFrIdcs <const> = #frIdcs
+
+        -- If isSelect is true, then a new layer will be created.
+        local srcLayer = site.layer --[[@as Layer]]
+
+        if isSelect then
+            AseUtilities.filterCels(activeSprite, srcLayer, frIdcs, "SELECTION")
+            srcLayer = activeSprite.layers[#activeSprite.layers]
+        else
+            if not srcLayer then
+                app.alert {
+                    title = "Error",
+                    text = "There is no active layer."
+                }
+                return
+            end
+
+            if srcLayer.isGroup then
+                app.alert {
+                    title = "Error",
+                    text = "Group layers are not supported."
+                }
+                return
+            end
+
+            if srcLayer.isReference then
+                app.alert {
+                    title = "Error",
+                    text = "Reference layers are not supported."
+                }
+                return
+            end
+        end
+
+        -- Check for tile map support.
+        local isTileMap <const> = srcLayer.isTilemap
         local tileSet = nil
-        if isTilemap then
+        if isTileMap and srcLayer.tileset then
             tileSet = srcLayer.tileset
         end
 
-        -- Cache global methods.
+        -- Cache global methods to local.
+        local strfmt <const> = string.format
+        local strpack <const> = string.pack
+        local strsub <const> = string.sub
+        local strbyte <const> = string.byte
+        local strunpack <const> = string.unpack
+        local tconcat <const> = table.concat
+        local transact <const> = app.transaction
+        local tilesToImage <const> = AseUtilities.tileMapToImage
         local fromHex <const> = Clr.fromHexAbgr32
-        local v3Hash <const> = Vec3.hashCode
         local octInsert <const> = Octree.insert
         local search <const> = Octree.queryInternal
-        local tilesToImage <const> = AseUtilities.tileMapToImage
-        local strfmt <const> = string.format
-        local transact <const> = app.transaction
-
-        -- Convert source palette colors to points
-        -- inserted into octree.
-        local palType <const> = args.palType
-            or defaults.palType --[[@as string]]
-        local palFile <const> = args.palFile --[[@as string]]
-        local hexesProfile <const>, hexesSrgb <const> = AseUtilities.asePaletteLoad(
-            palType, palFile, 0, 512, true)
+        local v3Hash <const> = Vec3.hashCode
 
         -- Select which conversion functions to use.
         local clrSpacePreset <const> = args.clrSpacePreset
@@ -275,37 +284,32 @@ dlg:button {
             cvgRad = cvgRad * 0.01
         end
 
-        -- Create octree.
-        -- local exactMatches = {}
-        ---@type table<integer, integer>
-        local ptToHexDict <const> = {}
-        local hexesSrgbLen <const> = #hexesSrgb
+        local palTarget <const> = args.palTarget
+            or defaults.palTarget --[[@as string]]
+        local palFile <const> = args.palFile --[[@as string]]
+        local hexesProfile <const>, hexesSrgb <const> = AseUtilities.asePaletteLoad(
+            palTarget, palFile, 0, 512, true)
+        local lenHexesSrgb <const> = #hexesSrgb
+
         local octExpBits <const> = args.octCapacity
             or defaults.octCapacityBits --[[@as integer]]
         local octCapacity = 1 << octExpBits
         local octree <const> = Octree.new(octBounds, octCapacity, 1)
 
-        local hexIdx = 0
-        while hexIdx < hexesSrgbLen do
-            hexIdx = hexIdx + 1
-            local hexSrgb <const> = hexesSrgb[hexIdx]
+        -- Convert source palette colors to points in an octree.
+        -- Ignore colors with zero alpha.
+        ---@type table<integer, integer>
+        local ptToHexDict <const> = {}
+        local h = 0
+        while h < lenHexesSrgb do
+            h = h + 1
+            local hexSrgb <const> = hexesSrgb[h]
             if (hexSrgb & 0xff000000) ~= 0 then
-                local clr <const> = fromHex(hexSrgb)
-                local pt <const> = clrV3Func(clr)
-                local hexProfile <const> = hexesProfile[hexIdx]
-                -- exactMatches[hexProfile] = true
-                ptToHexDict[v3Hash(pt)] = hexProfile
+                local pt <const> = clrV3Func(fromHex(hexSrgb))
+                ptToHexDict[v3Hash(pt)] = hexesProfile[h]
                 octInsert(octree, pt)
             end
         end
-
-        Octree.cull(octree)
-
-        -- Get frames.
-        local target <const> = args.target
-            or defaults.target --[[@as string]]
-        local frames <const> = Utilities.flatArr2(
-            AseUtilities.getFrames(activeSprite, target))
 
         -- Create a new layer, srcLayer should not be a group,
         -- and thus have an opacity and blend mode.
@@ -316,92 +320,106 @@ dlg:button {
                 srcLayerName = srcLayer.name
             end
             trgLayer.name = string.format("%s %s %03d",
-                srcLayerName, clrSpacePreset, hexesSrgbLen)
+                srcLayerName, clrSpacePreset, lenHexesSrgb)
             trgLayer.parent = AseUtilities.getTopVisibleParent(srcLayer)
             trgLayer.opacity = srcLayer.opacity or 255
             trgLayer.blendMode = srcLayer.blendMode
                 or BlendMode.NORMAL
         end)
 
-        local rgbColorMode <const> = ColorMode.RGB
-        local lenFrames <const> = #frames
+        -- Account for linked cels which may have the same image.
+        ---@type table<integer, Image>
+        local premadeTrgImgs <const> = {}
+
+        -- Used in naming transactions by frame.
+        local docPrefs <const> = app.preferences.document(activeSprite)
+        local tlPrefs <const> = docPrefs.timeline
+        local frameUiOffset <const> = tlPrefs.first_frame - 1 --[[@as integer]]
+
         local i = 0
-        while i < lenFrames do
+        while i < lenFrIdcs do
             i = i + 1
-            local srcFrame <const> = frames[i]
-            local srcCel <const> = srcLayer:cel(srcFrame)
+            local frIdx <const> = frIdcs[i]
+            local srcCel <const> = srcLayer:cel(frIdx)
             if srcCel then
-                local srcImg = srcCel.image
-                if isTilemap then
-                    srcImg = tilesToImage(srcImg, tileSet, rgbColorMode)
-                end
+                local srcImg <const> = isTileMap
+                    and tilesToImage(srcCel.image, tileSet, cmRgb)
+                    or srcCel.image
+                local srcImgId <const> = srcImg.id
+                local trgImg = premadeTrgImgs[srcImgId]
+                if not trgImg then
+                    -- Get unique hexadecimal values from image.
+                    -- There's no need to preserve order.
+                    ---@type table<integer, integer[]>
+                    local hexesUnique <const> = {}
+                    local srcSpec <const> = srcImg.spec
+                    local areaSrcImg <const> = srcSpec.width * srcSpec.height
+                    local srcBytes <const> = srcImg.bytes
 
-                -- Get unique hexadecimal values from image.
-                -- There's no need to preserve order.
-                ---@type table<integer, boolean>
-                local hexesUnique <const> = {}
-                local srcPxItr <const> = srcImg:pixels()
-                for pixel in srcPxItr do
-                    hexesUnique[pixel()] = true
-                end
-
-                -- Create a table where unique hexes are associated
-                -- with Vec3 queries to an octree.
-                ---@type {hex: integer, point: Vec3}[]
-                local queries <const> = {}
-                local lenQueries = 0
-                for k, _ in pairs(hexesUnique) do
-                    local clr <const> = fromHex(k)
-                    local pt <const> = clrV3Func(clr)
-                    lenQueries = lenQueries + 1
-                    queries[lenQueries] = { hex = k, point = pt }
-                end
-
-                -- Find nearest color in palette.
-                ---@type table<integer, integer>
-                local correspDict <const> = {}
-                local j = 0
-                while j < lenQueries do
-                    j = j + 1
-                    local query <const> = queries[j]
-                    local queryHex <const> = query.hex
-                    local resultHex = 0x0
-                    -- if exactMatches[queryHex] then
-                    -- resultHex = queryHex
-                    -- else
-                    local nearPoint <const>, _ <const> = search(
-                        octree, query.point, cvgRad, distFunc)
-                    if nearPoint then
-                        local hsh <const> = v3Hash(nearPoint)
-                        resultHex = ptToHexDict[hsh]
+                    local j = 0
+                    while j < areaSrcImg do
+                        local j4 <const> = j * 4
+                        local abgr32 <const> = strunpack("<I4", strsub(
+                            srcBytes, 1 + j4, 4 + j4))
+                        local idcs <const> = hexesUnique[abgr32]
+                        if idcs then
+                            idcs[#idcs + 1] = j
+                        else
+                            hexesUnique[abgr32] = { j }
+                        end
+                        j = j + 1
                     end
-                    -- end
-                    correspDict[queryHex] = resultHex & 0x00ffffff
-                end
 
-                -- Apply colors to image.
-                -- Use source color alpha.
-                local trgImg <const> = srcImg:clone()
-                local trgPxItr <const> = trgImg:pixels()
-                for pixel in trgPxItr do
-                    local srcHex <const> = pixel()
-                    pixel(srcHex & 0xff000000 | correspDict[srcHex])
-                end
+                    ---@type string[]
+                    local trgBytesArr <const> = {}
+                    for srcAbgr32, idcs in pairs(hexesUnique) do
+                        local ptSrc <const> = clrV3Func(fromHex(srcAbgr32))
+                        local ptTrg <const>, _ <const> = search(
+                            octree, ptSrc, cvgRad, distFunc)
 
-                transact(
-                    strfmt("PaletteToCel %d", srcFrame + frameUiOffset),
-                    function()
-                        local trgCel <const> = activeSprite:newCel(
-                            trgLayer, srcFrame,
-                            trgImg, srcCel.position)
-                        trgCel.opacity = srcCel.opacity
-                    end)
-            end
+                        local trgAbgr32 = 0x00000000
+                        if ptTrg then
+                            local hsh <const> = v3Hash(ptTrg)
+                            if ptToHexDict[hsh] then
+                                trgAbgr32 = ptToHexDict[hsh]
+                            end
+                        end
+
+                        local compAbgr32 <const> = (srcAbgr32 & 0xff000000)
+                            | (trgAbgr32 & 0x00ffffff)
+                        local trgPack <const> = strpack("<I4", compAbgr32)
+
+                        local lenIdcs <const> = #idcs
+                        local k = 0
+                        while k < lenIdcs do
+                            k = k + 1
+                            trgBytesArr[1 + idcs[k]] = trgPack
+                        end
+                    end
+
+                    trgImg = Image(srcSpec)
+                    trgImg.bytes = tconcat(trgBytesArr)
+                    premadeTrgImgs[srcImgId] = trgImg
+                end -- End create target image.
+
+                transact(strfmt("PaletteToCel %d", frIdx + frameUiOffset), function()
+                    local trgCel <const> = activeSprite:newCel(
+                        trgLayer, frIdx, trgImg, srcCel.position)
+                    trgCel.opacity = srcCel.opacity
+                end)
+            end -- End source cel exists.
+        end     -- End frames loop.
+
+        if isSelect then
+            app.transaction("Delete Layer", function()
+                activeSprite:deleteLayer(srcLayer)
+            end)
         end
 
         app.layer = trgLayer
         app.refresh()
 
+        local printElapsed <const> = args.printElapsed --[[@as boolean]]
         if printElapsed then
             local endTime <const> = os.clock()
             local elapsed <const> = endTime - startTime
@@ -411,7 +429,7 @@ dlg:button {
                     string.format("Start: %.2f", startTime),
                     string.format("End: %.2f", endTime),
                     string.format("Elapsed: %.6f", elapsed),
-                    string.format("Colors: %d", hexesSrgbLen),
+                    string.format("Colors: %d", lenHexesSrgb),
                 }
             }
         end
