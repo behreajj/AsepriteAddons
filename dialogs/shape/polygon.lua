@@ -149,7 +149,7 @@ dlg:check {
     label = "Fill:",
     text = "Enable",
     selected = defaults.useFill,
-    enabled = false,
+    -- enabled = false,
     onclick = function()
         local args <const> = dlg.data
         local useFill <const> = args.useFill --[[@as boolean]]
@@ -163,7 +163,7 @@ dlg:check {
 dlg:color {
     id = "fillClr",
     color = app.preferences.color_bar.bg_color --[[@as Color]],
-    enabled = false,
+    -- enabled = false,
     visible = defaults.useFill
 }
 

@@ -239,12 +239,15 @@ function ShapeUtilities.drawMesh2(
     useFill, fillClr,
     useStroke, strokeClr,
     brsh, frame, layer)
+    local toPt <const> = AseUtilities.vec2ToPoint
+    local round <const> = Utilities.round
+
     -- Convert Vec2s to Points.
     ---@type Point[]
     local pts <const> = {}
     local vs <const> = mesh.vs
     local vsLen <const> = #vs
-    local toPt <const> = AseUtilities.vec2ToPoint
+
     local idx0 = 0
     while idx0 < vsLen do
         idx0 = idx0 + 1
@@ -256,6 +259,11 @@ function ShapeUtilities.drawMesh2(
     local fsLen <const> = #fs
     ---@type Point[][]
     local ptsGrouped <const> = {}
+
+    -- Find centers for paint bucket.
+    ---@type Point[]
+    local centers <const> = {}
+
     local idx1 = 0
     while idx1 < fsLen do
         idx1 = idx1 + 1
@@ -263,33 +271,28 @@ function ShapeUtilities.drawMesh2(
         local fLen <const> = #f
         ---@type Point[]
         local ptsFace <const> = {}
+
+        local xSum = 0
+        local ySum = 0
+
         local idx2 = 0
         while idx2 < fLen do
             idx2 = idx2 + 1
-            ptsFace[idx2] = pts[f[idx2]]
+            local pt <const> = pts[f[idx2]]
+            ptsFace[idx2] = pt
+            xSum = xSum + pt.x
+            ySum = ySum + pt.y
         end
+
         ptsGrouped[idx1] = ptsFace
+        centers[idx1] = Point(
+            fLen >= 3 and round(xSum / fLen) or 0,
+            fLen >= 3 and round(ySum / fLen) or 0)
     end
 
     -- Group fills into one transaction.
     ---@diagnostic disable-next-line: deprecated
     local useTool <const> = app.useTool
-    if useFill then
-        app.transaction("Mesh Fill", function()
-            local idx3 = 0
-            while idx3 < fsLen do
-                idx3 = idx3 + 1
-                useTool {
-                    tool = "contour",
-                    color = fillClr,
-                    brush = brsh,
-                    points = ptsGrouped[idx3],
-                    frame = frame,
-                    layer = layer,
-                }
-            end
-        end)
-    end
 
     -- Group strokes into one transaction.
     -- Draw strokes line by line.
@@ -314,10 +317,31 @@ function ShapeUtilities.drawMesh2(
                         layer = layer
                     }
                     ptPrev = ptCurr
-                end
-            end
-        end)
-    end
+                end -- End vertices loop.
+            end     -- End faces loop.
+        end)        -- End transaction.
+    end             -- End use stroke.
+
+    if useFill then
+        app.transaction("Mesh Fill", function()
+            local idx3 = 0
+            while idx3 < fsLen do
+                idx3 = idx3 + 1
+                local f <const> = fs[idx3]
+                local fLen <const> = #f
+                if fLen >= 3 then
+                    useTool {
+                        tool = "paint_bucket",
+                        color = fillClr,
+                        brush = brsh,
+                        points = { centers[idx3] },
+                        frame = frame,
+                        layer = layer,
+                    }
+                end -- End valid face check.
+            end -- End faces loop.
+        end)    -- End transaction.
+    end         -- End use fill.
 end
 
 return ShapeUtilities
