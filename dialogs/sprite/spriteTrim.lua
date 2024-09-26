@@ -694,6 +694,7 @@ dlg:button {
         else
             app.command.Zoom {
                 action = "set",
+                focus = "center",
                 percentage = 100.0
             }
             app.command.ScrollCenter()
