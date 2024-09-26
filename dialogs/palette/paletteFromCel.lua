@@ -341,9 +341,6 @@ dlg:button {
     text = "&OK",
     focus = true,
     onclick = function()
-        -- Begin measuring elapsed time.
-        local args <const> = dlg.data
-        local printElapsed <const> = args.printElapsed --[[@as boolean]]
         local startTime <const> = os.clock()
 
         -- Early returns.
@@ -375,6 +372,7 @@ dlg:button {
         local xtl = 0
         local ytl = 0
 
+        local args <const> = dlg.data
         local areaTarget <const> = args.areaTarget
             or defaults.areaTarget --[[@as string]]
         if areaTarget == "SELECTION" then
@@ -410,7 +408,7 @@ dlg:button {
 
             if srcLayer.isGroup then
                 local includeLocked <const> = true
-                local includeHidden <const> = true
+                local includeHidden <const> = false
                 local includeTiles <const> = true
                 local includeBkg <const> = true
                 local boundingRect = Rectangle()
@@ -625,6 +623,7 @@ dlg:button {
 
         app.refresh()
 
+        local printElapsed <const> = args.printElapsed --[[@as boolean]]
         if printElapsed then
             local endTime <const> = os.clock()
             local elapsed <const> = endTime - startTime
