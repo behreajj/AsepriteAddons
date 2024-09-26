@@ -412,6 +412,7 @@ dlg:button {
             local cel <const> = layer.cels[1]
             cel.image = image
             app.tool = "hand"
+            app.command.FitScreen()
         else
             local profile <const> = activeSprite.colorSpace
             profileFlag = profile ~= ColorSpace { sRGB = true }
