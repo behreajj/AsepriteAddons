@@ -71,7 +71,8 @@ dlg:file {
     id = "bPalFile",
     filetypes = AseUtilities.FILE_FORMATS_PAL,
     open = true,
-    visible = defaults.bPalType == "FILE"
+    visible = defaults.bPalType == "FILE",
+    focus = defaults.bPalType == "FILE"
 }
 
 dlg:newrow { always = false }
@@ -129,7 +130,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "ok",
     text = "OK",
-    focus = true,
+    focus = false,
     onclick = function()
         local site <const> = app.site
         local activeSprite = site.sprite
