@@ -132,10 +132,52 @@ local dlg <const> = Dialog { title = "Palette From Cel" }
 
 dlg:combobox {
     id = "areaTarget",
-    label = "Area:",
+    label = "Target:",
     option = defaults.areaTarget,
     options = areaTargets,
     focus = false
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "palTarget",
+    label = "Palette:",
+    option = defaults.palTarget,
+    options = palTargets,
+    onchange = function()
+        local args <const> = dlg.data
+        local palTarget <const> = args.palTarget --[[@as string]]
+
+        dlg:modify {
+            id = "paletteIndex",
+            visible = palTarget == "ACTIVE"
+        }
+        dlg:modify {
+            id = "filepath",
+            visible = palTarget == "FILE"
+        }
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "paletteIndex",
+    label = "Palette:",
+    min = 1,
+    max = 96,
+    value = defaults.paletteIndex,
+    visible = defaults.palTarget == "ACTIVE"
+}
+
+dlg:newrow { always = false }
+
+dlg:file {
+    id = "filepath",
+    filetypes = AseUtilities.FILE_FORMATS_PAL,
+    save = true,
+    visible = defaults.palTarget == "FILE"
 }
 
 dlg:newrow { always = false }
@@ -280,48 +322,6 @@ dlg:combobox {
     option = defaults.clrSpacePreset,
     options = colorSpaces,
     visible = defaults.clampTo256
-}
-
-dlg:newrow { always = false }
-
-dlg:combobox {
-    id = "palTarget",
-    label = "Target:",
-    option = defaults.palTarget,
-    options = palTargets,
-    onchange = function()
-        local args <const> = dlg.data
-        local palTarget <const> = args.palTarget --[[@as string]]
-
-        dlg:modify {
-            id = "paletteIndex",
-            visible = palTarget == "ACTIVE"
-        }
-        dlg:modify {
-            id = "filepath",
-            visible = palTarget == "FILE"
-        }
-    end
-}
-
-dlg:newrow { always = false }
-
-dlg:slider {
-    id = "paletteIndex",
-    label = "Palette:",
-    min = 1,
-    max = 96,
-    value = defaults.paletteIndex,
-    visible = defaults.palTarget == "ACTIVE"
-}
-
-dlg:newrow { always = false }
-
-dlg:file {
-    id = "filepath",
-    filetypes = AseUtilities.FILE_FORMATS_PAL,
-    save = true,
-    visible = defaults.palTarget == "FILE"
 }
 
 dlg:newrow { always = false }
