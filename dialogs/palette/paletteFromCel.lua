@@ -7,7 +7,7 @@ local colorSpaces <const> = {
     "S_RGB",
     "SR_LAB_2"
 }
-local palTargets <const> = { "ACTIVE", "SAVE" }
+local palTargets <const> = { "ACTIVE", "FILE" }
 
 local defaults <const> = {
     -- Last commit with older paletteFromCel:
@@ -299,7 +299,7 @@ dlg:combobox {
         }
         dlg:modify {
             id = "filepath",
-            visible = palTarget == "SAVE"
+            visible = palTarget == "FILE"
         }
     end
 }
@@ -321,7 +321,7 @@ dlg:file {
     id = "filepath",
     filetypes = AseUtilities.FILE_FORMATS_PAL,
     save = true,
-    visible = defaults.palTarget == "SAVE"
+    visible = defaults.palTarget == "FILE"
 }
 
 dlg:newrow { always = false }
@@ -592,7 +592,7 @@ dlg:button {
 
         local palTarget <const> = args.palTarget
             or defaults.palTarget --[[@as string]]
-        if palTarget == "SAVE" then
+        if palTarget == "FILE" then
             local filepath <const> = args.filepath --[[@as string]]
             local palette <const> = Palette(lenHexes)
             local k = 0
