@@ -408,12 +408,18 @@ dlg:button {
         if height > dfms then height = dfms end
 
         -- Store new dimensions in preferences.
+        local autoFit = false
         local appPrefs <const> = app.preferences
         if appPrefs then
             local newFilePrefs <const> = appPrefs.new_file
             if newFilePrefs then
                 newFilePrefs.width = width
                 newFilePrefs.height = height
+            end
+
+            local editorPrefs <const> = appPrefs.editor
+            if editorPrefs then
+                autoFit = editorPrefs.auto_fit
             end
         end
 
@@ -477,6 +483,18 @@ dlg:button {
         end
 
         app.frame = firstFrame
+
+        if autoFit then
+            app.command.FitScreen()
+        else
+            app.command.Zoom {
+                action = "set",
+                focus = "center",
+                percentage = 100.0
+            }
+            app.command.ScrollCenter()
+        end
+
         app.refresh()
         dlg:close()
     end

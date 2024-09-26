@@ -687,8 +687,18 @@ dlg:button {
         end
 
         app.layer = activeSprite.layers[#activeSprite.layers]
-        app.command.FitScreen()
         app.refresh()
+
+        if app.preferences.editor.auto_fit then
+            app.command.FitScreen()
+        else
+            app.command.Zoom {
+                action = "set",
+                percentage = 100.0
+            }
+            app.command.ScrollCenter()
+        end
+
     end
 }
 

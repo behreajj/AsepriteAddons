@@ -340,6 +340,7 @@ dlg:button {
             end)
         end
 
+        local autoFit = false
         if appPrefs then
             local openFilePrefs <const> = appPrefs.open_file
             if openFilePrefs then
@@ -356,9 +357,26 @@ dlg:button {
             if quantPrefs then
                 quantPrefs.rgbmap_algorithm = oldQuantAlg
             end
+
+            local editorPrefs <const> = appPrefs.editor
+            if editorPrefs then
+                autoFit = editorPrefs.auto_fit
+            end
         end
 
         app.layer = openSprite.layers[#openSprite.layers]
+
+        if autoFit then
+            app.command.FitScreen()
+        else
+            app.command.Zoom {
+                action = "set",
+                focus = "center",
+                percentage = 100.0
+            }
+            app.command.ScrollCenter()
+        end
+
         app.refresh()
         dlg:close()
     end
