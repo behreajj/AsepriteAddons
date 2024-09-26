@@ -12,6 +12,7 @@ local defaults <const> = {
     fillOpt = "SUSTAIN",
     inbetweens = 1,
     matchTime = false,
+    tintCels = false,
 }
 
 ---Durations need to be rounded after scaling due to precision differences
@@ -32,13 +33,17 @@ end
 ---@param frIdxNewNext integer
 ---@param frameUiOffset integer
 ---@param inbetweens integer
+---@param useTint boolean
+---@param tintColor Color
 local function crossFade(
     activeSprite,
     leaf,
     frIdxNewPrev,
     frIdxNewNext,
     frameUiOffset,
-    inbetweens)
+    inbetweens,
+    useTint,
+    tintColor)
     local celNext <const> = leaf:cel(frIdxNewNext)
     local celPrev <const> = leaf:cel(frIdxNewPrev)
     if (not celNext) and (not celPrev) then return end
@@ -124,6 +129,7 @@ local function crossFade(
                 -- zIndex is always interpolated, even for linked cels.
                 local t <const> = j * jToFac
                 trgCel.zIndex = round((1.0 - t) * zIdxPrev + t * zIdxNext)
+                if useTint then trgCel.color = tintColor end
             end
         end)
     else
@@ -281,6 +287,7 @@ local function crossFade(
                         leaf, trgFrIdx, imgComp, pointComp)
                     trgCel.opacity = opacComp
                     trgCel.zIndex = zIdxComp
+                    if useTint then trgCel.color = tintColor end
                 end -- End inbetweens loop.
             end)
         end         -- End valid bounds check.
@@ -324,9 +331,12 @@ dlg:combobox {
         local fillOpt <const> = args.fillOpt
         local frameTarget <const> = args.frameTarget
         local isFade <const> = fillOpt == "CROSS_FADE"
+        local notEmpty <const> = fillOpt ~= "EMPTY"
         local isAll <const> = frameTarget == "ALL"
         dlg:modify { id = "isLoop", visible = isFade and isAll }
         dlg:modify { id = "tilemapWarn", visible = isFade }
+        dlg:modify { id = "useTint", visible = notEmpty }
+        dlg:modify { id = "tintColor", visible = notEmpty }
     end
 }
 
@@ -335,7 +345,7 @@ dlg:newrow { always = false }
 dlg:check {
     id = "matchTime",
     label = "Match:",
-    text = "Time",
+    text = "&Time",
     selected = defaults.matchTime
 }
 
@@ -347,6 +357,24 @@ dlg:check {
     selected = defaults.isLoop,
     visible = defaults.frameTarget == "ALL"
         and defaults.fillOpt == "CROSS_FADE"
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "useTint",
+    label = "Tint:",
+    text = "Cels",
+    selected = defaults.tintCels,
+    visible = defaults.fillOpt ~= "EMPTY"
+}
+
+dlg:newrow { always = false }
+
+dlg:color {
+    id = "tintColor",
+    color = Color { r = 0, g = 0, b = 0, a = 180 },
+    visible = defaults.fillOpt ~= "EMPTY"
 }
 
 dlg:newrow { always = false }
@@ -384,6 +412,8 @@ dlg:button {
         local fillOpt <const> = args.fillOpt
             or defaults.fillOpt --[[@as string]]
         local matchTime <const> = args.matchTime --[[@as boolean]]
+        local useTint <const> = args.useTint --[[@as boolean]]
+        local tintColor <const> = args.tintColor --[[@as Color]]
 
         --Unpack sprite spec.
         local spriteSpec <const> = activeSprite.spec
@@ -633,7 +663,7 @@ dlg:button {
                     local frIdxOldNext <const> = frIdcs[2 + i]
                     local frIdxNewNext <const> = frIdxOldNext + (1 + i) * inbetweens
                     crossFade(activeSprite, leaf, frIdxNewPrev, frIdxNewNext,
-                        frameUiOffset, inbetweens)
+                        frameUiOffset, inbetweens, useTint, tintColor)
 
                     i = i + 1
                 end
@@ -642,7 +672,7 @@ dlg:button {
                     local frIdxOldPrev <const> = frIdcs[lenFrIdcs]
                     local frIdxNewPrev <const> = frIdxOldPrev + (lenFrIdcs - 1) * inbetweens
                     crossFade(activeSprite, leaf, frIdxNewPrev, 1,
-                        frameUiOffset, inbetweens)
+                        frameUiOffset, inbetweens, useTint, tintColor)
                 end
             end
         else
@@ -674,6 +704,7 @@ dlg:button {
                                     leaf, trgFrIdx, srcImg, srcPos)
                                 trgCel.opacity = srcOpacity
                                 trgCel.zIndex = srcZIndex
+                                if useTint then trgCel.color = tintColor end
                             end
                         end)
                     end -- End cel exists check.
