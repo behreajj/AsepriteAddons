@@ -11,8 +11,8 @@ local defaults <const> = {
     isLoop = false,
     fillOpt = "SUSTAIN",
     inbetweens = 1,
-    matchTime = false,
-    tintCels = false,
+    matchTime = true,
+    useTint = false,
 }
 
 ---Durations need to be rounded after scaling due to precision differences
@@ -328,16 +328,42 @@ dlg:combobox {
     options = fillOpts,
     onchange = function()
         local args <const> = dlg.data
-        local fillOpt <const> = args.fillOpt
-        local frameTarget <const> = args.frameTarget
+        local fillOpt <const> = args.fillOpt --[[@as string]]
+        local frameTarget <const> = args.frameTarget --[[@as string]]
+        local useTint <const> = args.useTint --[[@as boolean]]
+
         local isFade <const> = fillOpt == "CROSS_FADE"
         local notEmpty <const> = fillOpt ~= "EMPTY"
         local isAll <const> = frameTarget == "ALL"
         dlg:modify { id = "isLoop", visible = isFade and isAll }
         dlg:modify { id = "tilemapWarn", visible = isFade }
         dlg:modify { id = "useTint", visible = notEmpty }
-        dlg:modify { id = "tintColor", visible = notEmpty }
+        dlg:modify { id = "tintColor", visible = useTint and notEmpty }
     end
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "useTint",
+    label = "Tint:",
+    text = "C&els",
+    selected = defaults.useTint,
+    visible = defaults.fillOpt ~= "EMPTY",
+    onclick = function()
+        local args <const> = dlg.data
+        local useTint <const> = args.useTint --[[@as boolean]]
+        dlg:modify { id = "tintColor", visible = useTint }
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:color {
+    id = "tintColor",
+    color = Color { r = 0, g = 0, b = 0, a = 180 },
+    visible = defaults.fillOpt ~= "EMPTY"
+        and defaults.useTint
 }
 
 dlg:newrow { always = false }
@@ -354,27 +380,10 @@ dlg:newrow { always = false }
 dlg:check {
     id = "isLoop",
     label = "Loop:",
+    text = "&Frames",
     selected = defaults.isLoop,
     visible = defaults.frameTarget == "ALL"
         and defaults.fillOpt == "CROSS_FADE"
-}
-
-dlg:newrow { always = false }
-
-dlg:check {
-    id = "useTint",
-    label = "Tint:",
-    text = "Cels",
-    selected = defaults.tintCels,
-    visible = defaults.fillOpt ~= "EMPTY"
-}
-
-dlg:newrow { always = false }
-
-dlg:color {
-    id = "tintColor",
-    color = Color { r = 0, g = 0, b = 0, a = 180 },
-    visible = defaults.fillOpt ~= "EMPTY"
 }
 
 dlg:newrow { always = false }
