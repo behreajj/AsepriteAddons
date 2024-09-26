@@ -1,3 +1,6 @@
+dofile("../../support/aseutilities.lua")
+dofile("../../support/octree.lua")
+
 local areaTargets <const> = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
 local colorSpaces <const> = { "LINEAR_RGB", "S_RGB", "SR_LAB_2" }
 local palTargets <const> = { "ACTIVE", "FILE" }
