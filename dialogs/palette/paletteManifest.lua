@@ -33,8 +33,7 @@ local defaults <const> = {
     hdrBkgColor = 0xeb282828,
     rowColor0 = 0xeb181818,
     rowColor1 = 0xeb202020,
-    bkgColor = 0xff101010,
-    pullFocus = false
+    bkgColor = 0xff101010
 }
 
 ---@param lut table
@@ -331,7 +330,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "confirm",
     text = "&OK",
-    focus = defaults.pullFocus,
+    focus = true,
     onclick = function()
         -- Force a refresh, this is an extra precaution in case
         -- a Sprite has been opened with an embedded profile, then
