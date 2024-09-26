@@ -71,6 +71,22 @@ local pxTilef <const> = app.pixelColor.tileF
 local topLayers <const> = sprite.layers
 local lenTopLayers <const> = #topLayers
 
+local keepSelection = false
+local selectOnClick = false
+local appPrefs <const> = app.preferences
+if appPrefs then
+    local timelinePrefs <const> = appPrefs.timeline
+    if timelinePrefs then
+        local keepSelPref <const> = timelinePrefs.keep_selection --[[@as boolean]]
+        if keepSelPref then keepSelection = true end
+        local selOnClkPref <const> = timelinePrefs.select_on_click --[[@as boolean]]
+        if selOnClkPref then selectOnClick = true end
+    end
+end
+local makeRange <const> = (not keepSelection)
+    and selectOnClick
+    and app.range.sprite == sprite
+
 local h = lenTopLayers + 1
 while h > 1 do
     h = h - 1
@@ -85,6 +101,7 @@ while h > 1 do
         if cel then
             if leaf.isBackground then
                 app.layer = leaf
+                if makeRange then app.range.layers = { leaf } end
                 return
             end
 
@@ -166,6 +183,7 @@ while h > 1 do
 
                     if isNonZero then
                         app.layer = leaf
+                        if makeRange then app.range.layers = { leaf } end
                         return
                     end -- End pixel is not transparent.
                 end     -- End mouse within upper bound.
