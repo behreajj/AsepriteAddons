@@ -1056,6 +1056,6 @@ dlg:button {
 }
 
 dlg:show {
-    autoscrollbars = true,
+    autoscrollbars = false,
     wait = false
 }
