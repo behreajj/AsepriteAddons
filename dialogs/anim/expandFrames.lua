@@ -316,7 +316,8 @@ dlg:slider {
     label = "Expand:",
     min = 1,
     max = 64,
-    value = defaults.inbetweens
+    value = defaults.inbetweens,
+    focus = true
 }
 
 dlg:newrow { always = false }
@@ -400,6 +401,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "confirm",
     text = "&OK",
+    focus = false,
     onclick = function()
         local site <const> = app.site
         local activeSprite <const> = site.sprite
