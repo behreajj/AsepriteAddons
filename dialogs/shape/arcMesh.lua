@@ -66,7 +66,18 @@ dlg:slider {
     label = "Margin:",
     min = 0,
     max = 100,
-    value = defaults.margin
+    value = defaults.margin,
+    onchange = function()
+        local args <const> = dlg.data
+        local useStroke <const> = args.useStroke --[[@as boolean]]
+        local useFill <const> = args.useFill --[[@as boolean]]
+        local margin <const> = args.margin --[[@as integer]]
+        dlg:modify { id = "useFill", visible = useStroke and margin > 0 }
+        dlg:modify {
+            id = "fillClr",
+            visible = useStroke and useFill and margin > 0
+        }
+    end
 }
 
 dlg:newrow { always = false }
@@ -106,10 +117,14 @@ dlg:check {
         local args <const> = dlg.data
         local useStroke <const> = args.useStroke --[[@as boolean]]
         local useFill <const> = args.useFill --[[@as boolean]]
+        local margin <const> = args.margin --[[@as integer]]
         dlg:modify { id = "strokeWeight", visible = useStroke }
         dlg:modify { id = "strokeClr", visible = useStroke }
-        dlg:modify { id = "useFill", visible = useStroke }
-        dlg:modify { id = "fillClr", visible = useStroke and useFill }
+        dlg:modify { id = "useFill", visible = useStroke and margin > 0 }
+        dlg:modify {
+            id = "fillClr",
+            visible = useStroke and useFill and margin > 0
+        }
     end
 }
 
@@ -134,12 +149,18 @@ dlg:check {
     label = "Fill:",
     text = "Enable",
     selected = defaults.useFill,
-    visible = defaults.useStroke,
+    visible = defaults.useStroke
+        and defaults.margin > 0,
     -- enabled = false,
     onclick = function()
         local args <const> = dlg.data
+        local useStroke <const> = args.useStroke --[[@as boolean]]
         local useFill <const> = args.useFill --[[@as boolean]]
-        dlg:modify { id = "fillClr", visible = useFill }
+        local margin <const> = args.margin --[[@as integer]]
+        dlg:modify {
+            id = "fillClr",
+            visible = useStroke and useFill and margin > 0
+        }
     end
 }
 
@@ -149,6 +170,7 @@ dlg:color {
     -- enabled = false,
     visible = defaults.useFill
         and defaults.useStroke
+        and defaults.margin > 0
 }
 
 dlg:newrow { always = false }
@@ -229,7 +251,7 @@ dlg:button {
         layer.name = mesh.name
 
         ShapeUtilities.drawMesh2(sprite,
-            mesh, useFill, fillColor,
+            mesh, useFill and margin > 0, fillColor,
             useStroke, strokeColor,
             Brush { size = strokeWeight },
             frame, layer)
