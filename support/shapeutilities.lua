@@ -4,95 +4,12 @@ ShapeUtilities = {}
 ShapeUtilities.__index = ShapeUtilities
 
 setmetatable(ShapeUtilities, {
-    -- Last commit with old drawCurve2 and drawKnot2:
+    -- Last commit with old drawCurve2:
     -- 91c2511cc032c2fa95d4271102fc0411dba286c1
     __call = function(cls, ...)
         return cls.new(...)
     end
 })
-
----Draws a knot for diagnostic purposes. Color arguments are optional.
----@param knot Knot2 knot
----@param frame Frame frame
----@param layer Layer layer
----@param lnClr Color? line color
----@param coClr Color? coordinate color
----@param fhClr Color? fore handle color
----@param rhClr Color? rear handle color
-function ShapeUtilities.drawKnot2(
-    knot, frame, layer,
-    lnClr, coClr, fhClr, rhClr)
-    local lnClrVal <const> = lnClr or Color { r = 175, g = 175, b = 175 }
-    local rhClrVal <const> = rhClr or Color { r = 2, g = 167, b = 235 }
-    local coClrVal <const> = coClr or Color { r = 235, g = 225, b = 40 }
-    local fhClrVal <const> = fhClr or Color { r = 235, g = 26, b = 64 }
-
-    local lnBrush <const> = Brush { size = 1 }
-    local rhBrush <const> = Brush { size = 4 }
-    local coBrush <const> = Brush { size = 6 }
-    local fhBrush <const> = Brush { size = 5 }
-
-    local coPt <const> = AseUtilities.vec2ToPoint(knot.co)
-    local fhPt <const> = AseUtilities.vec2ToPoint(knot.fh)
-    local rhPt <const> = AseUtilities.vec2ToPoint(knot.rh)
-
-    app.transaction("Draw Knot Handles", function()
-        -- Line from rear handle to coordinate.
-        ---@diagnostic disable-next-line: deprecated
-        app.useTool {
-            tool = "line",
-            color = lnClrVal,
-            brush = lnBrush,
-            points = { rhPt, coPt },
-            frame = frame,
-            layer = layer
-        }
-
-        -- Line from coordinate to fore handle.
-        ---@diagnostic disable-next-line: deprecated
-        app.useTool {
-            tool = "line",
-            color = lnClrVal,
-            brush = lnBrush,
-            points = { coPt, fhPt },
-            frame = frame,
-            layer = layer
-        }
-
-        -- Rear handle point.
-        ---@diagnostic disable-next-line: deprecated
-        app.useTool {
-            tool = "pencil",
-            color = rhClrVal,
-            brush = rhBrush,
-            points = { rhPt },
-            frame = frame,
-            layer = layer
-        }
-
-        -- Coordinate point.
-        ---@diagnostic disable-next-line: deprecated
-        app.useTool {
-            tool = "pencil",
-            color = coClrVal,
-            brush = coBrush,
-            points = { coPt },
-            frame = frame,
-            layer = layer
-        }
-
-        -- Fore handle point.
-        ---@diagnostic disable-next-line: deprecated
-        app.useTool {
-            tool = "pencil",
-            color = fhClrVal,
-            brush = fhBrush,
-            points = { fhPt },
-            frame = frame,
-            layer = layer
-        }
-    end)
-end
 
 ---Draws a mesh in Aseprite with the contour tool.
 ---If a stroke is used, draws the stroke line by line.
