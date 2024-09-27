@@ -105,8 +105,11 @@ dlg:check {
     onclick = function()
         local args <const> = dlg.data
         local useStroke <const> = args.useStroke --[[@as boolean]]
+        local useFill <const> = args.useFill --[[@as boolean]]
         dlg:modify { id = "strokeWeight", visible = useStroke }
         dlg:modify { id = "strokeClr", visible = useStroke }
+        dlg:modify { id = "useFill", visible = useStroke }
+        dlg:modify { id = "fillClr", visible = useStroke and useFill }
     end
 }
 
@@ -131,6 +134,7 @@ dlg:check {
     label = "Fill:",
     text = "Enable",
     selected = defaults.useFill,
+    visible = defaults.useStroke,
     -- enabled = false,
     onclick = function()
         local args <const> = dlg.data
@@ -144,6 +148,7 @@ dlg:color {
     color = app.preferences.color_bar.bg_color --[[@as Color]],
     -- enabled = false,
     visible = defaults.useFill
+        and defaults.useStroke
 }
 
 dlg:newrow { always = false }
@@ -223,18 +228,11 @@ dlg:button {
         local layer <const> = sprite:newLayer()
         layer.name = mesh.name
 
-        local docPrefs <const> = app.preferences.document(sprite)
-        local symmetryPrefs <const> = docPrefs.symmetry
-        local oldSymmetry <const> = symmetryPrefs.mode --[[@as integer]]
-        symmetryPrefs.mode = 0
-
-        ShapeUtilities.drawMesh2(
+        ShapeUtilities.drawMesh2(sprite,
             mesh, useFill, fillColor,
             useStroke, strokeColor,
             Brush { size = strokeWeight },
             frame, layer)
-
-        symmetryPrefs.mode = oldSymmetry
 
         app.refresh()
     end

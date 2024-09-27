@@ -226,6 +226,7 @@ end
 
 ---Draws a mesh in Aseprite with the contour tool.
 ---If a stroke is used, draws the stroke line by line.
+---@param sprite Sprite sprite
 ---@param mesh Mesh2 mesh
 ---@param useFill boolean use fill
 ---@param fillClr Color fill color
@@ -235,10 +236,15 @@ end
 ---@param frame Frame frame
 ---@param layer Layer layer
 function ShapeUtilities.drawMesh2(
-    mesh,
+    sprite, mesh,
     useFill, fillClr,
     useStroke, strokeClr,
     brsh, frame, layer)
+    local docPrefs <const> = app.preferences.document(sprite)
+    local symmetryPrefs <const> = docPrefs.symmetry
+    local oldSymmetry <const> = symmetryPrefs.mode or 0 --[[@as integer]]
+    symmetryPrefs.mode = 0
+
     local toPt <const> = AseUtilities.vec2ToPoint
     local round <const> = Utilities.round
 
@@ -293,6 +299,7 @@ function ShapeUtilities.drawMesh2(
     -- Group fills into one transaction.
     ---@diagnostic disable-next-line: deprecated
     local useTool <const> = app.useTool
+    local simpleInk <const> = Ink.SIMPLE
 
     -- Group strokes into one transaction.
     -- Draw strokes line by line.
@@ -310,38 +317,60 @@ function ShapeUtilities.drawMesh2(
                     local ptCurr <const> = ptGroup[idx5]
                     useTool {
                         tool = "line",
-                        color = strokeClr,
                         brush = brsh,
-                        points = { ptPrev, ptCurr },
+                        color = strokeClr,
                         frame = frame,
-                        layer = layer
+                        ink = simpleInk,
+                        layer = layer,
+                        points = { ptPrev, ptCurr },
                     }
                     ptPrev = ptCurr
                 end -- End vertices loop.
             end     -- End faces loop.
         end)        -- End transaction.
-    end             -- End use stroke.
 
-    if useFill then
-        app.transaction("Mesh Fill", function()
-            local idx3 = 0
-            while idx3 < fsLen do
-                idx3 = idx3 + 1
-                local f <const> = fs[idx3]
-                local fLen <const> = #f
-                if fLen >= 3 then
-                    useTool {
-                        tool = "paint_bucket",
-                        color = fillClr,
-                        brush = brsh,
-                        points = { centers[idx3] },
-                        frame = frame,
-                        layer = layer,
-                    }
-                end -- End valid face check.
-            end -- End faces loop.
-        end)    -- End transaction.
-    end         -- End use fill.
+        if useFill then
+            local paintPrefs <const> = app.preferences.tool("paint_bucket")
+            local floodPrefs <const> = paintPrefs.floodfill
+
+            local oldStopAtGrid <const> = floodPrefs.stop_at_grid or 0 --[[@as integer]]
+            local oldReferTo <const> = floodPrefs.refer_to or 0 --[[@as integer]]
+            local oldPxMatrix <const> = floodPrefs.pixel_connectivity or 0 --[[@as integer]]
+
+            floodPrefs.stop_at_grid = 0       -- Never
+            floodPrefs.refer_to = 0           -- Active Layer
+            floodPrefs.pixel_connectivity = 0 -- Four connected
+
+            app.transaction("Mesh Fill", function()
+                local paintBrush <const> = Brush { size = 1 }
+                local idx3 = 0
+                while idx3 < fsLen do
+                    idx3 = idx3 + 1
+                    local f <const> = fs[idx3]
+                    local fLen <const> = #f
+                    if fLen >= 3 then
+                        useTool {
+                            tool = "paint_bucket",
+                            brush = paintBrush,
+                            color = fillClr,
+                            contiguous = true,
+                            frame = frame,
+                            ink = simpleInk,
+                            layer = layer,
+                            points = { centers[idx3] },
+                            tolerance = 0,
+                        }
+                    end -- End valid face check.
+                end     -- End faces loop.
+            end)        -- End transaction.
+
+            floodPrefs.stop_at_grid = oldStopAtGrid
+            floodPrefs.refer_to = oldReferTo
+            floodPrefs.pixel_connectivity = oldPxMatrix
+        end -- End use fill.
+    end     -- End use stroke.
+
+    symmetryPrefs.mode = oldSymmetry
 end
 
 return ShapeUtilities
