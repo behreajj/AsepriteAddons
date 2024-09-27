@@ -26,7 +26,7 @@ local dataTypes <const> = {
 local defaults <const> = {
     target = "SPRITE",
     dataType = "STRING",
-    propName = "Property",
+    propName = "property",
     boolValue = false,
     intValue = 0,
     numValue = 0.0,
@@ -427,6 +427,26 @@ dlg:button {
             return
         end
 
+        local propNameVerif <const> = Utilities.validateFilename(propName)
+        local propNameWarn <const> = propNameVerif ~= propName
+        local confirm = 1
+        if propNameWarn then
+            confirm = app.alert {
+                title = "Warning",
+                text = {
+                    string.format(
+                        "The property name \"%s\" will be changed to \"%s\".",
+                        propName, propNameVerif),
+                    "Do you wish to proceed?"
+                },
+                buttons = { "&YES", "&NO" }
+            }
+        end
+
+        if (not confirm) or confirm == 2 then
+            return
+        end
+
         local assignment = nil
         if dataType == "BOOLEAN" then
             assignment = args.boolValue --[[@as boolean]]
@@ -471,55 +491,14 @@ dlg:button {
         local i = 0
         while i < lenProperties do
             i = i + 1
-            properties[i][propName] = assignment
+            properties[i][propNameVerif] = assignment
         end
 
         app.alert {
             title = "Success",
             text = string.format(
                 "The property \"%s\" in %s has been set.",
-                propName, target)
-        }
-    end
-}
-
-dlg:button {
-    id = "unset",
-    text = "&UNSET",
-    focus = false,
-    onclick = function()
-        local args <const> = dlg.data
-        local target <const> = args.target --[[@as string]]
-        local propName <const> = args.propName --[[@as string]]
-
-        if #propName <= 0 then
-            app.alert {
-                title = "Error",
-                text = "The property name is empty."
-            }
-            return
-        end
-
-        local properties <const>,
-        success <const>,
-        errMsg <const> = getProperties(target)
-        if (not properties) or (not success) then
-            app.alert { title = "Error", text = errMsg }
-            return
-        end
-
-        local lenProperties <const> = #properties
-        local i = 0
-        while i < lenProperties do
-            i = i + 1
-            properties[i][propName] = nil
-        end
-
-        app.alert {
-            title = "Success",
-            text = string.format(
-                "The property \"%s\" in %s has been unset.",
-                propName, target)
+                propNameVerif, target)
         }
     end
 }
