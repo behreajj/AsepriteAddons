@@ -869,6 +869,7 @@ dlg:button {
                     local include = evaluated[c]
                     if include == nil then
                         include = eval(c)
+                        evaluated[c] = include
                     end
 
                     if include then
