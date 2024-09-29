@@ -517,12 +517,14 @@ function AseUtilities.averageColor(sprite, frame)
         local palette <const> = AseUtilities.getPalette(frame, sprite.palettes)
         local lenPalette <const> = #palette
         local cmRgb <const> = ColorMode.RGB
+        local hasBkg <const> = sprite.backgroundLayer ~= nil
 
         local i = 0
         while i < areaFlat do
             i = i + 1
             local idx <const> = strbyte(flatBytes, i)
-            if idx >= 0 and idx < lenPalette then
+            if (idx ~= alphaIndex or hasBkg)
+                and idx >= 0 and idx < lenPalette then
                 local aseColor <const> = palette:getColor(idx)
                 if aseColor.alpha > 0 then
                     local abgr32 <const> = aseToHex(aseColor, cmRgb)
