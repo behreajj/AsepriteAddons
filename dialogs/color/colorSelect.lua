@@ -804,13 +804,15 @@ dlg:button {
                 local visited <const> = {}
                 ---@type integer[]
                 local neighbors <const> = { yMouse * wSprite + xMouse }
+                local lenNeighbors = 1
 
-                local tremove <const> = table.remove
-
-                while #neighbors > 0 do
+                while lenNeighbors > 0 do
                     -- Removing from the back may be slightly faster than from
                     -- the front.
-                    local coord <const> = tremove(neighbors)
+                    local coord <const> = neighbors[lenNeighbors]
+                    neighbors[lenNeighbors] = nil
+                    lenNeighbors = lenNeighbors - 1
+
                     if not visited[coord] then
                         visited[coord] = true
 
@@ -835,16 +837,18 @@ dlg:button {
                                 local yn1wSprite <const> = ywSprite - wSprite
                                 local yp1wSprite <const> = ywSprite + wSprite
 
-                                neighbors[#neighbors + 1] = yn1wSprite + xNgbr
-                                neighbors[#neighbors + 1] = ywSprite + xNgbr - 1
-                                neighbors[#neighbors + 1] = ywSprite + xNgbr + 1
-                                neighbors[#neighbors + 1] = yp1wSprite + xNgbr
+                                neighbors[1 + lenNeighbors] = yn1wSprite + xNgbr
+                                neighbors[2 + lenNeighbors] = ywSprite + xNgbr - 1
+                                neighbors[3 + lenNeighbors] = ywSprite + xNgbr + 1
+                                neighbors[4 + lenNeighbors] = yp1wSprite + xNgbr
+                                lenNeighbors = lenNeighbors + 4
 
                                 if useConnect8 then
-                                    neighbors[#neighbors + 1] = yn1wSprite + xNgbr - 1
-                                    neighbors[#neighbors + 1] = yn1wSprite + xNgbr + 1
-                                    neighbors[#neighbors + 1] = yp1wSprite + xNgbr - 1
-                                    neighbors[#neighbors + 1] = yp1wSprite + xNgbr + 1
+                                    neighbors[1 + lenNeighbors] = yn1wSprite + xNgbr - 1
+                                    neighbors[2 + lenNeighbors] = yn1wSprite + xNgbr + 1
+                                    neighbors[3 + lenNeighbors] = yp1wSprite + xNgbr - 1
+                                    neighbors[4 + lenNeighbors] = yp1wSprite + xNgbr + 1
+                                    lenNeighbors = lenNeighbors + 4
                                 end -- Connect 8 check.
                             end     -- Exact equality check.
                         end         -- In bounds check.

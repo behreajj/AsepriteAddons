@@ -713,8 +713,7 @@ function AseUtilities.bkgToLayer(sprite, overrideLock)
         unBkgLayer.name = "Bkg"
         -- Attempting to copy properties field by reference will cause crash.
 
-        local frObjs <const> = sprite.frames
-        local lenFrObjs <const> = #frObjs
+        local lenFrObjs <const> = #sprite.frames
         local i = 0
         while i < lenFrObjs do
             i = i + 1
@@ -972,13 +971,13 @@ end
 ---mask index.
 ---@param a integer backdrop color
 ---@param b integer overlay color
----@param mask integer mask index
+---@param alphaIndex integer alpha index
 ---@return integer
 ---@nodiscard
-function AseUtilities.blendIndices(a, b, mask)
-    if b ~= mask then return b end
-    if a ~= mask then return a end
-    return mask
+function AseUtilities.blendIndices(a, b, alphaIndex)
+    if b ~= alphaIndex then return b end
+    if a ~= alphaIndex then return a end
+    return alphaIndex
 end
 
 ---Blends two RGBA colors. Premultiplies each color by its alpha prior
