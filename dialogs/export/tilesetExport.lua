@@ -191,10 +191,13 @@ end
 local function writeProps(properties)
     ---@type string[]
     local propStrs <const> = {}
+    local lenPropStrs = 0
+
     local strfmt <const> = string.format
     local mathtype <const> = math.type
     local tconcat <const> = table.concat
     local isFile <const> = app.fs.isFile
+
     for k, v in pairs(properties) do
         -- Ignore script export ID and tile probability.
         if k ~= "id" and k ~= "probability" then
@@ -229,7 +232,8 @@ local function writeProps(properties)
             local propStr <const> = strfmt(
                 "<property name=\"%s\" type=\"%s\" value=\"%s\" />",
                 k, tStr, vStr)
-            propStrs[#propStrs + 1] = propStr
+            lenPropStrs = lenPropStrs + 1
+            propStrs[lenPropStrs] = propStr
         end
     end
     return propStrs

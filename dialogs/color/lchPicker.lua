@@ -26,7 +26,7 @@ local defaults <const> = {
     -- This does not support scroll wheel because the directionality is
     -- reversed and because there is too much debugging needed to stop mouse
     -- down from interfering with scroll wheel, particularly in normal wheel
-    -- picker I.e., scrool wheel should only work when mouse button is up.
+    -- picker I.e., scroll wheel should only work when mouse button is up.
     -- That means separate functions would need to be made for scroll.
     lchTosRgb = Clr.srLchTosRgb,
     sRgbToLch = Clr.sRgbToSrLch,

@@ -263,13 +263,16 @@ dlg:button {
                 cArr[v] = k
             end
         else
+            local cIdx = 0
+
             -- Find colors from palette A.
             local i = 0
             while i < aLen do
                 local aAseColor <const> = aPal:getColor(i)
                 local aHex = aseColorToHex(aAseColor, rgbColorMode)
                 if aHex & 0xff000000 == 0 then aHex = 0 end
-                cArr[#cArr + 1] = aHex
+                cIdx = cIdx + 1
+                cArr[cIdx] = aHex
                 i = i + 1
             end
 
@@ -279,7 +282,8 @@ dlg:button {
                 local bAseColor <const> = bPal:getColor(j)
                 local bHex = aseColorToHex(bAseColor, rgbColorMode)
                 if bHex & 0xff000000 == 0 then bHex = 0 end
-                cArr[#cArr + 1] = bHex
+                cIdx = cIdx + 1
+                cArr[cIdx] = bHex
                 j = j + 1
             end
         end

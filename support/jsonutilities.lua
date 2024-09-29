@@ -259,8 +259,11 @@ end
 function JsonUtilities.propsToJson(properties)
     ---@type string[]
     local propStrs <const> = {}
+    local lenPropStrs = 0
+
     local strfmt <const> = string.format
     local mathtype <const> = math.type
+
     for k, v in pairs(properties) do
         local vStr = "null"
         local typev <const> = type(v)
@@ -285,7 +288,8 @@ function JsonUtilities.propsToJson(properties)
             end
         end
 
-        propStrs[#propStrs + 1] = strfmt("\"%s\":%s", k, vStr)
+        lenPropStrs = lenPropStrs + 1
+        propStrs[lenPropStrs] = strfmt("\"%s\":%s", k, vStr)
     end
 
     return string.format("{%s}", table.concat(propStrs, ","))

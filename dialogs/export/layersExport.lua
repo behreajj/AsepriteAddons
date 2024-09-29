@@ -403,12 +403,14 @@ dlg:button {
                 -- toggling visibility, etc.
                 local rangeLayers <const> = range.layers
                 local lenRangeLayers <const> = #rangeLayers
+                local lenTopLayers = 0
                 local i = 0
                 while i < lenRangeLayers do
                     i = i + 1
                     local rangeLayer <const> = rangeLayers[i]
                     if not rangeLayer.isGroup then
-                        topLayers[#topLayers + 1] = rangeLayer
+                        lenTopLayers = lenTopLayers + 1
+                        topLayers[lenTopLayers] = rangeLayer
                     end
                 end
 
