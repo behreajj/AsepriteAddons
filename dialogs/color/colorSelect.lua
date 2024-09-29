@@ -574,7 +574,9 @@ dlg:button {
             activeFrame, activeSprite.palettes)
         local lenPalette <const> = #palette
 
-        local trgSel <const> = Selection()
+        local trgSel <const> = isMagicWand
+            and Selection()
+            or Selection(Rectangle(xtl, ytl, wImage, hImage))
         local pxRect <const> = Rectangle(0, 0, 1, 1)
         local srcBpp <const> = image.bytesPerPixel
         local packFmt <const> = "<I" .. srcBpp
@@ -692,10 +694,10 @@ dlg:button {
                     evaluated[c] = include
                 end
 
-                if include then
+                if include == false then
                     pxRect.x = xtl + i % wImage
                     pxRect.y = ytl + i // wImage
-                    trgSel:add(pxRect)
+                    trgSel:subtract(pxRect)
                 end
 
                 i = i + 1
@@ -873,10 +875,10 @@ dlg:button {
                         evaluated[c] = include
                     end
 
-                    if include then
+                    if include == false then
                         pxRect.x = xtl + i % wImage
                         pxRect.y = ytl + i // wImage
-                        trgSel:add(pxRect)
+                        trgSel:subtract(pxRect)
                     end
                     i = i + 1
                 end
