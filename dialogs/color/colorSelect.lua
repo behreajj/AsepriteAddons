@@ -689,6 +689,7 @@ dlg:button {
                         usePolar,
                         usec, mincsq, maxcsq,
                         useh, minhrd, maxhrd)
+                    evaluated[c] = include
                 end
 
                 if include then
