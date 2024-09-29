@@ -825,6 +825,8 @@ dlg:button {
                         local yLocal <const> = yNgbr - ytl
 
                         -- TODO: Is there a more efficient implementation?
+                        -- http://www.adammil.net/blog/v126_A_More_Efficient_Flood_Fill.html
+                        -- https://www.codeproject.com/Articles/6017/QuickFill-An-Efficient-Flood-Fill-Algorithm
                         if yLocal >= 0 and yLocal < hImage
                             and xLocal >= 0 and xLocal < wImage then
                             local lookup <const> = srcBpp * (yLocal * wImage + xLocal)
@@ -840,17 +842,21 @@ dlg:button {
                                 local yn1wSprite <const> = ywSprite - wSprite
                                 local yp1wSprite <const> = ywSprite + wSprite
 
-                                neighbors[1 + lenNeighbors] = yn1wSprite + xNgbr
-                                neighbors[2 + lenNeighbors] = ywSprite + xNgbr - 1
-                                neighbors[3 + lenNeighbors] = ywSprite + xNgbr + 1
-                                neighbors[4 + lenNeighbors] = yp1wSprite + xNgbr
-                                lenNeighbors = lenNeighbors + 4
-
                                 if useConnect8 then
                                     neighbors[1 + lenNeighbors] = yn1wSprite + xNgbr - 1
-                                    neighbors[2 + lenNeighbors] = yn1wSprite + xNgbr + 1
-                                    neighbors[3 + lenNeighbors] = yp1wSprite + xNgbr - 1
-                                    neighbors[4 + lenNeighbors] = yp1wSprite + xNgbr + 1
+                                    neighbors[2 + lenNeighbors] = yn1wSprite + xNgbr
+                                    neighbors[3 + lenNeighbors] = yn1wSprite + xNgbr + 1
+                                    neighbors[4 + lenNeighbors] = ywSprite + xNgbr - 1
+                                    neighbors[5 + lenNeighbors] = ywSprite + xNgbr + 1
+                                    neighbors[6 + lenNeighbors] = yp1wSprite + xNgbr - 1
+                                    neighbors[7 + lenNeighbors] = yp1wSprite + xNgbr
+                                    neighbors[8 + lenNeighbors] = yp1wSprite + xNgbr + 1
+                                    lenNeighbors = lenNeighbors + 8
+                                else
+                                    neighbors[1 + lenNeighbors] = yn1wSprite + xNgbr
+                                    neighbors[2 + lenNeighbors] = ywSprite + xNgbr - 1
+                                    neighbors[3 + lenNeighbors] = ywSprite + xNgbr + 1
+                                    neighbors[4 + lenNeighbors] = yp1wSprite + xNgbr
                                     lenNeighbors = lenNeighbors + 4
                                 end -- Connect 8 check.
                             end     -- Exact equality check.

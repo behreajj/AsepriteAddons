@@ -518,6 +518,7 @@ function AseUtilities.averageColor(sprite, frame)
         local lenPalette <const> = #palette
         local cmRgb <const> = ColorMode.RGB
         local hasBkg <const> = sprite.backgroundLayer ~= nil
+            and sprite.backgroundLayer.isVisible
 
         local i = 0
         while i < areaFlat do
