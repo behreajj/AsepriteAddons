@@ -251,7 +251,8 @@ dlg:slider {
 dlg:newrow { always = false }
 
 QuantizeUtilities.dialogWidgets(
-    dlg, defaults.ditherMode == "QUANTIZE")
+    dlg, defaults.ditherMode == "QUANTIZE",
+    false)
 
 dlg:combobox {
     id = "palType",
@@ -448,7 +449,7 @@ dlg:button {
                 return alpha | aHex
             end
 
-            dmStr = string.format("OneBit.%s.%03d", greyStr, thresh100)
+            dmStr = string.format("OneBit %s %03d", greyStr, thresh100)
         elseif ditherMode == "QUANTIZE" then
             local method <const> = args.method --[[@as string]]
 

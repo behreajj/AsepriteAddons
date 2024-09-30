@@ -2246,7 +2246,7 @@ function AseUtilities.getTopVisibleParent(layer)
 end
 
 ---Get unique cels from layers that have already been verified as leaves and
----filtered. If the output target array is not supplied, a new one is created.
+---filtered.
 ---@param leaves Layer[] leaf layers
 ---@param frames integer[]|Frame[] frames
 ---@return Cel[]

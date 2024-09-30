@@ -25,7 +25,7 @@ dlg:combobox {
 
 dlg:newrow { always = false }
 
-QuantizeUtilities.dialogWidgets(dlg, true)
+QuantizeUtilities.dialogWidgets(dlg, true, true)
 
 dlg:check {
     id = "genPalette",

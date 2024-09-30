@@ -53,7 +53,8 @@ setmetatable(QuantizeUtilities, {
 ---Places a new row at the end of the widgets.
 ---@param dlg Dialog dialog
 ---@param isVisible boolean visible by default
-function QuantizeUtilities.dialogWidgets(dlg, isVisible)
+---@param enableAlpha boolean enable alpha channel
+function QuantizeUtilities.dialogWidgets(dlg, isVisible, enableAlpha)
     dlg:combobox {
         id = "method",
         label = "Method:",
@@ -121,7 +122,9 @@ function QuantizeUtilities.dialogWidgets(dlg, isVisible)
             dlg:modify { id = "rLevels", value = uni }
             dlg:modify { id = "gLevels", value = uni }
             dlg:modify { id = "bLevels", value = uni }
-            dlg:modify { id = "aLevels", value = uni }
+            if enableAlpha then
+                dlg:modify { id = "aLevels", value = uni }
+            end
         end
     }
 
@@ -170,6 +173,7 @@ function QuantizeUtilities.dialogWidgets(dlg, isVisible)
         max = QuantizeUtilities.LEVELS_MAX,
         value = QuantizeUtilities.LEVELS_DEFAULT_A,
         focus = false,
+        enabled = enableAlpha,
         visible = isVisible
             and QuantizeUtilities.INPUT_DEFAULT == "NON_UNIFORM"
             and QuantizeUtilities.UNIT_DEFAULT == "INTEGERS"
@@ -193,14 +197,18 @@ function QuantizeUtilities.dialogWidgets(dlg, isVisible)
             dlg:modify { id = "rBits", value = bd }
             dlg:modify { id = "gBits", value = bd }
             dlg:modify { id = "bBits", value = bd }
-            dlg:modify { id = "aBits", value = bd }
+            if enableAlpha then
+                dlg:modify { id = "aBits", value = bd }
+            end
 
             local lv <const> = 1 << bd
             dlg:modify { id = "levelsUni", value = lv }
             dlg:modify { id = "rLevels", value = lv }
             dlg:modify { id = "gLevels", value = lv }
             dlg:modify { id = "bLevels", value = lv }
-            dlg:modify { id = "aLevels", value = lv }
+            if enableAlpha then
+                dlg:modify { id = "aLevels", value = lv }
+            end
         end
     }
 
@@ -267,14 +275,17 @@ function QuantizeUtilities.dialogWidgets(dlg, isVisible)
         max = QuantizeUtilities.BITS_MAX,
         value = QuantizeUtilities.BITS_DEFAULT_A,
         focus = false,
+        enabled = enableAlpha,
         visible = isVisible
             and QuantizeUtilities.INPUT_DEFAULT == "NON_UNIFORM"
             and QuantizeUtilities.UNIT_DEFAULT == "BITS",
         onchange = function()
-            local args <const> = dlg.data
-            local aBits <const> = args.aBits --[[@as integer]]
-            local lv <const> = 1 << aBits
-            dlg:modify { id = "aLevels", value = lv }
+            if enableAlpha then
+                local args <const> = dlg.data
+                local aBits <const> = args.aBits --[[@as integer]]
+                local lv <const> = 1 << aBits
+                dlg:modify { id = "aLevels", value = lv }
+            end
         end
     }
 

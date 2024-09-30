@@ -249,7 +249,6 @@ dlg:button {
         local strfmt <const> = string.format
         local strpack <const> = string.pack
         local strsub <const> = string.sub
-        local strbyte <const> = string.byte
         local strunpack <const> = string.unpack
         local tconcat <const> = table.concat
         local transact <const> = app.transaction
@@ -345,10 +344,11 @@ dlg:button {
             local frIdx <const> = frIdcs[i]
             local srcCel <const> = srcLayer:cel(frIdx)
             if srcCel then
+                local origImg <const> = srcCel.image
+                local srcImgId <const> = origImg.id
                 local srcImg <const> = isTileMap
-                    and tilesToImage(srcCel.image, tileSet, cmRgb)
-                    or srcCel.image
-                local srcImgId <const> = srcImg.id
+                    and tilesToImage(origImg, tileSet, cmRgb)
+                    or origImg
                 local trgImg = premadeTrgImgs[srcImgId]
                 if not trgImg then
                     -- Get unique hexadecimal values from image.
