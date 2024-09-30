@@ -361,7 +361,7 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
             }
             dlg:modify {
                 id = "easPreset",
-                visible = isMixed and (not isPolar)
+                visible = isMixed
             }
             dlg:modify {
                 id = "quantize",
@@ -399,7 +399,7 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
             }
             dlg:modify {
                 id = "easPreset",
-                visible = isMixed and (not isPolar)
+                visible = isMixed
             }
         end
     }
@@ -423,9 +423,8 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         label = "Easing:",
         option = GradientUtilities.DEFAULT_RGB_EASING,
         options = GradientUtilities.RGB_EASING_PRESETS,
-        visible = ((not showStyle)
-                or GradientUtilities.DEFAULT_STYLE == "MIXED")
-            and GradientUtilities.DEFAULT_CLR_SPC ~= "SR_LCH"
+        visible = (not showStyle)
+                or GradientUtilities.DEFAULT_STYLE == "MIXED"
     }
 
     dlg:newrow { always = false }
