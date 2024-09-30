@@ -8,16 +8,15 @@ local palTargets <const> = { "ACTIVE", "FILE" }
 local greyMethods <const> = { "AVERAGE", "HSL", "HSV", "LUMINANCE" }
 
 local defaults <const> = {
-    -- TODO: Support dithered alpha, especially for quantize.
     ditherMode = "PALETTE",
     areaTarget = "ACTIVE",
     palTarget = "ACTIVE",
     threshold = 50,
-    factor100 = 100,
     octCapacityBits = 4,
     minCapacityBits = 2,
     maxCapacityBits = 16,
     factor = 100,
+    greyMethod = "LUMINANCE",
     printElapsed = false,
 }
 
@@ -27,7 +26,7 @@ local defaults <const> = {
 ---@param hSrc integer source image height
 ---@param srcBpp integer source image bytes per pixel
 ---@param factor number dither factor
----@param closestFunc fun(r8Src: integer, g8Src: integer, b8Src: integer): integer, integer, integer
+---@param closestFunc fun(r8Src: integer, g8Src: integer, b8Src: integer, a8Src: integer): integer, integer, integer, integer
 local function fsDither(pixels, wSrc, hSrc, srcBpp, factor, closestFunc)
     local fs_1_16 <const> = 0.0625 * factor
     local fs_3_16 <const> = 0.1875 * factor
@@ -46,23 +45,23 @@ local function fsDither(pixels, wSrc, hSrc, srcBpp, factor, closestFunc)
         local r8Src <const> = pixels[1 + iSrcBpp]
         local g8Src <const> = pixels[2 + iSrcBpp]
         local b8Src <const> = pixels[3 + iSrcBpp]
+        local a8Src <const> = pixels[4 + iSrcBpp]
 
         local r8Trg <const>,
         g8Trg <const>,
-        b8Trg <const> = closestFunc(r8Src, g8Src, b8Src)
-
-        -- print(string.format(
-        --     "r8Trg: %d, g8Trg: %d, b8Trg: %d",
-        --     r8Trg, g8Trg, b8Trg))
+        b8Trg <const>,
+        a8Trg <const> = closestFunc(r8Src, g8Src, b8Src, a8Src)
 
         pixels[1 + iSrcBpp] = r8Trg
         pixels[2 + iSrcBpp] = g8Trg
         pixels[3 + iSrcBpp] = b8Trg
+        pixels[4 + iSrcBpp] = a8Trg
 
         -- Find difference between palette color and source color.
         local rErr <const> = r8Src - r8Trg
         local gErr <const> = g8Src - g8Trg
         local bErr <const> = b8Src - b8Trg
+        local aErr <const> = a8Src - a8Trg
 
         local xp1InBounds <const> = x + 1 < wSrc
         local yp1InBounds <const> = y + 1 < hSrc
@@ -72,19 +71,21 @@ local function fsDither(pixels, wSrc, hSrc, srcBpp, factor, closestFunc)
         -- Find right neighbor.
         if xp1InBounds then
             local idxNgbr0 <const> = y * wSrc * srcBpp + xBpp + srcBpp
-            -- local idxNgbr0 <const> = (y * wSrc + x + 1) * srcBpp
 
             local rne0 = pixels[1 + idxNgbr0] + floor(rErr * fs_7_16)
             local gne0 = pixels[2 + idxNgbr0] + floor(gErr * fs_7_16)
             local bne0 = pixels[3 + idxNgbr0] + floor(bErr * fs_7_16)
+            local ane0 = pixels[4 + idxNgbr0] + floor(aErr * fs_7_16)
 
             if rne0 < 0 then rne0 = 0 elseif rne0 > 255 then rne0 = 255 end
             if gne0 < 0 then gne0 = 0 elseif gne0 > 255 then gne0 = 255 end
             if bne0 < 0 then bne0 = 0 elseif bne0 > 255 then bne0 = 255 end
+            if ane0 < 0 then ane0 = 0 elseif ane0 > 255 then ane0 = 255 end
 
             pixels[1 + idxNgbr0] = rne0
             pixels[2 + idxNgbr0] = gne0
             pixels[3 + idxNgbr0] = bne0
+            pixels[4 + idxNgbr0] = ane0
         end
 
         if yp1InBounds then
@@ -93,53 +94,59 @@ local function fsDither(pixels, wSrc, hSrc, srcBpp, factor, closestFunc)
             -- Find bottom left neighbor.
             if x > 0 then
                 local idxNgbr1 <const> = yp1WSrcBpp + xBpp - srcBpp
-                -- local idxNgbr1 <const> = ((y + 1) * wSrc + x - 1) * srcBpp
 
                 local rne1 = pixels[1 + idxNgbr1] + floor(rErr * fs_3_16)
                 local gne1 = pixels[2 + idxNgbr1] + floor(gErr * fs_3_16)
                 local bne1 = pixels[3 + idxNgbr1] + floor(bErr * fs_3_16)
+                local ane1 = pixels[4 + idxNgbr1] + floor(aErr * fs_3_16)
 
                 if rne1 < 0 then rne1 = 0 elseif rne1 > 255 then rne1 = 255 end
                 if gne1 < 0 then gne1 = 0 elseif gne1 > 255 then gne1 = 255 end
                 if bne1 < 0 then bne1 = 0 elseif bne1 > 255 then bne1 = 255 end
+                if ane1 < 0 then ane1 = 0 elseif ane1 > 255 then ane1 = 255 end
 
                 pixels[1 + idxNgbr1] = rne1
                 pixels[2 + idxNgbr1] = gne1
                 pixels[3 + idxNgbr1] = bne1
+                pixels[4 + idxNgbr1] = ane1
             end
 
             -- Find the bottom neighbor.
             local idxNgbr2 <const> = yp1WSrcBpp + xBpp
-            -- local idxNgbr2 <const> = ((y + 1) * wSrc + x) * srcBpp
 
             local rne2 = pixels[1 + idxNgbr2] + floor(rErr * fs_5_16)
             local gne2 = pixels[2 + idxNgbr2] + floor(gErr * fs_5_16)
             local bne2 = pixels[3 + idxNgbr2] + floor(bErr * fs_5_16)
+            local ane2 = pixels[4 + idxNgbr2] + floor(aErr * fs_5_16)
 
             if rne2 < 0 then rne2 = 0 elseif rne2 > 255 then rne2 = 255 end
             if gne2 < 0 then gne2 = 0 elseif gne2 > 255 then gne2 = 255 end
             if bne2 < 0 then bne2 = 0 elseif bne2 > 255 then bne2 = 255 end
+            if ane2 < 0 then ane2 = 0 elseif ane2 > 255 then ane2 = 255 end
 
             pixels[1 + idxNgbr2] = rne2
             pixels[2 + idxNgbr2] = gne2
             pixels[3 + idxNgbr2] = bne2
+            pixels[4 + idxNgbr2] = ane2
 
             -- Find bottom right neighbor.
             if xp1InBounds then
                 local idxNgbr3 <const> = yp1WSrcBpp + xBpp + srcBpp
-                -- local idxNgbr3 <const> = ((y + 1) * wSrc + x + 1) * srcBpp
 
                 local rne3 = pixels[1 + idxNgbr3] + floor(rErr * fs_1_16)
                 local gne3 = pixels[2 + idxNgbr3] + floor(gErr * fs_1_16)
                 local bne3 = pixels[3 + idxNgbr3] + floor(bErr * fs_1_16)
+                local ane3 = pixels[4 + idxNgbr3] + floor(aErr * fs_1_16)
 
                 if rne3 < 0 then rne3 = 0 elseif rne3 > 255 then rne3 = 255 end
                 if gne3 < 0 then gne3 = 0 elseif gne3 > 255 then gne3 = 255 end
                 if bne3 < 0 then bne3 = 0 elseif bne3 > 255 then bne3 = 255 end
+                if ane3 < 0 then ane3 = 0 elseif ane3 > 255 then ane3 = 255 end
 
                 pixels[1 + idxNgbr3] = rne3
                 pixels[2 + idxNgbr3] = gne3
                 pixels[3 + idxNgbr3] = bne3
+                pixels[4 + idxNgbr3] = ane3
             end -- End x + 1 in bounds.
         end     -- End y + 1 in bounds.
 
@@ -256,7 +263,7 @@ dlg:newrow { always = false }
 
 QuantizeUtilities.dialogWidgets(
     dlg, defaults.ditherMode == "QUANTIZE",
-    false)
+    true)
 
 dlg:combobox {
     id = "palTarget",
@@ -414,10 +421,20 @@ dlg:button {
         local getPixels <const> = AseUtilities.getPixels
         local setPixels <const> = AseUtilities.setPixels
 
-        local closestFunc = function(r8Src, g8Src, b8Src)
-            return r8Src, g8Src, b8Src
-        end
+        -- String that is assigned to new layer name to clarify operation.
         local dmStr = ""
+
+        ---@param r8Src integer
+        ---@param g8Src integer
+        ---@param b8Src integer
+        ---@param a8Src integer
+        ---@return integer r8Trg
+        ---@return integer g8Trg
+        ---@return integer b8Trg
+        ---@return integer a8Trg
+        local closestFunc = function(r8Src, g8Src, b8Src, a8Src)
+            return r8Src, g8Src, b8Src, a8Src
+        end
 
         if ditherMode == "ONE_BIT" then
             local oColorAse <const> = args.oColor --[[@as Color]]
@@ -434,6 +451,16 @@ dlg:button {
             local dr8 = dColorAse.red
             local dg8 = dColorAse.green
             local db8 = dColorAse.blue
+
+            if math.abs(or8 - dr8) <= 4
+                and math.abs(og8 - dg8) <= 4
+                and math.abs(ob8 - db8) <= 4 then
+                app.alert {
+                    title = "Error",
+                    text = "Contrast too low between colors."
+                }
+                return
+            end
 
             local greyMethod = function(r8Src, g8Src, b8Src) return 0.5 end
             local greyStr = ""
@@ -463,16 +490,6 @@ dlg:button {
                 greyStr = "Luminance"
             end
 
-            if math.abs(or8 - dr8) <= 4
-                and math.abs(og8 - dg8) <= 4
-                and math.abs(ob8 - db8) <= 4 then
-                app.alert {
-                    title = "Error",
-                    text = "Contrast too low between colors."
-                }
-                return
-            end
-
             if greyMethod(or8, og8, ob8) > greyMethod(dr8, dg8, db8) then
                 or8, og8, ob8, dr8, dg8, db8 = dr8, dg8, db8, or8, og8, ob8
             end
@@ -485,13 +502,12 @@ dlg:button {
             --     dr8, dg8, db8))
 
             local threshold <const> = thresh100 * 0.01
-            closestFunc = function(r8Src, g8Src, b8Src)
+            closestFunc = function(r8Src, g8Src, b8Src, a8Src)
                 if greyMethod(r8Src, g8Src, b8Src) >= threshold then
-                    return dr8, dg8, db8
+                    return dr8, dg8, db8, a8Src
                 end
-                return or8, og8, ob8
+                return or8, og8, ob8, a8Src
             end
-
 
             dmStr = string.format("OneBit %s %03d", greyStr, thresh100)
         elseif ditherMode == "QUANTIZE" then
@@ -500,10 +516,12 @@ dlg:button {
             local rLevels = args.rLevels --[[@as integer]]
             local gLevels = args.gLevels --[[@as integer]]
             local bLevels = args.bLevels --[[@as integer]]
+            local aLevels = args.aLevels --[[@as integer]]
 
             local rDelta = 0.0
             local gDelta = 0.0
             local bDelta = 0.0
+            local aDelta = 0.0
 
             local quantize = Utilities.quantizeUnsignedInternal
 
@@ -513,31 +531,37 @@ dlg:button {
                 rDelta = 1.0 / (rLevels - 1.0)
                 gDelta = 1.0 / (gLevels - 1.0)
                 bDelta = 1.0 / (bLevels - 1.0)
+                aDelta = 1.0 / (aLevels - 1.0)
             else
                 quantize = Utilities.quantizeSignedInternal
 
                 rLevels = rLevels - 1
                 gLevels = gLevels - 1
                 bLevels = bLevels - 1
+                aLevels = aLevels - 1
 
                 rDelta = 1.0 / rLevels
                 gDelta = 1.0 / gLevels
                 bDelta = 1.0 / bLevels
+                aDelta = 1.0 / aLevels
             end
 
             local floor <const> = math.floor
 
-            closestFunc = function(r8Src, g8Src, b8Src)
+            closestFunc = function(r8Src, g8Src, b8Src, a8Src)
                 local rQtz <const> = quantize(r8Src / 255.0, rLevels, rDelta)
                 local gQtz <const> = quantize(g8Src / 255.0, gLevels, gDelta)
                 local bQtz <const> = quantize(b8Src / 255.0, bLevels, bDelta)
+                local aQtz <const> = quantize(a8Src / 255.0, aLevels, aDelta)
                 return floor(rQtz * 255.0 + 0.5),
                     floor(gQtz * 255.0 + 0.5),
-                    floor(bQtz * 255.0 + 0.5)
+                    floor(bQtz * 255.0 + 0.5),
+                    floor(aQtz * 255.0 + 0.5)
             end
 
-            dmStr = string.format("Quantized R%02d G%02d B%02d",
-                rLevels, gLevels, bLevels)
+            dmStr = string.format(
+                "Quantized R%02d G%02d B%02d A%02d",
+                rLevels, gLevels, bLevels, aLevels)
         elseif ditherMode == "PALETTE" then
             local palTarget <const> = args.palTarget
                 or defaults.palTarget --[[@as string]]
@@ -634,7 +658,7 @@ dlg:button {
             end
 
             Octree.cull(octree)
-            closestFunc = function(r8Src, g8Src, b8Src)
+            closestFunc = function(r8Src, g8Src, b8Src, a8Src)
                 local srgb <const> = cnew(
                     r8Src / 255.0,
                     g8Src / 255.0,
@@ -656,7 +680,7 @@ dlg:button {
                     end
                 end
 
-                return r8Trg, g8Trg, b8Trg
+                return r8Trg, g8Trg, b8Trg, a8Src
             end
 
             dmStr = "Palette"
