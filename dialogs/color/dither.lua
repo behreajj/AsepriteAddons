@@ -8,6 +8,7 @@ local greyMethods <const> = { "AVERAGE", "HSL", "HSV", "LUMINANCE" }
 local palTypes <const> = { "ACTIVE", "FILE" }
 
 local defaults <const> = {
+    -- TODO: Refactor.
     target = "ACTIVE",
     ditherMode = "PALETTE",
     greyMethod = "LUMINANCE",

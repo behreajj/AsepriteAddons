@@ -563,7 +563,8 @@ dlg:button {
         local cmIsGry <const> = colorMode == ColorMode.GRAY
 
         -- Cache global methods.
-        local fromHex <const> = Clr.fromHexAbgr32
+        local fromHex32 <const> = Clr.fromHexAbgr32
+        local fromHex16 <const> = Clr.fromHexAv16
         local sRgbaToLab <const> = Clr.sRgbToSrLab2
         local aseColorToClr <const> = AseUtilities.aseColorToClr
         local aseColorToHex <const> = AseUtilities.aseColorToHex
@@ -668,22 +669,19 @@ dlg:button {
 
                 local include = evaluated[c]
                 if include == nil then
-                    local c32 = c
+                    local srgb = nil
                     if cmIsIdx then
-                        -- TODO: Use AseUtilities convert.
                         if c >= 0 and c < lenPalette then
                             local aseColor <const> = palette:getColor(c)
-                            c32 = aseColorToHex(aseColor, ColorMode.RGB)
+                            srgb = aseColorToClr(aseColor)
                         else
-                            c32 = 0
+                            srgb = Clr.new(0, 0, 0, 0)
                         end
                     elseif cmIsGry then
-                        -- TODO: Use Clr.fromHexAv16
-                        local a8 <const> = (c >> 0x08) & 0xff
-                        local v8 <const> = c & 0xff
-                        c32 = a8 << 0x18 | v8 << 0x10 | v8 << 0x08 | v8
+                        srgb = fromHex16(c)
+                    else
+                        srgb = fromHex32(c)
                     end
-                    local srgb <const> = fromHex(c32)
                     local lab <const> = sRgbaToLab(srgb)
                     include = critEval(
                         lab, mint01, maxt01,
@@ -742,14 +740,11 @@ dlg:button {
                             refClr = Clr.new(0, 0, 0, 0)
                         end
                     elseif cmIsGry then
-                        local a8 <const> = (c >> 0x08) & 0xff
-                        local v8 <const> = c & 0xff
-                        local c32 <const> = a8 << 0x18 | v8 << 0x10 | v8 << 0x08 | v8
                         refInt = c
-                        refClr = fromHex(c32)
+                        refClr = fromHex16(c)
                     else
                         refInt = c
-                        refClr = fromHex(c)
+                        refClr = fromHex32(c)
                     end
                 else
                     -- You could set the reference to alpha index, but it seems
@@ -783,16 +778,13 @@ dlg:button {
                     end
                 elseif colorMode == ColorMode.GRAY then
                     eval = function(c16)
-                        local a8 <const> = (c16 >> 0x08) & 0xff
-                        local v8 <const> = c16 & 0xff
-                        local c32 <const> = a8 << 0x18 | v8 << 0x10 | v8 << 0x08 | v8
-                        local lab <const> = sRgbaToLab(fromHex(c32))
+                        local lab <const> = sRgbaToLab(fromHex16(c16))
                         return distSq(lab, refLab, tScl) <= tolsq
                     end
                 else
                     -- Default to RGB color mode.
                     eval = function(c32)
-                        local lab <const> = sRgbaToLab(fromHex(c32))
+                        local lab <const> = sRgbaToLab(fromHex32(c32))
                         return distSq(lab, refLab, tScl) <= tolsq
                     end
                 end
