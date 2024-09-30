@@ -6,6 +6,7 @@ local targets <const> = {
     "FORE_TILE",
     "BACK_TILE",
     "LAYER",
+    "RANGE",
     "SLICE",
     "SPRITE",
     "TAG",
@@ -59,6 +60,76 @@ local function getProperties(target)
             return nil, false, "There is no active cel."
         end
         return { activeCel.properties }, true, ""
+    elseif target == "RANGE" then
+        local activeSprite <const> = app.sprite
+        if not activeSprite then
+            return nil, false, "There is no active sprite."
+        end
+
+        local range <const> = app.range
+        if range.sprite ~= activeSprite then
+            return nil, false, "Range doesn't belong to sprite."
+        end
+
+        -- range.tiles Does not work as a getter.
+        local rangeType <const> = range.type
+        if rangeType == RangeType.CELS then
+            local rangeImages <const> = range.images
+            local lenRangeImages <const> = #rangeImages
+            if lenRangeImages <= 0 then
+                return nil, false, "No cels were selected."
+            end
+
+            ---@type table<string, any>[]
+            local properties <const> = {}
+            local i = 0
+            while i < lenRangeImages do
+                i = i + 1
+                properties[i] = rangeImages[i].cel.properties
+            end
+            return properties, true, ""
+        elseif rangeType == RangeType.FRAMES then
+            local rangeFrames <const> = range.frames
+            local lenRangeFrames <const> = #rangeFrames
+            if lenRangeFrames <= 0 then
+                return nil, false, "No frames were selected."
+            end
+
+            local leaves <const> = AseUtilities.getLayerHierarchy(
+                activeSprite, true, true, true, true)
+            local cels <const> = AseUtilities.getUniqueCelsFromLeaves(
+                leaves, rangeFrames)
+            local lenCels <const> = #cels
+            if lenCels <= 0 then
+                return nil, false, "No cels were selected."
+            end
+
+            ---@type table<string, any>[]
+            local properties <const> = {}
+            local i = 0
+            while i < lenCels do
+                i = i + 1
+                properties[i] = cels[i].properties
+            end
+            return properties, true, ""
+        elseif rangeType == RangeType.LAYERS then
+            local rangeLayers <const> = range.layers
+            local lenRangeLayers <const> = #rangeLayers
+            if lenRangeLayers <= 0 then
+                return nil, false, "No layers were selected."
+            end
+
+            ---@type table<string, any>[]
+            local properties <const> = {}
+            local i = 0
+            while i < lenRangeLayers do
+                i = i + 1
+                properties[i] = rangeLayers[i].properties
+            end
+            return properties, true, ""
+        end
+
+        return nil, false, "No cels or layers were selected."
     elseif target == "SLICE" then
         local activeSprite <const> = app.sprite
         if not activeSprite then
@@ -81,8 +152,9 @@ local function getProperties(target)
             return nil, false, "No slices were selected."
         end
 
+        local properties <const> = rangeSlices[1].properties
         app.tool = oldTool
-        return { rangeSlices[1].properties }, true, ""
+        return { properties }, true, ""
     elseif target == "SPRITE" then
         local activeSprite <const> = app.sprite
         if not activeSprite then
@@ -126,11 +198,13 @@ local function getProperties(target)
         if target == "TILES" then
             ---@type table<string, any>[]
             local properties <const> = {}
+            local lenProperties = 0
             local i = 1
             while i < lenTileSet do
                 local tile <const> = tileSet:tile(i)
                 if tile then
-                    properties[#properties + 1] = tile.properties
+                    lenProperties = lenProperties + 1
+                    properties[lenProperties] = tile.properties
                 end
                 i = i + 1
             end
