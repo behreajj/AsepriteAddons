@@ -8,6 +8,7 @@ local palTargets <const> = { "ACTIVE", "FILE" }
 local greyMethods <const> = { "AVERAGE", "HSL", "HSV", "LUMINANCE" }
 
 local defaults <const> = {
+    -- TODO: Support dithered alpha, especially for quantize.
     ditherMode = "PALETTE",
     areaTarget = "ACTIVE",
     palTarget = "ACTIVE",
@@ -462,9 +463,14 @@ dlg:button {
                 greyStr = "Luminance"
             end
 
-            if or8 == dr8 and og8 == dg8 and ob8 == db8 then
-                or8, og8, ob8 = 0, 0, 0
-                dr8, dg8, db8 = 255, 255, 255
+            if math.abs(or8 - dr8) <= 4
+                and math.abs(og8 - dg8) <= 4
+                and math.abs(ob8 - db8) <= 4 then
+                app.alert {
+                    title = "Error",
+                    text = "Contrast too low between colors."
+                }
+                return
             end
 
             if greyMethod(or8, og8, ob8) > greyMethod(dr8, dg8, db8) then
@@ -701,11 +707,11 @@ dlg:button {
                     premadeTrgImgs[srcImgId] = trgImg
                 end
 
-                -- transact(strfmt("PaletteToCel %d", frIdx + frameUiOffset), function()
-                local trgCel <const> = activeSprite:newCel(
-                    trgLayer, frIdx, trgImg, srcCel.position)
-                trgCel.opacity = srcCel.opacity
-                -- end)
+                transact(strfmt("Dither %d", frIdx + frameUiOffset), function()
+                    local trgCel <const> = activeSprite:newCel(
+                        trgLayer, frIdx, trgImg, srcCel.position)
+                    trgCel.opacity = srcCel.opacity
+                end)
             end -- End source cel exists.
         end     -- End frames loop.
 
