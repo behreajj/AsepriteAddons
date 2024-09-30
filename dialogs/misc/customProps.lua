@@ -25,6 +25,7 @@ local dataTypes <const> = {
 }
 
 local defaults <const> = {
+    -- TODO: Button to mark cels and layers that have properties with a color.
     target = "SPRITE",
     dataType = "STRING",
     propName = "property",
@@ -605,8 +606,16 @@ dlg:button {
             return
         end
 
-        -- TODO: Should this print all the properties?
-        print(JsonUtilities.propsToJson(properties[1]))
+        ---@type string[]
+        local strArr <const> = {}
+        local lenProperties <const> = #properties
+        local i = 0
+        while i < lenProperties do
+            i = i + 1
+            strArr[i] = JsonUtilities.propsToJson(properties[i])
+        end
+        strArr[1 + i] = ""
+        print(table.concat(strArr, "\n"))
     end
 }
 
