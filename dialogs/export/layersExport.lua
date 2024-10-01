@@ -309,19 +309,25 @@ dlg:button {
             if lcFileExt == "webp"
                 or lcFileExt == "jpg"
                 or lcFileExt == "jpeg"
+                or lcFileExt == "qoi"
                 or lcFileExt == "tga" then
                 app.alert {
                     title = "Error",
-                    text = "Indexed color not supported for jpeg, jpg, tga or webp."
+                    text = {
+                        "Indexed color not supported for",
+                        "jpeg, jpg, qoi, tga or webp."
+                    }
                 }
                 return
             end
         elseif spriteColorMode == ColorMode.GRAY then
             local lcFileExt <const> = string.lower(fileExt)
-            if lcFileExt == "bmp" then
+            if lcFileExt == "bmp"
+                or lcFileExt == "qoi"
+                or lcFileExt == "webp" then
                 app.alert {
                     title = "Error",
-                    text = "Grayscale not supported for bmp."
+                    text = "Grayscale not supported for bmp, qoi or webp."
                 }
                 return
             end

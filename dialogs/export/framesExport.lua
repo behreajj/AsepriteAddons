@@ -589,8 +589,8 @@ dlg:button {
         end
         filePath = string.gsub(filePath, "\\", "\\\\")
 
-        -- .webp file extensions do not allow indexed color mode and Aseprite
-        -- doesn't handle this limitation gracefully.
+        -- .qoi and .webp file extensions do not allow indexed color mode and
+        --  Aseprite doesn't handle this limitation gracefully.
         --
         -- .tga files are not properly imported into Blender. GIMP converts
         -- them from indexed to RGB on import and export doesn't support
@@ -601,10 +601,14 @@ dlg:button {
             if lcFileExt == "webp"
                 or lcFileExt == "jpg"
                 or lcFileExt == "jpeg"
+                or lcFileExt == "qoi"
                 or lcFileExt == "tga" then
                 app.alert {
                     title = "Error",
-                    text = "Indexed color not supported for jpeg, jpg, tga or webp."
+                    text = {
+                        "Indexed color not supported for",
+                        "jpeg, jpg, qoi, tga or webp."
+                    }
                 }
                 return
             end
@@ -620,10 +624,12 @@ dlg:button {
             end
         elseif spriteColorMode == ColorMode.GRAY then
             local lcFileExt <const> = string.lower(fileExt)
-            if lcFileExt == "bmp" then
+            if lcFileExt == "bmp"
+                or lcFileExt == "qoi"
+                or lcFileExt == "webp" then
                 app.alert {
                     title = "Error",
-                    text = "Grayscale not supported for bmp."
+                    text = "Grayscale not supported for bmp, qoi or webp."
                 }
                 return
             end
