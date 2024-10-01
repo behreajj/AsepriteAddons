@@ -105,6 +105,11 @@ local function getProperties(target)
                 return nil, false, "No cels were selected."
             end
 
+            -- TODO: These are out of order, making it hard to understand
+            -- a diagnostic printout. You might have to make a single loop
+            -- to get cels from range or from frames, then sort them by layer
+            -- stack index and frame number.
+
             ---@type table<string, any>[]
             local properties <const> = {}
             local i = 0

@@ -77,7 +77,7 @@ AseUtilities.DISPLAY_DECIMAL = 3
 AseUtilities.FILE_FORMATS_OPEN = {
     "ase", "aseprite", "bmp", "flc", "fli",
     "gif", "jpeg", "jpg", "pcc", "pcx",
-    "png", "tga", "webp"
+    "png", "qoi", "tga", "webp"
 }
 
 ---Table of file extensions supported for open and save palette dialogs.
@@ -90,7 +90,7 @@ AseUtilities.FILE_FORMATS_PAL = {
 AseUtilities.FILE_FORMATS_SAVE = {
     "aseprite", "bmp", "flc", "fli",
     "gif", "pcc", "pcx",
-    "png", "tga", "webp"
+    "png", "qoi", "tga", "webp"
 }
 
 ---Maximum number of frames a script may request to create before the user is
@@ -2246,7 +2246,7 @@ function AseUtilities.getTopVisibleParent(layer)
 end
 
 ---Get unique cels from layers that have already been verified as leaves and
----filtered.
+---filtered. Cels will not be in any order.
 ---@param leaves Layer[] leaf layers
 ---@param frames integer[]|Frame[] frames
 ---@return Cel[]
