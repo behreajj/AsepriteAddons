@@ -408,7 +408,7 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
 
     dlg:combobox {
         id = "huePreset",
-        label = "Easing:",
+        label = "Hue:",
         option = GradientUtilities.DEFAULT_HUE_EASING,
         options = GradientUtilities.HUE_EASING_PRESETS,
         visible = ((not showStyle)
