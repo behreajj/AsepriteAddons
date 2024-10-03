@@ -4,6 +4,7 @@ local palTypes <const> = { "ACTIVE", "FILE" }
 
 local defaults <const> = {
     palType = "ACTIVE",
+    keepIndices = false,
     uniquesOnly = false,
     prependMask = true,
     startIndex = 0,
@@ -35,6 +36,16 @@ dlg:file {
     filetypes = AseUtilities.FILE_FORMATS_PAL,
     open = true,
     visible = false
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "keepIndices",
+    label = "Indices:",
+    text = "&Keep",
+    selected = defaults.keepIndices,
+    visible = not defaults.useNew
 }
 
 dlg:newrow { always = false }
@@ -85,15 +96,10 @@ dlg:button {
         local profileNone <const> = ColorSpace()
         local profileSrgb <const> = ColorSpace { sRGB = true }
         local profActive = profileSrgb
-        local cmActive = ColorMode.RGB
 
-        local activeSprite <const> = app.site.sprite
+        local activeSprite <const> = app.sprite
         if activeSprite then
             profActive = activeSprite.colorSpace
-            -- TODO: Allow palettes to be shared between indexed cm sprites?
-            if activeSprite.colorMode ~= ColorMode.INDEXED then
-                cmActive = activeSprite.colorMode
-            end
         else
             app.alert {
                 title = "Error",
@@ -136,29 +142,26 @@ dlg:button {
         local candLenExact = 0
         local rejLen = #rejected
 
+        local keepIndices <const> = args.keepIndices --[[@as boolean]]
+        local notKeep <const> = not keepIndices
+        local cmIdx <const> = ColorMode.INDEXED
+
         local errorFlag = false
         local h = 0
         while h < lenOpenSprites do
             h = h + 1
             local sprite <const> = openSprites[h]
-            local colorMode <const> = sprite.colorMode
             local filename <const> = app.fs.fileTitle(sprite.filename)
 
-            if colorMode == cmActive then
-                local profile <const> = sprite.colorSpace
-                if profile == profActive then
-                    candLenExact = candLenExact + 1
-                    candidatesExact[candLenExact] = sprite
-                elseif (profile == nil
-                        or profile == profileSrgb
-                        or profile == profileNone) then
-                    candLenApprox = candLenApprox + 1
-                    candidatesApprox[candLenApprox] = sprite
-                else
-                    errorFlag = true
-                    rejLen = rejLen + 1
-                    rejected[rejLen] = filename
-                end
+            local profile <const> = sprite.colorSpace
+            if profile == profActive then
+                candLenExact = candLenExact + 1
+                candidatesExact[candLenExact] = sprite
+            elseif (profile == nil
+                    or profile == profileSrgb
+                    or profile == profileNone) then
+                candLenApprox = candLenApprox + 1
+                candidatesApprox[candLenApprox] = sprite
             else
                 errorFlag = true
                 rejLen = rejLen + 1
@@ -189,7 +192,18 @@ dlg:button {
         local i = 0
         while i < candLenApprox do
             i = i + 1
+
+            -- The active sprite needs to be set for the undo history to be
+            -- properly maintained among each sprite.
             local candidate <const> = candidatesApprox[i]
+            local oldColorMode <const> = candidate.colorMode
+            local keepMaxLen <const> = oldColorMode == cmIdx and keepIndices
+
+            app.sprite = candidate
+            if notKeep then
+                app.command.ChangePixelFormat { format = "rgb" }
+            end
+
             local lenPals <const> = #candidate.palettes
             -- This isn't as efficient as it could be because the same
             -- Aseprite Colors are recreated for each target palette when they
@@ -197,25 +211,46 @@ dlg:button {
             local j = 0
             while j < lenPals do
                 j = j + 1
-                -- For some reason this is creating a bunch of transactions
-                -- rather than wrapping them in a single named one.
-                AseUtilities.setPalette(hexesSrgb, candidate, j)
+                AseUtilities.setPalette(hexesSrgb, candidate, j,
+                    keepMaxLen)
             end
+
+            if notKeep then
+                AseUtilities.changePixelFormat(oldColorMode)
+            end
+
+            app.refresh()
         end
 
         local k = 0
         while k < candLenExact do
             k = k + 1
+
             local candidate <const> = candidatesExact[k]
+            local oldColorMode <const> = candidate.colorMode
+            local keepMaxLen <const> = oldColorMode == cmIdx and keepIndices
+
+            app.sprite = candidate
+            if notKeep then
+                app.command.ChangePixelFormat { format = "rgb" }
+            end
+
             local lenPals <const> = #candidate.palettes
             local j = 0
             while j < lenPals do
                 j = j + 1
-                AseUtilities.setPalette(hexesProfile, candidate, j)
+                AseUtilities.setPalette(hexesProfile, candidate, j,
+                    keepMaxLen)
             end
+
+            if notKeep then
+                AseUtilities.changePixelFormat(oldColorMode)
+            end
+
+            app.refresh()
         end
 
-        app.refresh()
+        app.sprite = activeSprite
 
         if errorFlag then
             app.alert {

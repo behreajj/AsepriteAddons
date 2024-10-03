@@ -21,6 +21,7 @@ local paletteModes <const> = { "APPEND", "REPLACE" }
 
 local defaults <const> = {
     uniquesOnly = false,
+    keepIndices = false,
     prependMask = true,
     useNew = false,
     paletteIndex = 1,
@@ -35,6 +36,21 @@ dlg:file {
     filetypes = { "gpl", "pal" },
     open = true,
     focus = true
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "useNew",
+    label = "New Sprite:",
+    selected = defaults.useNew,
+    onclick = function()
+        local args <const> = dlg.data
+        local useNew <const> = args.useNew --[[@as boolean]]
+        dlg:modify { id = "keepIndices", visible = not useNew }
+        dlg:modify { id = "paletteIndex", visible = not useNew }
+        dlg:modify { id = "paletteMode", visible = not useNew }
+    end
 }
 
 dlg:newrow { always = false }
@@ -56,15 +72,11 @@ dlg:check {
 dlg:newrow { always = false }
 
 dlg:check {
-    id = "useNew",
-    label = "New Sprite:",
-    selected = defaults.useNew,
-    onclick = function()
-        local args <const> = dlg.data
-        local useNew <const> = args.useNew --[[@as boolean]]
-        dlg:modify { id = "paletteIndex", visible = not useNew }
-        dlg:modify { id = "paletteMode", visible = not useNew }
-    end
+    id = "keepIndices",
+    label = "Indices:",
+    text = "&Keep",
+    selected = defaults.keepIndices,
+    visible = not defaults.useNew
 }
 
 dlg:newrow { always = false }
@@ -383,6 +395,9 @@ dlg:button {
         -- If no sprite exists, then create a new
         -- sprite and place palette swatches in it.
         local useNew <const> = args.useNew --[[@as boolean]]
+        local keepIndices <const> = args.keepIndices --[[@as boolean]]
+        local keepIdcsVerif <const> = keepIndices
+            and not (useNew or (not activeSprite))
         local profileFlag = false
         if useNew or (not activeSprite) then
             -- Try to base sprite width on columns in GPL file. If not,
@@ -423,9 +438,14 @@ dlg:button {
         -- indexed color mode. The new palette may be shorter than the old, or
         -- have clear black at different index.
         local oldMode <const> = activeSprite.colorMode
-        app.command.ChangePixelFormat { format = "rgb" }
-        AseUtilities.setPalette(colors, activeSprite, palIdx)
-        AseUtilities.changePixelFormat(oldMode)
+
+        if keepIdcsVerif then
+            AseUtilities.setPalette(colors, activeSprite, palIdx, true)
+        else
+            app.command.ChangePixelFormat { format = "rgb" }
+            AseUtilities.setPalette(colors, activeSprite, palIdx)
+            AseUtilities.changePixelFormat(oldMode)
+        end
         app.refresh()
 
         if profileFlag then

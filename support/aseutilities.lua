@@ -3063,11 +3063,14 @@ end
 
 ---Sets a palette in a sprite at a given index to a table of colors represented
 ---as hexadecimal integers. The palette index defaults to 1.
+---The keepMaxLen flag is for setting palettes in indexed color mode, where a
+---shorter palette would cause invalid indices in image maps.
 ---Creates a transaction.
 ---@param arr integer[] color array
 ---@param sprite Sprite sprite
 ---@param paletteIndex integer? index
-function AseUtilities.setPalette(arr, sprite, paletteIndex)
+---@param keepMaxLen boolean? keep maximum length
+function AseUtilities.setPalette(arr, sprite, paletteIndex, keepMaxLen)
     local palIdxVerif = paletteIndex or 1
     local palettes <const> = sprite.palettes
     local lenPalettes <const> = #palettes
@@ -3077,7 +3080,10 @@ function AseUtilities.setPalette(arr, sprite, paletteIndex)
     local palette <const> = palettes[palIdxVerif]
     if lenHexArr > 0 then
         app.transaction("Set Palette", function()
-            palette:resize(lenHexArr)
+            local lenNew <const> = keepMaxLen
+                and math.max(lenHexArr, #palette)
+                or lenHexArr
+            palette:resize(lenNew)
             local i = 0
             while i < lenHexArr do
                 i = i + 1
