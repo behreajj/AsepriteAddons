@@ -1,5 +1,46 @@
 dofile("../../support/aseutilities.lua")
 
+
+---@param sprites Sprite[]
+---@param hexes integer[]
+---@param keepIndices boolean
+local function updatePalettes(sprites, hexes, keepIndices)
+    local cmIdx <const> = ColorMode.INDEXED
+    local cmRgb <const> = ColorMode.RGB
+    local notKeep <const> = not keepIndices
+
+    local setPalette <const> = AseUtilities.setPalette
+    local changePixelFormat <const> = AseUtilities.changePixelFormat
+
+    local lenCandidates <const> = #sprites
+    local i = 0
+    while i < lenCandidates do
+        i = i + 1
+
+        -- The active sprite needs to be set for the undo history to be
+        -- properly maintained among each sprite.
+        local sprite <const> = sprites[i]
+        local oldColorMode <const> = sprite.colorMode
+        local keepMaxLen <const> = oldColorMode == cmIdx and keepIndices
+
+        app.sprite = sprite
+        if notKeep then changePixelFormat(cmRgb) end
+
+        local lenPals <const> = #sprite.palettes
+        -- This isn't as efficient as it could be because the same
+        -- Aseprite Colors are recreated for each target palette when they
+        -- are converted by value anyway.
+        local j = 0
+        while j < lenPals do
+            j = j + 1
+            setPalette(hexes, sprite, j,
+                keepMaxLen)
+        end
+
+        if notKeep then changePixelFormat(oldColorMode) end
+    end
+end
+
 local palTypes <const> = { "ACTIVE", "FILE" }
 
 local defaults <const> = {
@@ -93,19 +134,22 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
+        local openSprites <const> = app.sprites
+        local lenOpenSprites <const> = #openSprites
+        if lenOpenSprites <= 0 then
+            app.alert {
+                title = "Error",
+                text = "There are no open sprites."
+            }
+            return
+        end
+
         local profileNone <const> = ColorSpace()
         local profileSrgb <const> = ColorSpace { sRGB = true }
         local profActive = profileSrgb
-
         local activeSprite <const> = app.sprite
         if activeSprite then
             profActive = activeSprite.colorSpace
-        else
-            app.alert {
-                title = "Error",
-                text = "There is no active sprite."
-            }
-            return
         end
 
         local appTool <const> = app.tool
@@ -116,8 +160,6 @@ dlg:button {
         end
 
         AseUtilities.preserveForeBack()
-        local openSprites <const> = app.sprites
-        local lenOpenSprites <const> = #openSprites
 
         local args <const> = dlg.data
         local palType <const> = args.palType
@@ -141,10 +183,6 @@ dlg:button {
         local candLenApprox = 0
         local candLenExact = 0
         local rejLen = #rejected
-
-        local keepIndices <const> = args.keepIndices --[[@as boolean]]
-        local notKeep <const> = not keepIndices
-        local cmIdx <const> = ColorMode.INDEXED
 
         local errorFlag = false
         local h = 0
@@ -189,68 +227,14 @@ dlg:button {
             Utilities.prependMask(hexesSrgb)
         end
 
-        local i = 0
-        while i < candLenApprox do
-            i = i + 1
+        local keepIndices <const> = args.keepIndices --[[@as boolean]]
+        updatePalettes(candidatesApprox, hexesSrgb, keepIndices)
+        updatePalettes(candidatesExact, hexesProfile, keepIndices)
 
-            -- The active sprite needs to be set for the undo history to be
-            -- properly maintained among each sprite.
-            local candidate <const> = candidatesApprox[i]
-            local oldColorMode <const> = candidate.colorMode
-            local keepMaxLen <const> = oldColorMode == cmIdx and keepIndices
-
-            app.sprite = candidate
-            if notKeep then
-                app.command.ChangePixelFormat { format = "rgb" }
-            end
-
-            local lenPals <const> = #candidate.palettes
-            -- This isn't as efficient as it could be because the same
-            -- Aseprite Colors are recreated for each target palette when they
-            -- are converted by value anyway.
-            local j = 0
-            while j < lenPals do
-                j = j + 1
-                AseUtilities.setPalette(hexesSrgb, candidate, j,
-                    keepMaxLen)
-            end
-
-            if notKeep then
-                AseUtilities.changePixelFormat(oldColorMode)
-            end
-
-            app.refresh()
+        if activeSprite then
+            app.sprite = activeSprite
         end
-
-        local k = 0
-        while k < candLenExact do
-            k = k + 1
-
-            local candidate <const> = candidatesExact[k]
-            local oldColorMode <const> = candidate.colorMode
-            local keepMaxLen <const> = oldColorMode == cmIdx and keepIndices
-
-            app.sprite = candidate
-            if notKeep then
-                app.command.ChangePixelFormat { format = "rgb" }
-            end
-
-            local lenPals <const> = #candidate.palettes
-            local j = 0
-            while j < lenPals do
-                j = j + 1
-                AseUtilities.setPalette(hexesProfile, candidate, j,
-                    keepMaxLen)
-            end
-
-            if notKeep then
-                AseUtilities.changePixelFormat(oldColorMode)
-            end
-
-            app.refresh()
-        end
-
-        app.sprite = activeSprite
+        app.refresh()
 
         if errorFlag then
             app.alert {
