@@ -442,7 +442,7 @@ dlg:button {
         if keepIdcsVerif then
             AseUtilities.setPalette(colors, activeSprite, palIdx, true)
         else
-            app.command.ChangePixelFormat { format = "rgb" }
+            AseUtilities.changePixelFormat(ColorMode.RGB)
             AseUtilities.setPalette(colors, activeSprite, palIdx)
             AseUtilities.changePixelFormat(oldMode)
         end

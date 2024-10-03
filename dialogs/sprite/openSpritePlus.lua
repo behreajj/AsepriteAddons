@@ -262,7 +262,7 @@ dlg:button {
         app.sprite = openSprite
 
         local oldColorMode <const> = openSprite.colorMode
-        app.command.ChangePixelFormat { format = "rgb" }
+        AseUtilities.changePixelFormat(ColorMode.RGB)
 
         -- Due to indexed color mode backgrounds potentiallly containing
         -- transparent colors, or having an opaque color set as the sprite

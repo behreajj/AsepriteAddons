@@ -6,7 +6,7 @@ if not activeSprite then return end
 AseUtilities.preserveForeBack()
 
 local oldColorMode <const> = activeSprite.colorMode
-app.command.ChangePixelFormat { format = "rgb" }
+AseUtilities.changePixelFormat(ColorMode.RGB)
 
 activeSprite.transparentColor = 0
 

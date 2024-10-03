@@ -613,9 +613,9 @@ dlg:button {
             end
 
             if colorMode == ColorMode.INDEXED then
-                app.command.ChangePixelFormat { format = "rgb" }
+                AseUtilities.changePixelFormat(ColorMode.RGB)
                 AseUtilities.setPalette(hexes, activeSprite, palIdxVerif)
-                app.command.ChangePixelFormat { format = "indexed" }
+                AseUtilities.changePixelFormat(ColorMode.INDEXED)
             else
                 AseUtilities.setPalette(hexes, activeSprite, palIdxVerif)
             end
