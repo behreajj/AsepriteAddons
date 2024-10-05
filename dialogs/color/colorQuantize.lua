@@ -235,6 +235,8 @@ dlg:button {
                     srcImg = tilesToImage(srcImg, tileSet, rgbColorMode)
                 end
 
+                -- TODO: Update to use bytes instead of pixel iterator.
+
                 -- Gather unique colors in image.
                 ---@type table<integer, boolean>
                 local srcDict <const> = {}

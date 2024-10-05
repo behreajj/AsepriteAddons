@@ -106,12 +106,10 @@ function ClrGradient.dither(
         cg, step)
 
     local prStep <const> = prKey.step
-    local nxStep <const> = nxKey.step
-    local range <const> = nxStep - prStep
+    local range <const> = nxKey.step - prStep
     if range ~= 0.0 then
-        local tScaled <const> = (t - prStep) / range
         local matIdx <const> = 1 + (x % cols) + (y % rows) * cols
-        if tScaled >= matrix[matIdx] then
+        if (t - prStep) / range >= matrix[matIdx] then
             return nxKey.clr
         end
     end
@@ -131,10 +129,9 @@ end
 function ClrGradient.eval(cg, step, easing)
     local prKey <const>, nxKey <const>, t <const> = ClrGradient.findKeys(
         cg, step)
-    local prStep <const> = prKey.step
-    local nxStep <const> = nxKey.step
     local f <const> = easing or Clr.mixlRgbaInternal
-    local denom = nxStep - prStep
+    local prStep <const> = prKey.step
+    local denom = nxKey.step - prStep
     if denom ~= 0.0 then denom = 1.0 / denom end
     return f(prKey.clr, nxKey.clr,
         (t - prStep) * denom)
@@ -149,17 +146,14 @@ end
 ---@return number
 function ClrGradient.findKeys(cg, step)
     local keys <const> = cg.keys
-    local lenKeys <const> = #keys
     local firstKey <const> = keys[1]
-    local lastKey <const> = keys[lenKeys]
+    local lastKey <const> = keys[#keys]
 
-    local t = step or 0.5
-    t = math.min(math.max(t,
+    local t <const> = math.min(math.max(step or 0.5,
         firstKey.step), lastKey.step)
     local nextIdx <const> = ClrGradient.bisectRight(cg, t)
-    local prevIdx <const> = nextIdx - 1
 
-    local prevKey <const> = keys[prevIdx] or firstKey
+    local prevKey <const> = keys[nextIdx - 1] or firstKey
     local nextKey <const> = keys[nextIdx] or lastKey
 
     return prevKey, nextKey, t
@@ -179,8 +173,7 @@ function ClrGradient.noise(cg, step, x, y)
     local prKey <const>, nxKey <const>, t <const> = ClrGradient.findKeys(
         cg, step)
     local prStep <const> = prKey.step
-    local nxStep <const> = nxKey.step
-    local range <const> = nxStep - prStep
+    local range <const> = nxKey.step - prStep
 
     -- Radial gradients had noticeable artifacts when mod (floor) was used
     -- instead of fmod (trunc). Time can be included with x + 5.588238
@@ -189,10 +182,9 @@ function ClrGradient.noise(cg, step, x, y)
     -- gradient-noise-a-different-kind-of-low-
     -- discrepancy-sequence/
     if range ~= 0.0 then
-        local tScaled <const> = (t - prStep) / range
         local ign <const> = math.fmod(52.9829189 * math.fmod(
             0.06711056 * x + 0.00583715 * y, 1.0), 1.0)
-        if tScaled >= ign then
+        if (t - prStep) / range >= ign then
             return nxKey.clr
         end
     end
