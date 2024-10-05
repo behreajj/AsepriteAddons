@@ -1,7 +1,7 @@
 dofile("./clrkey.lua")
 
 ---@class ClrGradient
----@field protected keys ClrKey[] color keys
+---@field public keys ClrKey[] color keys
 ClrGradient = {}
 ClrGradient.__index = ClrGradient
 
@@ -129,10 +129,10 @@ end
 function ClrGradient.eval(cg, step, easing)
     local prKey <const>, nxKey <const>, t <const> = ClrGradient.findKeys(
         cg, step)
-    local f <const> = easing or Clr.mixlRgbaInternal
     local prStep <const> = prKey.step
     local denom = nxKey.step - prStep
     if denom ~= 0.0 then denom = 1.0 / denom end
+    local f <const> = easing or Clr.mixlRgbaInternal
     return f(prKey.clr, nxKey.clr,
         (t - prStep) * denom)
 end

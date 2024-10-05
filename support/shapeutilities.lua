@@ -116,7 +116,7 @@ function ShapeUtilities.drawMesh2(
             end     -- End faces loop.
         end)        -- End transaction.
 
-        if useFill then
+        if useFill and strokeClr.alpha > 0 then
             local paintPrefs <const> = app.preferences.tool("paint_bucket")
             local floodPrefs <const> = paintPrefs.floodfill
 
