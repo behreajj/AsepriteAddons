@@ -437,6 +437,24 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
     }
 
     dlg:button {
+        id = "spreadButton",
+        text = "SPREA&D",
+        focus = false,
+        onclick = function()
+            local keys <const> = gradient:getKeys()
+            local lenKeys <const> = #keys
+            local iToFac <const> = lenKeys > 1 and 1.0 / (lenKeys - 1.0) or 0.0
+            local i = 0
+            while i < lenKeys do
+                local fac <const> = i * iToFac
+                keys[1 + i].step = fac
+                i = i + 1
+            end
+            dlg:repaint()
+        end
+    }
+
+    dlg:button {
         id = "splineButton",
         text = "&SMOOTH",
         focus = false,
