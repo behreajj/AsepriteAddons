@@ -111,6 +111,12 @@ function ClrGradient:reset()
     }
 end
 
+---Sets a gradient's keys. For internal use only.
+---@param keys ClrKey[]
+function ClrGradient:setKeys(keys)
+    if #keys >= 2 then self.keys = keys end
+end
+
 ---Reverses the gradient's color keys. Subtracts each key step from 1.0.
 function ClrGradient:reverse()
     local t <const> = self.keys
