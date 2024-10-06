@@ -148,18 +148,60 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
     local gradient <const> = ClrGradient.newInternal({})
     do
         local origKeys <const> = {}
-        if app.sprite then
-            origKeys[1] = ClrKey.new(0.0, AseUtilities.aseColorToClr(app.fgColor))
-            app.command.SwitchColors()
-            origKeys[2] = ClrKey.new(1.0, AseUtilities.aseColorToClr(app.fgColor))
-            app.command.SwitchColors()
+        local sprite <const> = app.sprite
+        if sprite then
+            local aseColorToClr <const> = AseUtilities.aseColorToClr
+            local lenOrigKeys = 0
+
+            local appRange <const> = app.range
+            if appRange.sprite == sprite then
+                local frame <const> = app.frame or sprite.frames[1]
+                local palette <const> = AseUtilities.getPalette(
+                    frame, sprite.palettes)
+                local lenPalette <const> = #palette
+
+                ---@type Clr[]
+                local validColors <const> = {}
+                local lenValidColors = 0
+                local rangeClrIdcs <const> = appRange.colors
+                local lenRangeClrIdcs <const> = #rangeClrIdcs
+
+                local h = 0
+                while h < lenRangeClrIdcs do
+                    h = h + 1
+                    local rangeClrIdx <const> = rangeClrIdcs[h]
+                    if rangeClrIdx >= 0 and rangeClrIdx < lenPalette then
+                        local aseColor <const> = palette:getColor(rangeClrIdx)
+                        lenValidColors = lenValidColors + 1
+                        local clr <const> = aseColorToClr(aseColor)
+                        validColors[lenValidColors] = clr
+                    end -- End index is valid.
+                end     -- End range colors loop.
+
+                local iToFac <const> = lenValidColors > 1
+                    and 1.0 / (lenValidColors - 1.0)
+                    or 0.0
+                local i = 0
+                while i < lenValidColors do
+                    local fac <const> = i * iToFac
+                    lenOrigKeys = lenOrigKeys + 1
+                    origKeys[lenOrigKeys] = ClrKey.new(fac, validColors[1 + i])
+                    i = i + 1
+                end
+            end -- End range sprite is sprite.
+
+            if lenOrigKeys < 2 then
+                origKeys[1] = ClrKey.new(0.0, aseColorToClr(app.fgColor))
+                app.command.SwitchColors()
+                origKeys[2] = ClrKey.new(1.0, aseColorToClr(app.fgColor))
+                app.command.SwitchColors()
+            end
         else
             origKeys[1] = ClrKey.new(0.0, Clr.new(0.0, 0.0, 0.0, 1.0))
             origKeys[2] = ClrKey.new(1.0, Clr.new(1.0, 1.0, 1.0, 1.0))
         end
 
-        gradient:insortRight(origKeys[1])
-        gradient:insortRight(origKeys[2])
+        gradient:setKeys(origKeys)
     end
 
     local screenScale = 1
@@ -446,8 +488,7 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
             local iToFac <const> = lenKeys > 1 and 1.0 / (lenKeys - 1.0) or 0.0
             local i = 0
             while i < lenKeys do
-                local fac <const> = i * iToFac
-                keys[1 + i].step = fac
+                keys[1 + i].step = i * iToFac
                 i = i + 1
             end
             dlg:repaint()
