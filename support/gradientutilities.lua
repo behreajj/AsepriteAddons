@@ -452,10 +452,11 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
             local newKeys <const> = {}
             local lenGradient <const> = #gradient
             if lenGradient < 3 then
+                local hMixFunc <const> = GradientUtilities.hueEasingFuncFromPreset(huePreset)
                 newKeys[1] = ClrKey.new(0.0, cgeval(gradient, 0.0, mixFunc))
                 newKeys[3] = ClrKey.new(1.0, cgeval(gradient, 1.0, mixFunc))
                 newKeys[2] = ClrKey.new(0.5, Clr.mixSrLch(
-                    newKeys[1].clr, newKeys[3].clr, 0.5))
+                    newKeys[1].clr, newKeys[3].clr, 0.5, hMixFunc))
             else
                 -- Cache methods used in loop.
                 local floor <const> = math.floor
