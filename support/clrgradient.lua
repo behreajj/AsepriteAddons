@@ -102,6 +102,34 @@ function ClrGradient:removeKeyAt(i)
     return nil
 end
 
+---Resets gradient to an initial state, with opaque black
+---at step 0.0 and opaque white at step 1.0.
+function ClrGradient:reset()
+    self.keys = {
+        ClrKey.new(0.0, Clr.new(0.0, 0.0, 0.0, 1.0)),
+        ClrKey.new(1.0, Clr.new(1.0, 1.0, 1.0, 1.0))
+    }
+end
+
+---Reverses the gradient's color keys. Subtracts each key step from 1.0.
+function ClrGradient:reverse()
+    local t <const> = self.keys
+    local lenKeys <const> = #t
+    local i, n = 1, lenKeys
+    while i < n do
+        t[i], t[n] = t[n], t[i]
+        -- t[i].step = 1.0 - t[i].step
+        -- t[n].step = 1.0 - t[n].step
+        i, n = i + 1, n - 1
+    end
+
+    local j = 0
+    while j < lenKeys do
+        j = j + 1
+        t[j].step = 1.0 - t[j].step
+    end
+end
+
 ---Internal helper function to locate the insertion point for a step in the
 ---gradient so as to keep sorted order.
 ---@param cg ClrGradient color gradient
@@ -228,6 +256,28 @@ function ClrGradient.noise(cg, step, x, y)
     end
 
     return prKey.clr
+end
+
+---Returns a new gradient with the colors of the source,
+---but with opaque alpha.
+---@param source ClrGradient
+---@return ClrGradient
+function ClrGradient.opaque(source)
+    local srcKeys <const> = source.keys
+    local lenSrcKeys <const> = #srcKeys
+    ---@type ClrKey[]
+    local trgKeys <const> = {}
+    local i = 0
+    while i < lenSrcKeys do
+        i = i + 1
+        local srcKey <const> = srcKeys[i]
+        local srcClr <const> = srcKey.clr
+        local trgKey <const> = ClrKey.new(srcKey.step,
+            Clr.new(srcClr.r, srcClr.g, srcClr.b, 1.0))
+        trgKeys[i] = trgKey
+    end
+
+    return ClrGradient.newInternal(trgKeys)
 end
 
 ---Returns a JSON string of a color gradient.

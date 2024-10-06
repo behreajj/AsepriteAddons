@@ -10,7 +10,7 @@ local defaults <const> = {
 
 local dlg <const> = Dialog { title = "Gradient Map" }
 
-GradientUtilities.dialogWidgets(dlg, true)
+local gradient <const> = GradientUtilities.dialogWidgets(dlg, true)
 
 dlg:combobox {
     id = "target",
@@ -98,9 +98,7 @@ dlg:button {
         local target <const> = args.target or defaults.target --[[@as string]]
         local useNormalize <const> = args.useNormalize --[[@as boolean]]
         local clrSpacePreset <const> = args.clrSpacePreset --[[@as string]]
-        local easPreset <const> = args.easPreset --[[@as string]]
         local huePreset <const> = args.huePreset --[[@as string]]
-        local aseColors <const> = args.shades --[=[@as Color[]]=]
         local levels <const> = args.quantize --[[@as integer]]
         local bayerIndex <const> = args.bayerIndex --[[@as integer]]
         local ditherPath <const> = args.ditherPath --[[@as string]]
@@ -110,8 +108,6 @@ dlg:button {
             AseUtilities.getFrames(activeSprite, target))
 
         local useMixed <const> = stylePreset == "MIXED"
-        local gradient <const> = GradientUtilities.aseColorsToClrGradient(aseColors)
-        local facAdjust <const> = GradientUtilities.easingFuncFromPreset(easPreset)
         local mixFunc <const> = GradientUtilities.clrSpcFuncFromPreset(
             clrSpacePreset, huePreset)
         local dither <const> = GradientUtilities.ditherFromPreset(
@@ -201,7 +197,6 @@ dlg:button {
                     local trgHexDict <const> = {}
                     for srcHex, _ in pairs(srcHexDict) do
                         local fac = lumDict[srcHex]
-                        fac = facAdjust(fac)
                         fac = quantize(fac, levels)
                         local trgClr <const> = cgmix(
                             gradient, fac, mixFunc)
@@ -226,7 +221,6 @@ dlg:button {
                     for trgPixel in trgPxItr do
                         local srcHex <const> = trgPixel()
                         local fac = lumDict[srcHex]
-                        fac = facAdjust(fac)
                         local trgClr <const> = dither(
                             gradient, fac,
                             xSrcPos + trgPixel.x,

@@ -20,7 +20,7 @@ local defaults <const> = {
 
 local dlg <const> = Dialog { title = "Outline Gradient" }
 
-GradientUtilities.dialogWidgets(dlg, false)
+local unfiltered <const> = GradientUtilities.dialogWidgets(dlg, false)
 
 dlg:combobox {
     id = "target",
@@ -226,9 +226,7 @@ dlg:button {
         local alphaFade <const> = args.alphaFade --[[@as boolean]]
         local reverseFade <const> = args.reverseFade --[[@as boolean]]
         local clrSpacePreset <const> = args.clrSpacePreset --[[@as string]]
-        local easPreset <const> = args.easPreset --[[@as string]]
         local huePreset <const> = args.huePreset --[[@as string]]
-        local aseColors <const> = args.shades --[=[@as Color[]]=]
         local levels <const> = args.quantize --[[@as integer]]
         local aseBkgColor <const> = args.bkgColor --[[@as Color]]
         local iterations <const> = args.iterations
@@ -301,22 +299,8 @@ dlg:button {
         -- evaluate returns the background color. This could
         -- still happen as a result of mix, but minimize the
         -- chances by filtering out background inputs.
-        ---@type Color[]
-        local filtered <const> = {}
-        local lenAseColors <const> = #aseColors
-        local k = 0
-        while k < lenAseColors do
-            k = k + 1
-            local aseColor <const> = aseColors[k]
-            if aseColor.alpha > 0
-                and aseColor.rgbaPixel ~= bkgHex then
-                -- TODO: Don't use rgbaPixel
-                filtered[#filtered + 1] = aseColor
-            end
-        end
+        local gradient<const> = ClrGradient.opaque(unfiltered)
 
-        local gradient <const> = GradientUtilities.aseColorsToClrGradient(filtered)
-        local facAdjust <const> = GradientUtilities.easingFuncFromPreset(easPreset)
         local mixFunc <const> = GradientUtilities.clrSpcFuncFromPreset(
             clrSpacePreset, huePreset)
 
@@ -365,7 +349,6 @@ dlg:button {
         local h = 0
         while h < iterations do
             local fac = h * toFac
-            fac = facAdjust(fac)
             fac = quantize(fac, levels)
             h = h + 1
 

@@ -18,7 +18,7 @@ local defaults <const> = {
 
 local dlg <const> = Dialog { title = "Linear Gradient" }
 
-GradientUtilities.dialogWidgets(dlg, true)
+local gradient <const> = GradientUtilities.dialogWidgets(dlg, true)
 
 CanvasUtilities.graphLine(
     dlg, "graphCart", "Graph:",
@@ -62,15 +62,11 @@ dlg:button {
         local args <const> = dlg.data
         local stylePreset <const> = args.stylePreset --[[@as string]]
         local clrSpacePreset <const> = args.clrSpacePreset --[[@as string]]
-        local easPreset <const> = args.easPreset --[[@as string]]
         local huePreset <const> = args.huePreset --[[@as string]]
-        local aseColors <const> = args.shades --[=[@as Color[]]=]
         local levels <const> = args.quantize --[[@as integer]]
         local bayerIndex <const> = args.bayerIndex --[[@as integer]]
         local ditherPath <const> = args.ditherPath --[[@as string]]
 
-        local gradient <const> = GradientUtilities.aseColorsToClrGradient(aseColors)
-        local facAdjust <const> = GradientUtilities.easingFuncFromPreset(easPreset)
         local mixFunc <const> = GradientUtilities.clrSpcFuncFromPreset(
             clrSpacePreset, huePreset)
 
@@ -121,7 +117,6 @@ dlg:button {
             local cgmix <const> = ClrGradient.eval
             for pixel in grdItr do
                 local fac = linearEval(pixel.x, pixel.y)
-                fac = facAdjust(fac)
                 fac = quantize(fac, levels)
 
                 if facDict[fac] then
@@ -186,9 +181,7 @@ dlg:button {
         local args <const> = dlg.data
         local clrSpacePreset <const> = args.clrSpacePreset --[[@as string]]
         local huePreset <const> = args.huePreset --[[@as string]]
-        local aseColors <const> = args.shades --[=[@as Color[]]=]
 
-        local gradient <const> = GradientUtilities.aseColorsToClrGradient(aseColors)
         local mixFunc <const> = GradientUtilities.clrSpcFuncFromPreset(
             clrSpacePreset, huePreset)
         local eval <const> = ClrGradient.eval

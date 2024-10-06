@@ -7,6 +7,8 @@ GradientUtilities = {}
 GradientUtilities.__index = GradientUtilities
 
 setmetatable(GradientUtilities, {
+    -- Previous version at commit:
+    -- cb2f20dab3dcb1cf58a7fc664c2de13570506ebc
     __call = function(cls, ...)
         return cls.new(...)
     end
@@ -29,15 +31,6 @@ GradientUtilities.HUE_EASING_PRESETS = {
     "NEAR"
 }
 
----Easing function presets for non-polar color representations.
-GradientUtilities.RGB_EASING_PRESETS = {
-    "CIRCLE_IN",
-    "CIRCLE_OUT",
-    "LINEAR",
-    "SMOOTH",
-    "SMOOTHER"
-}
-
 ---Style presets.
 GradientUtilities.STYLE_PRESETS = {
     "DITHER_BAYER",
@@ -51,9 +44,6 @@ GradientUtilities.DEFAULT_CLR_SPC = "SR_LCH"
 
 ---Default hue easing preset.
 GradientUtilities.DEFAULT_HUE_EASING = "NEAR"
-
----Default linear easing preset.
-GradientUtilities.DEFAULT_RGB_EASING = "LINEAR"
 
 ---Default style preset.
 GradientUtilities.DEFAULT_STYLE = "MIXED"
@@ -152,88 +142,297 @@ end
 ---the style combo box for gradients which allow dithered vs. mixed color.
 ---@param dlg Dialog dialog
 ---@param showStyle boolean show style combo box
+---@return ClrGradient
+---@nodiscard
 function GradientUtilities.dialogWidgets(dlg, showStyle)
-    dlg:shades {
-        id = "shades",
-        label = "Colors:",
-        mode = "sort",
-        colors = {}
+    local gradient <const> = ClrGradient.newInternal({})
+    do
+        local origKeys <const> = {}
+        if app.sprite then
+            origKeys[1] = ClrKey.new(0.0, AseUtilities.aseColorToClr(app.fgColor))
+            app.command.SwitchColors()
+            origKeys[2] = ClrKey.new(1.0, AseUtilities.aseColorToClr(app.fgColor))
+            app.command.SwitchColors()
+        else
+            origKeys[1] = ClrKey.new(0.0, Clr.new(0.0, 0.0, 0.0, 1.0))
+            origKeys[2] = ClrKey.new(1.0, Clr.new(1.0, 1.0, 1.0, 1.0))
+        end
+
+        gradient:insortRight(origKeys[1])
+        gradient:insortRight(origKeys[2])
+    end
+
+    local screenScale = 1
+    if app.preferences then
+        local generalPrefs <const> = app.preferences.general
+        if generalPrefs then
+            local ssCand <const> = generalPrefs.screen_scale --[[@as integer]]
+            if ssCand and ssCand > 0 then
+                screenScale = ssCand
+            end
+        end
+    end
+
+    local activeGradient <const> = {
+        wCanvas = 240 // screenScale,
+        hCanvas = 16 // screenScale,
+        levels = 16,
+        mousePressed = false,
+        isDragging = false,
+        idxCurrent = -1,
+        reticleSize = 14 // screenScale
+    }
+
+    ---@param event { context: GraphicsContext }
+    local function onPaintGradient(event)
+        local ctx <const> = event.context
+        ctx.antialias = false
+        ctx.blendMode = BlendMode.SRC
+
+        local wCanvas <const> = ctx.width
+        local hCanvas <const> = ctx.height
+        if wCanvas <= 1 or hCanvas <= 1 then return end
+        activeGradient.wCanvas = wCanvas
+        activeGradient.hCanvas = hCanvas
+
+        local args <const> = dlg.data
+        local stylePreset <const> = args.stylePreset --[[@as string]]
+        local clrSpacePreset <const> = args.clrSpacePreset --[[@as string]]
+        local huePreset <const> = args.huePreset --[[@as string]]
+        local levels <const> = args.quantize --[[@as integer]]
+
+        ---@type string[]
+        local chars <const> = {}
+        local iToFac <const> = wCanvas > 1 and 1.0 / (wCanvas - 1.0) or 0.0
+        local lvVerif <const> = stylePreset == "MIXED" and levels or 0
+
+        local max <const> = math.max
+        local min <const> = math.min
+        local floor <const> = math.floor
+        local strchar <const> = string.char
+        local cgmix <const> = ClrGradient.eval
+        local quantize <const> = Utilities.quantizeUnsigned
+        local clrToAseColor <const> = AseUtilities.clrToAseColor
+
+        local mixFunc <const> = GradientUtilities.clrSpcFuncFromPreset(
+            clrSpacePreset, huePreset)
+
+        -- TODO: Support preview for color alpha?
+        local i = 0
+        while i < wCanvas do
+            local t <const> = i * iToFac
+            local tq <const> = quantize(t, lvVerif)
+            local c <const> = cgmix(gradient, tq, mixFunc)
+
+            local r8 <const> = floor(min(max(c.r, 0.0), 1.0) * 255.0 + 0.5)
+            local g8 <const> = floor(min(max(c.g, 0.0), 1.0) * 255.0 + 0.5)
+            local b8 <const> = floor(min(max(c.b, 0.0), 1.0) * 255.0 + 0.5)
+
+            local i4 <const> = i * 4
+            chars[1 + i4] = strchar(r8)
+            chars[2 + i4] = strchar(g8)
+            chars[3 + i4] = strchar(b8)
+            chars[4 + i4] = strchar(255)
+
+            i = i + 1
+        end
+
+        local gradientSpec <const> = ImageSpec {
+            width = wCanvas,
+            height = 1,
+            colorMode = ColorMode.RGB,
+            transparentColor = 0
+        }
+        local gradientImage <const> = Image(gradientSpec)
+        gradientImage.bytes = table.concat(chars)
+        ctx:drawImage(
+            gradientImage,
+            Rectangle(0, 0, wCanvas, 1),
+            Rectangle(0, 0, wCanvas, hCanvas))
+
+        local reticleSize <const> = activeGradient.reticleSize
+        local reticleHalf <const> = reticleSize // 2
+        local y <const> = hCanvas // 2 - reticleHalf
+        local aseWhite = Color(255, 255, 255, 255)
+        local aseBlack = Color(0, 0, 0, 255)
+
+        local keys <const> = gradient:getKeys()
+        local lenKeys <const> = #keys
+        local j = 0
+        while j < lenKeys do
+            j = j + 1
+            local key <const> = keys[j]
+            local keyStep <const> = key.step
+            local keyClr <const> = key.clr
+
+            local x <const> = floor(keyStep * (wCanvas - 1.0) + 0.5)
+
+            local avgLight <const> = (keyClr.r + keyClr.g + keyClr.b) / 3.0
+            local tagColor <const> = avgLight >= 0.5 and aseBlack or aseWhite
+            local aseColor <const> = clrToAseColor(keyClr)
+
+            ctx.color = tagColor
+            ctx:fillRect(Rectangle(
+                x - reticleHalf, y,
+                reticleSize, reticleSize))
+
+            ctx.color = aseColor
+            ctx:fillRect(Rectangle(
+                1 + x - reticleHalf, 1 + y,
+                reticleSize - 2, reticleSize - 2))
+
+            -- ctx.color = tagColor
+            -- ctx:fillText(string.format("%d", j),
+            --     2 + x - reticleHalf, 2 + y)
+        end
+    end
+
+    ---@param event MouseEvent
+    local function onMouseDownGradient(event)
+        local quantizeUnsigned <const> = Utilities.quantizeUnsigned
+        local levels <const> = activeGradient.levels
+
+        local wCanvas <const> = activeGradient.wCanvas
+        local xNorm <const> = wCanvas > 1
+            and event.x / (wCanvas - 1.0)
+            or 0.0
+        local xq <const> = quantizeUnsigned(xNorm, levels)
+
+        local keys <const> = gradient:getKeys()
+        local lenKeys <const> = #keys
+
+        local i = 0
+        while activeGradient.idxCurrent == -1
+            and i < lenKeys do
+            i = i + 1
+            if xq == quantizeUnsigned(keys[i].step, levels) then
+                activeGradient.idxCurrent = i
+            end
+        end
+
+        activeGradient.mousePressed = true
+    end
+
+    ---@param event MouseEvent
+    local function onMouseMoveGradient(event)
+        if activeGradient.idxCurrent == -1 then return end
+
+        local eventButton <const> = event.button
+        if eventButton == MouseButton.NONE then return end
+
+        local x <const> = event.x
+        local y <const> = event.y
+
+        if x < 0 then return end
+        if y < 0 then return end
+
+        local wCanvas <const> = activeGradient.wCanvas
+        local hCanvas <const> = activeGradient.hCanvas
+
+        if x >= wCanvas then return end
+        if y >= hCanvas then return end
+
+        activeGradient.isDragging = activeGradient.mousePressed
+
+        local quantizeUnsigned <const> = Utilities.quantizeUnsigned
+        local levels = activeGradient.levels
+
+        local xNorm <const> = wCanvas > 1
+            and event.x / (wCanvas - 1.0)
+            or 0.0
+        local xq <const> = quantizeUnsigned(xNorm, levels)
+
+        local keys <const> = gradient:getKeys()
+        local lenKeys <const> = #keys
+        local conflictingKeyIndex = -1
+
+        local i = 0
+        while conflictingKeyIndex == -1
+            and i < lenKeys do
+            i = i + 1
+            if xq == quantizeUnsigned(keys[i].step, levels) then
+                conflictingKeyIndex = i
+            end
+        end
+
+        if conflictingKeyIndex ~= -1 then
+            local temp <const> = keys[conflictingKeyIndex].clr
+            keys[conflictingKeyIndex].clr = keys[activeGradient.idxCurrent].clr
+            keys[activeGradient.idxCurrent].clr = temp
+
+            activeGradient.idxCurrent = conflictingKeyIndex
+        end
+
+        keys[activeGradient.idxCurrent].step = xNorm
+
+        dlg:repaint()
+    end
+
+    ---@param event MouseEvent
+    local function onMouseUpGradient(event)
+        local eventButton <const> = event.button
+        if eventButton == MouseButton.NONE then return end
+
+        if eventButton == MouseButton.RIGHT
+            or (event.ctrlKey and eventButton == MouseButton.LEFT) then
+            if activeGradient.isDragging == false then
+                if activeGradient.idxCurrent ~= -1 then
+                    -- Remove the active key.
+                    gradient:removeKeyAt(activeGradient.idxCurrent)
+                end -- End has current key.
+            end     -- End not dragging.
+        elseif eventButton == MouseButton.LEFT then
+            if activeGradient.isDragging == false then
+                if activeGradient.idxCurrent ~= -1 then
+                    -- Update the active key's color.
+                    gradient:getKey(activeGradient.idxCurrent).clr
+                    = AseUtilities.aseColorToClr(app.fgColor)
+                else
+                    -- Add a new key.
+                    local wCanvas <const> = activeGradient.wCanvas
+                    local xNorm <const> = wCanvas > 1
+                        and event.x / (wCanvas - 1.0)
+                        or 0.0
+
+                    -- TODO: xq or xNorm?
+                    -- local levels <const> = activeGradient.levels
+                    -- local xq <const> = Utilities.quantizeUnsigned(
+                    --     xNorm, levels)
+
+                    gradient:insortRight(ClrKey.new(
+                        xNorm, AseUtilities.aseColorToClr(app.fgColor)))
+                end -- End has current key.
+            end     -- End not dragging.
+        end         -- End mouse button check.
+
+        activeGradient.idxCurrent = -1
+        activeGradient.isDragging = false
+        activeGradient.mousePressed = false
+
+        dlg:repaint()
+    end
+
+    dlg:canvas {
+        id = "gradientCanvas",
+        label = "Gradient:",
+        focus = true,
+        width = activeGradient.wCanvas,
+        height = activeGradient.hCanvas,
+        onpaint = onPaintGradient,
+        onmousemove = onMouseMoveGradient,
+        onmouseup = onMouseUpGradient,
+        onmousedown = onMouseDownGradient
     }
 
     dlg:newrow { always = false }
-
-    dlg:button {
-        id = "appendButton",
-        text = "&ADD",
-        focus = false,
-        onclick = function()
-            local args <const> = dlg.data
-            local oldColors <const> = args.shades --[=[@as Color[]]=]
-            local lenOldColors <const> = #oldColors
-
-            ---@type Color[]
-            local newColors <const> = {}
-            local h = 0
-            while h < lenOldColors do
-                h = h + 1
-                newColors[h] = oldColors[h]
-            end
-
-            local activeSprite <const> = app.site.sprite
-            if activeSprite then
-                -- Range colors do not seem to have the same issues as range
-                -- layers and frames? They appear to be cleared automatically
-                -- on sprite tab change and are not impacted by timeline
-                -- visibility.
-                local appRange <const> = app.range
-                local validRange = false
-                local rangeColors <const> = appRange.colors
-                local lenRangeColors <const> = #rangeColors
-                if lenRangeColors > 0 then
-                    validRange = true
-                    local pal <const> = AseUtilities.getPalette(
-                        app.site.frame, activeSprite.palettes)
-                    local i = 0
-                    while i < lenRangeColors do
-                        i = i + 1
-                        local idx <const> = rangeColors[i]
-                        local aseColor <const> = pal:getColor(idx)
-                        newColors[lenOldColors + i] = aseColor
-                    end
-                end
-
-                if not validRange then
-                    -- If there are no colors in the shades,
-                    -- then add both the back- and fore-colors.
-                    if lenOldColors < 1 then
-                        app.command.SwitchColors()
-                        local bgClr <const> = app.fgColor
-                        newColors[#newColors + 1] = AseUtilities.aseColorCopy(
-                            bgClr, "UNBOUNDED")
-                        app.command.SwitchColors()
-                    end
-
-                    local fgClr <const> = app.fgColor
-                    newColors[#newColors + 1] = AseUtilities.aseColorCopy(
-                        fgClr, "UNBOUNDED")
-                end -- End of invalid range check
-            end     -- End of activeSprite check
-
-            dlg:modify { id = "shades", colors = newColors }
-        end
-    }
 
     dlg:button {
         id = "flipButton",
         text = "&FLIP",
         focus = false,
         onclick = function()
-            local args = dlg.data
-            local s = args.shades --[=[@as Color[]]=]
-            dlg:modify {
-                id = "shades",
-                colors = Utilities.reverseTable(s)
-            }
+            gradient:reverse()
+            dlg:repaint()
         end
     }
 
@@ -242,84 +441,78 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         text = "&SMOOTH",
         focus = false,
         onclick = function()
-            local args <const> = dlg.data
-            local oldColors <const> = args.shades --[=[@as Color[]]=]
-            local lenOldColors <const> = #oldColors
-            if lenOldColors < 2 then return end
-            if lenOldColors > 64 then return end
+            -- TODO: Refactor
 
-            ---@type Color[]
-            local newColors <const> = {}
+            -- ---@type Color[]
+            -- local newColors <const> = {}
 
-            -- Use LCH for two colors, otherwise use curve.
-            if lenOldColors < 3 then
-                local huePreset <const> = args.huePreset --[[@as string]]
-                local mixer <const> = GradientUtilities.hueEasingFuncFromPreset(huePreset)
-                local leftEdge <const> = oldColors[1]
-                local rightEdge <const> = oldColors[2]
+            -- -- Use LCH for two colors, otherwise use curve.
+            -- if lenOldColors < 3 then
+            --     local huePreset <const> = args.huePreset --[[@as string]]
+            --     local mixer <const> = GradientUtilities.hueEasingFuncFromPreset(huePreset)
+            --     local leftEdge <const> = oldColors[1]
+            --     local rightEdge <const> = oldColors[2]
 
-                newColors[1] = AseUtilities.aseColorCopy(
-                    leftEdge, "UNBOUNDED")
-                newColors[2] = AseUtilities.clrToAseColor(
-                    Clr.mixSrLchInternal(
-                        AseUtilities.aseColorToClr(leftEdge),
-                        AseUtilities.aseColorToClr(rightEdge),
-                        0.5, mixer))
-                newColors[3] = AseUtilities.aseColorCopy(
-                    rightEdge, "UNBOUNDED")
-            else
-                -- Cache methods used in loop.
-                local floor <const> = math.floor
-                local aseToClr <const> = AseUtilities.aseColorToClr
-                local clrToAse <const> = AseUtilities.clrToAseColor
-                local labTosRgb <const> = Clr.srLab2TosRgb
-                local sRgbToLab <const> = Clr.sRgbToSrLab2
-                local eval <const> = Curve3.eval
+            --     newColors[1] = AseUtilities.aseColorCopy(
+            --         leftEdge, "UNBOUNDED")
+            --     newColors[2] = AseUtilities.clrToAseColor(
+            --         Clr.mixSrLchInternal(
+            --             AseUtilities.aseColorToClr(leftEdge),
+            --             AseUtilities.aseColorToClr(rightEdge),
+            --             0.5, mixer))
+            --     newColors[3] = AseUtilities.aseColorCopy(
+            --         rightEdge, "UNBOUNDED")
+            -- else
+            --     -- Cache methods used in loop.
+            --     local floor <const> = math.floor
+            --     local aseToClr <const> = AseUtilities.aseColorToClr
+            --     local clrToAse <const> = AseUtilities.clrToAseColor
+            --     local labTosRgb <const> = Clr.srLab2TosRgb
+            --     local sRgbToLab <const> = Clr.sRgbToSrLab2
+            --     local eval <const> = Curve3.eval
 
-                ---@type Vec3[]
-                local points <const> = {}
-                ---@type number[]
-                local alphas <const> = {}
+            --     ---@type Vec3[]
+            --     local points <const> = {}
+            --     ---@type number[]
+            --     local alphas <const> = {}
 
-                local h = 0
-                while h < lenOldColors do
-                    h = h + 1
-                    local clr <const> = aseToClr(oldColors[h])
-                    local lab <const> = sRgbToLab(clr)
-                    points[h] = Vec3.new(lab.a, lab.b, lab.l)
-                    alphas[h] = clr.a
-                end
+            --     local h = 0
+            --     while h < lenOldColors do
+            --         h = h + 1
+            --         local clr <const> = aseToClr(oldColors[h])
+            --         local lab <const> = sRgbToLab(clr)
+            --         points[h] = Vec3.new(lab.a, lab.b, lab.l)
+            --         alphas[h] = clr.a
+            --     end
 
-                local curve <const> = Curve3.fromCatmull(false, points, 0.0)
+            --     local curve <const> = Curve3.fromCatmull(false, points, 0.0)
 
-                local sampleCount <const> = math.min(math.max(
-                    lenOldColors * 2 - 1, 3), 64)
-                local iToFac <const> = 1.0 / (sampleCount - 1.0)
-                local locn1 <const> = lenOldColors - 1
+            --     local sampleCount <const> = math.min(math.max(
+            --         lenOldColors * 2 - 1, 3), 64)
+            --     local iToFac <const> = 1.0 / (sampleCount - 1.0)
+            --     local locn1 <const> = lenOldColors - 1
 
-                local i = 0
-                while i < sampleCount do
-                    local iFac <const> = i * iToFac
-                    local alpha = 1.0
-                    if iFac <= 0.0 then
-                        alpha = alphas[1]
-                    elseif iFac >= 1.0 then
-                        alpha = alphas[lenOldColors]
-                    else
-                        local aScaled <const> = iFac * locn1
-                        local aFloor <const> = floor(aScaled)
-                        local aFrac <const> = aScaled - aFloor;
-                        alpha = (1.0 - aFrac) * alphas[1 + aFloor]
-                            + aFrac * alphas[2 + aFloor]
-                    end
-                    local point <const> = eval(curve, iFac)
-                    i = i + 1
-                    newColors[i] = clrToAse(labTosRgb(
-                        point.z, point.x, point.y, alpha))
-                end
-            end
-
-            dlg:modify { id = "shades", colors = newColors }
+            --     local i = 0
+            --     while i < sampleCount do
+            --         local iFac <const> = i * iToFac
+            --         local alpha = 1.0
+            --         if iFac <= 0.0 then
+            --             alpha = alphas[1]
+            --         elseif iFac >= 1.0 then
+            --             alpha = alphas[lenOldColors]
+            --         else
+            --             local aScaled <const> = iFac * locn1
+            --             local aFloor <const> = floor(aScaled)
+            --             local aFrac <const> = aScaled - aFloor;
+            --             alpha = (1.0 - aFrac) * alphas[1 + aFloor]
+            --                 + aFrac * alphas[2 + aFloor]
+            --         end
+            --         local point <const> = eval(curve, iFac)
+            --         i = i + 1
+            --         newColors[i] = clrToAse(labTosRgb(
+            --             point.z, point.x, point.y, alpha))
+            --     end
+            -- end
         end
     }
 
@@ -328,7 +521,8 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         text = "C&LEAR",
         focus = false,
         onclick = function()
-            dlg:modify { id = "shades", colors = {} }
+            gradient:reset()
+            dlg:repaint()
         end
     }
 
@@ -358,10 +552,6 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
             dlg:modify {
                 id = "huePreset",
                 visible = isMixed and isPolar
-            }
-            dlg:modify {
-                id = "easPreset",
-                visible = isMixed
             }
             dlg:modify {
                 id = "quantize",
@@ -397,10 +587,7 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
                 id = "huePreset",
                 visible = isMixed and isPolar
             }
-            dlg:modify {
-                id = "easPreset",
-                visible = isMixed
-            }
+            dlg:repaint()
         end
     }
 
@@ -413,18 +600,10 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         options = GradientUtilities.HUE_EASING_PRESETS,
         visible = ((not showStyle)
                 or GradientUtilities.DEFAULT_STYLE == "MIXED")
-            and GradientUtilities.DEFAULT_CLR_SPC == "SR_LCH"
-    }
-
-    dlg:newrow { always = false }
-
-    dlg:combobox {
-        id = "easPreset",
-        label = "Easing:",
-        option = GradientUtilities.DEFAULT_RGB_EASING,
-        options = GradientUtilities.RGB_EASING_PRESETS,
-        visible = (not showStyle)
-                or GradientUtilities.DEFAULT_STYLE == "MIXED"
+            and GradientUtilities.DEFAULT_CLR_SPC == "SR_LCH",
+        onchange = function()
+            dlg:repaint()
+        end
     }
 
     dlg:newrow { always = false }
@@ -436,7 +615,10 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         max = 32,
         value = 0,
         visible = (not showStyle) or
-            GradientUtilities.DEFAULT_STYLE == "MIXED"
+            GradientUtilities.DEFAULT_STYLE == "MIXED",
+        onchange = function()
+            dlg:repaint()
+        end
     }
 
     dlg:newrow { always = false }
@@ -464,6 +646,8 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
     }
 
     dlg:newrow { always = false }
+
+    return gradient
 end
 
 ---Returns a factor that eases in by a circular arc.
@@ -481,24 +665,6 @@ end
 function GradientUtilities.circleOut(t)
     local u <const> = t - 1.0
     return math.sqrt(1.0 - u * u)
-end
-
----Finds the appropriate easing function in RGB given a preset.
----@param preset string rgb preset
----@return fun(t: number): number
----@nodiscard
-function GradientUtilities.easingFuncFromPreset(preset)
-    if preset == "CIRCLE_IN" then
-        return GradientUtilities.circleIn
-    elseif preset == "CIRCLE_OUT" then
-        return GradientUtilities.circleOut
-    elseif preset == "SMOOTH" then
-        return GradientUtilities.smooth
-    elseif preset == "SMOOTHER" then
-        return GradientUtilities.smoother
-    else
-        return GradientUtilities.linear
-    end
 end
 
 ---Finds the appropriate color gradient dither from a string preset.
@@ -716,30 +882,6 @@ end
 ---@nodiscard
 function GradientUtilities.lerpHueNear(o, d, t)
     return Utilities.lerpAngleNear(o, d, t, 1.0)
-end
-
----Returns a linear step factor.
----@param t number factor
----@return number
----@nodiscard
-function GradientUtilities.linear(t)
-    return t
-end
-
----Returns a smooth step factor.
----@param t number factor
----@return number
----@nodiscard
-function GradientUtilities.smooth(t)
-    return t * t * (3.0 - (t + t))
-end
-
----Returns a smoother step factor.
----@param t number factor
----@return number
----@nodiscard
-function GradientUtilities.smoother(t)
-    return t * t * t * (t * (t * 6.0 - 15.0) + 10.0)
 end
 
 return GradientUtilities

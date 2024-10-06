@@ -12,7 +12,7 @@ local defaults <const> = {
 
 local dlg <const> = Dialog { title = "Time Gradient" }
 
-GradientUtilities.dialogWidgets(dlg, true)
+local gradient <const> = GradientUtilities.dialogWidgets(dlg, true)
 
 dlg:combobox {
     id = "frameTarget",
@@ -97,16 +97,12 @@ dlg:button {
 
         local stylePreset <const> = args.stylePreset --[[@as string]]
         local clrSpacePreset <const> = args.clrSpacePreset --[[@as string]]
-        local easPreset <const> = args.easPreset --[[@as string]]
         local huePreset <const> = args.huePreset --[[@as string]]
-        local aseColors <const> = args.shades --[=[@as Color[]]=]
         local levels <const> = args.quantize --[[@as integer]]
         local bayerIndex <const> = args.bayerIndex --[[@as integer]]
         local ditherPath <const> = args.ditherPath --[[@as string]]
 
         local useMixed <const> = stylePreset == "MIXED"
-        local gradient <const> = GradientUtilities.aseColorsToClrGradient(aseColors)
-        local facAdjust <const> = GradientUtilities.easingFuncFromPreset(easPreset)
         local mixFunc <const> = GradientUtilities.clrSpcFuncFromPreset(
             clrSpacePreset, huePreset)
         local toHex <const> = Clr.toHex
@@ -161,7 +157,6 @@ dlg:button {
                 i = i + 1
                 local timeStamp <const> = timeStamps[i]
                 local fac = timeStamp * timeToFac
-                fac = facAdjust(fac)
                 fac = quantize(fac, levels)
                 local trgClr <const> = cgmix(
                     gradient, fac, mixFunc)
