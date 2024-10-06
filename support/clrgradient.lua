@@ -1,7 +1,7 @@
 dofile("./clrkey.lua")
 
 ---@class ClrGradient
----@field public keys ClrKey[] color keys
+---@field protected keys ClrKey[] color keys
 ClrGradient = {}
 ClrGradient.__index = ClrGradient
 
@@ -10,6 +10,9 @@ setmetatable(ClrGradient, {
         return cls.new(...)
     end
 })
+
+---Default tolerance when evaluating whether two keys have an equal step.
+ClrGradient.TOLERANCE = 0.0005
 
 ---Constructs a color gradient. The first parameter is a table of ClrKeys.
 ---@param keys ClrKey[] color keys
@@ -23,7 +26,7 @@ function ClrGradient.new(keys)
         local i = 0
         while i < lenKeys do
             i = i + 1
-            inst:insortRight(keys[i], 0.0005)
+            inst:insortRight(keys[i])
         end
     end
     return inst
@@ -47,6 +50,28 @@ function ClrGradient:__tostring()
     return ClrGradient.toJson(self)
 end
 
+---Gets a color key at the index.
+---@param i integer index
+---@return ClrKey
+function ClrGradient:getKey(i)
+    local j <const> = 1 + (i - 1) % #self.keys
+    return self.keys[j]
+end
+
+---Gets an array of keys from the gradient.
+---@return ClrKey[]
+function ClrGradient:getKeys()
+    ---@type ClrKey[]
+    local arr <const> = {}
+    local lenKeys <const> = #self.keys
+    local i = 0
+    while i < lenKeys do
+        i = i + 1
+        arr[i] = self.keys[i]
+    end
+    return arr
+end
+
 ---Inserts a color key into the keys array based on the index returned by
 ---bisectRight. Does not check for duplicates. Returns true if the key was
 ---successfully inserted.
@@ -54,7 +79,7 @@ end
 ---@param tol number? tolerance
 ---@return boolean
 function ClrGradient:insortRight(ck, tol)
-    local eps <const> = tol or 0.0005
+    local eps <const> = tol or ClrGradient.TOLERANCE
     local i <const> = ClrGradient.bisectRight(self, ck.step)
     local dupe <const> = self.keys[i - 1]
     if dupe and (math.abs(ck.step - dupe.step) <= eps) then
@@ -62,6 +87,19 @@ function ClrGradient:insortRight(ck, tol)
     end
     table.insert(self.keys, i, ck)
     return true
+end
+
+---Removes a color key at the index if the gradient has more than 2
+---keys. Returns the key, if any.
+---@param i integer index
+---@return ClrKey|nil
+function ClrGradient:removeKeyAt(i)
+    local lenKeys <const> = #self.keys
+    if lenKeys > 2 then
+        local j <const> = 1 + (i - 1) % lenKeys
+        return table.remove(self.keys, j)
+    end
+    return nil
 end
 
 ---Internal helper function to locate the insertion point for a step in the
@@ -197,8 +235,6 @@ end
 ---@return string
 ---@nodiscard
 function ClrGradient.toJson(cg)
-    local str = "{\"keys\":["
-
     local keys <const> = cg.keys
     local lenKeys <const> = #keys
     local strArr <const> = {}
@@ -208,9 +244,9 @@ function ClrGradient.toJson(cg)
         strArr[i] = ClrKey.toJson(keys[i])
     end
 
-    str = str .. table.concat(strArr, ",")
-    str = str .. "]}"
-    return str
+    return string.format(
+        "{\"keys\":[%s]}",
+        table.concat(strArr, ","))
 end
 
 return ClrGradient
