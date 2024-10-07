@@ -393,8 +393,8 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
             if activeGradient.isDragging == false then
                 if activeGradient.idxCurrent ~= -1 then
                     -- Update the active key's color.
-                    gradient:getKey(activeGradient.idxCurrent).clr
-                    = AseUtilities.aseColorToClr(app.fgColor)
+                    local newClr <const> = AseUtilities.aseColorToClr(app.fgColor)
+                    gradient:getKey(activeGradient.idxCurrent).clr = newClr
                 else
                     -- Add a new key.
                     local wCanvas <const> = activeGradient.wCanvas
@@ -402,13 +402,18 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
                         and event.x / (wCanvas - 1.0)
                         or 0.0
 
-                    -- TODO: xq or xNorm?
+                    -- -- xq or xNorm?
                     -- local levels <const> = activeGradient.levels
                     -- local xq <const> = Utilities.quantizeUnsigned(
                     --     xNorm, levels)
 
-                    gradient:insortRight(ClrKey.new(
-                        xNorm, AseUtilities.aseColorToClr(app.fgColor)))
+                    local args <const> = dlg.data
+                    local clrSpacePreset <const> = args.clrSpacePreset --[[@as string]]
+                    local huePreset <const> = args.huePreset --[[@as string]]
+                    local mixFunc <const> = GradientUtilities.clrSpcFuncFromPreset(
+                        clrSpacePreset, huePreset)
+                    local newClr <const> = ClrGradient.eval(gradient, xNorm, mixFunc)
+                    gradient:insortRight(ClrKey.new(xNorm, newClr))
                 end -- End has current key.
             end     -- End not dragging.
         end         -- End mouse button check.
