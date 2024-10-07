@@ -102,12 +102,6 @@ function ClrGradient:removeKeyAt(i)
     return nil
 end
 
----Sets a gradient's keys. For internal use only.
----@param keys ClrKey[]
-function ClrGradient:setKeys(keys)
-    if #keys >= 2 then self.keys = keys end
-end
-
 ---Reverses the gradient's color keys. Subtracts each key step from 1.0.
 function ClrGradient:reverse()
     local t <const> = self.keys
@@ -125,6 +119,18 @@ function ClrGradient:reverse()
         j = j + 1
         t[j].step = 1.0 - t[j].step
     end
+end
+
+---Sets a gradient's keys. For internal use only.
+---@param keys ClrKey[]
+function ClrGradient:setKeys(keys)
+    if #keys >= 2 then self.keys = keys end
+end
+
+---Sorts a gradient's keys. For internal use only, as when a user
+---rearranges keys via the ui.
+function ClrGradient:sort()
+    table.sort(self.keys, function(o, d) return o.step < d.step end)
 end
 
 ---Internal helper function to locate the insertion point for a step in the
