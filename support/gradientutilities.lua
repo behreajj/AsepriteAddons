@@ -241,10 +241,15 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         local huePreset <const> = args.huePreset --[[@as string]]
         local levels <const> = args.quantize --[[@as integer]]
 
+        local keys <const> = gradient:getKeys()
+        local lenKeys <const> = #keys
+
         ---@type string[]
         local grdChars <const> = {}
         local iToFac <const> = wCanvas > 1 and 1.0 / (wCanvas - 1.0) or 0.0
-        local lvVerif <const> = stylePreset == "MIXED" and levels or 0
+        local lvVerif <const> = stylePreset == "MIXED"
+            and levels
+            or lenKeys
 
         local max <const> = math.max
         local min <const> = math.min
@@ -303,8 +308,6 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         local aseWhite = Color(255, 255, 255, 255)
         local aseBlack = Color(0, 0, 0, 255)
 
-        local keys <const> = gradient:getKeys()
-        local lenKeys <const> = #keys
         local j = 0
         while j < lenKeys do
             j = j + 1
@@ -433,6 +436,8 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
                 grdUtlActive.idxCurrent = conflictingKeyIndex
             end
 
+            -- TODO: Option to quantize this to 8,12 or 16 steps
+            -- if the alt or shift key is pressed?
             keys[grdUtlActive.idxCurrent].step = xNorm
         end
 
