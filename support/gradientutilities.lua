@@ -354,16 +354,9 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         if eventButton == MouseButton.NONE then return end
 
         local x <const> = event.x
-        local y <const> = event.y
-
         if x < 0 then return end
-        if y < 0 then return end
-
         local wCanvas <const> = activeGradient.wCanvas
-        local hCanvas <const> = activeGradient.hCanvas
-
         if x >= wCanvas then return end
-        if y >= hCanvas then return end
 
         activeGradient.isDragging = activeGradient.mousePressed
 
@@ -371,7 +364,7 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         local levels = activeGradient.levels
 
         local xNorm <const> = wCanvas > 1
-            and event.x / (wCanvas - 1.0)
+            and x / (wCanvas - 1.0)
             or 0.0
         local xq <const> = quantizeUnsigned(xNorm, levels)
 
