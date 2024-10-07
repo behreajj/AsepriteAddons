@@ -744,23 +744,6 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
     return gradient
 end
 
----Returns a factor that eases in by a circular arc.
----@param t number factor
----@return number
----@nodiscard
-function GradientUtilities.circleIn(t)
-    return 1.0 - math.sqrt(1.0 - t * t)
-end
-
----Returns a factor that eases out by a circular arc.
----@param t number factor
----@return number
----@nodiscard
-function GradientUtilities.circleOut(t)
-    local u <const> = t - 1.0
-    return math.sqrt(1.0 - u * u)
-end
-
 ---Finds the appropriate color gradient dither from a string preset.
 ---"DITHER_CUSTOM" returns a custom matrix loaded from an image file path.
 ---"DITHER_BAYER" returns a Bayer matrix.
