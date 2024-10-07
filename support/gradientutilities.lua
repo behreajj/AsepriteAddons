@@ -425,14 +425,17 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
                     local xNorm <const> = wCanvas > 1
                         and event.x / (wCanvas - 1.0)
                         or 0.0
+                    local xq <const> = Utilities.quantizeUnsigned(
+                        xNorm, GradientUtilities.MAX_KEYS)
 
                     local args <const> = dlg.data
                     local clrSpacePreset <const> = args.clrSpacePreset --[[@as string]]
                     local huePreset <const> = args.huePreset --[[@as string]]
                     local mixFunc <const> = GradientUtilities.clrSpcFuncFromPreset(
                         clrSpacePreset, huePreset)
-                    local newClr <const> = ClrGradient.eval(gradient, xNorm, mixFunc)
-                    gradient:insortRight(ClrKey.new(xNorm, newClr))
+
+                    local newClr <const> = ClrGradient.eval(gradient, xq, mixFunc)
+                    gradient:insortRight(ClrKey.new(xq, newClr))
                 end -- End has current key.
             end     -- End not dragging.
         end         -- End mouse button check.
