@@ -593,7 +593,6 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
                 local sampleCount <const> = math.min(math.max(
                     lenGradient * 2 - 1, 3), GradientUtilities.MAX_KEYS)
                 local iToFac <const> = 1.0 / (sampleCount - 1.0)
-                local locn1 <const> = lenGradient - 1
 
                 local h = 0
                 while h < sampleCount do
@@ -616,9 +615,9 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
                     elseif iFac >= 1.0 then
                         alpha = alphas[sampleCount]
                     else
-                        local aScaled <const> = iFac * locn1
+                        local aScaled <const> = iFac * (sampleCount - 1)
                         local aFloor <const> = floor(aScaled)
-                        local aFrac <const> = aScaled - aFloor;
+                        local aFrac <const> = aScaled - aFloor
                         alpha = (1.0 - aFrac) * alphas[1 + aFloor]
                             + aFrac * alphas[2 + aFloor]
                     end
