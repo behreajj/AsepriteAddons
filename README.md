@@ -10,7 +10,7 @@ There is a [known issue](https://community.aseprite.org/t/script-folder-path-can
 
 ## Usage
 
-Aseprite version 1.3.8 is the minimum supported version to run these scripts.
+Aseprite version 1.3.9 is the minimum supported version to run these scripts.
 
 To use, go to `File > Scripts` and choose from entries in the `dialogs` or `commands` folder.
 
@@ -67,7 +67,7 @@ This repo includes
  
   ![Linear Gradient](screencaps/linearGradient.png)
 
-- Luminance (grayscale) remapping. ([Test image source](https://en.wikipedia.org/wiki/File:Fire_breathing_2_Luc_Viatour.jpg).)
+- Gradient map. ([Test image source](https://en.wikipedia.org/wiki/File:Fire_breathing_2_Luc_Viatour.jpg).)
 
   ![Luminance remapping](screencaps/lumRemap.png)
 
