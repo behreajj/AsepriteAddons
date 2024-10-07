@@ -14,7 +14,6 @@ local bAse = Color { r = 10, g = 10, b = 10, a = 255 }
 
 local appPrefs <const> = app.preferences
 if appPrefs then
-    -- TODO: Abstract this to an AseUtilites method?
     local docPrefs <const> = appPrefs.document(activeSprite)
     if docPrefs then
         -- https://github.com/aseprite/aseprite/blob/main/data/pref.xml#L521
@@ -57,8 +56,8 @@ if appPrefs then
     end
 end
 
-local activeSpec <const> = activeSprite.spec
-local colorMode <const> = activeSpec.colorMode
+local spriteSpec <const> = activeSprite.spec
+local colorMode <const> = spriteSpec.colorMode
 
 local a = AseUtilities.aseColorToHex(aAse, colorMode)
 local b = AseUtilities.aseColorToHex(bAse, colorMode)
@@ -72,18 +71,13 @@ elseif colorMode == ColorMode.GRAY then
     b = 0xff00 | b
 end
 
--- TODO: Make this its own function in AseUtilities.
-local checker <const> = Image(activeSpec)
-local pxItr <const> = checker:pixels()
-for pixel in pxItr do
-    local hex = b
-    local x <const> = pixel.x
-    local y <const> = pixel.y
-    if (((x // wCheck) + (y // hCheck)) % 2) ~= 1 then
-        hex = a
-    end
-    pixel(hex)
-end
+local checker <const> = AseUtilities.checkerImage(
+    spriteSpec.width,
+    spriteSpec.height,
+    wCheck, hCheck, a, b,
+    colorMode,
+    spriteSpec.colorSpace,
+    spriteSpec.transparentColor)
 
 app.transaction("Bake Checker", function()
     local checkerLayer <const> = activeSprite:newLayer()

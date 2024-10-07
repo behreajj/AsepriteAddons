@@ -196,6 +196,8 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
     GradientUtilities.clearGradient(gradient)
 
     local screenScale = 1
+    local aColor = 0xff808080
+    local bColor = 0xffcacaca
     if app.preferences then
         local generalPrefs <const> = app.preferences.general
         if generalPrefs then
@@ -204,6 +206,9 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
                 screenScale = ssCand
             end
         end
+
+        -- If you wanted to set the checkers to the document preferenes,
+        -- it could be done here.
     end
 
     local grdUtlActive <const> = {
@@ -283,37 +288,9 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
 
         local wCheck <const> = grdUtlActive.wCheck
         local hCheck <const> = grdUtlActive.hCheck
+        local bkgImage <const> = AseUtilities.checkerImage(
+            wCanvas, hCanvas, wCheck, hCheck, aColor, bColor)
 
-        local bkgSpec <const> = ImageSpec {
-            width = wCanvas,
-            height = hCanvas,
-            colorMode = ColorMode.RGB,
-            transparentColor = 0
-        }
-        local bkgImage <const> = Image(bkgSpec)
-        local areaBkgImage <const> = wCanvas * hCanvas
-        ---@type string[]
-        local bkgChars <const> = {}
-
-        local g = 0
-        while g < areaBkgImage do
-            local xPx <const> = g % wCanvas
-            local yPx <const> = g // wCanvas
-            local r8, g8, b8 = 38, 38, 38
-            if (((xPx // wCheck) + (yPx // hCheck)) % 2) ~= 1 then
-                r8, g8, b8 = 59, 59, 59
-            end
-
-            local g4 <const> = g * 4
-            bkgChars[1 + g4] = strchar(r8)
-            bkgChars[2 + g4] = strchar(g8)
-            bkgChars[3 + g4] = strchar(b8)
-            bkgChars[4 + g4] = strchar(255)
-
-            g = g + 1
-        end
-
-        bkgImage.bytes = table.concat(bkgChars)
         gradientImage:resize(wCanvas, hCanvas)
         bkgImage:drawImage(gradientImage, Point(0, 0),
             255, BlendMode.NORMAL)

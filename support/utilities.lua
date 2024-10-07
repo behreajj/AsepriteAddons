@@ -66,6 +66,39 @@ function Utilities.bytesArrToString(source)
     return table.concat(chars)
 end
 
+---Generates a checker pattern. For creating backgrounds
+---onto which images with alpha may be blit. The colors
+---should be integers with matching bytes per pixel to
+---the image.
+---@param wImg integer image width
+---@param hImg integer image height
+---@param bpp integer bits per pixel
+---@param wCheck integer checker width
+---@param hCheck integer checker height
+---@param aColor integer first checker hex
+---@param bColor integer second checker hex
+---@return string
+function Utilities.checker(
+    wImg, hImg, bpp, wCheck, hCheck, aColor, bColor)
+    ---@type string[]
+    local checkered <const> = {}
+    local lenTrg <const> = wImg * hImg
+    local fmtStr <const> = "<I" .. bpp
+    local strpack <const> = string.pack
+    local i = 0
+    while i < lenTrg do
+        local x <const> = i // wImg
+        local y <const> = i % wImg
+        local c = bColor
+        if (((x // wCheck) + (y // hCheck)) % 2) ~= 1 then
+            c = aColor
+        end
+        checkered[1 + i] = strpack(fmtStr, c)
+        i = i + 1
+    end
+    return table.concat(checkered)
+end
+
 ---Converts a dictionary to a sorted set. If a comparator is not provided,
 ---elements are sorted by their less than operator.
 ---@generic K key

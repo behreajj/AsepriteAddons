@@ -2458,6 +2458,43 @@ function AseUtilities.padImage(image, padding)
     return padded
 end
 
+---Generates an image with a checker pattern. For creating
+---backgrounds onto which images with alpha may be blit.
+---The colors should be integers with matching bytes per
+---pixel to the image.
+---@param wImg integer image width
+---@param hImg integer image height
+---@param wCheck integer checker width
+---@param hCheck integer checker height
+---@param aColor integer first checker hex
+---@param bColor integer second checker hex
+---@param colorMode? ColorMode color mode
+---@param colorSpace? ColorSpace color space
+---@param alphaIndex? integer transparent color
+---@returns Image
+---@nodiscard
+function AseUtilities.checkerImage(
+    wImg, hImg, wCheck, hCheck, aColor, bColor,
+    colorMode, colorSpace, alphaIndex)
+    local trgSpec <const> = AseUtilities.createSpec(
+        wImg, hImg, colorMode, colorSpace, alphaIndex)
+    local trgImg <const> = Image(trgSpec)
+
+    local bpp = 1
+    local cmVerif <const> = trgSpec.colorMode
+    if cmVerif == ColorMode.RGB
+        or cmVerif == ColorMode.TILEMAP then
+        bpp = 4
+    elseif cmVerif == ColorMode.GRAY then
+        bpp = 3
+    end
+
+    trgImg.bytes = Utilities.checker(
+        trgSpec.width, trgSpec.height, bpp,
+        wCheck, hCheck, aColor, bColor)
+    return trgImg
+end
+
 ---Parses an Aseprite Tag to an array of frame indices. For example, a tag with
 ---a fromFrame of 8 and a toFrame of 10 will return 8, 9, 10 if the tag has
 ---FORWARD direction. 10, 9, 8 for REVERSE. Ping-pong and its reverse excludes

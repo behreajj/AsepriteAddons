@@ -23,6 +23,9 @@ local harmonyTypes <const> = {
 }
 
 local defaults <const> = {
+    -- TODO: Make backgrounds for colors with alpha consistent
+    -- with LCH color picker.
+
     -- This does not support scroll wheel because the directionality is
     -- reversed and because there is too much debugging needed to stop mouse
     -- down from interfering with scroll wheel, particularly in normal wheel
