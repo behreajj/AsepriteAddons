@@ -1,8 +1,9 @@
 dofile("../../support/gradientutilities.lua")
 
-local targets <const> = { "ACTIVE", "ALL", "RANGE" }
+local targets <const> = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
 
 local defaults <const> = {
+    -- TODO: Support gradient within selection.
     target = "ACTIVE",
     normalize = false,
     pullFocus = true
@@ -46,8 +47,8 @@ dlg:button {
             return
         end
 
-        local activeSpec <const> = activeSprite.spec
-        local colorMode <const> = activeSpec.colorMode
+        local spriteSpec <const> = activeSprite.spec
+        local colorMode <const> = spriteSpec.colorMode
         if colorMode ~= ColorMode.RGB then
             app.alert {
                 title = "Error",
@@ -56,32 +57,64 @@ dlg:button {
             return
         end
 
-        local srcLayer <const> = site.layer
-        if not srcLayer then
-            app.alert {
-                title = "Error",
-                text = "There is no active layer."
-            }
-            return
+        -- Unpack arguments.
+        local args <const> = dlg.data
+        local target <const> = args.target or defaults.target --[[@as string]]
+        local stylePreset <const> = args.stylePreset --[[@as string]]
+        local useNormalize <const> = args.useNormalize --[[@as boolean]]
+        local clrSpacePreset <const> = args.clrSpacePreset --[[@as string]]
+        local huePreset <const> = args.huePreset --[[@as string]]
+        local levels <const> = args.quantize --[[@as integer]]
+        local bayerIndex <const> = args.bayerIndex --[[@as integer]]
+        local ditherPath <const> = args.ditherPath --[[@as string]]
+
+        -- This needs to be done first, otherwise range will be lost.
+        local isSelect <const> = target == "SELECTION"
+        local frIdcs <const> = Utilities.flatArr2(
+            AseUtilities.getFrames(activeSprite,
+                isSelect and "ALL" or target))
+        local lenFrIdcs <const> = #frIdcs
+
+        -- If isSelect is true, then a new layer will be created.
+        local srcLayer = site.layer --[[@as Layer]]
+
+        if isSelect then
+            AseUtilities.filterCels(activeSprite, srcLayer, frIdcs, "SELECTION")
+            srcLayer = activeSprite.layers[#activeSprite.layers]
+        else
+            if not srcLayer then
+                app.alert {
+                    title = "Error",
+                    text = "There is no active layer."
+                }
+                return
+            end
+
+            if srcLayer.isGroup then
+                app.alert {
+                    title = "Error",
+                    text = "Group layers are not supported."
+                }
+                return
+            end
+
+            if srcLayer.isReference then
+                app.alert {
+                    title = "Error",
+                    text = "Reference layers are not supported."
+                }
+                return
+            end
         end
 
-        if srcLayer.isGroup then
-            app.alert {
-                title = "Error",
-                text = "Group layers are not supported."
-            }
-            return
+        -- Check for tile maps.
+        local isTilemap <const> = srcLayer.isTilemap
+        local tileSet = nil
+        if isTilemap then
+            tileSet = srcLayer.tileset
         end
 
-        if srcLayer.isReference then
-            app.alert {
-                title = "Error",
-                text = "Reference layers are not supported."
-            }
-            return
-        end
-
-        -- Cache methods.
+        -- Cache global methods to local.
         local abs <const> = math.abs
         local min <const> = math.min
         local fromHex <const> = Clr.fromHexAbgr32
@@ -92,34 +125,12 @@ dlg:button {
         local strfmt <const> = string.format
         local transact <const> = app.transaction
 
-        -- Unpack arguments.
-        local args <const> = dlg.data
-        local stylePreset <const> = args.stylePreset --[[@as string]]
-        local target <const> = args.target or defaults.target --[[@as string]]
-        local useNormalize <const> = args.useNormalize --[[@as boolean]]
-        local clrSpacePreset <const> = args.clrSpacePreset --[[@as string]]
-        local huePreset <const> = args.huePreset --[[@as string]]
-        local levels <const> = args.quantize --[[@as integer]]
-        local bayerIndex <const> = args.bayerIndex --[[@as integer]]
-        local ditherPath <const> = args.ditherPath --[[@as string]]
-
-        -- Find frames from target.
-        local frames <const> = Utilities.flatArr2(
-            AseUtilities.getFrames(activeSprite, target))
-
         local useMixed <const> = stylePreset == "MIXED"
         local mixFunc <const> = GradientUtilities.clrSpcFuncFromPreset(
             clrSpacePreset, huePreset)
         local dither <const> = GradientUtilities.ditherFromPreset(
             stylePreset, bayerIndex, ditherPath)
         local cgmix <const> = ClrGradient.eval
-
-        -- Check for tile maps.
-        local isTilemap <const> = srcLayer.isTilemap
-        local tileSet = nil
-        if isTilemap then
-            tileSet = srcLayer.tileset
-        end
 
         -- Create target layer.
         -- Do not copy source layer blend mode.
@@ -137,11 +148,10 @@ dlg:button {
             end
         end)
 
-        local lenFrames <const> = #frames
         local i = 0
-        while i < lenFrames do
+        while i < lenFrIdcs do
             i = i + 1
-            local srcFrame <const> = frames[i]
+            local srcFrame <const> = frIdcs[i]
             local srcCel <const> = srcLayer:cel(srcFrame)
             if srcCel then
                 local srcPos <const> = srcCel.position
@@ -235,8 +245,7 @@ dlg:button {
                     end
                 end -- End mix type.
 
-                transact(
-                    strfmt("Gradient Map %d", srcFrame),
+                transact(strfmt("Gradient Map %d", srcFrame),
                     function()
                         local trgCel <const> = activeSprite:newCel(
                             trgLayer, srcFrame, trgImg, srcPos)
@@ -244,6 +253,12 @@ dlg:button {
                     end)
             end -- End cel exists check.
         end     -- End frames loop.
+
+        if isSelect then
+            app.transaction("Delete Layer", function()
+                activeSprite:deleteLayer(srcLayer)
+            end)
+        end
 
         app.layer = trgLayer
         app.refresh()

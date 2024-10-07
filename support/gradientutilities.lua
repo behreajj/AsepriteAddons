@@ -327,7 +327,7 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         local xNorm <const> = wCanvas > 1
             and event.x / (wCanvas - 1.0)
             or 0.0
-        local maxKeys <const> = GradientUtilities.MAX_KEYS
+        local maxKeys <const> = 2 * GradientUtilities.MAX_KEYS // 3
         local xq <const> = quantizeUnsigned(xNorm, maxKeys)
 
         local keys <const> = gradient:getKeys()
@@ -360,7 +360,7 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         activeGradient.isDragging = activeGradient.mousePressed
 
         local quantizeUnsigned <const> = Utilities.quantizeUnsigned
-        local maxKeys <const> = GradientUtilities.MAX_KEYS
+        local maxKeys <const> = 2 * GradientUtilities.MAX_KEYS // 3
 
         local xNorm <const> = wCanvas > 1
             and x / (wCanvas - 1.0)
