@@ -209,7 +209,6 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
     local activeGradient <const> = {
         wCanvas = 240 // screenScale,
         hCanvas = 16 // screenScale,
-        levels = 16,
         mousePressed = false,
         isDragging = false,
         idxCurrent = -1,
@@ -361,12 +360,12 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         activeGradient.isDragging = activeGradient.mousePressed
 
         local quantizeUnsigned <const> = Utilities.quantizeUnsigned
-        local levels = activeGradient.levels
+        local maxKeys <const> = GradientUtilities.MAX_KEYS
 
         local xNorm <const> = wCanvas > 1
             and x / (wCanvas - 1.0)
             or 0.0
-        local xq <const> = quantizeUnsigned(xNorm, levels)
+        local xq <const> = quantizeUnsigned(xNorm, maxKeys)
 
         local keys <const> = gradient:getKeys()
         local lenKeys <const> = #keys
@@ -376,7 +375,7 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         while conflictingKeyIndex == -1
             and i < lenKeys do
             i = i + 1
-            if xq == quantizeUnsigned(keys[i].step, levels) then
+            if xq == quantizeUnsigned(keys[i].step, maxKeys) then
                 conflictingKeyIndex = i
             end
         end
