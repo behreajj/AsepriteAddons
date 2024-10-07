@@ -470,7 +470,7 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
 
     dlg:button {
         id = "spreadButton",
-        text = "SPREA&D",
+        text = "&SPREAD",
         focus = false,
         onclick = function()
             local keys <const> = gradient:getKeys()
@@ -487,7 +487,7 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
 
     dlg:button {
         id = "splineButton",
-        text = "&SMOOTH",
+        text = "&DIVIDE",
         focus = false,
         onclick = function()
             local args <const> = dlg.data
