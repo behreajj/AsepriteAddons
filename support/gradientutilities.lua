@@ -164,7 +164,7 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
                 local validColors <const> = {}
                 local lenValidColors = 0
                 local rangeClrIdcs <const> = appRange.colors
-                local lenRangeClrIdcs <const> = #rangeClrIdcs
+                local lenRangeClrIdcs <const> = math.min(32, #rangeClrIdcs)
 
                 local h = 0
                 while h < lenRangeClrIdcs do
