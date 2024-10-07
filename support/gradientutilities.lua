@@ -214,7 +214,8 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         mousePressed = false,
         isDragging = false,
         idxCurrent = -1,
-        reticleSize = 12 // screenScale
+        idxHover = -1,
+        reticleSize = 10 // screenScale
     }
 
     ---@param event { context: GraphicsContext }
@@ -306,7 +307,7 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
             local aseColor <const> = clrToAseColor(keyClr)
 
             ctx.color = tagColor
-            ctx:fillRect(Rectangle(
+            ctx:strokeRect(Rectangle(
                 x - reticleHalf, y,
                 reticleSize, reticleSize))
 
@@ -314,10 +315,26 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
             ctx:fillRect(Rectangle(
                 1 + x - reticleHalf, 1 + y,
                 reticleSize - 2, reticleSize - 2))
+        end -- End keys loop.
+
+        if grdUtlActive.idxHover ~= -1 then
+            local keyHover <const> = gradient:getKey(grdUtlActive.idxHover)
+            local stepHover <const> = keyHover.step
+            local clrHover <const> = keyHover.clr
+            local avgLight <const> = (clrHover.r + clrHover.g + clrHover.b) / 3.0
+            local tagColor <const> = avgLight >= 0.5 and aseBlack or aseWhite
+            local x <const> = floor(stepHover * (wCanvas - 1.0) + 0.5)
+
+            ctx.color = tagColor
+            ctx:strokeRect(Rectangle(
+                x - 2 - reticleHalf, y - 2,
+                reticleSize + 4, reticleSize + 4))
 
             -- ctx.color = tagColor
-            -- ctx:fillText(string.format("%d", j),
+            -- ctx:fillText(string.format("%d", grdUtlActive.idxHover),
             --     2 + x - reticleHalf, 2 + y)
+
+            grdUtlActive.idxHover = -1
         end
     end
 
@@ -349,17 +366,15 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
 
     ---@param event MouseEvent
     local function onMouseMoveGradient(event)
-        if grdUtlActive.idxCurrent == -1 then return end
-
         local eventButton <const> = event.button
-        if eventButton == MouseButton.NONE then return end
-
         local x <const> = event.x
-        if x < 0 then return end
-        local wCanvas <const> = grdUtlActive.wCanvas
-        if x >= wCanvas then return end
+        local y <const> = event.y
 
-        grdUtlActive.isDragging = grdUtlActive.mousePressed
+        local wCanvas <const> = grdUtlActive.wCanvas
+        local hCanvas <const> = grdUtlActive.hCanvas
+
+        if x < 0 then return end
+        if x >= wCanvas then return end
 
         local quantizeUnsigned <const> = Utilities.quantizeUnsigned
         local maxKeys <const> = 2 * GradientUtilities.MAX_KEYS // 3
@@ -371,26 +386,43 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
 
         local keys <const> = gradient:getKeys()
         local lenKeys <const> = #keys
-        local conflictingKeyIndex = -1
 
-        local i = 0
-        while conflictingKeyIndex == -1
-            and i < lenKeys do
-            i = i + 1
-            if xq == quantizeUnsigned(keys[i].step, maxKeys) then
-                conflictingKeyIndex = i
+        if y >= 0 and y < hCanvas then
+            local search = true
+            local j = 0
+            while search and j < lenKeys do
+                j = j + 1
+                if xq == quantizeUnsigned(keys[j].step, maxKeys) then
+                    grdUtlActive.idxHover = j
+                    search = false
+                end
             end
         end
 
-        if conflictingKeyIndex ~= -1 then
-            local temp <const> = keys[conflictingKeyIndex].clr
-            keys[conflictingKeyIndex].clr = keys[grdUtlActive.idxCurrent].clr
-            keys[grdUtlActive.idxCurrent].clr = temp
+        if eventButton == MouseButton.LEFT
+            and grdUtlActive.idxCurrent ~= -1 then
+            grdUtlActive.isDragging = true
 
-            grdUtlActive.idxCurrent = conflictingKeyIndex
+            local conflictingKeyIndex = -1
+            local i = 0
+            while conflictingKeyIndex == -1
+                and i < lenKeys do
+                i = i + 1
+                if xq == quantizeUnsigned(keys[i].step, maxKeys) then
+                    conflictingKeyIndex = i
+                end
+            end
+
+            if conflictingKeyIndex ~= -1 then
+                local temp <const> = keys[conflictingKeyIndex].clr
+                keys[conflictingKeyIndex].clr = keys[grdUtlActive.idxCurrent].clr
+                keys[grdUtlActive.idxCurrent].clr = temp
+
+                grdUtlActive.idxCurrent = conflictingKeyIndex
+            end
+
+            keys[grdUtlActive.idxCurrent].step = xNorm
         end
-
-        keys[grdUtlActive.idxCurrent].step = xNorm
 
         dlg:repaint()
     end
