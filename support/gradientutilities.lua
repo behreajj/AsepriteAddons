@@ -80,6 +80,87 @@ GradientUtilities.BAYER_MATRICES = {
 --- Maximum width or height for a custom dither image.
 GradientUtilities.DITHER_MAX_SIZE = 64
 
+---Maximum number of keys for gradient interface.
+GradientUtilities.MAX_KEYS = 32
+
+---Clears a gradient to an initial state.
+---@param gr ClrGradient
+---@return ClrGradient
+function GradientUtilities.clearGradient(gr)
+    local origKeys <const> = {}
+    local sprite <const> = app.sprite
+    if sprite then
+        local aseColorToClr <const> = AseUtilities.aseColorToClr
+        local lenOrigKeys = 0
+
+        local appRange <const> = app.range
+        if appRange.sprite == sprite then
+            local frame <const> = app.frame or sprite.frames[1]
+            local palette <const> = AseUtilities.getPalette(
+                frame, sprite.palettes)
+            local lenPalette <const> = #palette
+
+            ---@type Clr[]
+            local validColors <const> = {}
+            local lenValidColors = 0
+            local rangeClrIdcs <const> = appRange.colors
+            local lenRangeClrIdcs <const> = math.min(
+                GradientUtilities.MAX_KEYS,
+                #rangeClrIdcs)
+
+            local h = 0
+            while h < lenRangeClrIdcs do
+                h = h + 1
+                local rangeClrIdx <const> = rangeClrIdcs[h]
+                if rangeClrIdx >= 0 and rangeClrIdx < lenPalette then
+                    local aseColor <const> = palette:getColor(rangeClrIdx)
+                    lenValidColors = lenValidColors + 1
+                    local clr <const> = aseColorToClr(aseColor)
+                    validColors[lenValidColors] = clr
+                end -- End index is valid.
+            end     -- End range colors loop.
+
+            local iToFac <const> = lenValidColors > 1
+                and 1.0 / (lenValidColors - 1.0)
+                or 0.0
+            local i = 0
+            while i < lenValidColors do
+                local fac <const> = i * iToFac
+                lenOrigKeys = lenOrigKeys + 1
+                origKeys[lenOrigKeys] = ClrKey.new(fac, validColors[1 + i])
+                i = i + 1
+            end
+        end -- End range sprite is sprite.
+
+        if lenOrigKeys < 2 then
+            local fgClr <const> = aseColorToClr(app.fgColor)
+            app.command.SwitchColors()
+            local bgClr <const> = aseColorToClr(app.fgColor)
+            app.command.SwitchColors()
+
+            local fgHex <const> = Clr.toHex(fgClr)
+            local bgHex <const> = Clr.toHex(bgClr)
+            if fgHex == bgHex
+                and fgHex ~= 0x00000000
+                and fgHex ~= 0xff000000
+                and fgHex ~= 0xffffffff then
+                origKeys[1] = ClrKey.new(0.0, Clr.new(0.0, 0.0, 0.0, fgClr.a))
+                origKeys[2] = ClrKey.new(0.5, fgClr)
+                origKeys[3] = ClrKey.new(1.0, Clr.new(1.0, 1.0, 1.0, fgClr.a))
+            else
+                origKeys[1] = ClrKey.new(0.0, fgClr)
+                origKeys[2] = ClrKey.new(1.0, bgClr)
+            end
+        end
+    else
+        origKeys[1] = ClrKey.new(0.0, Clr.new(0.0, 0.0, 0.0, 1.0))
+        origKeys[2] = ClrKey.new(1.0, Clr.new(1.0, 1.0, 1.0, 1.0))
+    end
+
+    gr:setKeys(origKeys)
+    return gr
+end
+
 ---Finds the appropriate color easing function based on the color space preset
 ---and hue preset.
 ---@param clrSpcPreset string color space preset
@@ -112,63 +193,7 @@ end
 ---@nodiscard
 function GradientUtilities.dialogWidgets(dlg, showStyle)
     local gradient <const> = ClrGradient.newInternal({})
-    do
-        local origKeys <const> = {}
-        local sprite <const> = app.sprite
-        if sprite then
-            local aseColorToClr <const> = AseUtilities.aseColorToClr
-            local lenOrigKeys = 0
-
-            local appRange <const> = app.range
-            if appRange.sprite == sprite then
-                local frame <const> = app.frame or sprite.frames[1]
-                local palette <const> = AseUtilities.getPalette(
-                    frame, sprite.palettes)
-                local lenPalette <const> = #palette
-
-                ---@type Clr[]
-                local validColors <const> = {}
-                local lenValidColors = 0
-                local rangeClrIdcs <const> = appRange.colors
-                local lenRangeClrIdcs <const> = math.min(32, #rangeClrIdcs)
-
-                local h = 0
-                while h < lenRangeClrIdcs do
-                    h = h + 1
-                    local rangeClrIdx <const> = rangeClrIdcs[h]
-                    if rangeClrIdx >= 0 and rangeClrIdx < lenPalette then
-                        local aseColor <const> = palette:getColor(rangeClrIdx)
-                        lenValidColors = lenValidColors + 1
-                        local clr <const> = aseColorToClr(aseColor)
-                        validColors[lenValidColors] = clr
-                    end -- End index is valid.
-                end     -- End range colors loop.
-
-                local iToFac <const> = lenValidColors > 1
-                    and 1.0 / (lenValidColors - 1.0)
-                    or 0.0
-                local i = 0
-                while i < lenValidColors do
-                    local fac <const> = i * iToFac
-                    lenOrigKeys = lenOrigKeys + 1
-                    origKeys[lenOrigKeys] = ClrKey.new(fac, validColors[1 + i])
-                    i = i + 1
-                end
-            end -- End range sprite is sprite.
-
-            if lenOrigKeys < 2 then
-                origKeys[1] = ClrKey.new(0.0, aseColorToClr(app.fgColor))
-                app.command.SwitchColors()
-                origKeys[2] = ClrKey.new(1.0, aseColorToClr(app.fgColor))
-                app.command.SwitchColors()
-            end
-        else
-            origKeys[1] = ClrKey.new(0.0, Clr.new(0.0, 0.0, 0.0, 1.0))
-            origKeys[2] = ClrKey.new(1.0, Clr.new(1.0, 1.0, 1.0, 1.0))
-        end
-
-        gradient:setKeys(origKeys)
-    end
+    GradientUtilities.clearGradient(gradient)
 
     local screenScale = 1
     if app.preferences then
@@ -298,13 +323,13 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
     ---@param event MouseEvent
     local function onMouseDownGradient(event)
         local quantizeUnsigned <const> = Utilities.quantizeUnsigned
-        local levels <const> = activeGradient.levels
 
         local wCanvas <const> = activeGradient.wCanvas
         local xNorm <const> = wCanvas > 1
             and event.x / (wCanvas - 1.0)
             or 0.0
-        local xq <const> = quantizeUnsigned(xNorm, levels)
+        local maxKeys <const> = GradientUtilities.MAX_KEYS
+        local xq <const> = quantizeUnsigned(xNorm, maxKeys)
 
         local keys <const> = gradient:getKeys()
         local lenKeys <const> = #keys
@@ -313,7 +338,7 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         while activeGradient.idxCurrent == -1
             and i < lenKeys do
             i = i + 1
-            if xq == quantizeUnsigned(keys[i].step, levels) then
+            if xq == quantizeUnsigned(keys[i].step, maxKeys) then
                 activeGradient.idxCurrent = i
             end
         end
@@ -502,7 +527,7 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
                 local alphas <const> = {}
 
                 local sampleCount <const> = math.min(math.max(
-                    lenGradient * 2 - 1, 3), 64)
+                    lenGradient * 2 - 1, 3), GradientUtilities.MAX_KEYS)
                 local iToFac <const> = 1.0 / (sampleCount - 1.0)
                 local locn1 <const> = lenGradient - 1
 
@@ -550,7 +575,7 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         text = "C&LEAR",
         focus = false,
         onclick = function()
-            gradient:reset()
+            GradientUtilities.clearGradient(gradient)
             dlg:repaint()
         end
     }

@@ -102,15 +102,6 @@ function ClrGradient:removeKeyAt(i)
     return nil
 end
 
----Resets gradient to an initial state, with opaque black
----at step 0.0 and opaque white at step 1.0.
-function ClrGradient:reset()
-    self.keys = {
-        ClrKey.new(0.0, Clr.new(0.0, 0.0, 0.0, 1.0)),
-        ClrKey.new(1.0, Clr.new(1.0, 1.0, 1.0, 1.0))
-    }
-end
-
 ---Sets a gradient's keys. For internal use only.
 ---@param keys ClrKey[]
 function ClrGradient:setKeys(keys)
