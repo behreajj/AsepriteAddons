@@ -7,8 +7,6 @@ GradientUtilities = {}
 GradientUtilities.__index = GradientUtilities
 
 setmetatable(GradientUtilities, {
-    -- TODO: Display a reticle when the mouse hovers over a key.
-
     -- Previous version at commit:
     -- cb2f20dab3dcb1cf58a7fc664c2de13570506ebc
     __call = function(cls, ...)
@@ -215,7 +213,9 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         isDragging = false,
         idxCurrent = -1,
         idxHover = -1,
-        reticleSize = 10 // screenScale
+        reticleSize = 10 // screenScale,
+        wCheck = 8,
+        hCheck = 8,
     }
 
     ---@param event { context: GraphicsContext }
@@ -237,7 +237,7 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         local levels <const> = args.quantize --[[@as integer]]
 
         ---@type string[]
-        local chars <const> = {}
+        local grdChars <const> = {}
         local iToFac <const> = wCanvas > 1 and 1.0 / (wCanvas - 1.0) or 0.0
         local lvVerif <const> = stylePreset == "MIXED" and levels or 0
 
@@ -252,7 +252,6 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         local mixFunc <const> = GradientUtilities.clrSpcFuncFromPreset(
             clrSpacePreset, huePreset)
 
-        -- TODO: Support preview for color alpha?
         local i = 0
         while i < wCanvas do
             local t <const> = i * iToFac
@@ -262,12 +261,13 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
             local r8 <const> = floor(min(max(c.r, 0.0), 1.0) * 255.0 + 0.5)
             local g8 <const> = floor(min(max(c.g, 0.0), 1.0) * 255.0 + 0.5)
             local b8 <const> = floor(min(max(c.b, 0.0), 1.0) * 255.0 + 0.5)
+            local a8 <const> = floor(min(max(c.a, 0.0), 1.0) * 255.0 + 0.5)
 
             local i4 <const> = i * 4
-            chars[1 + i4] = strchar(r8)
-            chars[2 + i4] = strchar(g8)
-            chars[3 + i4] = strchar(b8)
-            chars[4 + i4] = strchar(255)
+            grdChars[1 + i4] = strchar(r8)
+            grdChars[2 + i4] = strchar(g8)
+            grdChars[3 + i4] = strchar(b8)
+            grdChars[4 + i4] = strchar(a8)
 
             i = i + 1
         end
@@ -279,11 +279,46 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
             transparentColor = 0
         }
         local gradientImage <const> = Image(gradientSpec)
-        gradientImage.bytes = table.concat(chars)
-        ctx:drawImage(
-            gradientImage,
-            Rectangle(0, 0, wCanvas, 1),
-            Rectangle(0, 0, wCanvas, hCanvas))
+        gradientImage.bytes = table.concat(grdChars)
+
+        local wCheck <const> = grdUtlActive.wCheck
+        local hCheck <const> = grdUtlActive.hCheck
+
+        local bkgSpec <const> = ImageSpec {
+            width = wCanvas,
+            height = hCanvas,
+            colorMode = ColorMode.RGB,
+            transparentColor = 0
+        }
+        local bkgImage <const> = Image(bkgSpec)
+        local areaBkgImage <const> = wCanvas * hCanvas
+        ---@type string[]
+        local bkgChars <const> = {}
+
+        local g = 0
+        while g < areaBkgImage do
+            local xPx <const> = g % wCanvas
+            local yPx <const> = g // wCanvas
+            local r8, g8, b8 = 38, 38, 38
+            if (((xPx // wCheck) + (yPx // hCheck)) % 2) ~= 1 then
+                r8, g8, b8 = 59, 59, 59
+            end
+
+            local g4 <const> = g * 4
+            bkgChars[1 + g4] = strchar(r8)
+            bkgChars[2 + g4] = strchar(g8)
+            bkgChars[3 + g4] = strchar(b8)
+            bkgChars[4 + g4] = strchar(255)
+
+            g = g + 1
+        end
+
+        bkgImage.bytes = table.concat(bkgChars)
+        gradientImage:resize(wCanvas, hCanvas)
+        bkgImage:drawImage(gradientImage, Point(0, 0),
+            255, BlendMode.NORMAL)
+        local drawRect <const> = Rectangle(0, 0, wCanvas, hCanvas)
+        ctx:drawImage(bkgImage, drawRect, drawRect)
 
         local reticleSize <const> = grdUtlActive.reticleSize
         local reticleHalf <const> = reticleSize // 2
@@ -335,7 +370,7 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
             --     2 + x - reticleHalf, 2 + y)
 
             grdUtlActive.idxHover = -1
-        end
+        end -- End hover reticle.
     end
 
     ---@param event MouseEvent
