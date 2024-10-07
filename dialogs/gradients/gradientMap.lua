@@ -3,9 +3,10 @@ dofile("../../support/gradientutilities.lua")
 local targets <const> = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
 
 local defaults <const> = {
+    -- TODO: Add an elapsed time check box.
     target = "ACTIVE",
     normalize = false,
-    pullFocus = true
+    printElapsed = false,
 }
 
 local dlg <const> = Dialog { title = "Gradient Map" }
@@ -30,11 +31,22 @@ dlg:check {
 
 dlg:newrow { always = false }
 
+dlg:check {
+    id = "printElapsed",
+    label = "Print:",
+    text = "Diagnostic",
+    selected = defaults.printElapsed
+}
+
+dlg:newrow { always = false }
+
 dlg:button {
     id = "confirm",
     text = "&OK",
-    focus = defaults.pullFocus,
+    focus = false,
     onclick = function()
+        local startTime <const> = os.clock()
+
         -- Early returns.
         local site <const> = app.site
         local activeSprite <const> = site.sprite
@@ -261,6 +273,20 @@ dlg:button {
 
         app.layer = trgLayer
         app.refresh()
+
+        local printElapsed <const> = args.printElapsed --[[@as boolean]]
+        if printElapsed then
+            local endTime <const> = os.clock()
+            local elapsed <const> = endTime - startTime
+            app.alert {
+                title = "Diagnostic",
+                text = {
+                    string.format("Start: %.2f", startTime),
+                    string.format("End: %.2f", endTime),
+                    string.format("Elapsed: %.6f", elapsed)
+                }
+            }
+        end
     end
 }
 
