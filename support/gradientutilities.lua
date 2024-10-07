@@ -393,19 +393,21 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
             if activeGradient.isDragging == false then
                 if activeGradient.idxCurrent ~= -1 then
                     -- Update the active key's color.
-                    local newClr <const> = AseUtilities.aseColorToClr(app.fgColor)
-                    gradient:getKey(activeGradient.idxCurrent).clr = newClr
+                    if event.altKey then
+                        app.command.SwitchColors()
+                        local newClr <const> = AseUtilities.aseColorToClr(app.fgColor)
+                        gradient:getKey(activeGradient.idxCurrent).clr = newClr
+                        app.command.SwitchColors()
+                    else
+                        local newClr <const> = AseUtilities.aseColorToClr(app.fgColor)
+                        gradient:getKey(activeGradient.idxCurrent).clr = newClr
+                    end
                 else
                     -- Add a new key.
                     local wCanvas <const> = activeGradient.wCanvas
                     local xNorm <const> = wCanvas > 1
                         and event.x / (wCanvas - 1.0)
                         or 0.0
-
-                    -- -- xq or xNorm?
-                    -- local levels <const> = activeGradient.levels
-                    -- local xq <const> = Utilities.quantizeUnsigned(
-                    --     xNorm, levels)
 
                     local args <const> = dlg.data
                     local clrSpacePreset <const> = args.clrSpacePreset --[[@as string]]
