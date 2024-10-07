@@ -7,6 +7,8 @@ GradientUtilities = {}
 GradientUtilities.__index = GradientUtilities
 
 setmetatable(GradientUtilities, {
+    -- TODO: Display a reticle when the mouse hovers over a key.
+
     -- Previous version at commit:
     -- cb2f20dab3dcb1cf58a7fc664c2de13570506ebc
     __call = function(cls, ...)
@@ -206,7 +208,7 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         end
     end
 
-    local activeGradient <const> = {
+    local grdUtlActive <const> = {
         wCanvas = 240 // screenScale,
         hCanvas = 16 // screenScale,
         mousePressed = false,
@@ -224,8 +226,8 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         local wCanvas <const> = ctx.width
         local hCanvas <const> = ctx.height
         if wCanvas <= 1 or hCanvas <= 1 then return end
-        activeGradient.wCanvas = wCanvas
-        activeGradient.hCanvas = hCanvas
+        grdUtlActive.wCanvas = wCanvas
+        grdUtlActive.hCanvas = hCanvas
 
         local args <const> = dlg.data
         local stylePreset <const> = args.stylePreset --[[@as string]]
@@ -282,7 +284,7 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
             Rectangle(0, 0, wCanvas, 1),
             Rectangle(0, 0, wCanvas, hCanvas))
 
-        local reticleSize <const> = activeGradient.reticleSize
+        local reticleSize <const> = grdUtlActive.reticleSize
         local reticleHalf <const> = reticleSize // 2
         local y <const> = hCanvas // 2 - reticleHalf
         local aseWhite = Color(255, 255, 255, 255)
@@ -323,7 +325,7 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
     local function onMouseDownGradient(event)
         local quantizeUnsigned <const> = Utilities.quantizeUnsigned
 
-        local wCanvas <const> = activeGradient.wCanvas
+        local wCanvas <const> = grdUtlActive.wCanvas
         local xNorm <const> = wCanvas > 1
             and event.x / (wCanvas - 1.0)
             or 0.0
@@ -334,30 +336,30 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         local lenKeys <const> = #keys
 
         local i = 0
-        while activeGradient.idxCurrent == -1
+        while grdUtlActive.idxCurrent == -1
             and i < lenKeys do
             i = i + 1
             if xq == quantizeUnsigned(keys[i].step, maxKeys) then
-                activeGradient.idxCurrent = i
+                grdUtlActive.idxCurrent = i
             end
         end
 
-        activeGradient.mousePressed = true
+        grdUtlActive.mousePressed = true
     end
 
     ---@param event MouseEvent
     local function onMouseMoveGradient(event)
-        if activeGradient.idxCurrent == -1 then return end
+        if grdUtlActive.idxCurrent == -1 then return end
 
         local eventButton <const> = event.button
         if eventButton == MouseButton.NONE then return end
 
         local x <const> = event.x
         if x < 0 then return end
-        local wCanvas <const> = activeGradient.wCanvas
+        local wCanvas <const> = grdUtlActive.wCanvas
         if x >= wCanvas then return end
 
-        activeGradient.isDragging = activeGradient.mousePressed
+        grdUtlActive.isDragging = grdUtlActive.mousePressed
 
         local quantizeUnsigned <const> = Utilities.quantizeUnsigned
         local maxKeys <const> = 2 * GradientUtilities.MAX_KEYS // 3
@@ -382,13 +384,13 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
 
         if conflictingKeyIndex ~= -1 then
             local temp <const> = keys[conflictingKeyIndex].clr
-            keys[conflictingKeyIndex].clr = keys[activeGradient.idxCurrent].clr
-            keys[activeGradient.idxCurrent].clr = temp
+            keys[conflictingKeyIndex].clr = keys[grdUtlActive.idxCurrent].clr
+            keys[grdUtlActive.idxCurrent].clr = temp
 
-            activeGradient.idxCurrent = conflictingKeyIndex
+            grdUtlActive.idxCurrent = conflictingKeyIndex
         end
 
-        keys[activeGradient.idxCurrent].step = xNorm
+        keys[grdUtlActive.idxCurrent].step = xNorm
 
         dlg:repaint()
     end
@@ -400,28 +402,28 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
 
         if eventButton == MouseButton.RIGHT
             or (event.ctrlKey and eventButton == MouseButton.LEFT) then
-            if activeGradient.isDragging == false then
-                if activeGradient.idxCurrent ~= -1 then
+            if grdUtlActive.isDragging == false then
+                if grdUtlActive.idxCurrent ~= -1 then
                     -- Remove the active key.
-                    gradient:removeKeyAt(activeGradient.idxCurrent)
+                    gradient:removeKeyAt(grdUtlActive.idxCurrent)
                 end -- End has current key.
             end     -- End not dragging.
         elseif eventButton == MouseButton.LEFT then
-            if activeGradient.isDragging == false then
-                if activeGradient.idxCurrent ~= -1 then
+            if grdUtlActive.isDragging == false then
+                if grdUtlActive.idxCurrent ~= -1 then
                     -- Update the active key's color.
                     if event.altKey then
                         app.command.SwitchColors()
                         local newClr <const> = AseUtilities.aseColorToClr(app.fgColor)
-                        gradient:getKey(activeGradient.idxCurrent).clr = newClr
+                        gradient:getKey(grdUtlActive.idxCurrent).clr = newClr
                         app.command.SwitchColors()
                     else
                         local newClr <const> = AseUtilities.aseColorToClr(app.fgColor)
-                        gradient:getKey(activeGradient.idxCurrent).clr = newClr
+                        gradient:getKey(grdUtlActive.idxCurrent).clr = newClr
                     end
                 else
                     -- Add a new key.
-                    local wCanvas <const> = activeGradient.wCanvas
+                    local wCanvas <const> = grdUtlActive.wCanvas
                     local xNorm <const> = wCanvas > 1
                         and event.x / (wCanvas - 1.0)
                         or 0.0
@@ -440,9 +442,9 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
             end     -- End not dragging.
         end         -- End mouse button check.
 
-        activeGradient.idxCurrent = -1
-        activeGradient.isDragging = false
-        activeGradient.mousePressed = false
+        grdUtlActive.idxCurrent = -1
+        grdUtlActive.isDragging = false
+        grdUtlActive.mousePressed = false
 
         dlg:repaint()
     end
@@ -451,8 +453,8 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         id = "gradientCanvas",
         label = "Gradient:",
         focus = true,
-        width = activeGradient.wCanvas,
-        height = activeGradient.hCanvas,
+        width = grdUtlActive.wCanvas,
+        height = grdUtlActive.hCanvas,
         onpaint = onPaintGradient,
         onmousemove = onMouseMoveGradient,
         onmouseup = onMouseUpGradient,
