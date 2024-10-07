@@ -3,7 +3,6 @@ dofile("../../support/gradientutilities.lua")
 local targets <const> = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
 
 local defaults <const> = {
-    -- TODO: Support gradient within selection.
     target = "ACTIVE",
     normalize = false,
     pullFocus = true
