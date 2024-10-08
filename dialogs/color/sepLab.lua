@@ -434,6 +434,8 @@ dlg:button {
                 if srcImg then
                     ---@type table<integer, integer>
                     local srcToTrg <const> = {}
+
+                    -- TODO: Switch to string bytes approach.
                     local srcPxItr <const> = srcImg:pixels()
                     for pixel in srcPxItr do
                         local srcHex <const> = pixel()

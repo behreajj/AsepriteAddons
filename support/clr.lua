@@ -359,19 +359,19 @@ end
 ---@return Clr
 ---@nodiscard
 function Clr.lRgbTosRgbInternal(c)
-    local sr = c.r
-    local sg = c.g
-    local sb = c.b
+    local sr <const> = c.r
+    local sg <const> = c.g
+    local sb <const> = c.b
 
     -- 1.0 / 2.4 = 0.41666666666667
-    sr = sr <= 0.0031308 and sr * 12.92
-        or (sr ^ 0.41666666666667) * 1.055 - 0.055
-    sg = sg <= 0.0031308 and sg * 12.92
-        or (sg ^ 0.41666666666667) * 1.055 - 0.055
-    sb = sb <= 0.0031308 and sb * 12.92
-        or (sb ^ 0.41666666666667) * 1.055 - 0.055
-
-    return Clr.new(sr, sg, sb, c.a)
+    return Clr.new(
+        sr <= 0.0031308 and sr * 12.92
+        or (sr ^ 0.41666666666667) * 1.055 - 0.055,
+        sg <= 0.0031308 and sg * 12.92
+        or (sg ^ 0.41666666666667) * 1.055 - 0.055,
+        sb <= 0.0031308 and sb * 12.92
+        or (sb ^ 0.41666666666667) * 1.055 - 0.055,
+        c.a)
 end
 
 ---Mixes two colors by a step. Defaults to the fastest algorithm, i.e., applies
@@ -679,9 +679,9 @@ end
 ---@return Clr
 ---@nodiscard
 function Clr.sRgbTolRgbInternal(c)
-    local lr = c.r
-    local lg = c.g
-    local lb = c.b
+    local lr <const> = c.r
+    local lg <const> = c.g
+    local lb <const> = c.b
 
     -- 1.0 / 12.92 = 0.077399380804954
     -- 1.0 / 1.055 = 0.9478672985782
