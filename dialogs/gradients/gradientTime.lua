@@ -179,6 +179,8 @@ dlg:button {
                 -- the size of the matrix, then repeating. Maybe update
                 -- ditherFromPreset to return that info? The only issue would
                 -- be IGN doesn't fit with the others...
+
+                -- TODO: Replace with string bytes. RGB color mode is assumed.
                 for pixel in trgItr do
                     local x <const> = pixel.x
                     local y <const> = pixel.y

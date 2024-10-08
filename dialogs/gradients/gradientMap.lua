@@ -3,7 +3,6 @@ dofile("../../support/gradientutilities.lua")
 local targets <const> = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
 
 local defaults <const> = {
-    -- TODO: Add an elapsed time check box.
     target = "ACTIVE",
     normalize = false,
     printElapsed = false,
@@ -127,7 +126,6 @@ dlg:button {
 
         -- Cache global methods to local.
         local abs <const> = math.abs
-        local min <const> = math.min
         local strfmt <const> = string.format
         local strpack <const> = string.pack
         local strunpack <const> = string.unpack
@@ -135,7 +133,7 @@ dlg:button {
         local tconcat <const> = table.concat
         local fromHex <const> = Clr.fromHexAbgr32
         local toHex <const> = Clr.toHex
-        local sRgbToLab <const> = Clr.sRgbToSrLab2
+        local sRgbToLab <const> = Clr.sRgbToSrLab2Internal
         local quantize <const> = Utilities.quantizeUnsigned
         local tilesToImage <const> = AseUtilities.tileMapToImage
         local transact <const> = app.transaction
@@ -218,8 +216,10 @@ dlg:button {
                             -- For each unique abgr32, find the
                             -- minimum and maximum lightness.
                             if (abgr32 & 0xff000000) ~= 0 then
-                                local lab <const> = sRgbToLab(fromHex(abgr32))
-                                local lum <const> = lab.l * 0.01
+                                local c <const> = fromHex(abgr32)
+                                -- Cheaper method:
+                                -- local lum <const> = 0.3 * c.r + 0.59 * c.g + 0.11 * c.b
+                                local lum <const> = sRgbToLab(c).l * 0.01
                                 if lum < minLum then minLum = lum end
                                 if lum > maxLum then maxLum = lum end
                                 lumDict[abgr32] = lum
