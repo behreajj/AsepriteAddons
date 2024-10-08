@@ -876,10 +876,10 @@ dlg:button {
                         local j4 <const> = j * 4
                         local r8 <const>, g8 <const>, b8 <const>, a8 <const> = strbyte(
                             srcBytes, 1 + j4, 4 + j4)
-                        local h32 <const> = a8 << 0x18 | b8 << 0x10 | g8 << 0x08 | r8
+                        local abgr32 <const> = a8 << 0x18 | b8 << 0x10 | g8 << 0x08 | r8
 
-                        if not srcLabDict[h32] then
-                            srcLabDict[h32] = labZero
+                        if not srcLabDict[abgr32] then
+                            srcLabDict[abgr32] = labZero
                             if a8 > 0 then
                                 -- This could be placed outside of the a8 > 0
                                 -- check if you wanted zero alpha colors to
@@ -890,7 +890,7 @@ dlg:button {
                                     b8 / 255.0,
                                     a8 / 255.0)
                                 local labSrc <const> = sRgbaToLab(srgbSrc)
-                                srcLabDict[h32] = labSrc
+                                srcLabDict[abgr32] = labSrc
 
                                 local lum <const> = labSrc.l
                                 if lum < minLum then minLum = lum end

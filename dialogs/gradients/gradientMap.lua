@@ -200,10 +200,10 @@ dlg:button {
                     local srcSpec <const> = srcImg.spec
                     local wSrc <const> = srcSpec.width
                     local hSrc <const> = srcSpec.height
-                    local areaSrcImg <const> = wSrc * hSrc
+                    local lenSrc <const> = wSrc * hSrc
 
                     local j = 0
-                    while j < areaSrcImg do
+                    while j < lenSrc do
                         local j4 <const> = j * 4
                         local abgr32 <const> = strunpack("<I4", strsub(
                             srcBytes, 1 + j4, 4 + j4))

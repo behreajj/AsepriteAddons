@@ -355,12 +355,12 @@ dlg:button {
                     -- There's no need to preserve order.
                     ---@type table<integer, integer[]>
                     local hexesUnique <const> = {}
-                    local srcSpec <const> = srcImg.spec
-                    local areaSrcImg <const> = srcSpec.width * srcSpec.height
                     local srcBytes <const> = srcImg.bytes
+                    local srcSpec <const> = srcImg.spec
+                    local lenSrc <const> = srcSpec.width * srcSpec.height
 
                     local j = 0
-                    while j < areaSrcImg do
+                    while j < lenSrc do
                         local j4 <const> = j * 4
                         local abgr32 <const> = strunpack("<I4", strsub(
                             srcBytes, 1 + j4, 4 + j4))

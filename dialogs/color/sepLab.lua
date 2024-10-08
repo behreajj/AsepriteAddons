@@ -293,7 +293,7 @@ dlg:button {
         local trimCels <const> = args.trimCels --[[@as boolean]]
 
         local alphaIndex <const> = spriteSpec.transparentColor
-        local maskRgb <const> = maskColor.blue << 0x10
+        local maskBgr24 <const> = maskColor.blue << 0x10
             | maskColor.green << 0x08
             | maskColor.red
         local frames <const> = Utilities.flatArr2(
@@ -388,7 +388,7 @@ dlg:button {
         app.transaction("Set Layer Props", function()
             trgLayer.parent = AseUtilities.getTopVisibleParent(srcLayer)
             trgLayer.name = string.format(
-                "%s Mask %s",
+                "%s Mask%s",
                 srcLayer.name, biasLabel)
         end)
 
@@ -398,7 +398,10 @@ dlg:button {
         local fromHex <const> = Clr.fromHexAbgr32
         local sRgbaToLab <const> = Clr.sRgbToSrLab2
         local floor <const> = math.floor
-        -- local flattenGroup = AseUtilities.flattenGroup
+        local strpack <const> = string.pack
+        local strsub <const> = string.sub
+        local strunpack <const> = string.unpack
+        local tconcat <const> = table.concat
 
         local lenFrames <const> = #frames
         app.transaction("Separate LAB", function()
@@ -410,15 +413,6 @@ dlg:button {
                 local xSrcPos = 0
                 local ySrcPos = 0
                 local srcImg = nil
-                -- if srcIsGroup then
-                --     local groupBounds = nil
-                --     srcImg, groupBounds = flattenGroup(
-                --         srcLayer, srcFrame,
-                --         colorMode, colorSpace, alphaIndex,
-                --         true, false, true, true)
-                --     xSrcPos = groupBounds.x
-                --     ySrcPos = groupBounds.y
-                -- else
                 local srcCel <const> = srcLayer:cel(srcFrame)
                 if srcCel then
                     srcImg = srcCel.image
@@ -429,40 +423,50 @@ dlg:button {
                     xSrcPos = srcPos.x
                     ySrcPos = srcPos.y
                 end
-                -- end
 
                 if srcImg then
+                    local srcBytes <const> = srcImg.bytes
+                    local srcSpec <const> = srcImg.spec
+                    local lenSrc <const> = srcSpec.width * srcSpec.height
+
                     ---@type table<integer, integer>
                     local srcToTrg <const> = {}
+                    ---@type string[]
+                    local trgBytesArr <const> = {}
 
-                    -- TODO: Switch to string bytes approach.
-                    local srcPxItr <const> = srcImg:pixels()
-                    for pixel in srcPxItr do
-                        local srcHex <const> = pixel()
-                        if not srcToTrg[srcHex] then
-                            local trgHex = 0x0
-                            local srcAlpha <const> = (srcHex >> 0x18) & 0xff
-                            if srcAlpha > 0 then
-                                local clr <const> = fromHex(srcHex)
+                    local j = 0
+                    while j < lenSrc do
+                        local j4 <const> = j * 4
+                        local srcAbgr32 <const> = strunpack("<I4", strsub(
+                            srcBytes, 1 + j4, 4 + j4))
+
+                        local trgAbgr32 = 0x00000000
+                        if srcToTrg[srcAbgr32] then
+                            trgAbgr32 = srcToTrg[srcAbgr32]
+                        else
+                            if (srcAbgr32 & 0xff000000) ~= 0 then
+                                local clr <const> = fromHex(srcAbgr32)
                                 local lab <const> = sRgbaToLab(clr)
                                 local fac <const> = toFac(lab)
                                 local facw <const> = responseFunc(fac)
-                                local trgAlpha <const> = floor(facw * 255.0 + 0.5)
-                                local trgRgb = maskRgb
-                                if useSrcClr then
-                                    trgRgb = srcHex & 0x00ffffff
-                                end
-                                trgHex = (trgAlpha << 0x18) | trgRgb
+
+                                local a8Trg <const> = floor(facw * 255.0 + 0.5)
+
+                                local trgRgb <const> = useSrcClr
+                                    and (srcAbgr32 & 0x00ffffff)
+                                    or maskBgr24
+                                trgAbgr32 = (a8Trg << 0x18) | trgRgb
                             end
-                            srcToTrg[srcHex] = trgHex
+
+                            srcToTrg[srcAbgr32] = trgAbgr32
                         end
+
+                        j = j + 1
+                        trgBytesArr[j] = strpack("<I4", trgAbgr32)
                     end
 
-                    local trgImg = srcImg:clone()
-                    local trgPxItr <const> = trgImg:pixels()
-                    for pixel in trgPxItr do
-                        pixel(srcToTrg[pixel()])
-                    end
+                    local trgImg = Image(srcSpec)
+                    trgImg.bytes = tconcat(trgBytesArr)
 
                     local xoff = 0
                     local yoff = 0
