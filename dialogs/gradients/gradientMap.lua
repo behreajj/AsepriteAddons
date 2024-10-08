@@ -254,10 +254,9 @@ dlg:button {
                             local trgClr <const> = cgmix(gradient, fac, mixFunc)
                             local trgAbgr32 <const> = toHex(trgClr)
 
-                            local minAlpha <const> = min(
-                                srcAbgr32 & 0xff000000,
-                                trgAbgr32 & 0xff000000)
-                            local compAbgr32 <const> = minAlpha
+                            local mulAlpha <const> = ((srcAbgr32 >> 0x18 & 0xff) *
+                                (trgAbgr32 >> 0x18 & 0xff)) // 255
+                            local compAbgr32 <const> = (mulAlpha << 0x18)
                                 | (trgAbgr32 & 0x00ffffff)
 
                             local trgPack <const> = strpack("<I4", compAbgr32)
@@ -287,10 +286,9 @@ dlg:button {
                                     ySrcPos + idx // wSrc)
                                 local trgAbgr32 <const> = toHex(trgClr)
 
-                                local minAlpha <const> = min(
-                                    srcAbgr32 & 0xff000000,
-                                    trgAbgr32 & 0xff000000)
-                                local compAbgr32 <const> = minAlpha
+                                local mulAlpha <const> = ((srcAbgr32 >> 0x18 & 0xff) *
+                                    (trgAbgr32 >> 0x18 & 0xff)) // 255
+                                local compAbgr32 <const> = (mulAlpha << 0x18)
                                     | (trgAbgr32 & 0x00ffffff)
 
                                 local trgPack <const> = strpack("<I4", compAbgr32)
