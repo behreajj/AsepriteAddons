@@ -2442,6 +2442,7 @@ end
 ---@param d Image right comparisand
 ---@return boolean
 function AseUtilities.imagesEqual(o, d)
+    -- https://en.wikipedia.org/wiki/Levenshtein_distance
     local oSpec <const> = o.spec
     local dSpec <const> = d.spec
     return o.id == d.id
