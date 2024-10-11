@@ -42,7 +42,7 @@ if rangeType ~= RangeType.FRAMES or lenRangeFrObjs <= 0 then
         end
     end
 
-    app.range.frames = { activeFrIdx }
+    app.range.frames = { activeFrObj}
     return
 end
 
