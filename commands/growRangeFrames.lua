@@ -14,9 +14,6 @@ local lenRangeFrObjs <const> = #rangeFrObjs
 local spriteFrObjs <const> = sprite.frames
 local lenSpriteFrObjs <const> = #spriteFrObjs
 
-local activeFrObj <const> = site.frame or spriteFrObjs[1]
-local activeFrIdx <const> = activeFrObj.frameNumber
-
 if rangeType ~= RangeType.FRAMES or lenRangeFrObjs <= 0 then
     local activeTag <const> = app.tag
     if activeTag then
@@ -42,7 +39,8 @@ if rangeType ~= RangeType.FRAMES or lenRangeFrObjs <= 0 then
         end
     end
 
-    app.range.frames = { activeFrObj}
+    local activeFrObj <const> = site.frame or spriteFrObjs[1]
+    app.range.frames = { activeFrObj }
     return
 end
 
@@ -62,8 +60,6 @@ while h < lenRangeFrObjs do
     frIdxUniques[frIdx] = true
     newFrIdcs[h] = frIdx
 end
-
-local currentFrIdx <const> = activeFrIdx
 
 local i = 0
 while i < lenFrIdcsSeqs do
