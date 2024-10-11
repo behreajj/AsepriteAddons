@@ -123,7 +123,9 @@ end
 ---@param includeLocked? boolean include locked groups
 ---@param includeHidden? boolean include hidden groups
 ---@return Layer[]
-function AseUtilities.appendGroups(layer, array, includeLocked, includeHidden)
+function AseUtilities.appendGroups(
+    layer, array, includeLocked, includeHidden)
+    -- TODO: Option to include or exclude collapsed?
     if layer.isGroup
         and (includeLocked or layer.isEditable)
         and (includeHidden or layer.isVisible) then
@@ -2432,6 +2434,24 @@ function AseUtilities.imageFromSel(sel, sprite, frame)
     end
 
     return image, xSel, ySel
+end
+
+---Evaluates two images for equality. Checks by id, then by spec, then
+---by bytes retrieved as a string.
+---@param o Image left comparisand
+---@param d Image right comparisand
+---@return boolean
+function AseUtilities.imagesEqual(o, d)
+    local oSpec <const> = o.spec
+    local dSpec <const> = d.spec
+    return o.id == d.id
+        or (oSpec.width == dSpec.width
+            and oSpec.height == dSpec.height
+            and oSpec.colorMode == dSpec.colorMode
+            and oSpec.colorSpace == dSpec.colorSpace
+            and oSpec.transparentColor == dSpec.transparentColor
+            and o.bytesPerPixel == d.bytesPerPixel
+            and o.bytes == d.bytes)
 end
 
 ---Adds padding around the edges of an image. Does not check if image is a tile
