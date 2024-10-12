@@ -44,21 +44,30 @@ local function loadSprite(filePath)
         AseUtilities.setPalette(spriteHexes, sprite, 1)
 
         local image <const> = Image(spec)
-        local pxItr <const> = image:pixels()
-        local index = 0
-        for pixel in pxItr do
-            if index < lenColors then
-                index = index + 1
-                pixel(spriteHexes[index])
+        ---@type string[]
+        local byteArr <const> = {}
+        local strpack <const> = string.pack
+        local areaImage <const> = rtLen * rtLen
+        local packZero <const> = strpack("<I4", 0)
+        local i = 0
+        while i < areaImage do
+            i = i + 1
+            local trgHex = packZero
+            if i <= lenColors then
+                trgHex = strpack("<I4", spriteHexes[i])
             end
+            byteArr[i] = trgHex
         end
+        image.bytes = table.concat(byteArr)
 
         app.transaction("Set Image", function()
             sprite.cels[1].image = image
         end)
     else
         sprite = Sprite { fromFile = filePath }
-        if fileExtLower ~= "ase" and fileExtLower ~= "aseprite" then
+        if sprite ~= nil
+            and fileExtLower ~= "ase"
+            and fileExtLower ~= "aseprite" then
             local appPrefs <const> = app.preferences
             if appPrefs then
                 -- appPrefs.selection.pivot_position = 4
@@ -75,11 +84,11 @@ local function loadSprite(filePath)
                         thumbPrefs.enabled = true
                         thumbPrefs.zoom = 1
                         thumbPrefs.overlay_enabled = true
-                    end
-                end
-            end
-        end
-    end
+                    end -- Thumb prefs exists.
+                end     -- Doc prefs exists.
+            end         -- App prefs exists.
+        end             -- File ext is neither ase nor aseprite.
+    end                 -- File ext match block.
 
     return sprite
 end
@@ -264,7 +273,7 @@ dlg:button {
         local oldColorMode <const> = openSprite.colorMode
         AseUtilities.changePixelFormat(ColorMode.RGB)
 
-        -- Due to indexed color mode backgrounds potentiallly containing
+        -- Due to indexed color mode backgrounds potentially containing
         -- transparent colors, or having an opaque color set as the sprite
         -- transparent color, there's no great solution as to whether this
         -- should go before or after RGB conversion.
