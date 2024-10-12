@@ -103,8 +103,7 @@ while currentLayer.__name ~= "doc::Sprite" do
             while k < lenKin do
                 k = k + 1
                 local cousin <const> = kin[k]
-                local idCousin <const> = cousin.id
-                local hadCousin <const> = idLayerDict[idCousin] ~= nil
+                local hadCousin <const> = idLayerDict[cousin.id] ~= nil
                 hadAllKin = hadAllKin and hadCousin
                 if not hadCousin then
                     lenNewLayers = lenNewLayers + 1

@@ -36,7 +36,7 @@ Unlike `dialog` scripts, it's not always apparent what `commands` scripts do. No
 
 - `growRangeFrames`: Expands the existing range to include more frames. If there is no frame range, then creates one for either the active tag or the active frame.
 
-- `growRangeLayers`: Expands the existing range to include more layers. If the layer is a group, selects its children. Then, selects the layer's neighbors. Then selects its parents.
+- `growRangeLayers`: Expands the existing range to include more layers. If the layer is a group, selects its children. Then, selects the layer's neighbors. Then selects its parents. Treats reference layers as a boundary.
 
 - `nextFrame`: Moves the active frame to the next frame index. Preserves timeline ranges of `RangeType.LAYERS`. If play once is false, then returns to the first frame after reaching the last.
 

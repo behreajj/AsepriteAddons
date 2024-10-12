@@ -78,8 +78,8 @@ dlg:button {
         end
 
         -- Early returns.
-        local activeSpec <const> = activeSprite.spec
-        local colorMode <const> = activeSpec.colorMode
+        local spriteSpec <const> = activeSprite.spec
+        local colorMode <const> = spriteSpec.colorMode
         if colorMode ~= ColorMode.RGB then
             app.alert {
                 title = "Error",
@@ -161,34 +161,44 @@ dlg:button {
                 local trgClr <const> = cgmix(
                     gradient, fac, mixFunc)
                 local trgHex <const> = toHex(trgClr)
-                local trgImage <const> = Image(activeSpec)
+                local trgImage <const> = Image(spriteSpec)
                 trgImage:clear(trgHex)
                 trgImages[i] = trgImage
             end
         else
             local dither <const> = GradientUtilities.ditherFromPreset(
                 stylePreset, bayerIndex, ditherPath)
+            local tconcat <const> = table.concat
+            local strpack <const> = string.pack
+
+            local wSprite <const> = spriteSpec.width
+            local hSprite <const> = spriteSpec.height
+            local areaSprite <const> = wSprite * hSprite
+
+            -- Time-based IGN is not worth it -- the changing pattern
+            -- flickers in such a way that it hurts the eyes.
             local i = 0
             while i < lenFrIdcs do
                 i = i + 1
                 local timeStamp <const> = timeStamps[i]
                 local fac <const> = timeStamp * timeToFac
-                local trgImage <const> = Image(activeSpec)
-                local trgItr <const> = trgImage:pixels()
+                local trgImage <const> = Image(spriteSpec)
                 -- Could optimize this by only looping over the gradient for
                 -- the size of the matrix, then repeating. Maybe update
                 -- ditherFromPreset to return that info? The only issue would
                 -- be IGN doesn't fit with the others...
 
-                -- TODO: Replace with string bytes. RGB color mode is assumed.
-                for pixel in trgItr do
-                    local x <const> = pixel.x
-                    local y <const> = pixel.y
-                    local clr <const> = dither(gradient, fac, x, y)
-                    -- Time-based IGN is not worth it -- the changing pattern
-                    -- flickers in such a way that it hurts the eyes.
-                    pixel(toHex(clr))
+                ---@type string[]
+                local bytesArr <const> = {}
+                local j = 0
+                while j < areaSprite do
+                    local clr <const> = dither(gradient, fac,
+                        j % wSprite, j // wSprite)
+                    j = j + 1
+                    bytesArr[j] = strpack("<I4", toHex(clr))
                 end
+
+                trgImage.bytes = tconcat(bytesArr)
                 trgImages[i] = trgImage
             end
         end
