@@ -723,11 +723,32 @@ dlg:button {
             local bkgHex <const> = AseUtilities.aseColorToHex(aseBkg, colorMode)
             app.command.SwitchColors()
 
-            local cleared <const> = srcImg:clone()
-            local clearedItr <const> = cleared:pixels()
-            for pixel in clearedItr do
-                if pixel() == bkgHex then pixel(alphaIndex) end
+            local srcBytes <const> = srcImg.bytes
+            local srcArea <const> = srcImg.width * srcImg.height
+            local srcBpp <const> = srcImg.bytesPerPixel
+            local imgFmt <const> = "<I" .. srcBpp
+            local bkgHexPacked <const> = string.pack(imgFmt, bkgHex)
+            local alphaIdxPacked <const> = string.pack(imgFmt, alphaIndex)
+            local strsub <const> = string.sub
+
+            ---@type string[]
+            local trgByteArr <const> = {}
+
+            local i = 0
+            while i < srcArea do
+                local ibpp <const> = i * srcBpp
+                local srcHexPacked <const> = strsub(srcBytes, 1 + ibpp,
+                    srcBpp + ibpp)
+                local trgHexPacked = srcHexPacked
+                if srcHexPacked == bkgHexPacked then
+                    trgHexPacked = alphaIdxPacked
+                end
+                i = i + 1
+                trgByteArr[i] = trgHexPacked
             end
+
+            local cleared <const> = Image(srcImg.spec)
+            cleared.bytes = table.concat(trgByteArr)
             srcImg = cleared
         end
 
