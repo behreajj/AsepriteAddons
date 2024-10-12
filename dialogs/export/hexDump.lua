@@ -1,3 +1,5 @@
+dofile("../../support/aseutilities.lua")
+
 local importFileExts <const> = {
     "acbm", -- Amiga Continuous Bitmap
     "acb",  -- Adobe Color Book

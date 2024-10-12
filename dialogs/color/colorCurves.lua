@@ -528,6 +528,7 @@ dlg:button {
                     srcToTrgDict[hex] = toHex(clrTrg)
                 end
 
+                -- TODO: Replace with string bytes method.
                 local trgImg <const> = srcImg:clone()
                 local trgPxItr <const> = trgImg:pixels()
                 for trgPixel in trgPxItr do
