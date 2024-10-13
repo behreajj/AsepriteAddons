@@ -1058,18 +1058,8 @@ function AseUtilities.checkerImage(
     local trgSpec <const> = AseUtilities.createSpec(
         wImg, hImg, colorMode, colorSpace, alphaIndex)
     local trgImg <const> = Image(trgSpec)
-
-    local bpp = 1
-    local cmVerif <const> = trgSpec.colorMode
-    if cmVerif == ColorMode.RGB
-        or cmVerif == ColorMode.TILEMAP then
-        bpp = 4
-    elseif cmVerif == ColorMode.GRAY then
-        bpp = 2
-    end
-
     trgImg.bytes = Utilities.checker(
-        trgSpec.width, trgSpec.height, bpp,
+        trgSpec.width, trgSpec.height, trgImg.bytesPerPixel,
         wCheck, hCheck, aColor, bColor)
     return trgImg
 end

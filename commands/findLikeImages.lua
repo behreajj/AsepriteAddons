@@ -24,7 +24,7 @@ local dictionary <const> = {}
 local original <const> = Color { r = 61, g = 86, b = 255, a = 170 }
 local duplicate <const> = Color { r = 255, g = 0, b = 0, a = 170 }
 local clear <const> = Color { r = 0, g = 0, b = 0, a = 0 }
-local linked<const> = Color { r = 0, g = 137, b = 58, a = 170 }
+local linked <const> = Color { r = 0, g = 137, b = 58, a = 170 }
 
 app.transaction("Find Like Images", function()
     local k = 0
