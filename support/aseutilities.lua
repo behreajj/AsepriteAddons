@@ -3052,6 +3052,43 @@ function AseUtilities.rotateImageZInternal(source, cosa, sina)
     return target
 end
 
+---Finds similar images in an array. Returns an array of similar images
+---and an array of fingerprints.
+---@param images Image[] images
+---@param palette Palette? palette
+---@return Image[] uniqueImages
+---@return integer[] fingeprints
+function AseUtilities.similarImages(images, palette)
+    -- This could also use the image's bytes string as a key, but it runs
+    -- into a problem of how long can a string be before it stops working
+    -- as a unique identifier.
+
+    ---@type table<integer, integer>
+    local dictionary <const> = {}
+    local fingerprint <const> = AseUtilities.fingerprint
+    local lenImages <const> = #images
+    local i = 0
+    while i < lenImages do
+        i = i + 1
+        local image <const> = images[i]
+        local fp <const> = fingerprint(image, palette)
+        if not dictionary[fp] then dictionary[fp] = i end
+    end
+
+    ---@type Image[]
+    local uniqueImages <const> = {}
+    ---@type integer[]
+    local fingerprints <const> = {}
+    local lenUniques = 0
+    for fp, j in pairs(dictionary) do
+        lenUniques = lenUniques + 1
+        uniqueImages[lenUniques] = images[j]
+        fingerprints[lenUniques] = fp
+    end
+
+    return uniqueImages, fingerprints
+end
+
 ---Returns a copy of the source image that has been skewed on the x axis by an
 ---angle in degrees. Uses nearest neighbor sampling.
 ---If the angle is 0 degrees, then returns the source image by reference.
@@ -3726,39 +3763,6 @@ function AseUtilities.trimMapAlpha(
     end
 
     return target, lft * wTile, top * hTile
-end
-
----Finds unique images in an array. Returns an array of unique images
----and an array of fingerprints.
----@param images Image[] images
----@param palette Palette? palette
----@return Image[] uniqueImages
----@return integer[] fingeprints
-function AseUtilities.uniqueImages(images, palette)
-    ---@type table<integer, integer>
-    local dictionary <const> = {}
-    local fingerprint <const> = AseUtilities.fingerprint
-    local lenImages <const> = #images
-    local i = 0
-    while i < lenImages do
-        i = i + 1
-        local image <const> = images[i]
-        local fp <const> = fingerprint(image, palette)
-        if not dictionary[fp] then dictionary[fp] = i end
-    end
-
-    ---@type Image[]
-    local uniqueImages <const> = {}
-    ---@type integer[]
-    local fingerprints <const> = {}
-    local lenUniques = 0
-    for fp, j in pairs(dictionary) do
-        lenUniques = lenUniques + 1
-        uniqueImages[lenUniques] = images[j]
-        fingerprints[lenUniques] = fp
-    end
-
-    return uniqueImages, fingerprints
 end
 
 ---Returns a copy of the source image that has been scaled up for export. Uses
