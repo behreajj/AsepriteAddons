@@ -307,7 +307,6 @@ dlg:button {
         local lenBinData <const> = #binData
         local strbyte <const> = string.byte
         local strfmt <const> = string.format
-        local strchar <const> = string.char
         local tconcat <const> = table.concat
 
         local useMarkdown = false

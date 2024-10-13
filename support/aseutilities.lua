@@ -1037,6 +1037,43 @@ function AseUtilities.changePixelFormat(format)
     end
 end
 
+---Generates an image with a checker pattern. For creating
+---backgrounds onto which images with alpha may be blit.
+---The colors should be integers with matching bytes per
+---pixel to the image.
+---@param wImg integer image width
+---@param hImg integer image height
+---@param wCheck integer checker width
+---@param hCheck integer checker height
+---@param aColor integer first checker hex
+---@param bColor integer second checker hex
+---@param colorMode? ColorMode color mode
+---@param colorSpace? ColorSpace color space
+---@param alphaIndex? integer transparent color
+---@returns Image
+---@nodiscard
+function AseUtilities.checkerImage(
+    wImg, hImg, wCheck, hCheck, aColor, bColor,
+    colorMode, colorSpace, alphaIndex)
+    local trgSpec <const> = AseUtilities.createSpec(
+        wImg, hImg, colorMode, colorSpace, alphaIndex)
+    local trgImg <const> = Image(trgSpec)
+
+    local bpp = 1
+    local cmVerif <const> = trgSpec.colorMode
+    if cmVerif == ColorMode.RGB
+        or cmVerif == ColorMode.TILEMAP then
+        bpp = 4
+    elseif cmVerif == ColorMode.GRAY then
+        bpp = 2
+    end
+
+    trgImg.bytes = Utilities.checker(
+        trgSpec.width, trgSpec.height, bpp,
+        wCheck, hCheck, aColor, bColor)
+    return trgImg
+end
+
 ---Converts a Clr to an Aseprite Color. Assumes that source and target are in
 ---sRGB. Clamps the Clr's channels to [0.0, 1.0] before they are converted.
 ---Beware that this could return (255, 0, 0, 0) or (0, 255, 0, 0), which may be
@@ -1886,6 +1923,63 @@ function AseUtilities.frameObjsToIdcs(frObjs)
     return frIdcs
 end
 
+---Gets the sprite's background checker width, height
+---and colors from preferences. Colors are retrieved
+---by reference.
+---@param sprite Sprite sprite
+---@return integer wCheck
+---@return integer hCheck
+---@return Color aAse
+---@return Color bAse
+---@nodiscard
+function AseUtilities.getBkgChecker(sprite)
+    local wCheck = 8
+    local hCheck = 8
+    local aAse = Color { r = 128, g = 128, b = 128, a = 255 }
+    local bAse = Color { r = 202, g = 202, b = 202, a = 255 }
+
+    local appPrefs <const> = app.preferences
+    if not appPrefs then return wCheck, hCheck, aAse, bAse end
+
+    local docPrefs <const> = appPrefs.document(sprite)
+    if not docPrefs then return wCheck, hCheck, aAse, bAse end
+
+    local bgPref <const> = docPrefs.bg
+    if not bgPref then return wCheck, hCheck, aAse, bAse end
+
+    -- https://github.com/aseprite/aseprite/blob/main/data/pref.xml#L521
+    local typePref <const> = bgPref.type --[[@as integer]]
+    if typePref == 0 then
+        wCheck, hCheck = 16, 16
+    elseif typePref == 1 then
+        wCheck, hCheck = 8, 8
+    elseif typePref == 2 then
+        wCheck, hCheck = 4, 4
+    elseif typePref == 3 then
+        wCheck, hCheck = 2, 2
+    elseif typePref == 4 then
+        wCheck, hCheck = 1, 1
+    elseif typePref == 5 then
+        local checkSize <const> = bgPref.size --[[@as Size]]
+        if checkSize then
+            wCheck = math.max(1, math.abs(checkSize.width))
+            hCheck = math.max(1, math.abs(checkSize.height))
+        end
+    end
+
+    local bgPrefColor1 <const> = bgPref.color1 --[[@as Color]]
+    if bgPrefColor1 then
+        aAse = bgPrefColor1
+    end
+
+    local bgPrefColor2 <const> = bgPref.color2 --[[@as Color]]
+    if bgPrefColor2 then
+        bAse = bgPrefColor2
+    end
+
+    return wCheck, hCheck, aAse, bAse
+end
+
 ---Gets an array of arrays of frame indices from a sprite according to a string.
 ---"ALL" gets all frames in the sprite.
 ---"RANGE" gets the frames in the timeline range.
@@ -2477,43 +2571,6 @@ function AseUtilities.padImage(image, padding)
     padded:drawImage(image, Point(padding, padding),
         255, BlendMode.SRC)
     return padded
-end
-
----Generates an image with a checker pattern. For creating
----backgrounds onto which images with alpha may be blit.
----The colors should be integers with matching bytes per
----pixel to the image.
----@param wImg integer image width
----@param hImg integer image height
----@param wCheck integer checker width
----@param hCheck integer checker height
----@param aColor integer first checker hex
----@param bColor integer second checker hex
----@param colorMode? ColorMode color mode
----@param colorSpace? ColorSpace color space
----@param alphaIndex? integer transparent color
----@returns Image
----@nodiscard
-function AseUtilities.checkerImage(
-    wImg, hImg, wCheck, hCheck, aColor, bColor,
-    colorMode, colorSpace, alphaIndex)
-    local trgSpec <const> = AseUtilities.createSpec(
-        wImg, hImg, colorMode, colorSpace, alphaIndex)
-    local trgImg <const> = Image(trgSpec)
-
-    local bpp = 1
-    local cmVerif <const> = trgSpec.colorMode
-    if cmVerif == ColorMode.RGB
-        or cmVerif == ColorMode.TILEMAP then
-        bpp = 4
-    elseif cmVerif == ColorMode.GRAY then
-        bpp = 3
-    end
-
-    trgImg.bytes = Utilities.checker(
-        trgSpec.width, trgSpec.height, bpp,
-        wCheck, hCheck, aColor, bColor)
-    return trgImg
 end
 
 ---Parses an Aseprite Tag to an array of frame indices. For example, a tag with

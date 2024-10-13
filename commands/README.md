@@ -50,7 +50,7 @@ Unlike `dialog` scripts, it's not always apparent what `commands` scripts do. No
 
 - `prevTab`: Moves the active sprite to the previous tab. Converts the fore- and background colors to RGB. If the slice tool is active, switches to the hand tool.
 
-- `shareChecker`: Shares the background checker preferences for the active sprite across other open sprites.
+- `shareChecker`: Shares the background checker preferences for the active sprite across other open sprites. Ignores zoom preference.
 
 - `selectCelsRange`: Creates a selection based on the timeline range, or the active cel if the range is empty. Finds the union of images in the range. Ignores reference layers. Selects tile map layers based on non-empty tiles. Equivalent to holding down `Ctrl` and clicking on an inactive layer in the timeline.
 

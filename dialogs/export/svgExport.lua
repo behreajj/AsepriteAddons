@@ -854,10 +854,6 @@ dlg:button {
         local wRowColLabel <const> = useRowColLabels and wPixel or 0
         local hRowColLabel <const> = useRowColLabels and hPixel or 0
 
-        -- Doc prefs are needed to get the frame UI offset, grid color and
-        -- background checker.
-        local docPrefs <const> = app.preferences.document(activeSprite)
-
         -- Unpack sprite spec.
         local activeSpec <const> = activeSprite.spec
         local colorMode <const> = activeSpec.colorMode
@@ -883,47 +879,10 @@ dlg:button {
         local defsStr = ""
         local checkerStr = ""
         if useChecker then
-            local wCheck = 8
-            local hCheck = 8
-            local aAse = Color { r = 28, g = 28, b = 28, a = 255 }
-            local bAse = Color { r = 10, g = 10, b = 10, a = 255 }
-
-            -- TODO: Make this an AseUtilites method?
-            -- https://github.com/aseprite/aseprite/blob/main/data/pref.xml#L521
-            local bgPref <const> = docPrefs.bg
-            if bgPref then
-                local typePref <const> = bgPref.type --[[@as integer]]
-                if typePref == 0 then
-                    wCheck = 16
-                    hCheck = 16
-                elseif typePref == 1 then
-                    wCheck = 8
-                    hCheck = 8
-                elseif typePref == 2 then
-                    wCheck = 4
-                    hCheck = 4
-                elseif typePref == 3 then
-                    wCheck = 2
-                    hCheck = 2
-                elseif typePref == 4 then
-                    wCheck = 1
-                    hCheck = 1
-                else
-                    local checkSize <const> = bgPref.size --[[@as Size]]
-                    if checkSize then
-                        wCheck = math.max(1, math.abs(checkSize.width))
-                        hCheck = math.max(1, math.abs(checkSize.height))
-                    end
-                end
-
-                if bgPref.color1 then
-                    aAse = bgPref.color1 --[[@as Color]]
-                end
-
-                if bgPref.color2 then
-                    bAse = bgPref.color2 --[[@as Color]]
-                end
-            end
+            local wCheck <const>,
+            hCheck <const>,
+            aAse <const>,
+            bAse <const> = AseUtilities.getBkgChecker(activeSprite)
 
             local wCheckScaled <const> = wCheck * wPixel
             local hCheckScaled <const> = hCheck * hPixel
@@ -1028,6 +987,7 @@ dlg:button {
                 local timeScalar <const> = args.timeScalar
                     or defaults.timeScalar --[[@as number]]
 
+                local docPrefs <const> = app.preferences.document(activeSprite)
                 local tlPrefs <const> = docPrefs.timeline
                 local frameUiOffset <const> = tlPrefs.first_frame - 1 --[[@as integer]]
                 local spritePalettes <const> = activeSprite.palettes

@@ -196,8 +196,8 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
     GradientUtilities.clearGradient(gradient)
 
     local screenScale = 1
-    local aColor = 0xff808080
-    local bColor = 0xffcacaca
+    local aHex = 0xff808080
+    local bHex = 0xffcacaca
     if app.preferences then
         local generalPrefs <const> = app.preferences.general
         if generalPrefs then
@@ -289,7 +289,7 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         local wCheck <const> = grdUtlActive.wCheck
         local hCheck <const> = grdUtlActive.hCheck
         local bkgImage <const> = AseUtilities.checkerImage(
-            wCanvas, hCanvas, wCheck, hCheck, aColor, bColor)
+            wCanvas, hCanvas, wCheck, hCheck, aHex, bHex)
 
         gradientImage:resize(wCanvas, hCanvas)
         bkgImage:drawImage(gradientImage, Point(0, 0),
