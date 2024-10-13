@@ -3728,31 +3728,37 @@ function AseUtilities.trimMapAlpha(
     return target, lft * wTile, top * hTile
 end
 
----Finds unique images in an array. First checks them for the same id, then
----creates a fingerprint for them. Returns a dictionary where the fingerprint
----is the key and the image is the value.
+---Finds unique images in an array. Returns an array of unique images
+---and an array of fingerprints.
 ---@param images Image[] images
 ---@param palette Palette? palette
----@return table<integer, Image>
+---@return Image[] uniqueImages
+---@return integer[] fingeprints
 function AseUtilities.uniqueImages(images, palette)
-    ---@type table<integer, Image>
-    local idDict <const> = {}
+    ---@type table<integer, integer>
+    local dictionary <const> = {}
+    local fingerprint <const> = AseUtilities.fingerprint
     local lenImages <const> = #images
     local i = 0
     while i < lenImages do
         i = i + 1
         local image <const> = images[i]
-        idDict[image.id] = image
+        local fp <const> = fingerprint(image, palette)
+        if not dictionary[fp] then dictionary[fp] = i end
     end
 
-    ---@type table<integer, Image>
+    ---@type Image[]
+    local uniqueImages <const> = {}
+    ---@type integer[]
     local fingerprints <const> = {}
-    local fingerprint <const> = AseUtilities.fingerprint
-    for _, image in pairs(idDict) do
-        fingerprints[fingerprint(image, palette)] = image
+    local lenUniques = 0
+    for fp, j in pairs(dictionary) do
+        lenUniques = lenUniques + 1
+        uniqueImages[lenUniques] = images[j]
+        fingerprints[lenUniques] = fp
     end
 
-    return fingerprints
+    return uniqueImages, fingerprints
 end
 
 ---Returns a copy of the source image that has been scaled up for export. Uses
