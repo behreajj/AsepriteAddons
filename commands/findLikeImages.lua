@@ -24,8 +24,10 @@ local tconcat <const> = table.concat
 ---@type table<integer, Cel>
 local dictionary <const> = {}
 
-local original <const> = Color { r = 0, g = 115, b = 129, a = 170 }
+local original <const> = Color { r = 61, g = 86, b = 255, a = 170 }
 local duplicate <const> = Color { r = 255, g = 0, b = 0, a = 170 }
+local clear <const> = Color { r = 0, g = 0, b = 0, a = 0 }
+local linked<const> = Color { r = 0, g = 137, b = 58, a = 170 }
 
 app.transaction("Show Duplicate Images", function()
     local k = 0
@@ -45,12 +47,15 @@ app.transaction("Show Duplicate Images", function()
                 tfp, lfp, afp, bfp)
             if dictionary[hash] then
                 local origCel <const> = dictionary[hash]
-                if image.id ~= origCel.image.id then
+                if image.id == origCel.image.id then
+                    cel.color = linked
+                else
                     cel.color = duplicate
                     origCel.color = original
                 end
             else
                 dictionary[hash] = cel
+                cel.color = clear
             end
 
             -- local lenHash <const> = #hash
