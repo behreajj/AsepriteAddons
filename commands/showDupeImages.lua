@@ -36,8 +36,12 @@ app.transaction("Show Duplicate Images", function()
             local image <const> = cel.image
             local hash <const> = fingerprint(image, palette)
             if dictionary[hash] then
-                cel.color = duplicate
-                dictionary[hash].color = original
+                local origCel <const> = dictionary[hash]
+                if image.id ~= origCel.image.id then
+                    cel.color = duplicate
+                    origCel.color = original
+                end
+
             else
                 dictionary[hash] = cel
             end
