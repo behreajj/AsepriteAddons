@@ -1792,9 +1792,11 @@ function AseUtilities.fingerprint(source, palette)
             local i = 0
             while i < trgArea do
                 i = i + 1
-                local x <const> = strbyte(bytes8x8, i) * 100.0 / 255.0
+                local idx <const> = strbyte(bytes8x8, i)
+                local x <const> = idx * 100.0 / 255.0
+                local t <const> = idx ~= alphaIndexVerif and 1.0 or 0.0
                 lm = lm + x
-                labs[i] = { l = x, a = 0.0, b = 0.0, alpha = 0.0 }
+                labs[i] = { l = x, a = 0.0, b = 0.0, alpha = t }
             end
         end
     else
