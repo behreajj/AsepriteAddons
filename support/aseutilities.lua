@@ -1778,7 +1778,9 @@ function AseUtilities.fingerprint(source, palette)
             while i < trgArea do
                 i = i + 1
                 local idx <const> = strbyte(bytes8x8, i)
-                if idx >= 0 and idx < lenPalette then
+                if idx >= 0
+                    and idx < lenPalette
+                    and idx ~= alphaIndex then
                     local aseColor <const> = palette:getColor(idx)
                     local lab <const> = sRgbToSrLab2(aseColorToClr(aseColor))
                     lm, am, bm, tm = lm + lab.l, am + lab.a, bm + lab.b,
@@ -1794,7 +1796,7 @@ function AseUtilities.fingerprint(source, palette)
                 i = i + 1
                 local idx <const> = strbyte(bytes8x8, i)
                 local x <const> = idx * 100.0 / 255.0
-                local t <const> = idx ~= alphaIndexVerif and 1.0 or 0.0
+                local t <const> = idx ~= alphaIndex and 1.0 or 0.0
                 lm = lm + x
                 labs[i] = { l = x, a = 0.0, b = 0.0, alpha = t }
             end
