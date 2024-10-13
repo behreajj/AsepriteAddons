@@ -1703,10 +1703,11 @@ function AseUtilities.filterLayers(
 end
 
 ---Generates a finger print, or hash, from an image. Creates an 8x8 copy of
----the image, then finds its mean lightness, a, b and alpha. If a pixel is
----less than the mean, then it yields 0. If greater, then 1. These bits are
----composited into three 64 bit integers, which are then combined into one.
+---the image, then finds its mean lightness, a, b and alpha. Each bit is set
+---based on whether the 8x8 pixel is less or greater than the mean. These bits
+---are composited into three 64 bit integers, which are then combined into one.
 ---Images should be trimmed of alpha before being given to the function.
+---This does not guarantee image uniqueness, only similarity.
 ---Returns zero if the image is a tile map.
 ---@param source Image source image
 ---@param palette Palette? source palette
@@ -3052,7 +3053,7 @@ function AseUtilities.rotateImageZInternal(source, cosa, sina)
     return target
 end
 
----Finds similar images in an array. Returns an array of similar images
+---Finds similar images in an array. Returns an array of filtered images
 ---and an array of fingerprints.
 ---@param images Image[] images
 ---@param palette Palette? palette
