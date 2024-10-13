@@ -17,9 +17,6 @@ local lenComp <const> = lenLeaves * lenFrObjs
 local fingerprint <const> = AseUtilities.fingerprintInternal
 local getPalette <const> = AseUtilities.getPalette
 local strpack <const> = string.pack
-local strfmt <const> = string.format
-local strbyte <const> = string.byte
-local tconcat <const> = table.concat
 
 ---@type table<integer, Cel>
 local dictionary <const> = {}
@@ -29,7 +26,7 @@ local duplicate <const> = Color { r = 255, g = 0, b = 0, a = 170 }
 local clear <const> = Color { r = 0, g = 0, b = 0, a = 0 }
 local linked<const> = Color { r = 0, g = 137, b = 58, a = 170 }
 
-app.transaction("Show Duplicate Images", function()
+app.transaction("Find Like Images", function()
     local k = 0
     while k < lenComp do
         local i <const> = k // lenLeaves
@@ -57,17 +54,6 @@ app.transaction("Show Duplicate Images", function()
                 dictionary[hash] = cel
                 cel.color = clear
             end
-
-            -- local lenHash <const> = #hash
-            -- ---@type string[]
-            -- local byteStrs <const> = {}
-            -- local n = 0
-            -- while n < lenHash do
-            --     n = n + 1
-            --     local byte <const> = strbyte(hash, n)
-            --     byteStrs[n] = strfmt("%02x", byte)
-            -- end
-            -- cel.properties["fingerprint"] = tconcat(byteStrs)
         end
         k = k + 1
     end

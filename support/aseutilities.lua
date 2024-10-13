@@ -1703,8 +1703,8 @@ function AseUtilities.filterLayers(
 end
 
 ---Generates a finger print, or hash, from an image. Images should be trimmed
----of alpha before being given to the function. This does not guarantee image
----uniqueness, only similarity.
+---of alpha before being given to the function. Does not guarantee image
+---uniqueness, only similarity. The fingerprint is a 64 bit integer.
 ---@param source Image source image
 ---@param palette Palette? source palette
 ---@param tileSet Tileset? tile set
@@ -1736,7 +1736,7 @@ end
 ---Generates fingerprints, or perpcetual hashes, from an image. Creates an 8 by
 ---8 copy of the image, then finds its mean lightness, a, b and alpha. Each
 ---bit is set based on whether the pixel is less or greater than the mean.
----These bits are composited into three 64 bit integers.
+---These bits are composited into four 64 bit integers.
 ---Returns all zeroes if the image is a tile map.
 ---@param source Image source image
 ---@param palette Palette? source palette
@@ -1758,15 +1758,16 @@ function AseUtilities.fingerprintInternal(source, palette)
     local wSrc <const> = srcSpec.width
     local hSrc <const> = srcSpec.height
     local alphaIndex <const> = srcSpec.transparentColor
-    local alphaIndexVerif = (alphaIndex >= 0 and alphaIndex < 256)
-        and alphaIndex or 0
+    local srcBpp <const> = source.bytesPerPixel
 
     local wTrg <const> = 8
     local hTrg <const> = 8
     local trgArea <const> = wTrg * hTrg
 
+    local alphaIndexVerif = (alphaIndex >= 0 and alphaIndex < 256)
+        and alphaIndex or 0
     local bytes8x8 <const> = Utilities.resizePixelsNearest(
-        source.bytes, wSrc, hSrc, wTrg, hTrg, source.bytesPerPixel,
+        source.bytes, wSrc, hSrc, wTrg, hTrg, srcBpp,
         alphaIndexVerif)
 
     ---@type {l: number, a: number, b: number, alpha: number}[]
@@ -1774,37 +1775,7 @@ function AseUtilities.fingerprintInternal(source, palette)
     local lm, am, bm, tm = 0.0, 0.0, 0.0, 0.0
 
     local sRgbToSrLab2 <const> = Clr.sRgbToSrLab2
-    if colorMode == ColorMode.RGB then
-        local strsub <const> = string.sub
-        local strunpack <const> = string.unpack
-        local fromHex <const> = Clr.fromHexAbgr32
-        local i = 0
-        while i < trgArea do
-            local i4 <const> = i * 4
-            local abgr32 <const> = strunpack("<I4", strsub(
-                bytes8x8, 1 + i4, 4 + i4))
-            local lab <const> = sRgbToSrLab2(fromHex(abgr32))
-            lm, am, bm, tm = lm + lab.l, am + lab.a, bm + lab.b,
-                tm + lab.alpha
-            i = i + 1
-            labs[i] = lab
-        end
-    elseif colorMode == ColorMode.GRAY then
-        local strsub <const> = string.sub
-        local strunpack <const> = string.unpack
-        local fromHex <const> = Clr.fromHexAv16
-        local i = 0
-        while i < trgArea do
-            local i2 <const> = i * 2
-            local abgr32 <const> = strunpack("<I2", strsub(
-                bytes8x8, 1 + i2, 2 + i2))
-            local lab <const> = sRgbToSrLab2(fromHex(abgr32))
-            lm, am, bm, tm = lm + lab.l, am + lab.a, bm + lab.b,
-                tm + lab.alpha
-            i = i + 1
-            labs[i] = lab
-        end
-    elseif colorMode == ColorMode.INDEXED then
+    if colorMode == ColorMode.INDEXED then
         local strbyte <const> = string.byte
         if palette then
             local lenPalette <const> = #palette
@@ -1835,6 +1806,25 @@ function AseUtilities.fingerprintInternal(source, palette)
                 lm = lm + x
                 labs[i] = { l = x, a = 0.0, b = 0.0, alpha = t }
             end
+        end
+    elseif colorMode == ColorMode.RGB
+        or colorMode == ColorMode.GRAY then
+        local strsub <const> = string.sub
+        local strunpack <const> = string.unpack
+        local fromHex <const> = colorMode == ColorMode.GRAY
+            and Clr.fromHexAv16
+            or Clr.fromHexAbgr32
+        local fmtStr <const> = "<I" .. srcBpp
+        local i = 0
+        while i < trgArea do
+            local ibpp <const> = i * srcBpp
+            local hex <const> = strunpack(fmtStr, strsub(
+                bytes8x8, 1 + ibpp, srcBpp + ibpp))
+            local lab <const> = sRgbToSrLab2(fromHex(hex))
+            lm, am, bm, tm = lm + lab.l, am + lab.a, bm + lab.b,
+                tm + lab.alpha
+            i = i + 1
+            labs[i] = lab
         end
     else
         return 0, 0, 0, 0
@@ -3087,7 +3077,7 @@ function AseUtilities.rotateImageZInternal(source, cosa, sina)
 end
 
 ---Finds similar images in an array. Returns an array of filtered images
----and an array of fingerprints.
+---and an array of 256 bit fingerprints formatted as strings.
 ---@param images Image[] images
 ---@param palette Palette? palette
 ---@return Image[] simImages
