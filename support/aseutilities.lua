@@ -1702,23 +1702,58 @@ function AseUtilities.filterLayers(
     end
 end
 
----Generates a finger print, or hash, from an image. Creates an 8x8 copy of
----the image, then finds its mean lightness, a, b and alpha. Each bit is set
----based on whether the 8x8 pixel is less or greater than the mean. These bits
----are composited into three 64 bit integers, which are then combined into one.
----Images should be trimmed of alpha before being given to the function.
----This does not guarantee image uniqueness, only similarity.
----Returns zero if the image is a tile map.
+---Generates a finger print, or hash, from an image. Images should be trimmed
+---of alpha before being given to the function. This does not guarantee image
+---uniqueness, only similarity.
 ---@param source Image source image
 ---@param palette Palette? source palette
+---@param tileSet Tileset? tile set
+---@param sprClrMode ColorMode? sprite color mode
 ---@return integer
-function AseUtilities.fingerprint(source, palette)
+---@nodiscard
+function AseUtilities.fingerprint(source, palette, tileSet, sprClrMode)
+    local srcVerif = source
+    if source.colorMode == ColorMode.TILEMAP then
+        if not sprClrMode then return 0 end
+        srcVerif = AseUtilities.tileMapToImage(
+            source, tileSet, sprClrMode)
+    end
+
+    local lHash <const>,
+    aHash <const>,
+    bHash <const>,
+    tHash <const> = AseUtilities.fingerprintIntenal(srcVerif, palette)
+
+    local prime <const> = 31
+    local cumulative = 1
+    cumulative = prime * cumulative + tHash
+    cumulative = prime * cumulative + lHash
+    cumulative = prime * cumulative + aHash
+    cumulative = prime * cumulative + bHash
+    return cumulative
+end
+
+---Generates fingerprints, or perpcetual hashes, from an image. Creates an 8 by
+---8 copy of the image, then finds its mean lightness, a, b and alpha. Each
+---bit is set based on whether the pixel is less or greater than the mean.
+---These bits are composited into three 64 bit integers.
+---Returns all zeroes if the image is a tile map.
+---@param source Image source image
+---@param palette Palette? source palette
+---@return integer lfp
+---@return integer afp
+---@return integer bfp
+---@return integer tfp
+---@nodiscard
+function AseUtilities.fingerprintInternal(source, palette)
     -- https://en.wikipedia.org/wiki/Levenshtein_distance
     -- https://en.wikipedia.org/wiki/Hamming_distance
 
+    -- Another approach would be to use 4 quadrants of a 16 by 16 image.
+
     local srcSpec <const> = source.spec
     local colorMode <const> = srcSpec.colorMode
-    if colorMode == ColorMode.TILEMAP then return 0 end
+    if colorMode == ColorMode.TILEMAP then return 0, 0, 0, 0 end
 
     local wSrc <const> = srcSpec.width
     local hSrc <const> = srcSpec.height
@@ -1802,7 +1837,7 @@ function AseUtilities.fingerprint(source, palette)
             end
         end
     else
-        return 0
+        return 0, 0, 0, 0
     end
 
     local lMean <const> = lm / trgArea
@@ -1810,10 +1845,10 @@ function AseUtilities.fingerprint(source, palette)
     local bMean <const> = bm / trgArea
     local tMean <const> = tm / trgArea
 
-    local lHash = 0
-    local aHash = 0
-    local bHash = 0
-    local tHash = 0
+    local lfp = 0
+    local afp = 0
+    local bfp = 0
+    local tfp = 0
     local j = 0
     while j < trgArea do
         local lab <const> = labs[1 + j]
@@ -1823,21 +1858,15 @@ function AseUtilities.fingerprint(source, palette)
         local bBit <const> = lab.b < bMean and 0 or 1
         local tBit <const> = lab.alpha < tMean and 0 or 1
 
-        lHash = lHash | (lBit << j)
-        aHash = aHash | (aBit << j)
-        bHash = bHash | (bBit << j)
-        tHash = tHash | (tBit << j)
+        lfp = lfp | (lBit << j)
+        afp = afp | (aBit << j)
+        bfp = bfp | (bBit << j)
+        tfp = tfp | (tBit << j)
 
         j = j + 1
     end
 
-    local prime <const> = 31
-    local cumulative = 1
-    cumulative = prime * cumulative + tHash
-    cumulative = prime * cumulative + lHash
-    cumulative = prime * cumulative + aHash
-    cumulative = prime * cumulative + bHash
-    return cumulative
+    return lfp, afp, bfp, tfp
 end
 
 ---Flattens a group layer to a composite image. Does not verify that a layer is
@@ -3061,37 +3090,41 @@ end
 ---and an array of fingerprints.
 ---@param images Image[] images
 ---@param palette Palette? palette
----@return Image[] uniqueImages
+---@return Image[] simImages
 ---@return integer[] fingeprints
 function AseUtilities.similarImages(images, palette)
-    -- This could also use the image's bytes string as a key, but it runs
-    -- into a problem of how long can a string be before it stops working
-    -- as a unique identifier.
+    -- How long can a string be before it is no longer effective as a key?
 
-    ---@type table<integer, integer>
+    ---@type table<string, integer>
     local dictionary <const> = {}
-    local fingerprint <const> = AseUtilities.fingerprint
+    local fingerprint <const> = AseUtilities.fingerprintInternal
+    local strpack <const> = string.pack
     local lenImages <const> = #images
     local i = 0
     while i < lenImages do
         i = i + 1
         local image <const> = images[i]
-        local fp <const> = fingerprint(image, palette)
-        if not dictionary[fp] then dictionary[fp] = i end
+        local lfp <const>, afp <const>,
+        bfp <const>, tfp <const> = fingerprint(image, palette)
+        local fpstr <const> = strpack("<I8 <I8 <I8 <I8",
+            tfp, lfp, afp, bfp)
+        if not dictionary[fpstr] then
+            dictionary[fpstr] = i
+        end
     end
 
     ---@type Image[]
-    local uniqueImages <const> = {}
-    ---@type integer[]
-    local fingerprints <const> = {}
+    local simImages <const> = {}
+    ---@type string[]
+    local fpstrs <const> = {}
     local lenUniques = 0
     for fp, j in pairs(dictionary) do
         lenUniques = lenUniques + 1
-        uniqueImages[lenUniques] = images[j]
-        fingerprints[lenUniques] = fp
+        simImages[lenUniques] = images[j]
+        fpstrs[lenUniques] = fp
     end
 
-    return uniqueImages, fingerprints
+    return simImages, fpstrs
 end
 
 ---Returns a copy of the source image that has been skewed on the x axis by an
@@ -3596,7 +3629,7 @@ function AseUtilities.trimImageAlpha(
     -- If the image contains no nonzero pixels, or is a tile map,
     -- returns a rectangle of zero size. Old version which could
     -- work around this is at:
-    -- https://github.com/behreajj/AsepriteAddons/blob/606a86e64801e63e18662650288ccd5df3b4ef27
+    -- 606a86e64801e63e18662650288ccd5df3b4ef27
     local rect <const> = image:shrinkBounds(alphaIndex)
     local rectIsValid <const> = rect.width > 0
         and rect.height > 0
