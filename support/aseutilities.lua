@@ -1702,6 +1702,139 @@ function AseUtilities.filterLayers(
     end
 end
 
+---Generates a finger print, or hash, from an image. Creates an 8x8 copy of
+---the image, then finds its mean lightness, a, b and alpha. If a pixel is
+---less than the mean, then it yields 0. If greater, then 1. These bits are
+---composited into three 64 bit integers, which are then combined into one.
+---Images should be trimmed of alpha before being given to the function.
+---Returns zero if the image is a tile map.
+---@param source Image source image
+---@param palette Palette? source palette
+---@return integer
+function AseUtilities.fingerprint(source, palette)
+    -- https://en.wikipedia.org/wiki/Levenshtein_distance
+    -- https://en.wikipedia.org/wiki/Hamming_distance
+
+    local srcSpec <const> = source.spec
+    local colorMode <const> = srcSpec.colorMode
+    if colorMode == ColorMode.TILEMAP then return 0 end
+
+    local wSrc <const> = srcSpec.width
+    local hSrc <const> = srcSpec.height
+    local alphaIndex <const> = srcSpec.transparentColor
+    local alphaIndexVerif = (alphaIndex >= 0 and alphaIndex < 256)
+        and alphaIndex or 0
+
+    local wTrg <const> = 8
+    local hTrg <const> = 8
+    local trgArea <const> = wTrg * hTrg
+
+    local bytes8x8 <const> = Utilities.resizePixelsNearest(
+        source.bytes, wSrc, hSrc, wTrg, hTrg, source.bytesPerPixel,
+        alphaIndexVerif)
+
+    ---@type {l: number, a: number, b: number, alpha: number}[]
+    local labs <const> = {}
+    local lm, am, bm, tm = 0.0, 0.0, 0.0, 0.0
+
+    local sRgbToSrLab2 <const> = Clr.sRgbToSrLab2
+    if colorMode == ColorMode.RGB then
+        local strsub <const> = string.sub
+        local strunpack <const> = string.unpack
+        local fromHex <const> = Clr.fromHexAbgr32
+        local i = 0
+        while i < trgArea do
+            local i4 <const> = i * 4
+            local abgr32 <const> = strunpack("<I4", strsub(
+                bytes8x8, 1 + i4, 4 + i4))
+            local lab <const> = sRgbToSrLab2(fromHex(abgr32))
+            lm, am, bm, tm = lm + lab.l, am + lab.a, bm + lab.b,
+                tm + lab.alpha
+            i = i + 1
+            labs[i] = lab
+        end
+    elseif colorMode == ColorMode.GRAY then
+        local strsub <const> = string.sub
+        local strunpack <const> = string.unpack
+        local fromHex <const> = Clr.fromHexAv16
+        local i = 0
+        while i < trgArea do
+            local i2 <const> = i * 2
+            local abgr32 <const> = strunpack("<I2", strsub(
+                bytes8x8, 1 + i2, 2 + i2))
+            local lab <const> = sRgbToSrLab2(fromHex(abgr32))
+            lm, am, bm, tm = lm + lab.l, am + lab.a, bm + lab.b,
+                tm + lab.alpha
+            i = i + 1
+            labs[i] = lab
+        end
+    elseif colorMode == ColorMode.INDEXED then
+        local strbyte <const> = string.byte
+        if palette then
+            local lenPalette <const> = #palette
+            local aseColorToClr = AseUtilities.aseColorToClr
+            local i = 0
+            while i < trgArea do
+                i = i + 1
+                local idx <const> = strbyte(bytes8x8, i)
+                if idx >= 0 and idx < lenPalette then
+                    local aseColor <const> = palette:getColor(idx)
+                    local lab <const> = sRgbToSrLab2(aseColorToClr(aseColor))
+                    lm, am, bm, tm = lm + lab.l, am + lab.a, bm + lab.b,
+                        tm + lab.alpha
+                    labs[i] = lab
+                else
+                    labs[i] = { l = 0.0, a = 0.0, b = 0.0, alpha = 0.0 }
+                end
+            end
+        else
+            local i = 0
+            while i < trgArea do
+                i = i + 1
+                local x <const> = strbyte(bytes8x8, i) * 100.0 / 255.0
+                lm = lm + x
+                labs[i] = { l = x, a = 0.0, b = 0.0, alpha = 0.0 }
+            end
+        end
+    else
+        return 0
+    end
+
+    local lMean <const> = lm / trgArea
+    local aMean <const> = am / trgArea
+    local bMean <const> = bm / trgArea
+    local tMean <const> = tm / trgArea
+
+    local lHash = 0
+    local aHash = 0
+    local bHash = 0
+    local tHash = 0
+    local j = 0
+    while j < trgArea do
+        local lab <const> = labs[1 + j]
+
+        local lBit <const> = lab.l < lMean and 0 or 1
+        local aBit <const> = lab.a < aMean and 0 or 1
+        local bBit <const> = lab.b < bMean and 0 or 1
+        local tBit <const> = lab.alpha < tMean and 0 or 1
+
+        lHash = lHash | (lBit << j)
+        aHash = aHash | (aBit << j)
+        bHash = bHash | (bBit << j)
+        tHash = tHash | (tBit << j)
+
+        j = j + 1
+    end
+
+    local prime <const> = 31
+    local cumulative = 1
+    cumulative = prime * cumulative + tHash
+    cumulative = prime * cumulative + lHash
+    cumulative = prime * cumulative + aHash
+    cumulative = prime * cumulative + bHash
+    return cumulative
+end
+
 ---Flattens a group layer to a composite image. Does not verify that a layer is
 ---a group. Child layers are filtered according to the provided criteria.
 ---Returns an image and a cel bounds. If no composite could be made, returns a
@@ -1923,9 +2056,8 @@ function AseUtilities.frameObjsToIdcs(frObjs)
     return frIdcs
 end
 
----Gets the sprite's background checker width, height
----and colors from preferences. Colors are retrieved
----by reference.
+---Gets the sprite's background checker width, height and colors from
+---from preferences. Colors are retrieved by reference.
 ---@param sprite Sprite sprite
 ---@return integer wCheck
 ---@return integer hCheck
@@ -1968,14 +2100,10 @@ function AseUtilities.getBkgChecker(sprite)
     end
 
     local bgPrefColor1 <const> = bgPref.color1 --[[@as Color]]
-    if bgPrefColor1 then
-        aAse = bgPrefColor1
-    end
+    if bgPrefColor1 then aAse = bgPrefColor1 end
 
     local bgPrefColor2 <const> = bgPref.color2 --[[@as Color]]
-    if bgPrefColor2 then
-        bAse = bgPrefColor2
-    end
+    if bgPrefColor2 then bAse = bgPrefColor2 end
 
     return wCheck, hCheck, aAse, bAse
 end
@@ -2528,25 +2656,6 @@ function AseUtilities.imageFromSel(sel, sprite, frame)
     end
 
     return image, xSel, ySel
-end
-
----Evaluates two images for equality. Checks by id, then by spec, then
----by bytes retrieved as a string.
----@param o Image left comparisand
----@param d Image right comparisand
----@return boolean
-function AseUtilities.imagesEqual(o, d)
-    -- https://en.wikipedia.org/wiki/Levenshtein_distance
-    local oSpec <const> = o.spec
-    local dSpec <const> = d.spec
-    return o.id == d.id
-        or (oSpec.width == dSpec.width
-            and oSpec.height == dSpec.height
-            and oSpec.colorMode == dSpec.colorMode
-            and oSpec.colorSpace == dSpec.colorSpace
-            and oSpec.transparentColor == dSpec.transparentColor
-            and o.bytesPerPixel == d.bytesPerPixel
-            and o.bytes == d.bytes)
 end
 
 ---Adds padding around the edges of an image. Does not check if image is a tile
@@ -3617,6 +3726,33 @@ function AseUtilities.trimMapAlpha(
     end
 
     return target, lft * wTile, top * hTile
+end
+
+---Finds unique images in an array. First checks them for the same id, then
+---creates a fingerprint for them. Returns a dictionary where the fingerprint
+---is the key and the image is the value.
+---@param images Image[] images
+---@param palette Palette? palette
+---@return table<integer, Image>
+function AseUtilities.uniqueImages(images, palette)
+    ---@type table<integer, Image>
+    local idDict <const> = {}
+    local lenImages <const> = #images
+    local i = 0
+    while i < lenImages do
+        i = i + 1
+        local image <const> = images[i]
+        idDict[image.id] = image
+    end
+
+    ---@type table<integer, Image>
+    local fingerprints <const> = {}
+    local fingerprint <const> = AseUtilities.fingerprint
+    for _, image in pairs(idDict) do
+        fingerprints[fingerprint(image, palette)] = image
+    end
+
+    return fingerprints
 end
 
 ---Returns a copy of the source image that has been scaled up for export. Uses
