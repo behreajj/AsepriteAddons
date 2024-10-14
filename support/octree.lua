@@ -437,15 +437,8 @@ end
 ---@param o Octree octree
 ---@return string
 function Octree.toJson(o)
-    local str = string.format("{\"level\":%d", o.level - 1)
-    str = str .. ",\"bounds\":"
-    str = str .. Bounds3.toJson(o.bounds)
-    str = str .. ",\"capacity\":"
-    str = str .. string.format("%d", o.capacity)
-
+    local leafStr = ""
     if Octree.isLeaf(o) then
-        str = str .. ",\"points\":["
-
         ---@type string[]
         local ptsStrs <const> = {}
         local pts <const> = o.points
@@ -457,11 +450,10 @@ function Octree.toJson(o)
             ptsStrs[i] = Vec3.toJson(pts[i])
         end
 
-        str = str .. table.concat(ptsStrs, ",")
-        str = str .. "]"
+        leafStr = string.format(
+            ",\"points\":[%s]",
+            table.concat(ptsStrs, ","))
     else
-        str = str .. ",\"children\":["
-
         ---@type string[]
         local childStrs <const> = {}
         local children <const> = o.children
@@ -474,12 +466,17 @@ function Octree.toJson(o)
             childStrs[j] = Octree.toJson(child)
         end
 
-        str = str .. table.concat(childStrs, ",")
-        str = str .. "]"
+        leafStr = string.format(
+            ",\"children\":[%s]",
+            table.concat(childStrs, ","))
     end
 
-    str = str .. "}"
-    return str
+    return string.format(
+        "{\"level\":%d,\"bounds\":%s,\"capacity\":%d%s}",
+        o.level - 1,
+        Bounds3.toJson(o.bounds),
+        o.capacity,
+        leafStr)
 end
 
 return Octree

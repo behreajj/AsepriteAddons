@@ -548,7 +548,6 @@ end
 ---@param a Mesh2 mesh
 ---@return string
 function Mesh2.toJson(a)
-    -- TODO: Test this.
     local strfmt <const> = string.format
     local tconcat <const> = table.concat
 
