@@ -150,18 +150,12 @@ dlg:button {
                     local gQtz <const> = gqFunc(g / 255.0, gLvVrf, gDelta)
                     local rQtz <const> = rqFunc(r / 255.0, rLvVrf, rDelta)
 
-                    local a8 <const> = floor(aQtz * 255.0 + 0.5)
-                    local b8 <const> = floor(bQtz * 255.0 + 0.5)
-                    local g8 <const> = floor(gQtz * 255.0 + 0.5)
-                    local r8 <const> = floor(rQtz * 255.0 + 0.5)
-
-                    local aseQtz <const> = Color {
-                        r = r8,
-                        g = g8,
-                        b = b8,
-                        a = a8
-                    }
-                    palette:setColor(i, aseQtz)
+                    palette:setColor(i, Color {
+                        r = floor(rQtz * 255.0 + 0.5),
+                        g = floor(gQtz * 255.0 + 0.5),
+                        b = floor(bQtz * 255.0 + 0.5),
+                        a = floor(aQtz * 255.0 + 0.5)
+                    })
 
                     i = i + 1
                 end

@@ -2458,9 +2458,9 @@ function AseUtilities.getSelectedTiles(
     local i = 0
     while i < lenMap do
         local ibpp <const> = i * bpp
-        local mapif <const> = strunpack(unpackFmt, strsub(
+        local mapIf <const> = strunpack(unpackFmt, strsub(
             bytes, 1 + ibpp, bpp + ibpp))
-        local idx <const> = pxTilei(mapif)
+        local idx <const> = pxTilei(mapIf)
         if idx > 0 and idx < lenTileSet then
             local xMap <const> = i % wMap
             local yMap <const> = i // wMap
@@ -2470,15 +2470,10 @@ function AseUtilities.getSelectedTiles(
             local isContained = true
             local j = 0
             while isContained and j < flatDimTile do
-                local xPixel <const> = xtlTile + j % wTile
-                local yPixel <const> = ytlTile + j // wTile
-                isContained = isContained and mask:contains(xPixel, yPixel)
+                isContained = isContained and mask:contains(
+                    xtlTile + j % wTile, ytlTile + j // wTile)
                 j = j + 1
             end
-
-            -- print(string.format(
-            --     "%d: [%d, %d]: [%d, %d]",
-            --     index, xMap, yMap, xtlTile, ytlTile))
 
             if isContained then
                 if not tiles[idx] then tiles[idx] = tileSet:tile(idx) end
@@ -2526,9 +2521,7 @@ function AseUtilities.getUniqueCelsFromLeaves(leaves, frames)
         local j <const> = k % lenFrames
         k = k + 1
 
-        local leaf <const> = leaves[1 + i]
-        local frame <const> = frames[1 + j]
-        local cel <const> = leaf:cel(frame)
+        local cel <const> = leaves[1 + i]:cel(frames[1 + j])
         if cel then
             uniqueCels[cel.image.id] = cel
         end
@@ -3090,42 +3083,6 @@ function AseUtilities.rotateImageZInternal(source, cosa, sina)
     return target
 end
 
----Finds similar images in an array. Returns an array of filtered images
----and an array of 256 bit fingerprints formatted as strings.
----@param images Image[] images
----@param palette Palette? palette
----@return Image[] simImages
----@return integer[] fingeprints
-function AseUtilities.similarImages(images, palette)
-    ---@type table<string, integer>
-    local dictionary <const> = {}
-    local fingerprint <const> = AseUtilities.fingerprint
-
-    local lenImages <const> = #images
-    local i = 0
-    while i < lenImages do
-        i = i + 1
-        local image <const> = images[i]
-        local fpstr <const> = fingerprint(image, palette)
-        if not dictionary[fpstr] then
-            dictionary[fpstr] = i
-        end
-    end
-
-    ---@type Image[]
-    local simImages <const> = {}
-    ---@type string[]
-    local fpstrs <const> = {}
-    local lenUniques = 0
-    for fp, j in pairs(dictionary) do
-        lenUniques = lenUniques + 1
-        simImages[lenUniques] = images[j]
-        fpstrs[lenUniques] = fp
-    end
-
-    return simImages, fpstrs
-end
-
 ---Returns a copy of the source image that has been skewed on the x axis by an
 ---angle in degrees. Uses nearest neighbor sampling.
 ---If the angle is 0 degrees, then returns the source image by reference.
@@ -3180,9 +3137,8 @@ function AseUtilities.skewImageX(source, angle)
             -1, 2, srcBpp, srcAlphaIndex)
     else
         local radians <const> = angle * 0.017453292519943
-        local tana <const> = math.tan(radians)
         trgBytes, wTrg, hTrg = Utilities.skewPixelsX(srcBytes, wSrc, hSrc,
-            tana, srcBpp, srcAlphaIndex)
+            math.tan(radians), srcBpp, srcAlphaIndex)
     end
 
     local trgSpec <const> = ImageSpec {
@@ -3251,9 +3207,8 @@ function AseUtilities.skewImageY(source, angle)
             -1, 2, srcBpp, srcAlphaIndex)
     else
         local radians <const> = angle * 0.017453292519943
-        local tana <const> = math.tan(radians)
         trgBytes, wTrg, hTrg = Utilities.skewPixelsY(srcBytes, wSrc, hSrc,
-            tana, srcBpp, srcAlphaIndex)
+            math.tan(radians), srcBpp, srcAlphaIndex)
     end
 
     local trgSpec <const> = ImageSpec {
@@ -3393,16 +3348,14 @@ function AseUtilities.setPalette(arr, sprite, paletteIndex, keepMaxLen)
                 -- blob/main/src/app/script/palette_class.cpp#L196 ,
                 -- https://github.com/aseprite/aseprite/blob/
                 -- main/src/app/color_utils.cpp .
-                local hex <const> = arr[i]
-                local aseColor <const> = AseUtilities.hexToAseColor(hex)
+                local aseColor <const> = AseUtilities.hexToAseColor(arr[i])
                 palette:setColor(i - 1, aseColor)
             end
         end)
     else
-        local clearBlack <const> = Color { r = 0, g = 0, b = 0, a = 0 }
         app.transaction("Set Palette", function()
             palette:resize(1)
-            palette:setColor(0, clearBlack)
+            palette:setColor(0, { r = 0, g = 0, b = 0, a = 0 })
         end)
     end
 end
@@ -3472,17 +3425,15 @@ function AseUtilities.tileMapToImage(imgSrc, tileSet, sprClrMode)
     local i = 0
     while i < srcArea do
         local ibpp <const> = i * srcBpp
-        local mapif <const> = strunpack(fmtStr, strsub(srcBytes,
+        local mapIf <const> = strunpack(fmtStr, strsub(srcBytes,
             1 + ibpp, srcBpp + ibpp))
-        local idx <const> = pxTilei(mapif)
+        local idx <const> = pxTilei(mapIf)
         local tile <const> = tileSet:tile(idx)
         if tile then
-            local xMap <const> = i % wSrc
-            local yMap <const> = i // wSrc
-            local meta <const> = pxTilef(mapif)
+            local meta <const> = pxTilef(mapIf)
             local tileImage <const>, _ <const> = bakeFlag(tile.image, meta)
             imgTrg:drawImage(tileImage,
-                Point(xMap * tileWidth, yMap * tileHeight),
+                Point((i % wSrc) * tileWidth, (i // wSrc) * tileHeight),
                 255, blendModeSrc)
         end
         i = i + 1
@@ -3554,6 +3505,7 @@ function AseUtilities.trimCelToSelect(cel, mask, hexDefault)
                 oldPos.y - celPos.y),
             255, BlendMode.SRC)
 
+        -- TODO: Remove pixel iterator.
         local hexVrf <const> = hexDefault or alphaIndex
         local pxItr <const> = trimImage:pixels()
         for pixel in pxItr do
@@ -3717,9 +3669,9 @@ function AseUtilities.trimMapAlpha(
         while x < wSrcn1 and goTop do
             x = x + 1
             local iTop <const> = bpp * (x + wSrc * topSearch)
-            local mapif <const> = strunpack("<I4", strsub(
+            local mapIf <const> = strunpack("<I4", strsub(
                 bytes, 1 + iTop, bpp + iTop))
-            if pxTilei(mapif) ~= 0 then
+            if pxTilei(mapIf) ~= 0 then
                 minRight = x
                 minBottom = topSearch
                 goTop = false
@@ -3736,9 +3688,9 @@ function AseUtilities.trimMapAlpha(
         while y > topSearch and goLft do
             y = y - 1
             local iLft <const> = bpp * (lftSearch + wSrc * y)
-            local mapif <const> = strunpack("<I4", strsub(
+            local mapIf <const> = strunpack("<I4", strsub(
                 bytes, 1 + iLft, bpp + iLft))
-            if pxTilei(mapif) ~= 0 then
+            if pxTilei(mapIf) ~= 0 then
                 minBottom = y
                 goLft = false
             end
@@ -3754,9 +3706,9 @@ function AseUtilities.trimMapAlpha(
         while x > lftSearch and goBtm do
             x = x - 1
             local iBtm <const> = bpp * (x + wSrc * btm)
-            local mapif <const> = strunpack("<I4", strsub(
+            local mapIf <const> = strunpack("<I4", strsub(
                 bytes, 1 + iBtm, bpp + iBtm))
-            if pxTilei(mapif) ~= 0 then
+            if pxTilei(mapIf) ~= 0 then
                 minRight = x
                 goBtm = false
             end
@@ -3772,9 +3724,9 @@ function AseUtilities.trimMapAlpha(
         while y > topSearch and goRgt do
             y = y - 1
             local iRgt <const> = bpp * (rgt + wSrc * y)
-            local mapif <const> = strunpack("<I4", strsub(
+            local mapIf <const> = strunpack("<I4", strsub(
                 bytes, 1 + iRgt, bpp + iRgt))
-            if pxTilei(mapif) ~= 0 then
+            if pxTilei(mapIf) ~= 0 then
                 goRgt = false
             end
         end
