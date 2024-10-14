@@ -85,7 +85,7 @@ dlg:slider {
     id = "swatchSize",
     label = "Swatch:",
     min = 4,
-    max = 32,
+    max = 64,
     value = defaults.swatchSize
 }
 
