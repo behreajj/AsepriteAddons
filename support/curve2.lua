@@ -63,7 +63,7 @@ function Curve2.arcLength(curve, sampleCount)
     end
 
     ---@type number[]
-    local arcLengths = {}
+    local arcLengths <const> = {}
     local totLen = 0.0
     local i = 1
     while i < countVrfp1 do

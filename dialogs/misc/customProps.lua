@@ -25,8 +25,7 @@ local dataTypes <const> = {
 }
 
 local defaults <const> = {
-    -- TODO: Button to mark cels and layers that have properties with a color.
-    target = "SPRITE",
+    target = "CEL",
     dataType = "STRING",
     propName = "property",
     boolValue = false,
@@ -590,8 +589,10 @@ dlg:button {
     text = "CO&NSOLE",
     focus = false,
     onclick = function()
+        local activeSprite <const> = app.sprite
         AseUtilities.preserveForeBack()
         app.command.DeveloperConsole()
+        if activeSprite then app.sprite = activeSprite end
     end
 }
 
