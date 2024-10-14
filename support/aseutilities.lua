@@ -1754,6 +1754,7 @@ function AseUtilities.fingerprintInternal(source, palette)
     local hTrg <const> = 8
     local trgArea <const> = wTrg * hTrg
 
+    -- source:resize { method = "bilinear" } gives worse results.
     local alphaIndexVerif = (alphaIndex >= 0 and alphaIndex < 256)
         and alphaIndex or 0
     local bytes8x8 <const> = Utilities.resizePixelsNearest(
@@ -3407,9 +3408,6 @@ end
 ---@return Image
 ---@nodiscard
 function AseUtilities.tileMapToImage(imgSrc, tileSet, sprClrMode)
-    -- The source image's color mode is 4 if it is a tile map.
-    -- Assigning 4 to the target image when the sprite color
-    -- mode is 2 (indexed) crashes Aseprite.
     local srcSpec <const> = imgSrc.spec
     local wSrc <const> = srcSpec.width
     local hSrc <const> = srcSpec.height
@@ -3439,28 +3437,37 @@ function AseUtilities.tileMapToImage(imgSrc, tileSet, sprClrMode)
     }
     trgSpec.colorSpace = colorSpace
     local imgTrg <const> = Image(trgSpec)
-    local blendModeSrc <const> = BlendMode.SRC
 
     local pixelColor <const> = app.pixelColor
     local pxTilei <const> = pixelColor.tileI
     local pxTilef <const> = pixelColor.tileF
     local bakeFlag <const> = AseUtilities.bakeFlag
+    local strsub <const> = string.sub
+    local strunpack <const> = string.unpack
 
-    local mapItr <const> = imgSrc:pixels()
-    for mapEntry in mapItr do
-        local mapif <const> = mapEntry() --[[@as integer]]
-        local i <const> = pxTilei(mapif)
-        -- Tileset:tile method returns nil if the index is out of bounds.
-        local tile <const> = tileSet:tile(i)
+    local srcBytes <const> = imgSrc.bytes
+    local srcBpp <const> = imgSrc.bytesPerPixel
+    local fmtStr <const> = "<I" .. srcBpp
+    local blendModeSrc <const> = BlendMode.SRC
+    local srcArea <const> = wSrc * hSrc
+
+    local i = 0
+    while i < srcArea do
+        local ibpp <const> = i * srcBpp
+        local mapif <const> = strunpack(fmtStr, strsub(srcBytes,
+            1 + ibpp, srcBpp + ibpp))
+        local idx <const> = pxTilei(mapif)
+        local tile <const> = tileSet:tile(idx)
         if tile then
+            local xMap <const> = i % wSrc
+            local yMap <const> = i // wSrc
             local meta <const> = pxTilef(mapif)
             local tileImage <const>, _ <const> = bakeFlag(tile.image, meta)
-            imgTrg:drawImage(
-                tileImage,
-                Point(mapEntry.x * tileWidth,
-                    mapEntry.y * tileHeight),
+            imgTrg:drawImage(tileImage,
+                Point(xMap * tileWidth, yMap * tileHeight),
                 255, blendModeSrc)
         end
+        i = i + 1
     end
 
     return imgTrg
