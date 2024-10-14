@@ -3,6 +3,7 @@ dofile("../support/aseutilities.lua")
 local sprite <const> = app.site.sprite
 if not sprite then return end
 
+local sprColorMode <const> = sprite.colorMode
 local palettes <const> = sprite.palettes
 
 local leaves <const> = AseUtilities.getLayerHierarchy(sprite,
@@ -14,9 +15,12 @@ local lenFrObjs <const> = #frObjs
 
 local lenComp <const> = lenLeaves * lenFrObjs
 
-local fingerprint <const> = AseUtilities.fingerprintInternal
+local fingerprint <const> = AseUtilities.fingerprint
 local getPalette <const> = AseUtilities.getPalette
-local strpack <const> = string.pack
+local tileMapToImage <const> = AseUtilities.tileMapToImage
+local strbyte <const> = string.byte
+local strfmt <const> = string.format
+local tconcat <const> = table.concat
 
 ---@type table<integer, Cel>
 local dictionary <const> = {}
@@ -27,23 +31,26 @@ local clear <const> = Color { r = 0, g = 0, b = 0, a = 0 }
 local linked <const> = Color { r = 0, g = 137, b = 58, a = 170 }
 
 app.transaction("Find Like Images", function()
-    local k = 0
-    while k < lenComp do
-        local i <const> = k // lenLeaves
-        local j <const> = k % lenLeaves
+    local h = 0
+    while h < lenComp do
+        local i <const> = h // lenLeaves
+        local j <const> = h % lenLeaves
         local frObj <const> = frObjs[1 + i]
         local leaf <const> = leaves[1 + j]
+        local isTilemap <const> = leaf.isTilemap
+        local tileSet <const> = leaf.tileset
         local cel <const> = leaf:cel(frObj)
         if cel then
             local palette <const> = getPalette(frObj, palettes)
-            local image <const> = cel.image
-            local lfp <const>, afp <const>,
-            bfp <const>, tfp <const> = fingerprint(image, palette)
-            local hash <const> = strpack(
-                "<I8 <I8 <I8 <I8",
-                tfp, lfp, afp, bfp)
-            if dictionary[hash] then
-                local origCel <const> = dictionary[hash]
+            local image = cel.image
+            if isTilemap and tileSet then
+                image = tileMapToImage(
+                    image, tileSet, sprColorMode)
+            end
+            local fpstr <const> = fingerprint(image, palette)
+
+            if dictionary[fpstr] then
+                local origCel <const> = dictionary[fpstr]
                 if image.id == origCel.image.id then
                     cel.color = linked
                 else
@@ -51,11 +58,23 @@ app.transaction("Find Like Images", function()
                     origCel.color = original
                 end
             else
-                dictionary[hash] = cel
+                dictionary[fpstr] = cel
                 cel.color = clear
             end
+
+            ---@type string[]
+            local hexStrArr <const> = {}
+            local lenFpstr <const> = #fpstr
+            local k = 0
+            while k < lenFpstr do
+                k = k + 1
+                local byte <const> = strbyte(fpstr, k)
+                local char <const> = strfmt("%02x", byte)
+                hexStrArr[k] = char
+            end
+            cel.properties["fingerprint"] = tconcat(hexStrArr)
         end
-        k = k + 1
+        h = h + 1
     end
 end)
 

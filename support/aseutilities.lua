@@ -1692,66 +1692,77 @@ function AseUtilities.filterLayers(
     end
 end
 
----Generates a finger print, or hash, from an image. Images should be trimmed
----of alpha before being given to the function. Does not guarantee image
----uniqueness, only similarity. The fingerprint is a 64 bit integer.
+---Generates a 256 bit byte string from an image. Creates a 16
+---by 16 copy of the image, then finds its mean lightness, a, b and alpha. Each
+---bit is set based on whether the pixel is less or greater than the mean.
+---Returns an empty string if the image is a tile map.
 ---@param source Image source image
 ---@param palette Palette? source palette
----@param tileSet Tileset? tile set
----@param sprClrMode ColorMode? sprite color mode
----@return integer
+---@return string fingerprint
 ---@nodiscard
-function AseUtilities.fingerprint(source, palette, tileSet, sprClrMode)
+function AseUtilities.fingerprint(source, palette)
     local srcVerif = source
     if source.colorMode == ColorMode.TILEMAP then
-        if not sprClrMode then return 0 end
-        srcVerif = AseUtilities.tileMapToImage(
-            source, tileSet, sprClrMode)
+        return ""
     end
 
-    local lHash <const>,
-    aHash <const>,
-    bHash <const>,
-    tHash <const> = AseUtilities.fingerprintIntenal(srcVerif, palette)
+    local lfp <const>,
+    afp <const>,
+    bfp <const>,
+    tfp <const> = AseUtilities.fingerprintInternal(srcVerif, palette)
 
-    local prime <const> = 31
-    local cumulative = 1
-    cumulative = prime * cumulative + tHash
-    cumulative = prime * cumulative + lHash
-    cumulative = prime * cumulative + aHash
-    cumulative = prime * cumulative + bHash
-    return cumulative
+    ---@type string[]
+    local byteStrArr <const> = {}
+    local strchar <const> = string.char
+
+    local tLen <const> = #tfp
+    local lLen <const> = #lfp
+    local aLen <const> = #afp
+
+    local tShift <const> = 0
+    local lShift <const> = tLen
+    local aShift <const> = lShift + lLen
+    local bShift <const> = aShift + aLen
+
+    local k = 0
+    while k < tLen do
+        k = k + 1
+        byteStrArr[tShift + k] = strchar(tfp[k])
+        byteStrArr[lShift + k] = strchar(lfp[k])
+        byteStrArr[aShift + k] = strchar(afp[k])
+        byteStrArr[bShift + k] = strchar(bfp[k])
+    end
+
+    return table.concat(byteStrArr)
 end
 
----Generates fingerprints, or perpcetual hashes, from an image. Creates an 8 by
----8 copy of the image, then finds its mean lightness, a, b and alpha. Each
+---Generates fingerprints, or perceptual hashes, from an image. Creates a 16
+---by 16 copy of the image, then finds its mean lightness, a, b and alpha. Each
 ---bit is set based on whether the pixel is less or greater than the mean.
----These bits are composited into four 64 bit integers.
----Returns all zeroes if the image is a tile map.
+---Returns four arrays containined 32 bytes (8 * 32 = 16 * 16 = 256).
+---Returns empty arrays if the image is a tile map.
 ---@param source Image source image
 ---@param palette Palette? source palette
----@return integer lfp
----@return integer afp
----@return integer bfp
----@return integer tfp
+---@return integer[] lfp
+---@return integer[] afp
+---@return integer[] bfp
+---@return integer[] tfp
 ---@nodiscard
 function AseUtilities.fingerprintInternal(source, palette)
     -- https://en.wikipedia.org/wiki/Levenshtein_distance
     -- https://en.wikipedia.org/wiki/Hamming_distance
 
-    -- Another approach would be to use 4 quadrants of a 16 by 16 image.
-
     local srcSpec <const> = source.spec
     local colorMode <const> = srcSpec.colorMode
-    if colorMode == ColorMode.TILEMAP then return 0, 0, 0, 0 end
+    if colorMode == ColorMode.TILEMAP then return {}, {}, {}, {} end
 
     local wSrc <const> = srcSpec.width
     local hSrc <const> = srcSpec.height
     local alphaIndex <const> = srcSpec.transparentColor
     local srcBpp <const> = source.bytesPerPixel
 
-    local wTrg <const> = 8
-    local hTrg <const> = 8
+    local wTrg <const> = 16
+    local hTrg <const> = 16
     local trgArea <const> = wTrg * hTrg
 
     -- source:resize { method = "bilinear" } gives worse results.
@@ -1818,7 +1829,7 @@ function AseUtilities.fingerprintInternal(source, palette)
             labs[i] = lab
         end
     else
-        return 0, 0, 0, 0
+        return {}, {}, {}, {}
     end
 
     local lMean <const> = lm / trgArea
@@ -1826,10 +1837,15 @@ function AseUtilities.fingerprintInternal(source, palette)
     local bMean <const> = bm / trgArea
     local tMean <const> = tm / trgArea
 
-    local lfp = 0
-    local afp = 0
-    local bfp = 0
-    local tfp = 0
+    ---@type integer[]
+    local lByteArr = {}
+    ---@type integer[]
+    local aByteArr = {}
+    ---@type integer[]
+    local bByteArr = {}
+    ---@type integer[]
+    local tByteArr = {}
+
     local j = 0
     while j < trgArea do
         local lab <const> = labs[1 + j]
@@ -1839,15 +1855,22 @@ function AseUtilities.fingerprintInternal(source, palette)
         local bBit <const> = lab.b < bMean and 0 or 1
         local tBit <const> = lab.alpha < tMean and 0 or 1
 
-        lfp = lfp | (lBit << j)
-        afp = afp | (aBit << j)
-        bfp = bfp | (bBit << j)
-        tfp = tfp | (tBit << j)
+        local idxByte <const> = j // 8
+        local lByte <const> = lByteArr[1 + idxByte] or 0
+        local aByte <const> = aByteArr[1 + idxByte] or 0
+        local bByte <const> = bByteArr[1 + idxByte] or 0
+        local tByte <const> = tByteArr[1 + idxByte] or 0
+
+        local idxBit <const> = j % 8
+        lByteArr[1 + idxByte] = lByte | (lBit << idxBit)
+        aByteArr[1 + idxByte] = aByte | (aBit << idxBit)
+        bByteArr[1 + idxByte] = bByte | (bBit << idxBit)
+        tByteArr[1 + idxByte] = tByte | (tBit << idxBit)
 
         j = j + 1
     end
 
-    return lfp, afp, bfp, tfp
+    return lByteArr, aByteArr, bByteArr, tByteArr
 end
 
 ---Flattens a group layer to a composite image. Does not verify that a layer is
@@ -3074,21 +3097,16 @@ end
 ---@return Image[] simImages
 ---@return integer[] fingeprints
 function AseUtilities.similarImages(images, palette)
-    -- How long can a string be before it is no longer effective as a key?
-
     ---@type table<string, integer>
     local dictionary <const> = {}
-    local fingerprint <const> = AseUtilities.fingerprintInternal
-    local strpack <const> = string.pack
+    local fingerprint <const> = AseUtilities.fingerprint
+
     local lenImages <const> = #images
     local i = 0
     while i < lenImages do
         i = i + 1
         local image <const> = images[i]
-        local lfp <const>, afp <const>,
-        bfp <const>, tfp <const> = fingerprint(image, palette)
-        local fpstr <const> = strpack("<I8 <I8 <I8 <I8",
-            tfp, lfp, afp, bfp)
+        local fpstr <const> = fingerprint(image, palette)
         if not dictionary[fpstr] then
             dictionary[fpstr] = i
         end
