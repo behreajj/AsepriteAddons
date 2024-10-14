@@ -261,6 +261,7 @@ dlg:button {
 
         -- Only include mixed colors if color space is SRGB.
         local useMix <const> = clrPrf == ColorSpace { sRGB = true }
+            or clrPrf == ColorSpace()
         local paddingGtEq1 <const> = padding >= 1
 
         ---@type table<integer, { l: number, a: number, b: number, alpha: number }>
@@ -357,34 +358,30 @@ dlg:button {
 
             if highsGroup then
                 highsGroup.name = "Highlights"
-                -- highsGroup.parent = dithersGroup
                 highsGroup.isCollapsed = true
             end
         end)
 
         local swatchSpec <const> = AseUtilities.createSpec(
             swatchSize, swatchSize, ColorMode.RGB, clrPrf, 0)
+        local swatchArea <const> = swatchSize * swatchSize
 
         -- Cache methods used in loop
         local abs <const> = math.abs
         local sqrt <const> = math.sqrt
         local strfmt <const> = string.format
-        local clrToAseColor <const> = AseUtilities.clrToAseColor
+        local strpack <const> = string.pack
+        local tconcat <const> = table.concat
         local srLab2TosRgb <const> = Clr.srLab2TosRgb
         local toHex <const> = Clr.toHex
+        local clrToAseColor <const> = AseUtilities.clrToAseColor
         local hexToAseColor <const> = AseUtilities.hexToAseColor
-        local strpack <const> = string.pack
 
         local highlightFrame = nil
         local frameWeight <const> = defaults.frameWeight
         if useHighlight and paddingGtEq1 then
-            -- For some reason, the pixel iterator approach stopped working.
-            local highStr <const> = strpack("B B B B",
-                highHex & 0xff,
-                (highHex >> 0x08) & 0xff,
-                (highHex >> 0x10) & 0xff,
-                (highHex >> 0x18) & 0xff)
-            local zeroStr <const> = strpack("B B B B", 0, 0, 0, 0)
+            local highStr <const> = strpack("<I4", highHex)
+            local zeroStr <const> = strpack("<I4", 0)
 
             local szHigh <const> = swatchSize + frameWeight * 2
             local highFrameSpec <const> = AseUtilities.createSpec(
@@ -395,7 +392,6 @@ dlg:button {
             local highBytes <const> = {}
             local stripWeight <const> = swatchSize + frameWeight
             local stripArea <const> = frameWeight * stripWeight
-            local swatchArea <const> = swatchSize * swatchSize
 
             -- Because swatches have the same width and height, horizontal
             -- and vertical borders can be drawn in one loop.
@@ -442,7 +438,7 @@ dlg:button {
                 k = k + 1
             end
 
-            highlightFrame.bytes = table.concat(highBytes)
+            highlightFrame.bytes = tconcat(highBytes)
         end
 
         local i = lenUniqueHexes + 1
@@ -492,19 +488,19 @@ dlg:button {
                     if i < j then
                         -- Dither colors.
                         local ditherImage <const> = Image(swatchSpec)
-
-                        -- TODO: Replace with string bytes approach? Might
-                        -- have to create yet another dictionary for packed
-                        -- binary strings.
-                        local dithPxItr <const> = ditherImage:pixels()
-                        for pixel in dithPxItr do
-                            local xpx <const> = pixel.x
-                            local ypx <const> = pixel.y
+                        ---@type string[]
+                        local ditherByteArr <const> = {}
+                        local n = 0
+                        while n < swatchArea do
+                            local xpx <const> = n % swatchSize
+                            local ypx <const> = n // swatchSize
                             local midx <const> = 1 + (xpx % mw) + (ypx % mh) * mw
                             local hex <const> = 0.5 >= matrix[midx]
                                 and rowHex or colHex
-                            pixel(hex)
+                            n = n + 1
+                            ditherByteArr[n] = strpack("<I4", hex)
                         end
+                        ditherImage.bytes = tconcat(ditherByteArr)
 
                         -- Display distance as a metric for how high
                         -- contrast the dither is.
@@ -548,13 +544,11 @@ dlg:button {
                         end
                     elseif useMix and i > j then
                         -- Mix colors.
-                        local lMixed <const> = (rowLab.l + colLab.l) * 0.5
-                        local aMixed <const> = (rowLab.a + colLab.a) * 0.5
-                        local bMixed <const> = (rowLab.b + colLab.b) * 0.5
-                        local tMixed <const> = (rowLab.alpha + colLab.alpha) * 0.5
-
                         local srgbMixed <const> = srLab2TosRgb(
-                            lMixed, aMixed, bMixed, tMixed)
+                            (rowLab.l + colLab.l) * 0.5,
+                            (rowLab.a + colLab.a) * 0.5,
+                            (rowLab.b + colLab.b) * 0.5,
+                            (rowLab.alpha + colLab.alpha) * 0.5)
                         local hexMixed <const> = toHex(srgbMixed)
 
                         local mixImage <const> = Image(swatchSpec)
