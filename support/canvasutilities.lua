@@ -579,13 +579,6 @@ function CanvasUtilities.graphBezier(
         onchange = function()
             local args <const> = dialog.data
             local easeFunc <const> = args[easeFuncsId] --[[@as string]]
-
-            -- Flat lines:
-            -- { 0.0, 0.5, 0.33333, 0.50000, 0.66667, 0.50000, 1.0, 0.5 }
-            -- { 0.0, 0.5, 0.27614, 0.77614, 0.72386, 0.77614, 1.0, 0.5 }
-            -- { 0.0, 0.5, 0.27614, 0.22386, 0.72386, 0.22386, 1.0, 0.5 }
-            -- { 0.0, 0.5, 0.50000, 1.00000, 0.50000, 0.00000, 1.0, 0.5 }
-            -- { 0.0, 0.5, 0.50000, 0.00000, 0.50000, 1.00000, 1.0, 0.5 }
             if easeFunc ~= "CUSTOM" then
                 local presetPoints = {
                     0.0, 0.0,

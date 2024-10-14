@@ -479,23 +479,7 @@ function Mesh2.polygon(sectors)
     end
     local fs = { f }
 
-    local name = "Polygon"
-    if vSect == 3 then
-        name = "Triangle"
-    elseif vSect == 4 then
-        name = "Quadrilateral"
-    elseif vSect == 5 then
-        name = "Pentagon"
-    elseif vSect == 6 then
-        name = "Hexagon"
-    elseif vSect == 7 then
-        name = "Heptagon"
-    elseif vSect == 8 then
-        name = "Octagon"
-    elseif vSect == 9 then
-        name = "Enneagon"
-    end
-
+    local name <const> = string.format("Polygon %d", vSect)
     return Mesh2.new(fs, vs, name)
 end
 
@@ -564,11 +548,9 @@ end
 ---@param a Mesh2 mesh
 ---@return string
 function Mesh2.toJson(a)
+    -- TODO: Test this.
+    local strfmt <const> = string.format
     local tconcat <const> = table.concat
-
-    local str = "{\"name\":\""
-    str = str .. a.name
-    str = str .. "\",\"fs\":["
 
     local fs <const> = a.fs
     local fsLen <const> = #fs
@@ -582,20 +564,14 @@ function Mesh2.toJson(a)
         local fLen <const> = #f
         ---@type integer[]
         local fStrArr <const> = {}
-        local fStr = "["
 
         local j = 0
         while j < fLen do
             j = j + 1
             fStrArr[j] = f[j] - 1
         end
-        fStr = fStr .. tconcat(fStrArr, ",")
-        fStr = fStr .. "]"
-        fsStrArr[i] = fStr
+        fsStrArr[i] = strfmt("[%s]", tconcat(fStrArr, ","))
     end
-
-    str = str .. tconcat(fsStrArr, ",")
-    str = str .. "],\"vs\":["
 
     local vs <const> = a.vs
     local vsLen <const> = #vs
@@ -608,9 +584,11 @@ function Mesh2.toJson(a)
         vsStrArr[k] = Vec2.toJson(vs[k])
     end
 
-    str = str .. tconcat(vsStrArr, ",")
-    str = str .. "]}"
-    return str
+    return strfmt(
+        "{\"name\":\"%s\",\"fs\":[%s],\"vs\":[%s]}",
+        a.name,
+        tconcat(fsStrArr, ","),
+        tconcat(vsStrArr, ","))
 end
 
 ---Restructures the mesh so that each face index refers to unique data.
