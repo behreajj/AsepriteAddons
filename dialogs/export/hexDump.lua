@@ -149,8 +149,10 @@ dlg:button {
     text = "CO&NSOLE",
     focus = true,
     onclick = function()
+        local activeSprite <const> = app.sprite
         AseUtilities.preserveForeBack()
         app.command.DeveloperConsole()
+        if activeSprite then app.sprite = activeSprite end
     end
 }
 
