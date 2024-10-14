@@ -153,7 +153,8 @@ end
 ---@return Clr
 ---@nodiscard
 function Clr.blendInternal(a, b)
-    -- TODO: Replace this with AseUtilities.blendRgbaChar?
+    -- TODO: This is used by only gradientOutline.
+    -- Replace this with AseUtilities.blendRgbaChar?
     local t <const> = b.a
     local u <const> = 1.0 - t
     local v <const> = a.a

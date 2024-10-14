@@ -356,29 +356,21 @@ end
 ---@return string
 ---@nodiscard
 function Curve3.toJson(c)
-    local str = "{\"name\":\""
-    str = str .. c.name
-    str = str .. "\",\"closedLoop\":"
-    if c.closedLoop then
-        str = str .. "true"
-    else
-        str = str .. "false"
-    end
-    str = str .. ",\"knots\":["
-
     ---@type string[]
-    local strArr <const> = {}
+    local knotStrArr <const> = {}
     local kns <const> = c.knots
     local knsLen <const> = #kns
     local i = 0
     while i < knsLen do
         i = i + 1
-        strArr[i] = Knot3.toJson(kns[i])
+        knotStrArr[i] = Knot3.toJson(kns[i])
     end
 
-    str = str .. table.concat(strArr, ",")
-    str = str .. "]}"
-    return str
+    return string.format(
+        "{\"name\":\"%s\",\"closedLoop\":%s,\"knots\":[%s]}",
+        c.name,
+        c.closedLoop and "true" or "false",
+        table.concat(knotStrArr, ","))
 end
 
 return Curve3

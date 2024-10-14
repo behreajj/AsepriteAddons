@@ -1022,7 +1022,6 @@ end
 ---@return integer
 ---@nodiscard
 function Utilities.round(x)
-    -- math.tointeger(-0.000001) = -1, so modf must be used.
     local ix <const>, fx <const> = math.modf(x)
     if ix <= 0 and fx <= -0.5 then
         return ix - 1
