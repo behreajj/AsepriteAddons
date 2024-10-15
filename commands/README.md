@@ -30,6 +30,8 @@ Unlike `dialog` scripts, it's not always apparent what `commands` scripts do. No
 
 - `dereference`: Converts a reference layer to a normal layer. Transfers the reference layer's parent to the new layer.
 
+- `findLikeImages`: Assigns a signed 64 bit integer hash of an image to the key "hash" in non empty cels' [property](https://github.com/aseprite/api/blob/main/api/properties.md). Cels that contain duplicate images according to the hash are highlighted in red.
+
 - `flattenGroup`: Flattens a group layer. Includes locked layers, but excludes hidden layers.
 
 - `groupLayers`: Places layers in the active range into a new group layer. If all child layers have the same parent, the group is placed under the parent. Does not group background layers.

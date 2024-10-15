@@ -4,7 +4,6 @@ local sprite <const> = app.site.sprite
 if not sprite then return end
 
 local sprColorMode <const> = sprite.colorMode
-local palettes <const> = sprite.palettes
 
 local leaves <const> = AseUtilities.getLayerHierarchy(sprite,
     true, true, true, true)
