@@ -2564,7 +2564,6 @@ end
 ---resized with nearest neighbor sampling. Does not distinguish between
 ---different color modes, as the hash function treats on the image bytes as
 ---a string. For best results, trim images of alpha prior to use.
----The hash algorithm is "djb2" by Daniel J. Bernstein.
 ---@param source Image source image
 ---@param sizeThresh integer? size threshold
 function AseUtilities.hashImage(source, sizeThresh)
