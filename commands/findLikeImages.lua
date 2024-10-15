@@ -17,8 +17,6 @@ local lenComp <const> = lenLeaves * lenFrObjs
 local sizeThresh <const> = 256
 
 local hash <const> = AseUtilities.hashImage
-local fingerprint <const> = AseUtilities.fingerprint
-local getPalette <const> = AseUtilities.getPalette
 local tileMapToImage <const> = AseUtilities.tileMapToImage
 
 ---@type table<integer, Cel>
@@ -46,8 +44,6 @@ app.transaction("Find Like Images", function()
                     image, tileSet, sprColorMode)
             end
 
-            -- local palette <const> = getPalette(frObj, palettes)
-            -- local fpstr <const> = fingerprint(image, palette)
             local fpint <const> = hash(image, sizeThresh)
 
             if dictionary[fpint] then
