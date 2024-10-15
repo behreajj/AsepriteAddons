@@ -2386,6 +2386,9 @@ end
 ---@param source Image source image
 ---@param sizeThresh integer? size threshold
 function AseUtilities.hashImage(source, sizeThresh)
+    -- Aseprite uses city hash:
+    -- https://github.com/aseprite/aseprite/blob/main/src/doc/primitives.cpp#L545
+
     local bytes = source.bytes
     if sizeThresh and sizeThresh > 0 then
         local srcSpec <const> = source.spec
@@ -2403,27 +2406,7 @@ function AseUtilities.hashImage(source, sizeThresh)
         end
     end
 
-    local strbyte <const> = string.byte
-    local lenBytes <const> = #bytes
-
-    -- http://www.cs.yorku.ca/~oz/hash.html
-    -- https://burtleburtle.net/bob/hash/doobs.html
-    -- https://softwareengineering.stackexchange.com/questions/49550/
-    -- which-hashing-algorithm-is-best-for-uniqueness-and-speed/145633
-    -- Looks like Aseprite uses city hash:
-    -- https://github.com/aseprite/aseprite/blob/main/src/doc/primitives.cpp#L545
-
-    local fnvBasis <const> = 0xcbf29ce484222325
-    local fnvPrime <const> = 0x00000100000001b3
-
-    local h = fnvBasis
-    local i = 0
-    while i < lenBytes do
-        i = i + 1
-        h = h ~ strbyte(bytes, i)
-        h = h * fnvPrime
-    end
-    return h
+    return Utilities.fnvHash(bytes)
 end
 
 ---Converts a 32 bit ABGR hexadecimal integer to an Aseprite Color object.
