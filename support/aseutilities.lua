@@ -1692,10 +1692,10 @@ function AseUtilities.filterLayers(
     end
 end
 
----Generates a 256 bit byte string from an image. Creates a 16
----by 16 copy of the image, then finds its mean lightness, a, b and alpha. Each
----bit is set based on whether the pixel is less or greater than the mean.
----Returns an empty string if the image is a tile map.
+---Generates a 128 bit string fingerprint, or perceptual hash, from an image.
+---Creates a 16 by 16 copy of the image, then finds its mean lightness, a, b
+---and alpha. Each bit is set based on whether the pixel is less or greater
+---than the mean. Returns an empty string if the image is a tile map.
 ---@param source Image source image
 ---@param palette Palette? source palette
 ---@return string fingerprint
@@ -1739,7 +1739,7 @@ end
 ---Generates fingerprints, or perceptual hashes, from an image. Creates a 16
 ---by 16 copy of the image, then finds its mean lightness, a, b and alpha. Each
 ---bit is set based on whether the pixel is less or greater than the mean.
----Returns four arrays containined 32 bytes (8 * 32 = 16 * 16 = 256).
+---Returns four arrays containining 32 bytes each (8 * 32 = 16 * 16 = 256).
 ---Returns empty arrays if the image is a tile map.
 ---@param source Image source image
 ---@param palette Palette? source palette
@@ -2557,6 +2557,51 @@ function AseUtilities.grayHexes(count)
         result[i] = 0xff000000 | g << 0x10 | g << 0x08 | g
     end
     return result
+end
+
+---Generates a 64 bit integer hash code for an image. If a size threshold is
+---given, and the image's area exceeds the threshold squared, then the image is
+---resized with nearest neighbor sampling. Does not distinguish between
+---different color modes, as the hash function treats on the image bytes as
+---a string. For best results, trim images of alpha prior to use.
+---The hash algorithm is "djb2" by Daniel J. Bernstein.
+---@param source Image source image
+---@param sizeThresh integer? size threshold
+function AseUtilities.hashImage(source, sizeThresh)
+    local srcSpec <const> = source.spec
+    local cmSrc <const> = srcSpec.colorMode
+
+    local bytes = source.bytes
+    if sizeThresh and sizeThresh > 0 then
+        local wSrc <const> = srcSpec.width
+        local hSrc <const> = srcSpec.height
+        local alphaIndex <const> = srcSpec.transparentColor
+        local srcBpp <const> = source.bytesPerPixel
+
+        local alphaIndexVerif <const> = (cmSrc ~= ColorMode.INDEXED
+                or (alphaIndex >= 0 and alphaIndex < 256))
+            and alphaIndex
+            or 0
+        local srcArea <const> = wSrc * hSrc
+        local sqThresh <const> = sizeThresh * sizeThresh
+
+        if srcArea > sqThresh then
+            bytes = Utilities.resizePixelsNearest(bytes, wSrc, hSrc,
+                sizeThresh, sizeThresh, srcBpp, alphaIndexVerif)
+        end
+    end
+
+    -- http://www.cs.yorku.ca/~oz/hash.html
+    -- https://burtleburtle.net/bob/hash/doobs.html
+    local i = 0
+    local h = 5381
+    local strbyte <const> = string.byte
+    local lenBytes <const> = #bytes
+    while i < lenBytes do
+        i = i + 1
+        h = ((h << 5) + h) + strbyte(bytes, i)
+    end
+    return h
 end
 
 ---Converts a 32 bit ABGR hexadecimal integer to an Aseprite Color object.

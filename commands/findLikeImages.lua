@@ -14,13 +14,12 @@ local frObjs <const> = sprite.frames
 local lenFrObjs <const> = #frObjs
 
 local lenComp <const> = lenLeaves * lenFrObjs
+local sizeThresh <const> = 256
 
+local hash <const> = AseUtilities.hashImage
 local fingerprint <const> = AseUtilities.fingerprint
 local getPalette <const> = AseUtilities.getPalette
 local tileMapToImage <const> = AseUtilities.tileMapToImage
-local strbyte <const> = string.byte
-local strfmt <const> = string.format
-local tconcat <const> = table.concat
 
 ---@type table<integer, Cel>
 local dictionary <const> = {}
@@ -41,16 +40,18 @@ app.transaction("Find Like Images", function()
         local tileSet <const> = leaf.tileset
         local cel <const> = leaf:cel(frObj)
         if cel then
-            local palette <const> = getPalette(frObj, palettes)
             local image = cel.image
             if isTilemap and tileSet then
                 image = tileMapToImage(
                     image, tileSet, sprColorMode)
             end
-            local fpstr <const> = fingerprint(image, palette)
 
-            if dictionary[fpstr] then
-                local origCel <const> = dictionary[fpstr]
+            -- local palette <const> = getPalette(frObj, palettes)
+            -- local fpstr <const> = fingerprint(image, palette)
+            local fpint <const> = hash(image, sizeThresh)
+
+            if dictionary[fpint] then
+                local origCel <const> = dictionary[fpint]
                 if image.id == origCel.image.id then
                     cel.color = linked
                 else
@@ -58,9 +59,11 @@ app.transaction("Find Like Images", function()
                     origCel.color = original
                 end
             else
-                dictionary[fpstr] = cel
+                dictionary[fpint] = cel
                 cel.color = clear
             end
+
+            cel.properties["hash"] = fpint
         end
         h = h + 1
     end
