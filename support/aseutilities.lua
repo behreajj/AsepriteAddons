@@ -2591,15 +2591,23 @@ function AseUtilities.hashImage(source, sizeThresh)
         end
     end
 
-    -- http://www.cs.yorku.ca/~oz/hash.html
-    -- https://burtleburtle.net/bob/hash/doobs.html
-    local i = 0
-    local h = 5381
     local strbyte <const> = string.byte
     local lenBytes <const> = #bytes
+
+    -- http://www.cs.yorku.ca/~oz/hash.html
+    -- https://burtleburtle.net/bob/hash/doobs.html
+    -- https://softwareengineering.stackexchange.com/questions/49550/
+    -- which-hashing-algorithm-is-best-for-uniqueness-and-speed/145633
+
+    local fnvBasis <const> = 0xcbf29ce484222325
+    local fnvPrime <const> = 0x00000100000001b3
+
+    local h = fnvBasis
+    local i = 0
     while i < lenBytes do
         i = i + 1
-        h = ((h << 5) + h) + strbyte(bytes, i)
+        h = h ~ strbyte(bytes, i)
+        h = h * fnvPrime
     end
     return h
 end
