@@ -61,18 +61,6 @@ app.transaction("Find Like Images", function()
                 dictionary[fpstr] = cel
                 cel.color = clear
             end
-
-            ---@type string[]
-            local hexStrArr <const> = {}
-            local lenFpstr <const> = #fpstr
-            local k = 0
-            while k < lenFpstr do
-                k = k + 1
-                local byte <const> = strbyte(fpstr, k)
-                local char <const> = strfmt("%02x", byte)
-                hexStrArr[k] = char
-            end
-            cel.properties["fingerprint"] = tconcat(hexStrArr)
         end
         h = h + 1
     end
