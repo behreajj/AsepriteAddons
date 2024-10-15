@@ -2567,23 +2567,6 @@ function AseUtilities.padImage(image, padding)
     return padded
 end
 
----Converts two signed 64 bit integers to an Aseprite Uuid.
----@param left integer left integer
----@param right integer right integer
----@return Uuid
-function AseUtilities.intsToUuid(left, right)
-    local l0 <const> = (left & 0xffffffff00000000) >> 0x20
-    local l1 <const> = (left & 0xffff0000) >> 0x10
-    local l2 <const> = left & 0xffff
-
-    local r1 <const> = right & 0xffffffffffff
-    local r0 <const> = (right & 0xffff000000000000) >> 0x30
-
-    return Uuid(string.format(
-        "%08x-%04x-%04x-%04x-%012x",
-        l0, l1, l2, r0, r1))
-end
-
 ---Parses an Aseprite Tag to an array of frame indices. For example, a tag with
 ---a fromFrame of 8 and a toFrame of 10 will return 8, 9, 10 if the tag has
 ---FORWARD direction. 10, 9, 8 for REVERSE. Ping-pong and its reverse excludes
@@ -3690,22 +3673,6 @@ function AseUtilities.upscaleImageForExport(source, wScale, hScale)
 
     target.bytes = table.concat(resized)
     return target
-end
-
----Converts an Aseprite Uuid to two signed 64 bit integers.
----@param u Uuid unique identifier
----@return integer left
----@return integer right
-function AseUtilities.uuidToInts(u)
-    local left, right = 0, 0
-    local i = 0
-    while i < 8 do
-        local i8 <const> = i * 8
-        left = left | (u[8 - i] << i8)
-        right = right | (u[16 - i] << i8)
-        i = i + 1
-    end
-    return left, right
 end
 
 ---Converts a Vec2 to an Aseprite Point.
