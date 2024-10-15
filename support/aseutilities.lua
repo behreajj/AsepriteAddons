@@ -2567,26 +2567,20 @@ end
 ---@param source Image source image
 ---@param sizeThresh integer? size threshold
 function AseUtilities.hashImage(source, sizeThresh)
-    local srcSpec <const> = source.spec
-    local cmSrc <const> = srcSpec.colorMode
-
     local bytes = source.bytes
     if sizeThresh and sizeThresh > 0 then
+        local srcSpec <const> = source.spec
         local wSrc <const> = srcSpec.width
         local hSrc <const> = srcSpec.height
-        local alphaIndex <const> = srcSpec.transparentColor
-        local srcBpp <const> = source.bytesPerPixel
-
-        local alphaIndexVerif <const> = (cmSrc ~= ColorMode.INDEXED
-                or (alphaIndex >= 0 and alphaIndex < 256))
-            and alphaIndex
-            or 0
-        local srcArea <const> = wSrc * hSrc
-        local sqThresh <const> = sizeThresh * sizeThresh
-
-        if srcArea > sqThresh then
+        if wSrc * hSrc > sizeThresh * sizeThresh then
+            local cmSrc <const> = srcSpec.colorMode
+            local alphaIndex <const> = srcSpec.transparentColor
+            local alphaIndexVerif <const> = (cmSrc ~= ColorMode.INDEXED
+                    or (alphaIndex >= 0 and alphaIndex < 256))
+                and alphaIndex
+                or 0
             bytes = Utilities.resizePixelsNearest(bytes, wSrc, hSrc,
-                sizeThresh, sizeThresh, srcBpp, alphaIndexVerif)
+                sizeThresh, sizeThresh, source.bytesPerPixel, alphaIndexVerif)
         end
     end
 
