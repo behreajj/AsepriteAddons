@@ -44,22 +44,24 @@ app.transaction("Find Like Images", function()
                     image, tileSet, sprColorMode)
             end
 
-            local fpint <const> = hash(image, sizeThresh)
+            if not image:isEmpty() then
+                local fpint <const> = hash(image, sizeThresh)
 
-            if dictionary[fpint] then
-                local origCel <const> = dictionary[fpint]
-                if image.id == origCel.image.id then
-                    cel.color = linked
+                if dictionary[fpint] then
+                    local origCel <const> = dictionary[fpint]
+                    if image.id == origCel.image.id then
+                        cel.color = linked
+                    else
+                        cel.color = duplicate
+                        origCel.color = original
+                    end
                 else
-                    cel.color = duplicate
-                    origCel.color = original
+                    dictionary[fpint] = cel
+                    cel.color = clear
                 end
-            else
-                dictionary[fpint] = cel
-                cel.color = clear
-            end
 
-            cel.properties["hash"] = fpint
+                cel.properties["hash"] = fpint
+            end
         end
         h = h + 1
     end

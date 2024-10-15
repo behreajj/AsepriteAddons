@@ -2380,9 +2380,13 @@ end
 
 ---Generates a 64 bit integer hash code for an image. If a size threshold is
 ---given, and the image's area exceeds the threshold squared, then the image is
----resized with nearest neighbor sampling. Does not distinguish between
----different color modes, as the hash function treats on the image bytes as
----a string. For best results, trim images of alpha prior to use.
+---resized with nearest neighbor sampling.
+---
+---Does not distinguish between different color modes, as the hash function
+---treats on the image bytes as a string.
+---
+---For best results, prior to use, trim images of excess alpha and filter out
+---empty images.
 ---@param source Image source image
 ---@param sizeThresh integer? size threshold
 function AseUtilities.hashImage(source, sizeThresh)

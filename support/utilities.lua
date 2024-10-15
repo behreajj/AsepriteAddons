@@ -225,26 +225,22 @@ function Utilities.flipPixelsY(source, w, h, bpp)
     return table.concat(flipped)
 end
 
----Hashes a string to a 64 bit integer with the Fowler Noll Vo method, version
----1a. See https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function .
+---Hashes a string to a 64 bit integer with the Fowler Noll Vo method.
+---See https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function
+---and https://softwareengineering.stackexchange.com/q/49550 .
 ---@param s string string
 ---@return integer
+---@nodiscard
 function Utilities.fnvHash(s)
-    -- https://softwareengineering.stackexchange.com/questions/49550/
-    -- which-hashing-algorithm-is-best-for-uniqueness-and-speed/145633
-
     local strbyte <const> = string.byte
     local len <const> = #s
 
-    local fnvBasis <const> = 0xcbf29ce484222325
-    local fnvPrime <const> = 0x00000100000001b3
-
-    local h = fnvBasis
+    local h = 0xcbf29ce484222325
     local i = 0
     while i < len do
         i = i + 1
         h = h ~ strbyte(s, i)
-        h = h * fnvPrime
+        h = h * 0x100000001b3
     end
     return h
 end
