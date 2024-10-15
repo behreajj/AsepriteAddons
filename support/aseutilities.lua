@@ -1595,7 +1595,7 @@ function AseUtilities.filterCels(
                 xSel <const>,
                 ySel <const> = imageFromSel(sel, sprite, srcFrame)
 
-                -- Avoid containing extraneous cels.
+                -- Avoid empty cels.
                 if not selImage:isEmpty() then
                     local trgCel <const> = sprite:newCel(
                         srcLayer, srcFrame,
@@ -1739,7 +1739,7 @@ end
 ---Generates fingerprints, or perceptual hashes, from an image. Creates a 16
 ---by 16 copy of the image, then finds its mean lightness, a, b and alpha. Each
 ---bit is set based on whether the pixel is less or greater than the mean.
----Returns four arrays containining 32 bytes each (8 * 32 = 16 * 16 = 256).
+---Returns four arrays of 32 bytes each (8 * 32 = 16 * 16 = 256).
 ---Returns empty arrays if the image is a tile map.
 ---@param source Image source image
 ---@param palette Palette? source palette
@@ -2597,6 +2597,8 @@ function AseUtilities.hashImage(source, sizeThresh)
     -- https://burtleburtle.net/bob/hash/doobs.html
     -- https://softwareengineering.stackexchange.com/questions/49550/
     -- which-hashing-algorithm-is-best-for-uniqueness-and-speed/145633
+    -- Looks like Aseprite uses city hash:
+    -- https://github.com/aseprite/aseprite/blob/main/src/doc/primitives.cpp#L545
 
     local fnvBasis <const> = 0xcbf29ce484222325
     local fnvPrime <const> = 0x00000100000001b3
@@ -2771,8 +2773,8 @@ end
 ---one boundary so that other renderers don't draw it twice. Doesn't interpret
 ---a tag's repeat count.
 ---
----A tag may contain frame indices that are out of bounds for the sprite that
----contains the tag. Returns an empty array if so.
+---A tag may have frame indices that are out of bounds for the sprite that
+---has the tag. Returns an empty array if so.
 ---@param tag Tag Aseprite Tag
 ---@return integer[]
 ---@nodiscard
@@ -3617,8 +3619,8 @@ end
 ---Default width and height can be given in the event that the image is
 ---completely transparent.
 ---
----Returns a tuple containing the cropped image, the top left x and top left y.
----The top left should be added to the position of the cel that contained the
+---Returns a tuple with the cropped image, the top left x and top left y.
+---The top left should be added to the position of the cel that owned the
 ---source image.
 ---@param image Image aseprite image
 ---@param padding integer padding
@@ -3635,7 +3637,7 @@ function AseUtilities.trimImageAlpha(
     padVrf = math.abs(padVrf)
     local pad2 <const> = padVrf + padVrf
 
-    -- If the image contains no nonzero pixels, or is a tile map,
+    -- If the image has no nonzero pixels, or is a tile map,
     -- returns a rectangle of zero size. Old version which could
     -- work around this is at:
     -- 606a86e64801e63e18662650288ccd5df3b4ef27
@@ -3678,8 +3680,8 @@ end
 ---Default width and height can be given in the event that the image is
 ---completely transparent.
 ---
----Returns a tuple containing the cropped image, the top left x and top left y.
----The top left should be added to the position of the cel that contained the
+---Returns a tuple with the cropped image, the top left x and top left y.
+---The top left should be added to the position of the cel that owned the
 ---source image.
 ---@param map Image tile map image
 ---@param alphaIndex integer alpha mask index

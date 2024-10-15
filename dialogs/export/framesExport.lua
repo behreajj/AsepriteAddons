@@ -813,11 +813,11 @@ dlg:button {
                         sheetOrient)
                     sheetPacket.fileName = batchFileShort
                     sheetPackets[j] = sheetPacket
-                end
+                end -- End save sheet loop.
             else
                 -- This is not a viable option for now, unless batched
                 -- individual images in subfolders were implemented.
-            end
+            end -- End use batches check.
         else
             local expandPot <const> = AseUtilities.expandImageToPow2
             local padImage <const> = AseUtilities.padImage
@@ -880,9 +880,9 @@ dlg:button {
 
                     -- This needs to be re-set because of the saveJson option.
                     packets1[k].cel.fileName = fileNameShort
-                end
-            end
-        end
+                end -- End save image loop.
+            end     -- End use sheet check.
+        end         -- End use batches check.
 
         if saveJson then
             -- Cache Json methods.
