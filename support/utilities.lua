@@ -225,13 +225,15 @@ function Utilities.flipPixelsY(source, w, h, bpp)
     return table.concat(flipped)
 end
 
----Hashes a string to a 64 bit integer with the Fowler Noll Vo method.
+---Hashes a string to a signed 64 bit integer based on the Fowler Noll Vo method.
 ---See https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function
 ---and https://softwareengineering.stackexchange.com/q/49550 .
 ---@param s string string
 ---@return integer
 ---@nodiscard
 function Utilities.fnvHash(s)
+    -- This is intended for use with unsigned 64 bit integers,
+    -- but Lua is limited to signed, which changes hash outcomes.
     local strbyte <const> = string.byte
     local len <const> = #s
 
