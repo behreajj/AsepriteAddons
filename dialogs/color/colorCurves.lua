@@ -64,64 +64,6 @@ local defaults <const> = {
 
 local dlg <const> = Dialog { title = "Color Curves" }
 
----@param srcImg Image
----@return table<integer, { l: number, a: number, b: number, alpha: number }> hexToLabDict
----@return number aMin
----@return number aMax
----@return number bMin
----@return number bMax
-local function auditImage(srcImg)
-    local sRgbaToLab <const> = Clr.sRgbToSrLab2
-    local strbyte <const> = string.byte
-    local clrnew <const> = Clr.new
-
-    ---@type table<integer, {l: number, a: number, b: number, alpha: number}>
-    local hexToLabDict <const> = {}
-    local labZero <const> = { l = 0.0, a = 0.0, b = 0.0, alpha = 0.0 }
-    local aMin = 2147483647
-    local bMin = 2147483647
-    local aMax = -2147483648
-    local bMax = -2147483648
-
-    local srcBytes <const> = srcImg.bytes
-    local lenSrcImg <const> = srcImg.width * srcImg.height
-    local j = 0
-    while j < lenSrcImg do
-        local j4 <const> = j * 4
-        local r8 <const>, g8 <const>, b8 <const>, a8 <const> = strbyte(
-            srcBytes, 1 + j4, 4 + j4)
-
-        local h32 <const> = a8 << 0x18 | b8 << 0x10 | g8 << 0x08 | r8
-
-        if not hexToLabDict[h32] then
-            hexToLabDict[h32] = labZero
-            if a8 > 0 then
-                -- This could be placed outside of the a8 > 0 check if you
-                -- wanted zero alpha colors to preserve their RGB components.
-                -- See colorAdjust for consistency.
-                local srgbSrc <const> = clrnew(
-                    r8 / 255.0,
-                    g8 / 255.0,
-                    b8 / 255.0,
-                    a8 / 255.0)
-                local labSrc <const> = sRgbaToLab(srgbSrc)
-                hexToLabDict[h32] = labSrc
-
-                local aSrc <const> = labSrc.a
-                local bSrc <const> = labSrc.b
-
-                if aSrc < aMin then aMin = aSrc end
-                if aSrc > aMax then aMax = aSrc end
-                if bSrc < bMin then bMin = bSrc end
-                if bSrc > bMax then bMax = bSrc end
-            end
-        end
-        j = j + 1
-    end
-
-    return hexToLabDict, aMin, aMax, bMin, bMax
-end
-
 ---@param coPostfix string
 local function setInputFromColor(coPostfix)
     local site <const> = app.site
@@ -417,72 +359,117 @@ dlg:button {
         local useRelative <const> = args.useRelative --[[@as boolean]]
         local aAbsMin <const> = defaults.aAbsMin
         local aAbsMax <const> = -defaults.aAbsMin
-        local aAbsRange <const> = aAbsMax - aAbsMin
-        local aAbsDenom <const> = 1.0 / aAbsRange
 
         local bAbsMin <const> = defaults.bAbsMin
         local bAbsMax <const> = -defaults.bAbsMin
-        local bAbsRange <const> = bAbsMax - bAbsMin
-        local bAbsDenom <const> = 1.0 / bAbsRange
 
-        -- Cache methods.
+        local labZero <const> = { l = 0.0, a = 0.0, b = 0.0, alpha = 0.0 }
+
+        -- Used in naming transactions by frame.
+        local docPrefs <const> = app.preferences.document(activeSprite)
+        local tlPrefs <const> = docPrefs.timeline
+        local frameUiOffset <const> = tlPrefs.first_frame - 1 --[[@as integer]]
+
+        -- Cache global methods to local.
+        local max <const> = math.max
+        local min <const> = math.min
         local strfmt <const> = string.format
+        local strpack <const> = string.pack
+        local strsub <const> = string.sub
+        local strunpack <const> = string.unpack
+        local toHex <const> = Clr.toHex
+        local fromHex <const> = Clr.fromHexAbgr32
+        local labTosRgb <const> = Clr.srLab2TosRgb
+        local sRgbaToLab <const> = Clr.sRgbToSrLab2
+        local tconcat <const> = table.concat
+        local bisectRight <const> = Utilities.bisectRight
         local tilesToImage <const> = AseUtilities.tileMapToImage
         local transact <const> = app.transaction
-        local labTosRgb <const> = Clr.srLab2TosRgb
-        local toHex <const> = Clr.toHex
-        local bisectRight <const> = Utilities.bisectRight
-        local min <const> = math.min
-        local max <const> = math.max
 
         local k = 0
         while k < lenFrames do
             k = k + 1
-            local srcFrame <const> = frames[k]
-            local srcCel <const> = srcLayer:cel(srcFrame)
+            local frIdx <const> = frames[k]
+            local srcCel <const> = srcLayer:cel(frIdx)
+
             if srcCel then
                 local srcImg = srcCel.image
                 if isTilemap then
                     srcImg = tilesToImage(srcImg, tileSet, colorMode)
                 end
 
-                local aMin = aAbsMin
-                local aMax = aAbsMax
-                local aRange = aAbsRange
-                local aViable = true
-                local aDenom = aAbsDenom
+                local srcSpec <const> = srcImg.spec
+                local wSrc <const> = srcSpec.width
+                local hSrc <const> = srcSpec.height
+                local areaSrc <const> = wSrc * hSrc
+                local srcBytes <const> = srcImg.bytes
 
-                local bMin = bAbsMin
-                local bMax = bAbsMax
-                local bRange = bAbsRange
-                local bViable = true
-                local bDenom = bAbsDenom
+                ---@type table<integer, {l: number, a: number, b: number, alpha: number}>
+                local abgr32ToLab <const> = {}
+                ---@type table<integer, integer[]>
+                local abgr32Idcs <const> = {}
 
-                local hexToLabDict = {}
-                if useRelative then
-                    -- For animations this will cause flickering because each
-                    -- image is independent from the prior frame. Would need a
-                    -- preliminary loop to build a dict across frames.
-                    hexToLabDict, aMin, aMax, bMin, bMax = auditImage(srcImg)
-                    aRange = aMax - aMin
-                    aViable = aRange > 0.5
-                    aDenom = 0.0
-                    if aViable then aDenom = 1.0 / aRange end
+                local aMin = 2147483647
+                local bMin = 2147483647
+                local aMax = -2147483648
+                local bMax = -2147483648
 
-                    bRange = bMax - bMin
-                    bViable = bRange > 0.5
-                    bDenom = 0.0
-                    if bViable then bDenom = 1.0 / bRange end
-                else
-                    hexToLabDict, _, _, _, _ = auditImage(srcImg)
+                local m = 0
+                while m < areaSrc do
+                    local m4 <const> = m * 4
+                    local abgr32 <const> = strunpack("<I4", strsub(
+                        srcBytes, 1 + m4, 4 + m4))
+
+                    -- Find coordinates where the color is used.
+                    if abgr32Idcs[abgr32] then
+                        local idcsArr <const> = abgr32Idcs[abgr32]
+                        idcsArr[#idcsArr + 1] = m
+                    else
+                        abgr32Idcs[abgr32] = { m }
+                    end
+
+                    -- Convert new colors to lab, find a, b min and max.
+                    if not abgr32ToLab[abgr32] then
+                        abgr32ToLab[abgr32] = labZero
+                        if abgr32 & 0xff000000 ~= 0 then
+                            local srgbSrc <const> = fromHex(abgr32)
+                            local labSrc <const> = sRgbaToLab(srgbSrc)
+                            abgr32ToLab[abgr32] = labSrc
+
+                            local aSrc <const> = labSrc.a
+                            local bSrc <const> = labSrc.b
+
+                            if aSrc < aMin then aMin = aSrc end
+                            if aSrc > aMax then aMax = aSrc end
+                            if bSrc < bMin then bMin = bSrc end
+                            if bSrc > bMax then bMax = bSrc end
+                        end -- End pixel is not mask.
+                    end     -- End new entry block.
+
+                    m = m + 1
+                end -- End audit image loop.
+
+                if not useRelative then
+                    aMin = aAbsMin
+                    aMax = aAbsMax
+                    bMin = bAbsMin
+                    bMax = bAbsMax
                 end
 
-                ---@type table<integer, integer>
-                local srcToTrgDict <const> = {}
-                for hex, lab in pairs(hexToLabDict) do
+                local aRange <const> = aMax - aMin
+                local aViable <const> = aRange > 0.5
+                local aDenom <const> = aViable and 1.0 / aRange or 0.0
+
+                local bRange <const> = bMax - bMin
+                local bViable <const> = bRange > 0.5
+                local bDenom <const> = bViable and 1.0 / bRange or 0.0
+
+                ---@type string[]
+                local trgByteArr <const> = {}
+                for abgr32Src, labSrc in pairs(abgr32ToLab) do
                     -- Lightness.
-                    local lTrg = lab.l
-                    local lx <const> = lab.l * 0.01
+                    local lTrg = labSrc.l
+                    local lx <const> = labSrc.l * 0.01
                     local lSamples <const> = curveSamples[1]
                     local li = bisectRight(
                         lSamples, lx, samplesCompare)
@@ -491,9 +478,9 @@ dlg:button {
                     lTrg = ly * 100.0
 
                     -- A (green to magenta).
-                    local aTrg = lab.a
+                    local aTrg = labSrc.a
                     if aViable then
-                        local ax <const> = (lab.a - aMin) * aDenom
+                        local ax <const> = (labSrc.a - aMin) * aDenom
                         local aSamples <const> = curveSamples[2]
                         local ai = bisectRight(
                             aSamples, ax, samplesCompare)
@@ -503,9 +490,9 @@ dlg:button {
                     end
 
                     -- B (blue to yellow).
-                    local bTrg = lab.b
+                    local bTrg = labSrc.b
                     if bViable then
-                        local bx <const> = (lab.b - bMin) * bDenom
+                        local bx <const> = (labSrc.b - bMin) * bDenom
                         local bSamples <const> = curveSamples[3]
                         local bi = bisectRight(
                             bSamples, bx, samplesCompare)
@@ -515,8 +502,8 @@ dlg:button {
                     end
 
                     -- Transparency.
-                    local tTrg = lab.alpha
-                    local tx <const> = lab.alpha
+                    local tTrg = labSrc.alpha
+                    local tx <const> = labSrc.alpha
                     local tSamples <const> = curveSamples[4]
                     local ti = bisectRight(
                         tSamples, tx, samplesCompare)
@@ -524,25 +511,33 @@ dlg:button {
                     local ty <const> = tSamples[ti].y
                     tTrg = ty
 
-                    local clrTrg <const> = labTosRgb(lTrg, aTrg, bTrg, tTrg)
-                    srcToTrgDict[hex] = toHex(clrTrg)
+                    -- Find adjusted lab color, convert to hex.
+                    local srgbTrg <const> = labTosRgb(lTrg, aTrg, bTrg, tTrg)
+                    local abgr32Trg <const> = toHex(srgbTrg)
+                    local abgr32Packed <const> = strpack("<I4", abgr32Trg)
+
+                    -- Fill in target pixels with adjusted color.
+                    local idcsArr <const> = abgr32Idcs[abgr32Src]
+                    local lenIdcsArr <const> = #idcsArr
+                    local n = 0
+                    while n < lenIdcsArr do
+                        n = n + 1
+                        local idx <const> = idcsArr[n]
+                        trgByteArr[1 + idx] = abgr32Packed
+                    end
                 end
 
-                -- TODO: Replace with string bytes method.
-                local trgImg <const> = srcImg:clone()
-                local trgPxItr <const> = trgImg:pixels()
-                for trgPixel in trgPxItr do
-                    trgPixel(srcToTrgDict[trgPixel()])
-                end
+                local trgImg <const> = Image(srcSpec)
+                trgImg.bytes = tconcat(trgByteArr)
 
-                transact(strfmt("Levels Adjust %d", srcFrame),
+                transact(strfmt("Levels Adjust %d", frIdx + frameUiOffset),
                     function()
                         local trgCel <const> = activeSprite:newCel(
-                            trgLayer, srcFrame, trgImg, srcCel.position)
+                            trgLayer, frIdx, trgImg, srcCel.position)
                         trgCel.opacity = srcCel.opacity
                     end)
-            end
-        end
+            end -- End cel exists.
+        end     -- End frames loop.
 
         if isSelect then
             app.transaction("Delete Layer", function()
@@ -565,39 +560,6 @@ dlg:button {
                 }
             }
         end
-    end
-}
-
-dlg:button {
-    id = "reset",
-    text = "&RESET",
-    focus = false,
-    onclick = function()
-        local init <const> = {
-            0.0, 0.0,
-            0.33333, 0.33333,
-            0.66667, 0.66667,
-            1.0, 1.0
-        }
-        local strfmt <const> = string.format
-
-        local i = 0
-        while i < lenIdPrefixes do
-            i = i + 1
-            local idPrefix <const> = idPrefixes[i]
-
-            local j = 0
-            while j < lenCoPostfixes do
-                j = j + 1
-                local coPostfix <const> = coPostfixes[j]
-                local id <const> = idPrefix .. "_" .. coPostfix
-                dlg:modify { id = id, text = strfmt("%.5f", init[j]) }
-            end
-
-            local easeFuncsId <const> = idPrefix .. "_easeFuncs"
-            dlg:modify { id = easeFuncsId, option = "LINEAR" }
-        end
-        dlg:repaint()
     end
 }
 
