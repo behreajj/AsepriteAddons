@@ -3342,11 +3342,15 @@ function AseUtilities.trimCelToSelect(cel, mask, hexDefault)
     local celImg <const> = cel.image
     local celSpec <const> = celImg.spec
 
+    local wTrim <const> = math.max(1, clip.width)
+    local hTrim <const> = math.max(1, clip.height)
     local alphaIndex <const> = celSpec.transparentColor
+    local colorMode <const> = celSpec.colorMode
+
     local trimSpec <const> = ImageSpec {
-        width = math.max(1, clip.width),
-        height = math.max(1, clip.height),
-        colorMode = celSpec.colorMode,
+        width = wTrim,
+        height = hTrim,
+        colorMode = colorMode,
         transparentColor = alphaIndex
     }
     trimSpec.colorSpace = celSpec.colorSpace
@@ -3360,18 +3364,31 @@ function AseUtilities.trimCelToSelect(cel, mask, hexDefault)
                 oldPos.y - celPos.y),
             255, BlendMode.SRC)
 
-        -- TODO: Remove pixel iterator.
-        -- TODO: alphaIndex needs to be verified to be less than 256
-        -- for indexed color mode.
-        local hexVrf <const> = hexDefault or alphaIndex
-        local pxItr <const> = trimImage:pixels()
-        for pixel in pxItr do
-            if not mask:contains(
-                    xClip + pixel.x,
-                    yClip + pixel.y) then
-                pixel(hexVrf)
+        local alphaIndexVerif <const> = (colorMode ~= ColorMode.INDEXED
+                or (alphaIndex >= 0 and alphaIndex < 256)) and
+            alphaIndex or 0
+        local hexVerif <const> = hexDefault or alphaIndexVerif
+        local trimBytesStr <const> = trimImage.bytes
+        local bpp <const> = trimImage.bytesPerPixel
+        local hexPacked <const> = string.pack("<I" .. bpp, hexVerif)
+        local strsub <const> = string.sub
+
+        ---@type string[]
+        local trimBytesArr <const> = {}
+        local areaTrim <const> = wTrim * hTrim
+        local i = 0
+        while i < areaTrim do
+            local byteStr = hexPacked
+            if mask:contains(
+                    xClip + i % wTrim,
+                    yClip + i // wTrim) then
+                local ibpp <const> = i * bpp
+                byteStr = strsub(trimBytesStr, 1 + ibpp, bpp + ibpp)
             end
+            i = i + 1
+            trimBytesArr[i] = byteStr
         end
+        trimImage.bytes = table.concat(trimBytesArr)
     end
     cel.image = trimImage
 end
