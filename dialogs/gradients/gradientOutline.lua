@@ -187,6 +187,9 @@ dlg:button {
 
         local activeSpec <const> = activeSprite.spec
         local colorMode <const> = activeSpec.colorMode
+        local colorSpace <const> = activeSpec.colorSpace
+        local alphaIndex <const> = activeSpec.transparentColor
+
         if colorMode ~= ColorMode.RGB then
             app.alert {
                 title = "Error",
@@ -333,14 +336,14 @@ dlg:button {
         end
 
         local itr2 <const> = iterations + iterations
-        local itrPoint <const> = Point(iterations, iterations)
-        local blendModeSrc <const> = BlendMode.SRC
+        local alphaIndexVerif <const> = (colorMode ~= ColorMode.INDEXED
+                or (alphaIndex >= 0 and alphaIndex < 256)) and
+            alphaIndex or 0
 
         -- Convert iterations to a factor given to gradient.
-        local toFac = 1.0
-        if iterations > 1 then
-            toFac = 1.0 / (iterations - 1.0)
-        end
+        local toFac <const> = iterations > 1
+            and 1.0 / (iterations - 1.0)
+            or 1.0
 
         -- Create target layer.
         -- Do not copy source layer blend mode.
@@ -384,36 +387,43 @@ dlg:button {
             local frIdx <const> = frIdcs[g]
             local srcCel <const> = srcLayer:cel(frIdx)
             if srcCel then
+                local srcPos <const> = srcCel.position
                 local srcImg = srcCel.image
                 if isTilemap then
                     srcImg = tilesToImage(srcImg, tileSet, colorMode)
                 end
 
                 local srcSpec <const> = srcImg.spec
-                local wTrg <const> = srcSpec.width + itr2
-                local hTrg <const> = srcSpec.height + itr2
+                local srcByteStr <const> = srcImg.bytes
+                local srcBpp <const> = srcImg.bytesPerPixel
+
+                local wSrc <const> = srcSpec.width
+                local hSrc <const> = srcSpec.height
+
+                local unpackFmt <const> = "<I" .. srcBpp
+                local wTrg <const> = wSrc + itr2
+                local hTrg <const> = hSrc + itr2
                 local areaTrg <const> = wTrg * hTrg
-
-                local trgSpec = createSpec(
-                    wTrg, hTrg, srcSpec.colorMode,
-                    srcSpec.colorSpace, srcSpec.transparentColor)
-                local trgImg <const> = Image(trgSpec)
-                trgImg:drawImage(srcImg, itrPoint, 255, blendModeSrc)
-                local trgByteStr <const> = trgImg.bytes
-
-                -- TODO: Avoid using drawImage above by reading from srcImg
-                -- into the array?
 
                 ---@type integer[]
                 local read = {}
                 ---@type integer[]
                 local write <const> = {}
+
                 local i = 0
                 while i < areaTrg do
-                    local i4 <const> = i * 4
-                    write[1 + i] = strunpack("<I4", strsub(trgByteStr,
-                        1 + i4, 4 + i4))
+                    local xSrc <const> = (i % wTrg) - iterations
+                    local ySrc <const> = (i // wTrg) - iterations
+
+                    local hex = alphaIndexVerif
+                    if ySrc >= 0 and ySrc < hSrc
+                        and xSrc >= 0 and xSrc < wSrc then
+                        local jbpp <const> = (ySrc * wSrc + xSrc) * srcBpp
+                        hex = strunpack(unpackFmt, strsub(srcByteStr,
+                            1 + jbpp, srcBpp + jbpp))
+                    end
                     i = i + 1
+                    write[i] = hex
                 end
 
                 h = 0
@@ -421,6 +431,7 @@ dlg:button {
                     h = h + 1
                     local hexOut <const> = hexesOutline[h]
 
+                    -- Copy write to read.
                     i = 0
                     while i < areaTrg do
                         i = i + 1
@@ -430,6 +441,8 @@ dlg:button {
                     i = 0
                     while i < areaTrg do
                         local cRead <const> = read[1 + i]
+                        -- TODO: Make this line and the neighbor line below
+                        -- friendlier to any color mode?
                         if (cRead & 0xff000000) == 0x0
                             or cRead == bkgHex then
                             -- Loop through matrix, check neighbors against
@@ -444,21 +457,20 @@ dlg:button {
                             while continue and j < activeCount do
                                 j = j + 1
                                 local offset <const> = activeOffsets[j]
+                                local xNbr <const> = xRead + offset[1]
                                 local yNbr <const> = yRead + offset[2]
-                                if yNbr >= 0 and yNbr < hTrg then
-                                    local xNbr <const> = xRead + offset[1]
-                                    if xNbr >= 0 and xNbr < wTrg then
-                                        local cIdx <const> = yNbr * wTrg + xNbr
-                                        local cNbr <const> = read[1 + cIdx]
-                                        if (cNbr & 0xff000000) ~= 0x0
-                                            and cNbr ~= bkgHex then
-                                            write[1 + i] = hexOut
-                                            continue = false
-                                        end -- Neighbor not transparent check.
-                                    end     -- x in bounds check.
-                                end         -- y in bounds check.
-                            end             -- Neighbors kernel.
-                        end                 -- Center transparent check.
+                                if yNbr >= 0 and yNbr < hTrg
+                                    and xNbr >= 0 and xNbr < wTrg then
+                                    local cIdx <const> = yNbr * wTrg + xNbr
+                                    local cNbr <const> = read[1 + cIdx]
+                                    if (cNbr & 0xff000000) ~= 0x0
+                                        and cNbr ~= bkgHex then
+                                        write[1 + i] = hexOut
+                                        continue = false
+                                    end -- Neighbor not transparent check.
+                                end     -- In bounds check.
+                            end         -- Neighbors kernel.
+                        end             -- Center transparent check.
 
                         i = i + 1
                     end -- End pixel loop.
@@ -471,6 +483,10 @@ dlg:button {
                     i = i + 1
                     writeByteStrArr[i] = strpack("<I4", write[i])
                 end
+
+                local trgSpec <const> = createSpec(wTrg, hTrg, colorMode,
+                    colorSpace, alphaIndexVerif)
+                local trgImg <const> = Image(trgSpec)
                 trgImg.bytes = tconcat(writeByteStrArr)
 
                 transact(
@@ -478,7 +494,7 @@ dlg:button {
                     function()
                         local trgCel <const> = activeSprite:newCel(
                             trgLayer, frIdx, trgImg,
-                            srcCel.position - itrPoint)
+                            Point(srcPos.x - iterations, srcPos.y - iterations))
                         trgCel.opacity = srcCel.opacity
                     end)
             end

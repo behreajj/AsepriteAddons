@@ -3341,6 +3341,7 @@ function AseUtilities.trimCelToSelect(cel, mask, hexDefault)
 
     local celImg <const> = cel.image
     local celSpec <const> = celImg.spec
+
     local alphaIndex <const> = celSpec.transparentColor
     local trimSpec <const> = ImageSpec {
         width = math.max(1, clip.width),
@@ -3360,6 +3361,8 @@ function AseUtilities.trimCelToSelect(cel, mask, hexDefault)
             255, BlendMode.SRC)
 
         -- TODO: Remove pixel iterator.
+        -- TODO: alphaIndex needs to be verified to be less than 256
+        -- for indexed color mode.
         local hexVrf <const> = hexDefault or alphaIndex
         local pxItr <const> = trimImage:pixels()
         for pixel in pxItr do

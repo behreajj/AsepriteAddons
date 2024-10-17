@@ -34,11 +34,8 @@ local tsxAligns <const> = {
 }
 
 local defaults <const> = {
-    -- Would be cool if user could select a range string,
-    -- then a probability for picked indices and one for
-    -- skipped indices. However, the target would have to
-    -- be active only, since different sets have different
-    -- lengths and base indices.
+    -- TODO: Refactor to include group hierarchy and layers that are not
+    -- tile maps if user wants them.
     target = "ALL",
     border = 0,
     padding = 0,
