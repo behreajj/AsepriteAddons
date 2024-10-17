@@ -608,6 +608,8 @@ dlg:button {
         local rng <const> = math.random
         local sqrt <const> = math.sqrt
         local strfmt <const> = string.format
+        local strsub <const> = string.sub
+        local strunpack <const> = string.unpack
         local tconcat <const> = table.concat
         local nextPow2 <const> = Utilities.nextPowerOf2
         local verifName <const> = Utilities.validateFilename
@@ -817,9 +819,8 @@ dlg:button {
                 while j < lenTmLayers do
                     j = j + 1
                     local tmLayer <const> = tmLayers[j]
-                    if tmLayer.isTilemap then
-                        -- TODO: Should this use a nil check?
-                        local tileSet <const> = tmLayer.tileset --[[@as Tileset]]
+                    local tileSet <const> = tmLayer.tileset
+                    if tmLayer.isTilemap and tileSet then
                         local lenTileSet <const> = #tileSet
                         local tileSetId <const> = tileSet.properties["id"] --[[@as integer]]
 
@@ -856,27 +857,34 @@ dlg:button {
                             local tmCel <const> = tmLayer:cel(tmFrame)
                             if tmCel then
                                 local tmImage <const> = tmCel.image
-                                local tmPxItr <const> = tmImage:pixels()
+                                local tmBytes <const> = tmImage.bytes
 
                                 ---@type integer[]
                                 local tmIndicesArr <const> = {}
                                 ---@type integer[]
                                 local tmFlagsArr <const> = {}
 
-                                for pixel in tmPxItr do
-                                    local tlData <const> = pixel() --[[@as integer]]
+                                local wTileMap <const> = tmImage.width
+                                local hTileMap <const> = tmImage.height
+                                local areaTileMap <const> = wTileMap * hTileMap
+
+                                local n = 0
+                                while n < areaTileMap do
+                                    local n4 <const> = n * 4
+                                    local tlData <const> = strunpack("<I4",
+                                        strsub(tmBytes, 1 + n4, 4 + n4))
                                     local tlIndex = pxTilei(tlData)
                                     local tlFlag = pxTilef(tlData)
                                     if tlIndex >= lenTileSet then
                                         tlIndex = 0
                                         tlFlag = 0
                                     end
-                                    tmIndicesArr[#tmIndicesArr + 1] = tlIndex
-                                    tmFlagsArr[#tmFlagsArr + 1] = tlFlag
+
+                                    n = n + 1
+                                    tmIndicesArr[n] = tlIndex
+                                    tmFlagsArr[n] = tlFlag
                                 end
 
-                                local wTileMap <const> = tmImage.width
-                                local hTileMap <const> = tmImage.height
                                 local mapPacket <const> = {
                                     flags = tmFlagsArr,
                                     frameNumber = tmFrame,
