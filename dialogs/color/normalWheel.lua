@@ -173,6 +173,7 @@ dlg:button {
         local max <const> = math.max
         local sin <const> = math.sin
         local sqrt <const> = math.sqrt
+        local strchar <const> = string.char
 
         -- Cache math constants.
         local pi <const> = math.pi
@@ -215,17 +216,14 @@ dlg:button {
         local wheelCel <const> = sprite.cels[1]
 
         -- For flipping the wheel orientation.
-        local hexDefault = 0xffff8080
-        local zFlipNum = 1
-        local yFlipNum = 1
-        local xFlipNum = 1
+        local r8Default <const> = 0x80
+        local g8Default <const> = 0x80
+        local b8Default <const> = zFlip and 0x00 or 0xff
+        local a8Default <const> = 0xff
 
-        if zFlip then
-            zFlipNum = -1
-            hexDefault = 0xff008080
-        end
-        if yFlip then yFlipNum = -1 end
-        if xFlip then xFlipNum = -1 end
+        local xFlipNum <const> = xFlip and -1 or 1
+        local yFlipNum <const> = yFlip and -1 or 1
+        local zFlipNum <const> = zFlip and -1 or 1
 
         -- Discrete sectors (azimuths).
         -- To quantize, values need to be in [0.0, 1.0].
@@ -253,24 +251,28 @@ dlg:button {
             oneDivRings = 1.0 / rings
         end
 
-        -- Create image, prepare for loop.
         local quantUse <const> = quantAzims or quantIncls
         local szInv <const> = 1.0 / (size - 1.0)
+        local szSq <const> = size * size
+        ---@type string[]
+        local byteStrArr <const> = {}
 
-        local wheelImg <const> = Image(spec)
-
-        local pxItr <const> = wheelImg:pixels()
-        for pixel in pxItr do
+        local n = 0
+        while n < szSq do
             -- Find rise and run as [0.0, 1.0], convert to
             -- [-1.0, 1.0] and flip as requested.
-            local y01 <const> = pixel.y * szInv
-            local ySgn <const> = yFlipNum * (1.0 - (y01 + y01))
-            local x01 <const> = pixel.x * szInv
+            local x <const> = n % size
+            local x01 <const> = x * szInv
             local xSgn <const> = xFlipNum * (x01 + x01 - 1.0)
+
+            local y <const> = n // size
+            local y01 <const> = y * szInv
+            local ySgn <const> = yFlipNum * (1.0 - (y01 + y01))
 
             -- Find square magnitude.
             -- Magnitude is correlated with inclination.
             -- Epsilon = 2 * ((1 / 255) ^ 2) = 0.000031
+            local r8, g8, b8, a8 = r8Default, g8Default, b8Default, a8Default
             local sqMag2d <const> = xSgn * xSgn + ySgn * ySgn
             if sqMag2d > 0.000031 and sqMag2d <= 1.0 then
                 local zSgn <const> = zFlipNum * sqrt(1.0 - sqMag2d)
@@ -322,14 +324,22 @@ dlg:button {
                     if abs(zn) < 0.0039216 then zn = 0.0 end
                 end
 
-                local r <const> = floor(xn * 127.5 + 128.0)
-                local g <const> = floor(yn * 127.5 + 128.0)
-                local b <const> = floor(zn * 127.5 + 128.0)
-                pixel(0xff000000 | (b << 0x10) | (g << 0x08) | r)
-            else
-                pixel(hexDefault)
+                r8 = floor(xn * 127.5 + 128.0)
+                g8 = floor(yn * 127.5 + 128.0)
+                b8 = floor(zn * 127.5 + 128.0)
             end
+
+            local n4 <const> = n * 4
+            byteStrArr[1 + n4] = strchar(r8)
+            byteStrArr[2 + n4] = strchar(g8)
+            byteStrArr[3 + n4] = strchar(b8)
+            byteStrArr[4 + n4] = strchar(a8)
+
+            n = n + 1
         end
+
+        local wheelImg <const> = Image(spec)
+        wheelImg.bytes = table.concat(byteStrArr)
 
         wheelCel.image = wheelImg
         sprite.layers[1].name = "Wheel"

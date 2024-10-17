@@ -2277,9 +2277,9 @@ function AseUtilities.getSelectedTiles(
     local i = 0
     while i < lenMap do
         local ibpp <const> = i * bpp
-        local mapIf <const> = strunpack(unpackFmt, strsub(
+        local mapif <const> = strunpack(unpackFmt, strsub(
             bytes, 1 + ibpp, bpp + ibpp))
-        local idx <const> = pxTilei(mapIf)
+        local idx <const> = pxTilei(mapif)
         if idx > 0 and idx < lenTileSet then
             local xMap <const> = i % wMap
             local yMap <const> = i // wMap
@@ -3135,8 +3135,8 @@ function AseUtilities.selectImage(image, xtl, ytl, tileSet, spriteBounds)
             while i < lenImage do
                 local ibpp <const> = i * bpp
                 local str <const> = strsub(bytes, 1 + ibpp, bpp + ibpp)
-                local mapIf <const> = strunpack("<I4", str)
-                local idx <const> = pxTilei(mapIf)
+                local mapif <const> = strunpack("<I4", str)
+                local idx <const> = pxTilei(mapif)
                 if idx == 0 then
                     pxRect.x = wTile * (i % wImage) + xtl
                     pxRect.y = hTile * (i // wImage) + ytl
@@ -3279,12 +3279,12 @@ function AseUtilities.tileMapToImage(imgSrc, tileSet, sprClrMode)
     local i = 0
     while i < srcArea do
         local ibpp <const> = i * srcBpp
-        local mapIf <const> = strunpack(fmtStr, strsub(srcBytes,
+        local mapif <const> = strunpack(fmtStr, strsub(srcBytes,
             1 + ibpp, srcBpp + ibpp))
-        local idx <const> = pxTilei(mapIf)
+        local idx <const> = pxTilei(mapif)
         local tile <const> = tileSet:tile(idx)
         if tile then
-            local meta <const> = pxTilef(mapIf)
+            local meta <const> = pxTilef(mapif)
             local tileImage <const>, _ <const> = bakeFlag(tile.image, meta)
             imgTrg:drawImage(tileImage,
                 Point((i % wSrc) * tileWidth, (i // wSrc) * tileHeight),
@@ -3523,9 +3523,9 @@ function AseUtilities.trimMapAlpha(
         while x < wSrcn1 and goTop do
             x = x + 1
             local iTop <const> = bpp * (x + wSrc * topSearch)
-            local mapIf <const> = strunpack("<I4", strsub(
+            local mapif <const> = strunpack("<I4", strsub(
                 bytes, 1 + iTop, bpp + iTop))
-            if pxTilei(mapIf) ~= 0 then
+            if pxTilei(mapif) ~= 0 then
                 minRight = x
                 minBottom = topSearch
                 goTop = false
@@ -3542,9 +3542,9 @@ function AseUtilities.trimMapAlpha(
         while y > topSearch and goLft do
             y = y - 1
             local iLft <const> = bpp * (lftSearch + wSrc * y)
-            local mapIf <const> = strunpack("<I4", strsub(
+            local mapif <const> = strunpack("<I4", strsub(
                 bytes, 1 + iLft, bpp + iLft))
-            if pxTilei(mapIf) ~= 0 then
+            if pxTilei(mapif) ~= 0 then
                 minBottom = y
                 goLft = false
             end
@@ -3560,9 +3560,9 @@ function AseUtilities.trimMapAlpha(
         while x > lftSearch and goBtm do
             x = x - 1
             local iBtm <const> = bpp * (x + wSrc * btm)
-            local mapIf <const> = strunpack("<I4", strsub(
+            local mapif <const> = strunpack("<I4", strsub(
                 bytes, 1 + iBtm, bpp + iBtm))
-            if pxTilei(mapIf) ~= 0 then
+            if pxTilei(mapif) ~= 0 then
                 minRight = x
                 goBtm = false
             end
@@ -3578,9 +3578,9 @@ function AseUtilities.trimMapAlpha(
         while y > topSearch and goRgt do
             y = y - 1
             local iRgt <const> = bpp * (rgt + wSrc * y)
-            local mapIf <const> = strunpack("<I4", strsub(
+            local mapif <const> = strunpack("<I4", strsub(
                 bytes, 1 + iRgt, bpp + iRgt))
-            if pxTilei(mapIf) ~= 0 then
+            if pxTilei(mapif) ~= 0 then
                 goRgt = false
             end
         end
