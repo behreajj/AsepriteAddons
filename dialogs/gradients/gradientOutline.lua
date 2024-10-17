@@ -281,6 +281,11 @@ dlg:button {
             tileSet = srcLayer.tileset
         end
 
+        -- Used in naming transactions by frame.
+        local docPrefs <const> = app.preferences.document(activeSprite)
+        local tlPrefs <const> = docPrefs.timeline
+        local frameUiOffset <const> = tlPrefs.first_frame - 1 --[[@as integer]]
+
         -- Cache methods.
         local quantize <const> = Utilities.quantizeUnsigned
         local cgeval <const> = ClrGradient.eval
@@ -290,6 +295,10 @@ dlg:button {
         local tilesToImage <const> = AseUtilities.tileMapToImage
         local createSpec <const> = AseUtilities.createSpec
         local strfmt <const> = string.format
+        local strpack <const> = string.pack
+        local strsub <const> = string.sub
+        local strunpack <const> = string.unpack
+        local tconcat <const> = table.concat
         local transact <const> = app.transaction
 
         local bkgClr <const> = AseUtilities.aseColorToClr(aseBkgColor)
@@ -299,13 +308,13 @@ dlg:button {
         -- evaluate returns the background color. This could
         -- still happen as a result of mix, but minimize the
         -- chances by filtering out background inputs.
-        local gradient<const> = ClrGradient.opaque(unfiltered)
+        local gradient <const> = ClrGradient.opaque(unfiltered)
 
         local mixFunc <const> = GradientUtilities.clrSpcFuncFromPreset(
             clrSpacePreset, huePreset)
 
         -- Find frames from target.
-        local frames <const> = Utilities.flatArr2(
+        local frIdcs <const> = Utilities.flatArr2(
             AseUtilities.getFrames(activeSprite, target))
 
         -- For auto alpha fade.
@@ -368,12 +377,12 @@ dlg:button {
 
         -- Wrapping this while loop in a transaction causes problems
         -- with undo history.
-        local lenFrames <const> = #frames
+        local lenFrIdcs <const> = #frIdcs
         local g = 0
-        while g < lenFrames do
+        while g < lenFrIdcs do
             g = g + 1
-            local srcFrame <const> = frames[g]
-            local srcCel <const> = srcLayer:cel(srcFrame)
+            local frIdx <const> = frIdcs[g]
+            local srcCel <const> = srcLayer:cel(frIdx)
             if srcCel then
                 local srcImg = srcCel.image
                 if isTilemap then
@@ -383,29 +392,52 @@ dlg:button {
                 local srcSpec <const> = srcImg.spec
                 local wTrg <const> = srcSpec.width + itr2
                 local hTrg <const> = srcSpec.height + itr2
+                local areaTrg <const> = wTrg * hTrg
+
                 local trgSpec = createSpec(
                     wTrg, hTrg, srcSpec.colorMode,
                     srcSpec.colorSpace, srcSpec.transparentColor)
                 local trgImg <const> = Image(trgSpec)
                 trgImg:drawImage(srcImg, itrPoint, 255, blendModeSrc)
+                local trgByteStr <const> = trgImg.bytes
+
+                -- TODO: Avoid using drawImage above by reading from srcImg
+                -- into the array?
+
+                ---@type integer[]
+                local read = {}
+                ---@type integer[]
+                local write <const> = {}
+                local i = 0
+                while i < areaTrg do
+                    local i4 <const> = i * 4
+                    write[1 + i] = strunpack("<I4", strsub(trgByteStr,
+                        1 + i4, 4 + i4))
+                    i = i + 1
+                end
 
                 h = 0
                 while h < iterations do
                     h = h + 1
-                    -- Read image must be separate from target.
                     local hexOut <const> = hexesOutline[h]
-                    local readImg <const> = trgImg:clone()
-                    local readPxItr <const> = readImg:pixels()
-                    for pixel in readPxItr do
-                        local cRead <const> = pixel()
+
+                    i = 0
+                    while i < areaTrg do
+                        i = i + 1
+                        read[i] = write[i]
+                    end
+
+                    i = 0
+                    while i < areaTrg do
+                        local cRead <const> = read[1 + i]
                         if (cRead & 0xff000000) == 0x0
                             or cRead == bkgHex then
-                            -- Loop through matrix, check neighbors
-                            -- against background. There's no need to
-                            -- tally up neighbor marks; just draw a
-                            -- pixel, then break the loop.
-                            local xRead <const> = pixel.x
-                            local yRead <const> = pixel.y
+                            -- Loop through matrix, check neighbors against
+                            -- background. There's no need to tally up
+                            -- neighbor marks; just draw a pixel, then break
+                            -- the loop.
+                            local xRead <const> = i % wTrg
+                            local yRead <const> = i // wTrg
 
                             local j = 0
                             local continue = true
@@ -416,24 +448,36 @@ dlg:button {
                                 if yNbr >= 0 and yNbr < hTrg then
                                     local xNbr <const> = xRead + offset[1]
                                     if xNbr >= 0 and xNbr < wTrg then
-                                        local cNbr <const> = readImg:getPixel(xNbr, yNbr)
+                                        local cIdx <const> = yNbr * wTrg + xNbr
+                                        local cNbr <const> = read[1 + cIdx]
                                         if (cNbr & 0xff000000) ~= 0x0
                                             and cNbr ~= bkgHex then
-                                            trgImg:drawPixel(xRead, yRead, hexOut)
+                                            write[1 + i] = hexOut
                                             continue = false
-                                        end -- Neighbor not transparent check
-                                    end     -- x in bounds check
-                                end         -- y in bounds check
-                            end             -- Neighbors kernel
-                        end                 -- Center transparent check
-                    end                     -- Pixel loop
-                end                         -- Iterations loop
+                                        end -- Neighbor not transparent check.
+                                    end     -- x in bounds check.
+                                end         -- y in bounds check.
+                            end             -- Neighbors kernel.
+                        end                 -- Center transparent check.
+
+                        i = i + 1
+                    end -- End pixel loop.
+                end     -- End Iterations loop.
+
+                ---@type string[]
+                local writeByteStrArr <const> = {}
+                i = 0
+                while i < areaTrg do
+                    i = i + 1
+                    writeByteStrArr[i] = strpack("<I4", write[i])
+                end
+                trgImg.bytes = tconcat(writeByteStrArr)
 
                 transact(
-                    strfmt("Gradient Outline %d", srcFrame),
+                    strfmt("Gradient Outline %d", frIdx + frameUiOffset),
                     function()
                         local trgCel <const> = activeSprite:newCel(
-                            trgLayer, srcFrame, trgImg,
+                            trgLayer, frIdx, trgImg,
                             srcCel.position - itrPoint)
                         trgCel.opacity = srcCel.opacity
                     end)
