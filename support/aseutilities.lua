@@ -2322,7 +2322,7 @@ function AseUtilities.getTopVisibleParent(layer)
 end
 
 ---Get unique cels from layers that have already been verified as leaves and
----filtered. Cels will not be in any order.
+---filtered. Cels are ordered by frame number, then by layer id.
 ---@param leaves Layer[] leaf layers
 ---@param frames integer[]|Frame[] frames
 ---@return Cel[]
@@ -2353,6 +2353,18 @@ function AseUtilities.getUniqueCelsFromLeaves(leaves, frames)
         lenCelsArr = lenCelsArr + 1
         celsArr[lenCelsArr] = cel
     end
+
+    table.sort(celsArr, function(a, b)
+        local aFrIdx <const> = a.frame and a.frame.frameNumber or 1
+        local bFrIdx <const> = b.frame and b.frame.frameNumber or 1
+        if aFrIdx == bFrIdx then
+            local az <const> = a.layer.id
+            local bz <const> = b.layer.id
+            return az < bz
+        end
+        return aFrIdx < bFrIdx
+    end)
+
     return celsArr
 end
 
