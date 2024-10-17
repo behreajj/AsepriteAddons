@@ -289,7 +289,7 @@ dlg:button {
         local tlPrefs <const> = docPrefs.timeline
         local frameUiOffset <const> = tlPrefs.first_frame - 1 --[[@as integer]]
 
-        -- Cache methods.
+        -- Cache methods used in loop.
         local quantize <const> = Utilities.quantizeUnsigned
         local cgeval <const> = ClrGradient.eval
         local toHex <const> = Clr.toHex

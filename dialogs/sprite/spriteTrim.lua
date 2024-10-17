@@ -498,6 +498,11 @@ dlg:button {
             leaves, frIdcs)
         local lenCels <const> = #cels
 
+        -- Used in naming transactions by frame.
+        local docPrefs <const> = app.preferences.document(activeSprite)
+        local tlPrefs <const> = docPrefs.timeline
+        local frameUiOffset <const> = tlPrefs.first_frame - 1 --[[@as integer]]
+
         -- Cache methods used in loop.
         local selectCel <const> = AseUtilities.trimCelToSelect
         local cropCel <const> = AseUtilities.trimCelToSprite
@@ -516,9 +521,13 @@ dlg:button {
             local cel <const> = cels[i]
             local celPos = cel.position
             local celImg = cel.image
+
             local layer <const> = cel.layer
             local layerName <const> = layer.name
             local isTilemap <const> = layer.isTilemap
+
+            local frObj <const> = cel.frame
+            local frIdx <const> = frObj and frObj.frameNumber or 1
 
             local wTile = 1
             local hTile = 1
@@ -537,9 +546,8 @@ dlg:button {
             local bry = tly + hTile * celImg.height - 1
 
             if sel and (not isTilemap) then
-                transact(strfmt("Crop %s", layerName), function()
-                    selectCel(cel, sel)
-                end)
+                transact(strfmt("Crop %s %d", layerName, frIdx + frameUiOffset),
+                    function() selectCel(cel, sel) end)
                 celPos = cel.position
                 tlx = celPos.x
                 tly = celPos.y
@@ -564,7 +572,7 @@ dlg:button {
                 bry = tly + hTile * trimmed.height - 1
 
                 transact(
-                    strfmt("Trim %s", layerName),
+                    strfmt("Trim %s %d", layerName, frIdx + frameUiOffset),
                     function()
                         cel.position = Point(tlx, tly)
                         cel.image = trimmed
@@ -573,7 +581,8 @@ dlg:button {
                 celImg = cel.image
 
                 if useCrop and (not isTilemap) then
-                    transact(strfmt("Crop %s", layerName), function()
+                    transact(strfmt("Crop %s %d", layerName,
+                        frIdx + frameUiOffset), function()
                         cropCel(cel, activeSprite)
                     end)
                     celPos = cel.position
@@ -699,7 +708,6 @@ dlg:button {
             }
             app.command.ScrollCenter()
         end
-
     end
 }
 
