@@ -546,7 +546,7 @@ dlg:button {
             local bry = tly + hTile * celImg.height - 1
 
             if sel and (not isTilemap) then
-                transact(strfmt("Crop %s %d", layerName, frIdx + frameUiOffset),
+                transact(strfmt("Crop %d %s", frIdx + frameUiOffset, layerName),
                     function() selectCel(cel, sel) end)
                 celPos = cel.position
                 tlx = celPos.x
@@ -572,7 +572,7 @@ dlg:button {
                 bry = tly + hTile * trimmed.height - 1
 
                 transact(
-                    strfmt("Trim %s %d", layerName, frIdx + frameUiOffset),
+                    strfmt("Trim %d %s", frIdx + frameUiOffset, layerName),
                     function()
                         cel.position = Point(tlx, tly)
                         cel.image = trimmed
@@ -581,8 +581,8 @@ dlg:button {
                 celImg = cel.image
 
                 if useCrop and (not isTilemap) then
-                    transact(strfmt("Crop %s %d", layerName,
-                        frIdx + frameUiOffset), function()
+                    transact(strfmt("Crop %d %s", frIdx + frameUiOffset,
+                        layerName), function()
                         cropCel(cel, activeSprite)
                     end)
                     celPos = cel.position

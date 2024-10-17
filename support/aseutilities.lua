@@ -2358,9 +2358,7 @@ function AseUtilities.getUniqueCelsFromLeaves(leaves, frames)
         local aFrIdx <const> = a.frame and a.frame.frameNumber or 1
         local bFrIdx <const> = b.frame and b.frame.frameNumber or 1
         if aFrIdx == bFrIdx then
-            local az <const> = a.layer.id
-            local bz <const> = b.layer.id
-            return az < bz
+            return a.layer.id < b.layer.id
         end
         return aFrIdx < bFrIdx
     end)
