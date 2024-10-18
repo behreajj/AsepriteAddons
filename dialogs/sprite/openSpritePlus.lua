@@ -341,7 +341,8 @@ dlg:button {
                 while j < lenCels do
                     j = j + 1
                     local cel <const> = cels[j]
-                    local trgImg <const>, x <const>, y <const> = trimImage(cel.image, 0, 0)
+                    local trgImg <const>, x <const>, y <const> = trimImage(
+                        cel.image, 0, 0)
                     local srcPos <const> = cel.position
                     cel.position = Point(srcPos.x + x, srcPos.y + y)
                     cel.image = trgImg

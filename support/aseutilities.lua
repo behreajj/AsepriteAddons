@@ -2338,12 +2338,11 @@ function AseUtilities.getUniqueCelsFromLeaves(leaves, frames)
     while k < lenCompound do
         local i <const> = k // lenFrames
         local j <const> = k % lenFrames
-        k = k + 1
-
         local cel <const> = leaves[1 + i]:cel(frames[1 + j])
         if cel then
             uniqueCels[cel.image.id] = cel
         end
+        k = k + 1
     end
 
     ---@type Cel[]

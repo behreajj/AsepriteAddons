@@ -125,9 +125,6 @@ dlg:button {
 
         local rgbColorMode <const> = ColorMode.RGB
         local floor <const> = math.floor
-        local strfmt <const> = string.format
-        local tilesToImage <const> = AseUtilities.tileMapToImage
-        local transact <const> = app.transaction
 
         if target == "PALETTE" then
             local palettes <const> = activeSprite.palettes
@@ -217,68 +214,79 @@ dlg:button {
                 or BlendMode.NORMAL
         end)
 
+        local strfmt <const> = string.format
+        local strpack <const> = string.pack
+        local strsub <const> = string.sub
+        local strunpack <const> = string.unpack
+        local tconcat <const> = table.concat
+        local tilesToImage <const> = AseUtilities.tileMapToImage
+        local transact <const> = app.transaction
+
         local i = 0
         local lenFrames <const> = #frames
         while i < lenFrames do
             i = i + 1
-            local srcFrame <const> = frames[i]
-            local srcCel <const> = srcLayer:cel(srcFrame)
+            local frIdx <const> = frames[i]
+            local srcCel <const> = srcLayer:cel(frIdx)
             if srcCel then
                 local srcImg = srcCel.image
                 if isTilemap then
                     srcImg = tilesToImage(srcImg, tileSet, rgbColorMode)
                 end
 
-                -- TODO: Update to use bytes instead of pixel iterator.
+                local srcSpec <const> = srcImg.spec
+                local areaImg <const> = srcSpec.width * srcSpec.height
+                local srcBytes <const> = srcImg.bytes
 
-                -- Gather unique colors in image.
-                ---@type table<integer, boolean>
-                local srcDict <const> = {}
-                local srcPxItr <const> = srcImg:pixels()
-                for pixel in srcPxItr do
-                    srcDict[pixel()] = true
-                end
-
-                -- Quantize colors, place in dictionary.
                 ---@type table<integer, integer>
-                local trgDict <const> = {}
-                for k, _ in pairs(srcDict) do
-                    local a <const> = (k >> 0x18) & 0xff
-                    local b <const> = (k >> 0x10) & 0xff
-                    local g <const> = (k >> 0x08) & 0xff
-                    local r <const> = k & 0xff
+                local srcToTrgDict <const> = {}
+                ---@type string[]
+                local trgBytesArr <const> = {}
 
-                    -- Do not cache the division in a variable
-                    -- as 1.0 / 255.0. It leads to precision errors
-                    -- which impact alpha during unsigned quantize.
-                    local aQtz <const> = aqFunc(a / 255.0, aLvVrf, aDelta)
-                    local bQtz <const> = bqFunc(b / 255.0, bLvVrf, bDelta)
-                    local gQtz <const> = gqFunc(g / 255.0, gLvVrf, gDelta)
-                    local rQtz <const> = rqFunc(r / 255.0, rLvVrf, rDelta)
+                local j = 0
+                while j < areaImg do
+                    local j4 <const> = j * 4
+                    local srcAbgr32 <const> = strunpack("<I4", strsub(
+                        srcBytes, 1 + j4, 4 + j4))
+                    local trgAbgr32 = srcToTrgDict[srcAbgr32]
+                    if not trgAbgr32 then
+                        local a8Src <const> = (srcAbgr32 >> 0x18) & 0xff
+                        local b8Src <const> = (srcAbgr32 >> 0x10) & 0xff
+                        local g8Src <const> = (srcAbgr32 >> 0x08) & 0xff
+                        local r8Src <const> = srcAbgr32 & 0xff
 
-                    local a8 <const> = floor(aQtz * 255.0 + 0.5)
-                    local b8 <const> = floor(bQtz * 255.0 + 0.5)
-                    local g8 <const> = floor(gQtz * 255.0 + 0.5)
-                    local r8 <const> = floor(rQtz * 255.0 + 0.5)
+                        -- Do not cache the division in a variable
+                        -- as 1.0 / 255.0. It leads to precision errors
+                        -- which impact alpha during unsigned quantize.
+                        local aq <const> = aqFunc(a8Src / 255.0, aLvVrf, aDelta)
+                        local bq <const> = bqFunc(b8Src / 255.0, bLvVrf, bDelta)
+                        local gq <const> = gqFunc(g8Src / 255.0, gLvVrf, gDelta)
+                        local rq <const> = rqFunc(r8Src / 255.0, rLvVrf, rDelta)
 
-                    trgDict[k] = (a8 << 0x18)
-                        | (b8 << 0x10)
-                        | (g8 << 0x08)
-                        |  r8
+                        local a8Trg <const> = floor(aq * 255.0 + 0.5)
+                        local b8Trg <const> = floor(bq * 255.0 + 0.5)
+                        local g8Trg <const> = floor(gq * 255.0 + 0.5)
+                        local r8Trg <const> = floor(rq * 255.0 + 0.5)
+
+                        trgAbgr32 = a8Trg << 0x18
+                            | b8Trg << 0x10
+                            | g8Trg << 0x08
+                            | r8Trg
+                        srcToTrgDict[srcAbgr32] = trgAbgr32
+                    end
+
+                    j = j + 1
+                    trgBytesArr[j] = strpack("<I4", trgAbgr32)
                 end
 
-                -- Clone image, replace color with quantized.
-                local trgImg <const> = srcImg:clone()
-                local trgPxItr <const> = trgImg:pixels()
-                for pixel in trgPxItr do
-                    pixel(trgDict[pixel()])
-                end
+                local trgImg <const> = Image(srcSpec)
+                trgImg.bytes = tconcat(trgBytesArr)
 
                 transact(
-                    strfmt("Color Quantize %d", srcFrame + frameUiOffset),
+                    strfmt("Color Quantize %d", frIdx + frameUiOffset),
                     function()
                         local trgCel = activeSprite:newCel(
-                            trgLayer, srcFrame,
+                            trgLayer, frIdx,
                             trgImg, srcCel.position)
                         trgCel.opacity = srcCel.opacity
                     end)

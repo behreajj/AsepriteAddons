@@ -44,10 +44,10 @@ app.transaction("Find Like Images", function()
             end
 
             if not image:isEmpty() then
-                local fpint <const> = hash(image, sizeThresh)
+                local hsh64 <const> = hash(image, sizeThresh)
 
-                if dictionary[fpint] then
-                    local origCel <const> = dictionary[fpint]
+                if dictionary[hsh64] then
+                    local origCel <const> = dictionary[hsh64]
                     if image.id == origCel.image.id then
                         cel.color = linked
                     else
@@ -55,11 +55,11 @@ app.transaction("Find Like Images", function()
                         origCel.color = original
                     end
                 else
-                    dictionary[fpint] = cel
+                    dictionary[hsh64] = cel
                     cel.color = clear
                 end
 
-                cel.properties["hash"] = fpint
+                cel.properties["hash"] = hsh64
             end
         end
         h = h + 1
