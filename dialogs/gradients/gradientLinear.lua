@@ -42,8 +42,8 @@ dlg:button {
         end
 
         -- Early returns.
-        local activeSpec <const> = activeSprite.spec
-        local colorMode <const> = activeSpec.colorMode
+        local spriteSpec <const> = activeSprite.spec
+        local colorMode <const> = spriteSpec.colorMode
         if colorMode ~= ColorMode.RGB then
             app.alert {
                 title = "Error",
@@ -55,6 +55,7 @@ dlg:button {
         -- Cache methods.
         local max <const> = math.max
         local min <const> = math.min
+        local strpack <const> = string.pack
         local toHex <const> = Clr.toHex
         local quantize <const> = Utilities.quantizeUnsigned
 
@@ -70,8 +71,11 @@ dlg:button {
         local mixFunc <const> = GradientUtilities.clrSpcFuncFromPreset(
             clrSpacePreset, huePreset)
 
-        local wn1 <const> = max(1.0, activeSprite.width - 1.0)
-        local hn1 <const> = max(1.0, activeSprite.height - 1.0)
+        local wSprite <const> = spriteSpec.width
+        local hSprite <const> = spriteSpec.height
+        local areaSprite <const> = wSprite * hSprite
+        local wn1 <const> = max(1.0, wSprite - 1.0)
+        local hn1 <const> = max(1.0, hSprite - 1.0)
 
         -- Calculate origin and destination.
         -- Divide by 100 to account for percentage.
@@ -101,9 +105,8 @@ dlg:button {
         local bbInv = 0.0
         if bbDot ~= 0.0 then bbInv = 1.0 / bbDot end
 
-        local grdImg <const> = Image(activeSpec)
-        local grdItr <const> = grdImg:pixels()
-
+        ---@type string[]
+        local trgByteStr <const> = {}
         local linearEval <const> = function(x, y)
             local ax <const> = x - xOrPx
             local ay <const> = y - yOrPx
@@ -115,30 +118,35 @@ dlg:button {
             ---@type table<number, integer>
             local facDict <const> = {}
             local cgmix <const> = ClrGradient.eval
-            for pixel in grdItr do
-                local fac = linearEval(pixel.x, pixel.y)
-                fac = quantize(fac, levels)
-
-                if facDict[fac] then
-                    pixel(facDict[fac])
-                else
-                    local clr <const> = cgmix(gradient, fac, mixFunc)
-                    local hex <const> = toHex(clr)
-                    pixel(hex)
-                    facDict[fac] = hex
+            local i = 0
+            while i < areaSprite do
+                local x <const> = i % wSprite
+                local y <const> = i // wSprite
+                local fac <const> = quantize(linearEval(x, y), levels)
+                local trgAbgr32 = facDict[fac]
+                if not trgAbgr32 then
+                    trgAbgr32 = toHex(cgmix(gradient, fac, mixFunc))
+                    facDict[fac] = trgAbgr32
                 end
+                i = i + 1
+                trgByteStr[i] = strpack("<I4", trgAbgr32)
             end
         else
             local dither <const> = GradientUtilities.ditherFromPreset(
                 stylePreset, bayerIndex, ditherPath)
-            for pixel in grdItr do
-                local x <const> = pixel.x
-                local y <const> = pixel.y
+            local i = 0
+            while i < areaSprite do
+                local x <const> = i % wSprite
+                local y <const> = i // wSprite
                 local fac <const> = linearEval(x, y)
-                local clr <const> = dither(gradient, fac, x, y)
-                pixel(toHex(clr))
+                local trgAbgr32 <const> = toHex(dither(gradient, fac, x, y))
+                i = i + 1
+                trgByteStr[i] = strpack("<I4", trgAbgr32)
             end
         end
+
+        local grdImg <const> = Image(spriteSpec)
+        grdImg.bytes = table.concat(trgByteStr)
 
         app.transaction("Linear Gradient", function()
             local grdLayer <const> = activeSprite:newLayer()

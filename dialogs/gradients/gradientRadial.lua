@@ -169,8 +169,8 @@ dlg:button {
         end
 
         -- Early returns.
-        local activeSpec <const> = activeSprite.spec
-        local colorMode <const> = activeSpec.colorMode
+        local spriteSpec <const> = activeSprite.spec
+        local colorMode <const> = spriteSpec.colorMode
         if colorMode ~= ColorMode.RGB then
             app.alert {
                 title = "Error",
@@ -182,6 +182,7 @@ dlg:button {
         -- Cache methods.
         local max <const> = math.max
         local min <const> = math.min
+        local strpack <const> = string.pack
         local toHex <const> = Clr.toHex
         local quantize <const> = Utilities.quantizeUnsigned
 
@@ -230,17 +231,19 @@ dlg:button {
         local yOrig <const> = 0.01 * yOrig100
 
         -- Convert from normalized to pixel size.
-        local wn1 <const> = max(1.0, activeSprite.width - 1.0)
-        local hn1 <const> = max(1.0, activeSprite.height - 1.0)
+        local wSprite <const> = spriteSpec.width
+        local hSprite <const> = spriteSpec.height
+        local areaSprite <const> = wSprite * hSprite
+        local wn1 <const> = max(1.0, wSprite - 1.0)
+        local hn1 <const> = max(1.0, hSprite - 1.0)
         local xOrigPx <const> = xOrig * wn1
         local yOrigPx <const> = yOrig * hn1
 
         -- Need a scalar to normalize distance to [0.0, 1.0]
         local normDist <const> = 2.0 / (maxRad * distFunc(0.0, 0.0, wn1, hn1))
 
-        local grdImg <const> = Image(activeSpec)
-        local grdItr <const> = grdImg:pixels()
-
+        ---@type string[]
+        local trgByteStr <const> = {}
         local function radialEval(x, y)
             local dst <const> = distFunc(x, y, xOrigPx, yOrigPx)
             local fac = dst * normDist
@@ -252,30 +255,35 @@ dlg:button {
             ---@type table<number, integer>
             local facDict <const> = {}
             local cgmix <const> = ClrGradient.eval
-            for pixel in grdItr do
-                local fac = radialEval(pixel.x, pixel.y)
-                fac = quantize(fac, levels)
-
-                if facDict[fac] then
-                    pixel(facDict[fac])
-                else
-                    local clr <const> = cgmix(gradient, fac, mixFunc)
-                    local hex <const> = toHex(clr)
-                    pixel(hex)
-                    facDict[fac] = hex
+            local i = 0
+            while i < areaSprite do
+                local x <const> = i % wSprite
+                local y <const> = i // wSprite
+                local fac <const> = quantize(radialEval(x, y), levels)
+                local trgAbgr32 = facDict[fac]
+                if not trgAbgr32 then
+                    trgAbgr32 = toHex(cgmix(gradient, fac, mixFunc))
+                    facDict[fac] = trgAbgr32
                 end
+                i = i + 1
+                trgByteStr[i] = strpack("<I4", trgAbgr32)
             end
         else
             local dither <const> = GradientUtilities.ditherFromPreset(
                 stylePreset, bayerIndex, ditherPath)
-            for pixel in grdItr do
-                local x <const> = pixel.x
-                local y <const> = pixel.y
+            local i = 0
+            while i < areaSprite do
+                local x <const> = i % wSprite
+                local y <const> = i // wSprite
                 local fac <const> = radialEval(x, y)
-                local clr <const> = dither(gradient, fac, x, y)
-                pixel(toHex(clr))
+                local trgAbgr32 <const> = toHex(dither(gradient, fac, x, y))
+                i = i + 1
+                trgByteStr[i] = strpack("<I4", trgAbgr32)
             end
         end
+
+        local grdImg <const> = Image(spriteSpec)
+        grdImg.bytes = table.concat(trgByteStr)
 
         app.transaction("Radial Gradient", function()
             local grdLayer <const> = activeSprite:newLayer()
