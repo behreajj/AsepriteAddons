@@ -262,9 +262,8 @@ function Utilities.getPixelClamp(
     source, x, y, w, h, bpp, defaultValue)
     local xc <const> = math.min(math.max(x, 0), w - 1)
     local yc <const> = math.min(math.max(y, 0), h - 1)
-    local orig <const> = 1 + (yc * w + xc) * bpp
-    local dest <const> = orig + bpp - 1
-    return string.sub(source, orig, dest)
+    local ibpp <const> = (yc * w + xc) * bpp
+    return string.sub(source, 1 + ibpp, bpp + ibpp)
 end
 
 ---Gets a pixel from an image's bytes, formatted as a string.
@@ -284,9 +283,8 @@ function Utilities.getPixelOmit(
     source, x, y, w, h, bpp, defaultValue)
     if x >= 0 and x < w
         and y >= 0 and y < h then
-        local orig <const> = 1 + (y * w + x) * bpp
-        local dest <const> = orig + bpp - 1
-        return string.sub(source, orig, dest)
+        local ibpp <const> = (y * w + x) * bpp
+        return string.sub(source, 1 + ibpp, bpp + ibpp)
     end
     return defaultValue
 end
@@ -306,9 +304,8 @@ function Utilities.getPixelWrap(
     source, x, y, w, h, bpp, defaultValue)
     local xfm <const> = x % w
     local yfm <const> = y % h
-    local orig <const> = 1 + (yfm * w + xfm) * bpp
-    local dest <const> = orig + bpp - 1
-    return string.sub(source, orig, dest)
+    local ibpp <const> = (yfm * w + xfm) * bpp
+    return string.sub(source, 1 + ibpp, bpp + ibpp)
 end
 
 ---Generates a random number with normal distribution. Based on the Box-Muller
