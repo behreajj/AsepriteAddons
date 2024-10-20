@@ -743,39 +743,4 @@ function Vec2.trunc(v)
         v.y - math.fmod(v.y, 1.0))
 end
 
----Creates a right facing vector, (1.0, 0.0).
----@return Vec2
----@nodiscard
-function Vec2.right()
-    return Vec2.new(1.0, 0.0)
-end
-
----Creates a forward facing vector, (0.0, 1.0).
----@return Vec2
----@nodiscard
-function Vec2.forward()
-    return Vec2.new(0.0, 1.0)
-end
-
----Creates a left facing vector, (-1.0, 0.0).
----@return Vec2
----@nodiscard
-function Vec2.left()
-    return Vec2.new(-1.0, 0.0)
-end
-
----Creates a back facing vector, (0.0, -1.0).
----@return Vec2
----@nodiscard
-function Vec2.back()
-    return Vec2.new(0.0, -1.0)
-end
-
----Creates a vector with all components set to 1.0.
----@return Vec2
----@nodiscard
-function Vec2.one()
-    return Vec2.new(1.0, 1.0)
-end
-
 return Vec2

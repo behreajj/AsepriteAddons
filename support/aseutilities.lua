@@ -1922,8 +1922,7 @@ end
 ---@return Color bAse
 ---@nodiscard
 function AseUtilities.getBkgChecker(sprite)
-    local wCheck = 8
-    local hCheck = 8
+    local wCheck, hCheck = 8, 8
     local aAse = Color { r = 128, g = 128, b = 128, a = 255 }
     local bAse = Color { r = 202, g = 202, b = 202, a = 255 }
 
