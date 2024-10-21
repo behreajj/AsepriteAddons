@@ -2386,9 +2386,9 @@ function AseUtilities.grayHexes(count)
     return result
 end
 
----Generates a 64 bit integer hash code for an image. If a size threshold is
----given, and the image's area exceeds the threshold squared, then the image is
----resized with nearest neighbor sampling.
+---Generates a signed 64 bit integer hash code for an image. If a size
+---threshold is given, and the image's area exceeds the threshold squared,
+---then the image is resized with nearest neighbor sampling.
 ---
 ---Does not distinguish between different color modes, as the hash function
 ---treats on the image bytes as a string.
@@ -2398,7 +2398,7 @@ end
 ---@param source Image source image
 ---@param sizeThresh integer? size threshold
 function AseUtilities.hashImage(source, sizeThresh)
-    -- Aseprite uses city hash:
+    -- Aseprite uses city hash, but only returns a 32 bit integer:
     -- https://github.com/aseprite/aseprite/blob/main/src/doc/primitives.cpp#L545
 
     local bytes = source.bytes
