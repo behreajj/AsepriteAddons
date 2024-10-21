@@ -1313,20 +1313,14 @@ function Utilities.toScreen(modelview, projection, pt3, width, height)
     local pt4 <const> = Vec4.new(pt3.x, pt3.y, pt3.z, 1.0)
     local mvpt4 <const> = Utilities.mulMat4Vec4(modelview, pt4)
     local scr <const> = Utilities.mulMat4Vec4(projection, mvpt4)
-
-    local w <const> = scr.w
-    local x = scr.x
-    local y = scr.y
-    local z = scr.z
+    local x, y, z, w <const> = 0.0, 0.0, 0.0, scr.w
 
     -- Demote from homogenous coordinate.
     if w ~= 0.0 then
         local wInv <const> = 1.0 / w
-        x = x * wInv
-        y = y * wInv
-        z = z * wInv
-    else
-        return Vec3.new(0.0, 0.0, 0.0)
+        x = scr.x * wInv
+        y = scr.y * wInv
+        z = scr.z * wInv
     end
 
     -- Convert from normalized coordinates to screen dimensions. Flip y axis.
