@@ -26,7 +26,7 @@ end
 local cropTypes <const> = {
     "CROP",
     "EDGES",
-    "EXPAND",
+    -- "EXPAND",
     "RECTANGLE",
     "SELECTION"
 }
