@@ -231,29 +231,17 @@ dlg:button {
                 local strchar <const> = string.char
 
                 local stride = 4
-                local rOffset = 1
-                local gOffset = 2
-                local bOffset = 3
-                local tOffset = 4
+                local rOff, gOff, bOff, tOff = 1, 2, 3, 4
 
                 if rgbaFormat == "RGB" then
                     stride = 3
-                    rOffset = 1
-                    gOffset = 2
-                    bOffset = 3
-                    tOffset = 0
+                    rOff, gOff, bOff, tOff = 1, 2, 3, 0
                 elseif rgbaFormat == "BGR" then
                     stride = 3
-                    rOffset = 3
-                    gOffset = 2
-                    bOffset = 1
-                    tOffset = 0
+                    rOff, gOff, bOff, tOff = 3, 2, 1, 0
                 elseif rgbaFormat == "ABGR" then
                     stride = 4
-                    rOffset = 4
-                    gOffset = 3
-                    bOffset = 2
-                    tOffset = 1
+                    rOff, gOff, bOff, tOff = 4, 3, 2, 1
                 end
 
                 ---@type string[]
@@ -262,11 +250,11 @@ dlg:button {
                 while i < lenPalette do
                     local aseColor <const> = palette:getColor(i)
                     local iStride <const> = i * stride
-                    palChars[rOffset + iStride] = strchar(aseColor.red)
-                    palChars[gOffset + iStride] = strchar(aseColor.green)
-                    palChars[bOffset + iStride] = strchar(aseColor.blue)
+                    palChars[rOff + iStride] = strchar(aseColor.red)
+                    palChars[gOff + iStride] = strchar(aseColor.green)
+                    palChars[bOff + iStride] = strchar(aseColor.blue)
                     if stride >= 4 then
-                        palChars[tOffset + iStride] = strchar(aseColor.alpha)
+                        palChars[tOff + iStride] = strchar(aseColor.alpha)
                     end
                     i = i + 1
                 end
