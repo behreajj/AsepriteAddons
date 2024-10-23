@@ -256,8 +256,9 @@ dlg:button {
 
                             local mulAlpha <const> = ((srcAbgr32 >> 0x18 & 0xff) *
                                 (trgAbgr32 >> 0x18 & 0xff)) // 255
-                            local compAbgr32 <const> = (mulAlpha << 0x18)
-                                | (trgAbgr32 & 0x00ffffff)
+                            local compAbgr32 <const> = mulAlpha > 0
+                                and ((mulAlpha << 0x18) | (trgAbgr32 & 0x00ffffff))
+                                or 0
 
                             local trgPack <const> = strpack("<I4", compAbgr32)
                             local lenIdcs <const> = #idcs
@@ -288,8 +289,9 @@ dlg:button {
 
                                 local mulAlpha <const> = ((srcAbgr32 >> 0x18 & 0xff) *
                                     (trgAbgr32 >> 0x18 & 0xff)) // 255
-                                local compAbgr32 <const> = (mulAlpha << 0x18)
-                                    | (trgAbgr32 & 0x00ffffff)
+                                local compAbgr32 <const> = mulAlpha > 0
+                                    and ((mulAlpha << 0x18) | (trgAbgr32 & 0x00ffffff))
+                                    or 0
 
                                 local trgPack <const> = strpack("<I4", compAbgr32)
                                 trgBytesArr[1 + idx] = trgPack
