@@ -722,7 +722,7 @@ dlg:button {
     id = "selectButton",
     label = "Select:",
     text = "&TARGET",
-    focus = false,
+    focus = true,
     onclick = function()
         local site <const> = app.site
         local activeSprite <const> = site.sprite
