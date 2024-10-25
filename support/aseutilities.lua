@@ -1064,12 +1064,10 @@ function AseUtilities.changeActiveSwatch(step, useBack)
         if useBack then app.command.SwitchColors() end
         local idxCurr <const> = app.fgColor.index
         if idxCurr >= lenPalette or idxCurr < 0 then
-            app.fgColor = AseUtilities.aseColorCopy(
-                Color { index = 0 }, "UNBOUNDED")
+            app.fgColor = palette:getColor(0)
         else
             local idxNext <const> = (idxCurr + step) % lenPalette
-            app.fgColor = AseUtilities.aseColorCopy(
-                Color { index = idxNext }, "UNBOUNDED")
+            app.fgColor = palette:getColor(idxNext)
         end
         if useBack then app.command.SwitchColors() end
     end

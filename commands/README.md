@@ -44,11 +44,19 @@ Unlike `dialog` scripts, it's not always apparent what `commands` scripts do. No
 
 - `nextLayer`: Moves the active layer to the next layer up the stack. Preserves timeline ranges of `RangeType.FRAMES`. Stops when the top of the sprite layer stack is reached.
 
+- `nextSwatchBack`: Moves the active background color to the next palette index. If the tile map mode is `TilemapMode.TILES`, then moves the active tile.
+
+- `nextSwatchFore`: Moves the active foreground color to the next palette index. If the tile map mode is `TilemapMode.TILES`, then moves the active tile.
+
 - `nextTab`: Moves the active sprite to the next tab. Converts the fore- and background colors to RGB. If the slice tool is active, switches to the hand tool.
 
 - `prevFrame`: Moves the active frame to the previous frame index. Preserves timeline ranges of `RangeType.LAYERS`. If play once is false, then returns to the last frame after reaching the first.
 
 - `prevLayer`: Moves the active layer to the previous layer down the stack. Preserves timeline ranges of `RangeType.FRAMES`. Stops when the bottom of the sprite layer stack is reached.
+
+- `prevSwatchBack`: Moves the active background color to the previous palette index. If the tile map mode is `TilemapMode.TILES`, then moves the active tile.
+
+- `prevSwatchFore`: Moves the active foreground color to the previous palette index. If the tile map mode is `TilemapMode.TILES`, then moves the active tile.
 
 - `prevTab`: Moves the active sprite to the previous tab. Converts the fore- and background colors to RGB. If the slice tool is active, switches to the hand tool.
 
