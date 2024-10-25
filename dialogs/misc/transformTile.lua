@@ -107,35 +107,6 @@ local function getIndexAtCursor()
     return isValid, mapIndex, mapFlags, xGrid, yGrid
 end
 
----@param target "FORE_TILE"|"BACK_TILE"
----@param shift integer
-local function cycleActive(target, shift)
-    local site <const> = app.site
-    local activeSprite <const> = site.sprite
-    if not activeSprite then return end
-
-    local activeLayer <const> = site.layer
-    if not activeLayer then return end
-    if not activeLayer.isTilemap then return end
-
-    local tileSet <const> = activeLayer.tileset
-    if not tileSet then return end
-    local lenTileSet <const> = #tileSet
-
-    local access <const> = target == "BACK_TILE" and "bg_tile" or "fg_tile"
-    local colorBarPrefs <const> = app.preferences.color_bar
-    local tifCurr <const> = colorBarPrefs[access] --[[@as integer]]
-    local tiCurr <const> = app.pixelColor.tileI(tifCurr)
-    if tiCurr > lenTileSet - 1 or tiCurr < 0 then
-        colorBarPrefs[access] = 0
-    else
-        local tfCurr <const> = app.pixelColor.tileF(tifCurr)
-        local tiNext <const> = (tiCurr + shift) % lenTileSet
-        colorBarPrefs[access] = app.pixelColor.tile(tiNext, tfCurr)
-    end
-    app.refresh()
-end
-
 ---@param flag integer
 ---@return integer
 local function flipFlagX(flag)
@@ -173,8 +144,8 @@ local function moveMap(xShift, yShift)
         local tileSet <const> = activeLayer.tileset
         if tileSet then
             local tileSize <const> = tileSet.grid.tileSize
-            local wTile <const> = tileSize.width
-            local hTile <const> = tileSize.height
+            local wTile <const> = math.max(1, math.abs(tileSize.width))
+            local hTile <const> = math.max(1, math.abs(tileSize.height))
             xShScl = xShScl * wTile
             yShScl = yShScl * hTile
         end
@@ -476,10 +447,9 @@ local function transformCel(dialog, preset)
                 -- Built-in Aseprite flags allow for rotations of index zero
                 -- and for rotations of non-uniform tiles.
                 local trgFlags <const> = flgTrFunc(pxTilef(srcMapif))
-                local trgByteStr <const> = strpack(packFmt,
-                    pxTileCompose(srcIdx, trgFlags))
                 i = i + 1
-                trgByteStrs[i] = trgByteStr
+                trgByteStrs[i] = strpack(packFmt, pxTileCompose(
+                    srcIdx, trgFlags))
             end
             trMap.bytes = tconcat(trgByteStrs)
 
@@ -845,6 +815,7 @@ dlg:button {
             -- Cache methods used in loop.
             local pxTilei <const> = app.pixelColor.tileI
 
+            -- TODO: Replace pixel iterator.
             local tileMap <const> = activeCel.image
             local mapItr <const> = tileMap:pixels()
             for mapEntry in mapItr do
@@ -905,8 +876,8 @@ dlg:button {
         local tileSet <const> = activeLayer.tileset
         if not tileSet then return end
         local tileSize <const> = tileSet.grid.tileSize
-        local wTile <const> = tileSize.width
-        local hTile <const> = tileSize.height
+        local wTile <const> = math.max(1, math.abs(tileSize.width))
+        local hTile <const> = math.max(1, math.abs(tileSize.height))
 
         local tileMap <const> = activeCel.image
         local trgSel <const> = Selection()
@@ -914,19 +885,31 @@ dlg:button {
 
         -- Cache methods used in loop.
         local pxTilei <const> = app.pixelColor.tileI
+        local strsub <const> = string.sub
+        local strunpack <const> = string.unpack
 
         ---@type table<integer, boolean>
         local visited <const> = {}
-        local mapItr <const> = tileMap:pixels()
-        for mapEntry in mapItr do
-            local mapif <const> = mapEntry() --[[@as integer]]
+
+        local wMap <const> = tileMap.width
+        local hMap <const> = tileMap.height
+        local bytesMap <const> = tileMap.bytes
+        local areaMap <const> = wMap * hMap
+
+        local i = 0
+        while i < areaMap do
+            local i4 <const> = i * 4
+            local mapif <const> = strunpack("<I4", strsub(bytesMap,
+                1 + i4, 4 + i4))
             local index = pxTilei(mapif)
             if index ~= 0 and visited[index] then
-                selRect.x = xTopLeft + mapEntry.x * wTile
-                selRect.y = yTopLeft + mapEntry.y * hTile
+                selRect.x = xTopLeft + (i % wMap) * wTile
+                selRect.y = yTopLeft + (i // wMap) * hTile
                 trgSel:add(selRect)
             end
             visited[index] = true
+
+            i = i + 1
         end
 
         local args <const> = dlg.data
@@ -1062,6 +1045,8 @@ dlg:button {
         local pxTileCompose <const> = pixelColor.tile
         local createSpec <const> = AseUtilities.createSpec
         local colorCopy <const> = AseUtilities.aseColorCopy
+        local strunpack <const> = string.unpack
+        local strsub <const> = string.sub
 
         -- Contains the first usage of a tile in the set by the active map.
         -- Ignores index 0. Because all tile maps in the layer have to be
@@ -1072,15 +1057,21 @@ dlg:button {
 
         local srcMap <const> = activeCel.image
         local srcWidth <const> = srcMap.width
-        local srcItr <const> = srcMap:pixels()
-        for mapEntry in srcItr do
-            local mapif <const> = mapEntry() --[[@as integer]]
+        local srcHeight <const> = srcMap.height
+        local srcBytes <const> = srcMap.bytes
+        local srcArea <const> = srcWidth * srcHeight
+
+        local g = 0
+        while g < srcArea do
+            local g4 <const> = g * 4
+            local mapif <const> = strunpack("<I4", strsub(
+                srcBytes, 1 + g4, 4 + g4))
             local srcTsIdx <const> = pxTilei(mapif)
             if srcTsIdx > 0 and srcTsIdx < lenTileSet
                 and (not visited[srcTsIdx]) then
-                local flatIdx <const> = mapEntry.x + mapEntry.y * srcWidth
-                visited[srcTsIdx] = flatIdx
+                visited[srcTsIdx] = 1 + g
             end
+            g = g + 1
         end
 
         -- Convert dictionary to a set.
@@ -1171,6 +1162,8 @@ dlg:button {
             local uniqueCel <const> = uniqueCels[k]
             local uniqueMap <const> = uniqueCel.image
             local reordered <const> = uniqueMap:clone()
+
+            -- TODO: Replace pixel iterator.
             local reoItr <const> = reordered:pixels()
             for mapEntry in reoItr do
                 local mapif <const> = mapEntry() --[[@as integer]]
@@ -1281,49 +1274,7 @@ dlg:button {
     end
 }
 
-dlg:separator { id = "sortSep" }
-
-dlg:button {
-    id = "nextFore",
-    label = "Next:",
-    text = "&FORE",
-    focus = true,
-    onclick = function()
-        cycleActive("FORE_TILE", 1)
-    end
-}
-
-dlg:button {
-    id = "nextBack",
-    text = "&BACK",
-    focus = false,
-    onclick = function()
-        cycleActive("BACK_TILE", 1)
-    end
-}
-
-dlg:newrow { always = false }
-
-dlg:button {
-    id = "prevFore",
-    label = "Prev:",
-    text = "F&ORE",
-    focus = false,
-    onclick = function()
-        cycleActive("FORE_TILE", -1)
-    end
-}
-
-dlg:button {
-    id = "prevBack",
-    text = "B&ACK",
-    focus = false,
-    onclick = function()
-        cycleActive("BACK_TILE", -1)
-    end
-}
-
-dlg:newrow { always = false }
+dlg:separator { id = "cancelSep" }
 
 dlg:button {
     id = "cancel",

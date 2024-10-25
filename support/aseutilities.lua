@@ -1024,6 +1024,57 @@ function AseUtilities.blendRgba(
     return cr, cg, cb, tuv
 end
 
+---Changes the active swatch in the color bar via a step.
+---If the site is in tile map mode, then changes the active tile,
+---otherwise changes the palette swatch.
+---@param step integer step
+---@param useBack boolean use background
+function AseUtilities.changeActiveSwatch(step, useBack)
+    local site <const> = app.site
+    local activeSprite <const> = site.sprite
+    if not activeSprite then return end
+
+    local tilemapMode <const> = site.tilemapMode
+    local activeLayer <const> = site.layer
+        or activeSprite.layers[1]
+
+    if tilemapMode == TilemapMode.TILES
+        and activeLayer.isTilemap then
+        local tileSet <const> = activeLayer.tileset
+        if not tileSet then return end
+        local lenTileSet <const> = #tileSet
+
+        local field <const> = useBack and "bgTile" or "fgTile"
+        local tifCurr <const> = app[field] --[[@as integer]]
+        local tiCurr <const> = app.pixelColor.tileI(tifCurr)
+        if tiCurr >= lenTileSet or tiCurr < 0 then
+            app[field] = 0
+        else
+            local tfCurr <const> = app.pixelColor.tileF(tifCurr)
+            local tiNext <const> = (tiCurr + step) % lenTileSet
+            app[field] = app.pixelColor.tile(tiNext, tfCurr)
+        end
+    else
+        local activeFrObj <const> = site.frame
+            or activeSprite.frames[1]
+        local palette <const> = AseUtilities.getPalette(
+            activeFrObj, activeSprite.palettes)
+        local lenPalette <const> = #palette
+
+        if useBack then app.command.SwitchColors() end
+        local idxCurr <const> = app.fgColor.index
+        if idxCurr >= lenPalette or idxCurr < 0 then
+            app.fgColor = AseUtilities.aseColorCopy(
+                Color { index = 0 }, "UNBOUNDED")
+        else
+            local idxNext <const> = (idxCurr + step) % lenPalette
+            app.fgColor = AseUtilities.aseColorCopy(
+                Color { index = idxNext }, "UNBOUNDED")
+        end
+        if useBack then app.command.SwitchColors() end
+    end
+end
+
 ---Wrapper for app.command.ChangePixelFormat to accept ColorMode
 ---as an input.
 ---@param format ColorMode format constant
