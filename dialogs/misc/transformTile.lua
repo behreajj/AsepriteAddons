@@ -401,8 +401,6 @@ local function transformCel(dialog, preset)
         return
     end
 
-    local srcBpp <const> = srcMap.bytesPerPixel
-    local packFmt <const> = "<I" .. srcBpp
     local srcBytes <const> = srcMap.bytes
     local lenSrcMap <const> = wSrcMap * hSrcMap
 
@@ -439,15 +437,15 @@ local function transformCel(dialog, preset)
             local trgByteStrs <const> = {}
             local i = 0
             while i < lenSrcMap do
-                local ibpp <const> = i * srcBpp
-                local srcMapif <const> = strunpack(packFmt,
-                    strsub(trBytes, 1 + ibpp, srcBpp + ibpp))
+                local i4 <const> = i * 4
+                local srcMapif <const> = strunpack("<I4", strsub(
+                    trBytes, 1 + i4, 4 + i4))
                 local srcIdx <const> = pxTilei(srcMapif)
                 -- Built-in Aseprite flags allow for rotations of index zero
                 -- and for rotations of non-uniform tiles.
                 local trgFlags <const> = flgTrFunc(pxTilef(srcMapif))
                 i = i + 1
-                trgByteStrs[i] = strpack(packFmt, pxTileCompose(
+                trgByteStrs[i] = strpack("<I4", pxTileCompose(
                     srcIdx, trgFlags))
             end
             trMap.bytes = tconcat(trgByteStrs)
@@ -475,8 +473,9 @@ local function transformCel(dialog, preset)
         return
     end
 
-    -- TODO: In theory, app.range.tiles could also be used, but it doesn't seem
-    -- to work.
+    -- TODO: In theory, app.range.tiles could also be used. It now works
+    -- as a getter. getSelectedTiles is an involved function to have in
+    -- AseUtilities when this is its only usage.
 
     -- A regular layer's cel bounds may be within the canvas, but after
     -- conversion to tilemap layer, it may go outside the canvas due to
@@ -496,9 +495,9 @@ local function transformCel(dialog, preset)
         local trgByteStrs <const> = {}
         local i = 0
         while i < lenSrcMap do
-            local ibpp <const> = i * srcBpp
+            local i4 <const> = i * 4
             i = i + 1
-            trgByteStrs[i] = strsub(srcBytes, 1 + ibpp, srcBpp + ibpp)
+            trgByteStrs[i] = strsub(srcBytes, 1 + i4, 4 + i4)
         end
 
         local lenCoords <const> = #coords
@@ -506,12 +505,12 @@ local function transformCel(dialog, preset)
         while j < lenCoords do
             j = j + 1
             local coord <const> = coords[j]
-            local srcMapif <const> = strunpack(packFmt, trgByteStrs[1 + coord])
+            local srcMapif <const> = strunpack("<I4", trgByteStrs[1 + coord])
             local srcIdx = pxTilei(srcMapif)
             if srcToTrgIdcs[srcIdx] then
                 local trgMapif <const> = pxTileCompose(srcToTrgIdcs[srcIdx],
                     pxTilef(srcMapif))
-                trgByteStrs[1 + coord] = strpack(packFmt, trgMapif)
+                trgByteStrs[1 + coord] = strpack("<I4", trgMapif)
             end
         end
 
@@ -773,12 +772,26 @@ dlg:button {
             selIndices = Utilities.parseRangeStringUnique(
                 rangeStr, lenTileSet - 1, baseIndex - 1)
             -- print(table.concat(selIndices, ", "))
+
+            if #selIndices <= 0 then
+                local range <const> = app.range
+                if range.sprite == activeSprite then
+                    local rangeTiles <const> = range.tiles
+                    local lenRangeTiles <const> = #rangeTiles
+                    local i = 0
+                    while i < lenRangeTiles do
+                        i = i + 1
+                        selIndices[i] = rangeTiles[i]
+                    end
+                end
+            end
         end
 
         local lenSelIndices <const> = #selIndices
-        if lenSelIndices < 1 then return end
+        if lenSelIndices <= 0 then return end
 
-        app.range:clear()
+        -- TODO: This range should respond to add, replace, union, intersect
+        -- if it is going to be included.
         app.range.tiles = selIndices
 
         local activeFrame <const> = site.frame
