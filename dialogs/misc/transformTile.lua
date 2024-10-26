@@ -996,13 +996,17 @@ dlg:button {
             else
                 local flat <const> = Image(spriteSpec)
                 flat:drawSprite(activeSprite, activeFrame, Point(0, 0))
-                local trimmed <const>,
-                xTrimmed <const>,
-                yTrimmed <const> = AseUtilities.trimImageAlpha(
-                    flat, 0, alphaIndex, 8, 8)
-                srcImg, xtl, ytl = trimmed, xTrimmed, yTrimmed
+                srcImg, xtl, ytl = flat, 0, 0
             end
         end
+
+        local trimmed <const>,
+        xTrimmed <const>,
+        yTrimmed <const> = AseUtilities.trimImageAlpha(
+            srcImg, 0, alphaIndex, 8, 8)
+        srcImg = trimmed
+        xtl = xtl + xTrimmed
+        ytl = ytl + yTrimmed
 
         if srcImg:isEmpty() then return end
 
