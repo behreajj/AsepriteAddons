@@ -84,9 +84,9 @@ local function loadSprite(filePath)
                         thumbPrefs.enabled = true
                         thumbPrefs.zoom = 1
                         thumbPrefs.overlay_enabled = true
-                    end -- Thumb prefs exists.
-                end     -- Doc prefs exists.
-            end         -- App prefs exists.
+                    end -- Thumb preferences exists.
+                end     -- Doc preferences exists.
+            end         -- App preferences exists.
         end             -- File ext is neither ase nor aseprite.
     end                 -- File ext match block.
 

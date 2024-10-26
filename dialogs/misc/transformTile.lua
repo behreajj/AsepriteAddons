@@ -4,8 +4,6 @@ local targets <const> = { "CURSOR", "FORE_TILE", "BACK_TILE", "TILES", "TILE_MAP
 local selModes <const> = { "REPLACE", "ADD", "SUBTRACT", "INTERSECT" }
 
 local defaults <const> = {
-    -- TODO: app.range.tiles now appears to work as a getter.
-
     -- Built-in Image:flip method has not been adopted here due to issues with
     -- undo history.
 
@@ -477,7 +475,7 @@ local function transformCel(dialog, preset)
         return
     end
 
-    -- In theory, app.range.tiles could also be used, but it doesn't seem
+    -- TODO: In theory, app.range.tiles could also be used, but it doesn't seem
     -- to work.
 
     -- A regular layer's cel bounds may be within the canvas, but after
@@ -747,15 +745,13 @@ dlg:button {
 
         local selIndices = {}
         if target == "FORE_TILE" then
-            local tifFore <const> = app.fgTile
-            local tiFore = app.pixelColor.tileI(tifFore)
+            local tiFore = app.pixelColor.tileI(app.fgTile)
             if tiFore > lenTileSet - 1 or tiFore < 0 then
                 tiFore = 0
             end
             selIndices[1] = tiFore
         elseif target == "BACK_TILE" then
-            local tifBack <const> = app.bgTile
-            local tiBack = app.pixelColor.tileI(tifBack)
+            local tiBack = app.pixelColor.tileI(app.bgTile)
             if tiBack > lenTileSet - 1 or tiBack < 0 then
                 tiBack = 0
             end
@@ -779,79 +775,77 @@ dlg:button {
             -- print(table.concat(selIndices, ", "))
         end
 
-        if target == "TILES" then
-            app.range:clear()
-            app.range.tiles = selIndices
-        else
-            local activeFrame <const> = site.frame
-            if not activeFrame then return end
+        local lenSelIndices <const> = #selIndices
+        if lenSelIndices < 1 then return end
 
-            local activeCel <const> = activeLayer:cel(activeFrame)
-            if not activeCel then return end
+        app.range:clear()
+        app.range.tiles = selIndices
 
-            local lenSelIndices <const> = #selIndices
-            if lenSelIndices < 1 then return end
+        local activeFrame <const> = site.frame
+        if not activeFrame then return end
 
-            local useXFlip <const> = args.useXFlip --[[@as boolean]]
-            local useYFlip <const> = args.useYFlip --[[@as boolean]]
-            local useDFlip <const> = args.useDFlip --[[@as boolean]]
+        local activeCel <const> = activeLayer:cel(activeFrame)
+        if not activeCel then return end
 
-            local flipMask = 0x0
-            if useXFlip then flipMask = flipMask | 0x80000000 end
-            if useYFlip then flipMask = flipMask | 0x40000000 end
-            if useDFlip then flipMask = flipMask | 0x20000000 end
-            if flipMask == 0x0 then
-                flipMask = 0x1fffffff
-            end
+        local useXFlip <const> = args.useXFlip --[[@as boolean]]
+        local useYFlip <const> = args.useYFlip --[[@as boolean]]
+        local useDFlip <const> = args.useDFlip --[[@as boolean]]
 
-            local celPos <const> = activeCel.position
-            local xTopLeft <const> = celPos.x
-            local yTopLeft <const> = celPos.y
-
-            local trgSel <const> = Selection()
-            local selRect <const> = Rectangle(0, 0, wTile, hTile)
-
-            -- Cache methods used in loop.
-            local pxTilei <const> = app.pixelColor.tileI
-            local strsub <const> = string.sub
-            local strunpack <const> = string.unpack
-
-            local tileMap <const> = activeCel.image
-            local wMap <const> = tileMap.width
-            local hMap <const> = tileMap.height
-            local areaMap <const> = wMap * hMap
-            local bytesMap <const> = tileMap.bytes
-
-            local i = 0
-            while i < areaMap do
-                local i4 <const> = i * 4
-                local mapif <const> = strunpack("<I4", strsub(bytesMap,
-                    1 + i4, 4 + i4))
-                local flag <const> = flipMask & mapif
-                if flag ~= 0 then
-                    local idx <const> = pxTilei(mapif)
-                    local found = false
-                    local k = 0
-                    while (not found) and k < lenSelIndices do
-                        k = k + 1
-                        found = idx == selIndices[k]
-                    end
-
-                    if found then
-                        selRect.x = xTopLeft + (i % wMap) * wTile
-                        selRect.y = yTopLeft + (i // wMap) * hTile
-                        trgSel:add(selRect)
-                    end
-                end
-                i = i + 1
-            end
-
-            local selMode <const> = args.selMode
-                or defaults.selMode --[[@as string]]
-            app.transaction("Select Tiles", function()
-                updateSel(activeSprite, trgSel, selMode)
-            end)
+        local flipMask = 0x0
+        if useXFlip then flipMask = flipMask | 0x80000000 end
+        if useYFlip then flipMask = flipMask | 0x40000000 end
+        if useDFlip then flipMask = flipMask | 0x20000000 end
+        if flipMask == 0x0 then
+            flipMask = 0x1fffffff
         end
+
+        local celPos <const> = activeCel.position
+        local xTopLeft <const> = celPos.x
+        local yTopLeft <const> = celPos.y
+
+        local trgSel <const> = Selection()
+        local selRect <const> = Rectangle(0, 0, wTile, hTile)
+
+        -- Cache methods used in loop.
+        local pxTilei <const> = app.pixelColor.tileI
+        local strsub <const> = string.sub
+        local strunpack <const> = string.unpack
+
+        local tileMap <const> = activeCel.image
+        local wMap <const> = tileMap.width
+        local hMap <const> = tileMap.height
+        local areaMap <const> = wMap * hMap
+        local bytesMap <const> = tileMap.bytes
+
+        local i = 0
+        while i < areaMap do
+            local i4 <const> = i * 4
+            local mapif <const> = strunpack("<I4", strsub(
+                bytesMap, 1 + i4, 4 + i4))
+            local flag <const> = flipMask & mapif
+            if flag ~= 0 then
+                local idx <const> = pxTilei(mapif)
+                local found = false
+                local k = 0
+                while (not found) and k < lenSelIndices do
+                    k = k + 1
+                    found = idx == selIndices[k]
+                end
+
+                if found then
+                    selRect.x = xTopLeft + (i % wMap) * wTile
+                    selRect.y = yTopLeft + (i // wMap) * hTile
+                    trgSel:add(selRect)
+                end
+            end
+            i = i + 1
+        end
+
+        local selMode <const> = args.selMode
+            or defaults.selMode --[[@as string]]
+        app.transaction("Select Tiles", function()
+            updateSel(activeSprite, trgSel, selMode)
+        end)
 
         app.refresh()
     end
@@ -1143,7 +1137,7 @@ dlg:button {
             end
 
             sortedTsPackets[i] = packet
-            oldToNew[1 + sortedTsIdcs[i]] = i
+            oldToNew[1 + tsIdx] = i
         end
 
         -- Reassign sorted images to tile set tiles.
