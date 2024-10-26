@@ -809,9 +809,11 @@ dlg:button {
         local useDFlip <const> = args.useDFlip --[[@as boolean]]
 
         local flipMask = 0x0
-        if useXFlip then flipMask = flipMask | 0x80000000 end
-        if useYFlip then flipMask = flipMask | 0x40000000 end
-        if useDFlip then flipMask = flipMask | 0x20000000 end
+        if target ~= "TILES" then
+            if useXFlip then flipMask = flipMask | 0x80000000 end
+            if useYFlip then flipMask = flipMask | 0x40000000 end
+            if useDFlip then flipMask = flipMask | 0x20000000 end
+        end
         if flipMask == 0x0 then
             flipMask = 0x1fffffff
         end
