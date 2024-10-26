@@ -946,7 +946,7 @@ dlg:separator { id = "sortSep" }
 dlg:button {
     id = "createButton",
     label = "Tile Set:",
-    text = "CREATE",
+    text = "CR&EATE",
     focus = false,
     onclick = function()
         local site <const> = app.site
