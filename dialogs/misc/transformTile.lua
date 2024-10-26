@@ -4,6 +4,8 @@ local targets <const> = { "CURSOR", "FORE_TILE", "BACK_TILE", "TILES", "TILE_MAP
 local selModes <const> = { "REPLACE", "ADD", "SUBTRACT", "INTERSECT" }
 
 local defaults <const> = {
+    -- TODO: app.range.tiles now appears to work as a getter.
+
     -- Built-in Image:flip method has not been adopted here due to issues with
     -- undo history.
 
@@ -361,17 +363,16 @@ local function transformCel(dialog, preset)
     end
 
     if target == "FORE_TILE" or target == "BACK_TILE" then
-        local access <const> = target == "BACK_TILE" and "bg_tile" or "fg_tile"
-
-        local colorBarPrefs <const> = app.preferences.color_bar
-        local tifCurr <const> = colorBarPrefs[access] --[[@as integer]]
+        local useBack <const> = target == "BACK_TILE"
+        local tifCurr <const> = useBack and app.bgTile or app.fgTile
         local tiCurr <const> = pxTilei(tifCurr)
         if tiCurr > lenTileSet - 1 or tiCurr < 0 then
-            colorBarPrefs[access] = 0
+            if useBack then app.bgTile = 0 else app.fgTile = 0 end
         else
             local tfCurr <const> = pxTilef(tifCurr)
             local tfNext <const> = flgTrFunc(tfCurr)
-            colorBarPrefs[access] = pxTileCompose(tiCurr, tfNext)
+            local comp <const> = pxTileCompose(tiCurr, tfNext)
+            if useBack then app.bgTile = comp else app.fgTile = comp end
         end
         app.refresh()
         return
@@ -744,18 +745,16 @@ dlg:button {
         local target <const> = args.target
             or defaults.target --[[@as string]]
 
-        local colorBarPrefs <const> = app.preferences.color_bar
-
         local selIndices = {}
         if target == "FORE_TILE" then
-            local tifFore <const> = colorBarPrefs["fg_tile"] --[[@as integer]]
+            local tifFore <const> = app.fgTile
             local tiFore = app.pixelColor.tileI(tifFore)
             if tiFore > lenTileSet - 1 or tiFore < 0 then
                 tiFore = 0
             end
             selIndices[1] = tiFore
         elseif target == "BACK_TILE" then
-            local tifBack <const> = colorBarPrefs["bg_tile"] --[[@as integer]]
+            local tifBack <const> = app.bgTile
             local tiBack = app.pixelColor.tileI(tifBack)
             if tiBack > lenTileSet - 1 or tiBack < 0 then
                 tiBack = 0
@@ -814,14 +813,21 @@ dlg:button {
 
             -- Cache methods used in loop.
             local pxTilei <const> = app.pixelColor.tileI
+            local strsub <const> = string.sub
+            local strunpack <const> = string.unpack
 
-            -- TODO: Replace pixel iterator.
             local tileMap <const> = activeCel.image
-            local mapItr <const> = tileMap:pixels()
-            for mapEntry in mapItr do
-                local mapif <const> = mapEntry() --[[@as integer]]
-                local flag <const> = flipMask & mapif
+            local wMap <const> = tileMap.width
+            local hMap <const> = tileMap.height
+            local areaMap <const> = wMap * hMap
+            local bytesMap <const> = tileMap.bytes
 
+            local i = 0
+            while i < areaMap do
+                local i4 <const> = i * 4
+                local mapif <const> = strunpack("<I4", strsub(bytesMap,
+                    1 + i4, 4 + i4))
+                local flag <const> = flipMask & mapif
                 if flag ~= 0 then
                     local idx <const> = pxTilei(mapif)
                     local found = false
@@ -832,11 +838,12 @@ dlg:button {
                     end
 
                     if found then
-                        selRect.x = xTopLeft + mapEntry.x * wTile
-                        selRect.y = yTopLeft + mapEntry.y * hTile
+                        selRect.x = xTopLeft + (i % wMap) * wTile
+                        selRect.y = yTopLeft + (i // wMap) * hTile
                         trgSel:add(selRect)
                     end
                 end
+                i = i + 1
             end
 
             local selMode <const> = args.selMode
@@ -1039,14 +1046,16 @@ dlg:button {
         local colorSpace <const> = spriteSpec.colorSpace
 
         -- Cache methods used in a for loop.
+        local strpack <const> = string.pack
+        local strsub <const> = string.sub
+        local strunpack <const> = string.unpack
+        local tconcat <const> = table.concat
         local pixelColor <const> = app.pixelColor
         local pxTilei <const> = pixelColor.tileI
         local pxTilef <const> = pixelColor.tileF
         local pxTileCompose <const> = pixelColor.tile
         local createSpec <const> = AseUtilities.createSpec
         local colorCopy <const> = AseUtilities.aseColorCopy
-        local strunpack <const> = string.unpack
-        local strsub <const> = string.sub
 
         -- Contains the first usage of a tile in the set by the active map.
         -- Ignores index 0. Because all tile maps in the layer have to be
@@ -1161,21 +1170,34 @@ dlg:button {
             k = k + 1
             local uniqueCel <const> = uniqueCels[k]
             local uniqueMap <const> = uniqueCel.image
-            local reordered <const> = uniqueMap:clone()
 
-            -- TODO: Replace pixel iterator.
-            local reoItr <const> = reordered:pixels()
-            for mapEntry in reoItr do
-                local mapif <const> = mapEntry() --[[@as integer]]
+            local uniqueSpec <const> = uniqueMap.spec
+            local bytesMap <const> = uniqueMap.bytes
+            local wMap <const> = uniqueSpec.width
+            local hMap <const> = uniqueSpec.height
+            local areaMap <const> = wMap * hMap
+            ---@type string[]
+            local reorderedStrArr <const> = {}
+
+            local m = 0
+            while m < areaMap do
+                local m4 <const> = m * 4
+                local mapif <const> = strunpack("<I4", strsub(bytesMap,
+                    1 + m4, 4 + m4))
                 local oldTsIdx <const> = pxTilei(mapif)
                 local flags <const> = pxTilef(mapif)
+                local reordered = pxTileCompose(0, flags)
                 if oldTsIdx > 0 and oldTsIdx < lenTileSet then
                     local newTsIdx <const> = oldToNew[1 + oldTsIdx] - 1
-                    mapEntry(pxTileCompose(newTsIdx, flags))
-                else
-                    mapEntry(pxTileCompose(0, flags))
+                    reordered = pxTileCompose(newTsIdx, flags)
                 end
+
+                m = m + 1
+                reorderedStrArr[m] = strpack("<I4", reordered)
             end
+
+            local reordered <const> = Image(uniqueSpec)
+            reordered.bytes = tconcat(reorderedStrArr)
 
             app.transaction("Update Map", function()
                 uniqueCel.image = reordered
