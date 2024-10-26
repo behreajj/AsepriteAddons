@@ -401,6 +401,8 @@ local function transformCel(dialog, preset)
         return
     end
 
+    -- TODO: You could save yourself a few loops by getting the source
+    -- map pixels with the AseUtilities method.
     local srcBytes <const> = srcMap.bytes
     local lenSrcMap <const> = wSrcMap * hSrcMap
 
@@ -438,15 +440,15 @@ local function transformCel(dialog, preset)
             local i = 0
             while i < lenSrcMap do
                 local i4 <const> = i * 4
-                local srcMapif <const> = strunpack("<I4", strsub(
+                local trMapif <const> = strunpack("<I4", strsub(
                     trBytes, 1 + i4, 4 + i4))
-                local srcIdx <const> = pxTilei(srcMapif)
+                local trIdx <const> = pxTilei(trMapif)
                 -- Built-in Aseprite flags allow for rotations of index zero
                 -- and for rotations of non-uniform tiles.
-                local trgFlags <const> = flgTrFunc(pxTilef(srcMapif))
+                local trgFlags <const> = flgTrFunc(pxTilef(trMapif))
                 i = i + 1
                 trgByteStrs[i] = strpack("<I4", pxTileCompose(
-                    srcIdx, trgFlags))
+                    trIdx, trgFlags))
             end
             trMap.bytes = tconcat(trgByteStrs)
 
@@ -790,9 +792,11 @@ dlg:button {
         local lenSelIndices <const> = #selIndices
         if lenSelIndices <= 0 then return end
 
-        -- TODO: This range should respond to add, replace, union, intersect
-        -- if it is going to be included.
-        app.range.tiles = selIndices
+        -- A tile range appears in the color bar even when app.site tile map
+        -- mode is not tiles.
+        if app.range.isEmpty or target == "TILES" then
+            app.range.tiles = selIndices
+        end
 
         local activeFrame <const> = site.frame
         if not activeFrame then return end
