@@ -4,6 +4,8 @@ local targets <const> = { "CURSOR", "FORE_TILE", "BACK_TILE", "TILES", "TILE_MAP
 local selModes <const> = { "REPLACE", "ADD", "SUBTRACT", "INTERSECT" }
 
 local defaults <const> = {
+    -- app.range.tiles now works as a getter.
+
     -- Built-in Image:flip method has not been adopted here due to issues with
     -- undo history.
 
@@ -401,8 +403,6 @@ local function transformCel(dialog, preset)
         return
     end
 
-    -- TODO: You could save yourself a few loops by getting the source
-    -- map pixels with the AseUtilities method.
     local srcBytes <const> = srcMap.bytes
     local lenSrcMap <const> = wSrcMap * hSrcMap
 
@@ -474,10 +474,6 @@ local function transformCel(dialog, preset)
         app.refresh()
         return
     end
-
-    -- TODO: In theory, app.range.tiles could also be used. It now works
-    -- as a getter. getSelectedTiles is an involved function to have in
-    -- AseUtilities when this is its only usage.
 
     -- A regular layer's cel bounds may be within the canvas, but after
     -- conversion to tilemap layer, it may go outside the canvas due to

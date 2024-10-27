@@ -202,6 +202,7 @@ dlg:button {
         local strlower <const> = string.lower
         local strsub <const> = string.sub
         local strmatch <const> = string.match
+        local strpack <const> = string.pack
         local strunpack <const> = string.unpack
 
         local isValidRiff = false
@@ -411,16 +412,18 @@ dlg:button {
             local hSprite <const> = math.max(1,
                 math.ceil(lenColors / wSprite))
 
+            ---@type string[]
+            local byteArr <const> = {}
+            local areaSprite <const> = wSprite * hSprite
+            local i = 0
+            while i < areaSprite do
+                i = i + 1
+                byteArr[i] = strpack("<I4", colors[i] or 0)
+            end
+
             local spec <const> = AseUtilities.createSpec(wSprite, hSprite)
             local image <const> = Image(spec)
-            local pxItr <const> = image:pixels()
-            local index = 0
-            for pixel in pxItr do
-                if index <= lenColors then
-                    index = index + 1
-                    pixel(colors[index])
-                end
-            end
+            image.bytes = table.concat(byteArr)
 
             activeSprite = AseUtilities.createSprite(spec, "Palette")
             local layer <const> = activeSprite.layers[1]
