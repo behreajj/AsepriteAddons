@@ -407,19 +407,18 @@ dlg:button {
             if columns < 1 then
                 wSprite = math.max(8,
                     math.ceil(math.sqrt(math.max(
-                        1, lenColors))))
+                        1, #colors))))
             end
             local hSprite <const> = math.max(1,
-                math.ceil(lenColors / wSprite))
+                math.ceil(#colors / wSprite))
 
             ---@type string[]
             local byteArr <const> = {}
             local areaSprite <const> = wSprite * hSprite
-            local offset <const> = prependMask and 1 or 0
             local i = 0
             while i < areaSprite do
                 i = i + 1
-                byteArr[i] = strpack("<I4", colors[offset + i] or 0)
+                byteArr[i] = strpack("<I4", colors[i] or 0)
             end
 
             local spec <const> = AseUtilities.createSpec(wSprite, hSprite)
