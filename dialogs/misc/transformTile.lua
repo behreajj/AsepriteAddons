@@ -982,7 +982,11 @@ dlg:button {
         local colorSpace <const> = spriteSpec.colorSpace
         local alphaIndex <const> = spriteSpec.transparentColor
 
-        local srcImg, xtl, ytl = nil, 0, 0
+        local srcImg = nil
+        local xtl, ytl = 0, 0
+        local layerOpacity, celOpacity = 255, 255
+        local blendMode = BlendMode.NORMAL
+        local zIndex = 0
         if activeLayer.isGroup then
             local flat <const>,
             bounds <const> = AseUtilities.flattenGroup(
@@ -991,8 +995,13 @@ dlg:button {
                 true, false, true, true)
             srcImg, xtl, ytl = flat, bounds.x, bounds.y
         else
+            layerOpacity = activeLayer.opacity or 255
+            blendMode = activeLayer.blendMode or BlendMode.NORMAL
+
             local cel <const> = activeLayer:cel(activeFrame)
             if cel then
+                celOpacity = cel.opacity
+                zIndex = cel.zIndex
                 local celPos <const> = cel.position
                 srcImg, xtl, ytl = cel.image, celPos.x, celPos.y
             else
@@ -1002,6 +1011,8 @@ dlg:button {
             end
         end
 
+        if srcImg:isEmpty() then return end
+
         local trimmed <const>,
         xTrimmed <const>,
         yTrimmed <const> = AseUtilities.trimImageAlpha(
@@ -1009,8 +1020,6 @@ dlg:button {
         srcImg = trimmed
         xtl = xtl + xTrimmed
         ytl = ytl + yTrimmed
-
-        if srcImg:isEmpty() then return end
 
         local wTile, hTile = 8, 8
         local docPrefs <const> = app.preferences.document(activeSprite)
@@ -1069,8 +1078,7 @@ dlg:button {
                 local hexTile = alphaIndexPacked
                 if ySrc >= 0 and ySrc < hSrc
                     and xSrc >= 0 and xSrc < wSrc then
-                    local idx <const> = ySrc * wSrc + xSrc
-                    local idxbpp <const> = idx * srcBpp
+                    local idxbpp <const> = (ySrc * wSrc + xSrc) * srcBpp
                     hexTile = strsub(srcBytes, 1 + idxbpp, srcBpp + idxbpp)
                 end
 
@@ -1134,21 +1142,23 @@ dlg:button {
             mapBytes[m] = strpack("<I4", idx)
         end
 
-        local mapSpec <const> = AseUtilities.createSpec(wMap, hMap,
-            ColorMode.TILEMAP, colorSpace, 0)
-        local mapImage <const> = Image(mapSpec)
+        local mapImage <const> = Image(AseUtilities.createSpec(
+            wMap, hMap, ColorMode.TILEMAP, colorSpace, 0))
         mapImage.bytes = table.concat(mapBytes)
 
         app.command.NewLayer { tilemap = true }
 
-        -- TODO: Should this copy over blend mode, layer opacity, cel opacity,
-        -- cel z index, etc.?
         local tmLayer <const> = app.layer
         if tmLayer and tmLayer.isTilemap then
             app.transaction("Create Map Cel", function()
                 tmLayer.tileset = tileSet
+                tmLayer.blendMode = blendMode
+                tmLayer.opacity = layerOpacity
+
                 local tmCel <const> = activeSprite:newCel(
                     tmLayer, activeFrame, mapImage, Point(xtl, ytl))
+                tmCel.opacity = celOpacity
+                tmCel.zIndex = zIndex
             end)
         end
 
@@ -1211,14 +1221,12 @@ dlg:button {
                     if not tileImage:isEmpty() then
                         local column <const> = k % columns
                         local row <const> = k // columns
-                        local xTrg <const> = column * wTile
-                        local yTrg <const> = row * hTile
                         local tileLayer <const> = activeSprite:newLayer()
                         tileLayer.name = strfmt("Tile %d", k + baseIndex - 1)
                         tileLayer.parent = tileSetLayer
                         activeSprite:newCel(
                             tileLayer, activeFrame,
-                            tileImage, Point(xTrg, yTrg))
+                            tileImage, Point(column * wTile, row * hTile))
                     end
                 end
             end
@@ -1408,14 +1416,14 @@ dlg:button {
                 local mapif <const> = strunpack("<I4", strsub(bytesMap,
                     1 + m4, 4 + m4))
                 local oldTsIdx <const> = pxTilei(mapif)
-                local flags <const> = pxTilef(mapif)
-                local reordered = pxTileCompose(0, flags)
+                local newTsIdx = 0
                 if oldTsIdx > 0 and oldTsIdx < lenTileSet then
-                    local newTsIdx <const> = oldToNew[1 + oldTsIdx] - 1
-                    reordered = pxTileCompose(newTsIdx, flags)
+                    newTsIdx = oldToNew[1 + oldTsIdx] - 1
                 end
 
                 m = m + 1
+                local flags <const> = pxTilef(mapif)
+                local reordered <const> = pxTileCompose(newTsIdx, flags)
                 reorderedStrArr[m] = strpack("<I4", reordered)
             end
 
