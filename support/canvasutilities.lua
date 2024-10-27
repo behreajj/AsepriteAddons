@@ -998,25 +998,36 @@ function CanvasUtilities.spectrum(
             local aActive <const> = args.spectrumAlpha --[[@as number]]
 
             local floor <const> = math.floor
+            local strpack <const> = string.pack
             local lchTosRgb <const> = Clr.srLchTosRgb
             local toHex <const> = Clr.toHex
 
-            local image <const> = Image(wVrf, hVrf)
-            local pxItr <const> = image:pixels()
-            for pixel in pxItr do
-                local x <const> = pixel.x
-                local y <const> = pixel.y
+            ---@type string[]
+            local byteArr <const> = {}
+            local areaCanvas <const> = wVrf * hVrf
+            local i = 0
+            while i < areaCanvas do
+                local x <const> = i % wVrf
+                local y <const> = i // wVrf
+
+                local hex = 0xff000000
                 if y < spectrumHeight then
-                    pixel(toHex(lchTosRgb(
-                        100.0 - y * yToLgt, cActive, x * xToHue, 1.0)))
+                    hex = toHex(lchTosRgb(
+                        100.0 - y * yToLgt, cActive, x * xToHue, 1.0))
                 elseif y < chrBarThresh then
-                    pixel(toHex(lchTosRgb(
-                        lActive, x * xToChr, hActive, 1.0)))
+                    hex = toHex(lchTosRgb(
+                        lActive, x * xToChr, hActive, 1.0))
                 else
                     local v <const> = floor(x * xToAlpha255 + 0.5)
-                    pixel(0xff000000 | v << 0x10 | v << 0x08 | v)
+                    hex = 0xff000000 | v << 0x10 | v << 0x08 | v
                 end
+
+                i = i + 1
+                byteArr[i] = strpack("<I4", hex)
             end
+
+            local image <const> = Image(wVrf, hVrf)
+            image.bytes = table.concat(byteArr)
             context:drawImage(image,
                 Rectangle(0, 0, wVrf, hVrf),
                 Rectangle(0, 0, wVrf, hVrf))
