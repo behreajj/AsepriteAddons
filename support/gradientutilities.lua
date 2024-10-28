@@ -300,8 +300,8 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         local reticleSize <const> = grdUtlActive.reticleSize
         local reticleHalf <const> = reticleSize // 2
         local y <const> = hCanvas // 2 - reticleHalf
-        local aseWhite = Color(255, 255, 255, 255)
-        local aseBlack = Color(0, 0, 0, 255)
+        local aseWhite = Color { r = 255, g = 255, b = 255 }
+        local aseBlack = Color { r = 0, g = 0, b = 0 }
 
         local keys <const> = gradient:getKeys()
         local lenKeys <const> = #keys
