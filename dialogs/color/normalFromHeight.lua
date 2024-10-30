@@ -136,10 +136,14 @@ dlg:button {
         local preserveAlpha <const> = args.preserveAlpha --[[@as boolean]]
 
         -- Cache global methods to locals.
+        local floor <const> = math.floor
         local max <const> = math.max
         local min <const> = math.min
         local sqrt <const> = math.sqrt
-        local floor <const> = math.floor
+        local strpack <const> = string.pack
+        local strsub <const> = string.sub
+        local strunpack <const> = string.unpack
+        local tconcat <const> = table.concat
 
         -- Choose edge wrapping method.
         local edgeType <const> = args.edgeType
@@ -162,9 +166,10 @@ dlg:button {
             AseUtilities.getFrames(activeSprite, target))
 
         -- Held constant in loop to follow.
-        local spriteWidth <const> = activeSprite.width
-        local spriteHeight <const> = activeSprite.height
         local spriteSpec <const> = activeSprite.spec
+        local wSprite <const> = spriteSpec.width
+        local hSprite <const> = spriteSpec.height
+        local areaSprite <const> = wSprite * hSprite
         local halfScale <const> = scale * 0.5
         local originPt <const> = Point(0, 0)
         local lenFrames <const> = #frames
@@ -182,7 +187,7 @@ dlg:button {
             hexDefault = 0x00008080
         end
 
-        local hexBlank = 0xff000000 | hexDefault
+        local hexBlank = 0xff000000 | hexDefault --[[@as integer]]
         local alphaPart = 0xff
         if preserveAlpha then
             hexBlank = 0x0
@@ -190,8 +195,8 @@ dlg:button {
         end
 
         -- In the event that the image is trimmed.
-        local activeWidth <const> = spriteWidth
-        local activeHeight <const> = spriteHeight
+        local wActive <const> = wSprite
+        local hActive <const> = hSprite
 
         -- Create necessary layers.
         local flatLayer <const> = showFlatMap
@@ -213,7 +218,8 @@ dlg:button {
         end)
 
         local specNone <const> = AseUtilities.createSpec(
-            activeWidth, activeHeight, ColorMode.RGB, ColorSpace())
+            wActive, hActive, ColorMode.RGB, ColorSpace())
+        local areaActive <const> = wActive * hActive
 
         app.transaction("Normal From Height", function()
             local i = 0
@@ -236,30 +242,30 @@ dlg:button {
                 local lumTable <const> = {}
                 ---@type integer[]
                 local alphaTable <const> = {}
-                local flatIdx = 0
                 local lMin = 2147483647
                 local lMax = -2147483648
 
-                -- TODO: Switch to using string bytes approach?
-
-                -- Cache pixels from pixel iterator.
-                local flatPxItr <const> = flatImg:pixels()
-                for pixel in flatPxItr do
-                    flatIdx = flatIdx + 1
-                    local hex <const> = pixel()
-                    local alpha <const> = (hex >> 0x18) & 0xff
-                    alphaTable[flatIdx] = alpha
+                local srcBytes <const> = flatImg.bytes
+                local j = 0
+                while j < areaSprite do
+                    local j4 <const> = j * 4
+                    local abgr32 <const> = strunpack("<I4", strsub(
+                        srcBytes, 1 + j4, 4 + j4))
+                    local alpha <const> = (abgr32 >> 0x18) & 0xff
 
                     local lum = 0.0
                     if alpha > 0 then
-                        local clr <const> = Clr.fromHexAbgr32(hex)
+                        local clr <const> = Clr.fromHexAbgr32(abgr32)
                         local lab <const> = Clr.sRgbToSrLab2(clr)
                         lum = lab.l * 0.01
                     end
 
-                    lumTable[flatIdx] = lum
                     if lum < lMin then lMin = lum end
                     if lum > lMax then lMax = lum end
+
+                    j = j + 1
+                    alphaTable[j] = alpha
+                    lumTable[j] = lum
                 end
 
                 -- Stretch contrast.
@@ -270,79 +276,81 @@ dlg:button {
                     if rangeLum > 0.07 then
                         local invRangeLum <const> = 1.0 / rangeLum
                         local lenLum <const> = #lumTable
-                        local j = 0
-                        while j < lenLum do
-                            j = j + 1
-                            local lum <const> = lumTable[j]
-                            lumTable[j] = (lum - lMin) * invRangeLum
+                        local k = 0
+                        while k < lenLum do
+                            k = k + 1
+                            local lum <const> = lumTable[k]
+                            lumTable[k] = (lum - lMin) * invRangeLum
                         end
                     end
                 end
 
                 -- Show gray image.
                 if grayLayer then
-                    local grayImg <const> = Image(specNone)
-                    local grayPxItr <const> = grayImg:pixels()
-                    local grayIdx = 0
-                    for pixel in grayPxItr do
-                        grayIdx = grayIdx + 1
-                        local alpha <const> = alphaTable[grayIdx]
-                        local lum <const> = lumTable[grayIdx]
+                    ---@type string[]
+                    local grayByteStrArr <const> = {}
+                    local m = 0
+                    while m < areaActive do
+                        m = m + 1
+                        local alpha <const> = alphaTable[m]
+                        local abgr32 = 0
                         if alpha > 0 then
-                            local v <const> = floor(0.5 + lum * 255.0)
-                            local hex <const> = alpha << 0x18 | v << 0x10 | v << 0x08 | v
-                            pixel(hex)
+                            local lum <const> = lumTable[m]
+                            local v8 <const> = floor(lum * 255.0 + 0.5)
+                            abgr32 = alpha << 0x18 | v8 << 0x10 | v8 << 0x08 | v8
                         end
+                        grayByteStrArr[m] = strpack("<I4", abgr32)
                     end
 
+                    local grayImg <const> = Image(specNone)
+                    grayImg.bytes = tconcat(grayByteStrArr)
                     activeSprite:newCel(
                         grayLayer, frame, grayImg, originPt)
                 end
 
-                local writeIdx = 0
-                local normalImg <const> = Image(specNone)
-                local normPxItr <const> = normalImg:pixels()
-
-                for pixel in normPxItr do
-                    writeIdx = writeIdx + 1
-                    local alphaCenter <const> = alphaTable[writeIdx]
+                ---@type string[]
+                local normalByteStrArr <const> = {}
+                local m = 0
+                while m < areaActive do
+                    local abgr32 = hexBlank
+                    local alphaCenter <const> = alphaTable[1 + m]
                     if alphaCenter > 0 then
-                        local yc <const> = pixel.y
-                        local yn1 <const> = wrapper(yc - 1, activeHeight)
-                        local yp1 <const> = wrapper(yc + 1, activeHeight)
+                        local yc <const> = m // wActive
+                        local yn1 <const> = wrapper(yc - 1, hActive)
+                        local yp1 <const> = wrapper(yc + 1, hActive)
 
-                        local xc <const> = pixel.x
-                        local xn1 <const> = wrapper(xc - 1, activeWidth)
-                        local xp1 <const> = wrapper(xc + 1, activeWidth)
+                        local xc <const> = m % wActive
+                        local xn1 <const> = wrapper(xc - 1, wActive)
+                        local xp1 <const> = wrapper(xc + 1, wActive)
 
-                        local yn1Index <const> = xc + yn1 * activeWidth
-                        local yp1Index <const> = xc + yp1 * activeWidth
+                        local yn1Index <const> = yn1 * wActive + xc
+                        local yp1Index <const> = yp1 * wActive + xc
 
-                        local ycw <const> = yc * activeWidth
+                        local ycw <const> = yc * wActive
                         local xn1Index <const> = xn1 + ycw
                         local xp1Index <const> = xp1 + ycw
 
                         -- Treat transparent pixels as zero height.
-                        local grayNorth = 0.0
                         local alphaNorth <const> = alphaTable[1 + yn1Index]
+                        local grayNorth = 0.0
                         if alphaNorth > 0 then
                             grayNorth = lumTable[1 + yn1Index]
                         end
 
-                        local grayWest = 0.0
                         local alphaWest <const> = alphaTable[1 + xn1Index]
+                        local grayWest = 0.0
                         if alphaWest > 0 then
                             grayWest = lumTable[1 + xn1Index]
                         end
 
-                        local grayEast = 0.0
                         local alphaEast <const> = alphaTable[1 + xp1Index]
+                        local grayEast = 0.0
                         if alphaEast > 0 then
                             grayEast = lumTable[1 + xp1Index]
                         end
 
-                        local graySouth = 0.0
                         local alphaSouth <const> = alphaTable[1 + yp1Index]
+                        local graySouth = 0.0
                         if alphaSouth > 0 then
                             graySouth = lumTable[1 + yp1Index]
                         end
@@ -352,6 +360,8 @@ dlg:button {
 
                         local sqMag <const> = dx * dx + dy * dy + 1.0
                         local alphaMask <const> = (alphaCenter | alphaPart) << 0x18
+
+                        abgr32 = alphaMask | hexDefault
                         if sqMag > 1.0 then
                             local nz = 1.0 / sqrt(sqMag)
                             local nx = min(max(dx * nz, -1.0), 1.0)
@@ -361,17 +371,19 @@ dlg:button {
                             ny = ny * yFlipNum
                             nz = nz * zFlipNum
 
-                            pixel(alphaMask
+                            abgr32 = alphaMask
                                 | (floor(nz * 127.5 + 128.0) << 0x10)
                                 | (floor(ny * 127.5 + 128.0) << 0x08)
-                                | floor(nx * 127.5 + 128.0))
-                        else
-                            pixel(alphaMask | hexDefault)
+                                | floor(nx * 127.5 + 128.0)
                         end
-                    else
-                        pixel(hexBlank)
                     end
+
+                    m = m + 1
+                    normalByteStrArr[m] = strpack("<I4", abgr32)
                 end
+
+                local normalImg <const> = Image(specNone)
+                normalImg.bytes = tconcat(normalByteStrArr)
 
                 activeSprite:newCel(
                     normalLayer, frame, normalImg, originPt)
