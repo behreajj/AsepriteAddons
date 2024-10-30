@@ -24,7 +24,7 @@ local harmonyTypes <const> = {
 
 local defaults <const> = {
     -- TODO: Make backgrounds for colors with alpha consistent
-    -- with LCH color picker.
+    -- with gradient utilities UI.
 
     -- This does not support scroll wheel because the directionality is
     -- reversed and because there is too much debugging needed to stop mouse
@@ -296,7 +296,6 @@ dlg:entry {
         local args <const> = dlg.data
         local hexStr <const> = args.hexCode --[[@as string]]
 
-        -- TODO: Support alpha inputs?
         local srgb <const> = Clr.fromHexWeb(hexStr)
         local lch <const> = defaults.sRgbToLch(srgb)
         active.l = lch.l
@@ -693,18 +692,34 @@ dlg:button {
         local selBounds <const> = sel.bounds
         local xSel <const> = selBounds.x
         local ySel <const> = selBounds.y
+        local wSel <const> = selBounds.width
+        local hSel <const> = selBounds.height
 
-        local selSpec <const> = AseUtilities.createSpec(
-            selBounds.width, selBounds.height,
-            colorMode, sprSpec.colorSpace, sprSpec.transparentColor)
+        local alphaIndex <const> = sprSpec.transparentColor
+        local alphaIndexVerif <const> = (colorMode ~= ColorMode.INDEXED
+                or (alphaIndex >= 0 and alphaIndex < 256)) and
+            alphaIndex or 0
+
+        local selSpec <const> = AseUtilities.createSpec(wSel, hSel,
+            colorMode, sprSpec.colorSpace, alphaIndex)
         local selImage <const> = Image(selSpec)
-        local pxItr <const> = selImage:pixels()
+        local selBpp <const> = selImage.bytesPerPixel
+        local selFmt <const> = "<I" .. selBpp
 
-        for pixel in pxItr do
-            if sel:contains(pixel.x + xSel, pixel.y + ySel) then
-                pixel(hex)
+        ---@type string[]
+        local byteStrArr <const> = {}
+        local strpack <const> = string.pack
+        local areaSel <const> = wSel * hSel
+        local h = 0
+        while h < areaSel do
+            local trg = alphaIndexVerif
+            if sel:contains(xSel + h % wSel, ySel + h // wSel) then
+                trg = hex
             end
+            h = h + 1
+            byteStrArr[h] = strpack(selFmt, trg)
         end
+        selImage.bytes = table.concat(byteStrArr)
 
         app.transaction("Set Selection", function()
             local frIdcs = Utilities.flatArr2(AseUtilities.getFrames(

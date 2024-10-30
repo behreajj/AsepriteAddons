@@ -585,18 +585,27 @@ dlg:button {
         local selBounds <const> = sel.bounds
         local xSel <const> = selBounds.x
         local ySel <const> = selBounds.y
+        local wSel <const> = selBounds.width
+        local hSel <const> = selBounds.height
 
-        local selSpec <const> = AseUtilities.createSpec(
-            selBounds.width, selBounds.height,
+        local selSpec <const> = AseUtilities.createSpec(wSel, hSel,
             colorMode, sprSpec.colorSpace, sprSpec.transparentColor)
         local selImage <const> = Image(selSpec)
-        local pxItr <const> = selImage:pixels()
 
-        for pixel in pxItr do
-            if sel:contains(pixel.x + xSel, pixel.y + ySel) then
-                pixel(hex)
+        ---@type string[]
+        local byteStrArr <const> = {}
+        local strpack <const> = string.pack
+        local areaSel <const> = wSel * hSel
+        local h = 0
+        while h < areaSel do
+            local trg = 0
+            if sel:contains(xSel + h % wSel, ySel + h // wSel) then
+                trg = hex
             end
+            h = h + 1
+            byteStrArr[h] = strpack("<I4", trg)
         end
+        selImage.bytes = table.concat(byteStrArr)
 
         app.transaction("Set Selection", function()
             local frIdcs = Utilities.flatArr2(AseUtilities.getFrames(

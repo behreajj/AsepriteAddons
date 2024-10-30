@@ -40,7 +40,6 @@ local defaults <const> = {
 ---@return integer[] coords
 local function getSelectedTiles(
     tileMap, tileSet, mask, xtlCel, ytlCel)
-
     ---@type table<integer, Tile>
     local tiles <const> = {}
     ---@type integer[]
@@ -1079,8 +1078,10 @@ dlg:button {
             if cel then
                 celOpacity = cel.opacity
                 zIndex = cel.zIndex
-                local celPos <const> = cel.position
-                srcImg, xtl, ytl = cel.image, celPos.x, celPos.y
+
+                local flat <const> = Image(spriteSpec)
+                flat:drawImage(cel.image, cel.position, 255, BlendMode.SRC)
+                srcImg, xtl, ytl = flat, 0, 0
             else
                 local flat <const> = Image(spriteSpec)
                 flat:drawSprite(activeSprite, activeFrame, Point(0, 0))
@@ -1090,13 +1091,13 @@ dlg:button {
 
         if srcImg:isEmpty() then return end
 
-        local trimmed <const>,
-        xTrimmed <const>,
-        yTrimmed <const> = AseUtilities.trimImageAlpha(
-            srcImg, 0, alphaIndex, 8, 8)
-        srcImg = trimmed
-        xtl = xtl + xTrimmed
-        ytl = ytl + yTrimmed
+        -- local trimmed <const>,
+        -- xTrimmed <const>,
+        -- yTrimmed <const> = AseUtilities.trimImageAlpha(
+        --     srcImg, 0, alphaIndex, 8, 8)
+        -- srcImg = trimmed
+        -- xtl = xtl + xTrimmed
+        -- ytl = ytl + yTrimmed
 
         local wTile, hTile = 8, 8
         local docPrefs <const> = app.preferences.document(activeSprite)
@@ -1219,9 +1220,15 @@ dlg:button {
             mapBytes[m] = strpack("<I4", idx)
         end
 
-        local mapImage <const> = Image(AseUtilities.createSpec(
+        local mapImage = Image(AseUtilities.createSpec(
             wMap, hMap, ColorMode.TILEMAP, colorSpace, 0))
         mapImage.bytes = table.concat(mapBytes)
+
+        local xTrimmed, yTrimmed = 0, 0
+        mapImage, xTrimmed, yTrimmed = AseUtilities.trimMapAlpha(
+            mapImage, alphaIndexVerif, wTile, hTile, 8, 8)
+        xtl = xtl + xTrimmed
+        ytl = ytl + yTrimmed
 
         app.command.NewLayer { tilemap = true }
 
@@ -1557,46 +1564,68 @@ dlg:button {
         local pxTilef <const> = pixelColor.tileF
         local pxTileCompose <const> = pixelColor.tile
         local bakeFlag <const> = AseUtilities.bakeFlag
+        local strpack <const> = string.pack
+        local strunpack <const> = string.unpack
+        local strsub <const> = string.sub
 
         ---@type table<integer, integer>
-        local srcToTrgIf <const> = {}
+        local srcToTrgif <const> = {}
         local srcMap <const> = activeCel.image
+        local srcBytes <const> = srcMap.bytes
+        local wSrc <const> = srcMap.width
+        local hSrc <const> = srcMap.height
+        local areaSrc <const> = wSrc * hSrc
 
         app.transaction("Bake Flips", function()
-            local srcItr <const> = srcMap:pixels()
-            for mapEntry in srcItr do
-                local trgMapIf = 0
-                local srcMapIf <const> = mapEntry() --[[@as integer]]
-                local srcIdx <const> = pxTilei(srcMapIf)
+            local i = 0
+            while i < areaSrc do
+                local trgMapif = 0
+
+                local i4 <const> = i * 4
+                local srcMapif <const> = strunpack("<I4", strsub(
+                    srcBytes, 1 + i4, 4 + i4))
+                local srcIdx <const> = pxTilei(srcMapif)
                 if srcIdx > 0 and srcIdx < lenTileSet then
-                    trgMapIf = srcMapIf
-                    local srcFlag <const> = pxTilef(srcMapIf)
+                    trgMapif = srcMapif
+                    local srcFlag <const> = pxTilef(srcMapif)
                     if srcFlag ~= 0 then
-                        trgMapIf = srcToTrgIf[srcMapIf]
-                        if not trgMapIf then
+                        trgMapif = srcToTrgif[srcMapif]
+                        if not trgMapif then
                             local srcTile <const> = tileSet:tile(srcIdx)
                             if srcTile then
                                 local srcImage <const> = srcTile.image
-                                local trgImage <const>, _ <const> = bakeFlag(srcImage, srcFlag)
-                                local trgTile <const> = activeSprite:newTile(tileSet)
+                                local trgImage <const>, _ <const> = bakeFlag(
+                                    srcImage, srcFlag)
+                                local trgTile <const> = activeSprite:newTile(
+                                    tileSet)
                                 trgTile.image = trgImage
-                                trgMapIf = pxTileCompose(trgTile.index, 0)
+                                trgMapif = pxTileCompose(trgTile.index, 0)
                             else
-                                trgMapIf = 0
+                                trgMapif = 0
                             end -- End tile is valid.
-                        end     -- End map entry not in dictionary.
-                    end         -- End non zero source flag.
-                end             -- End source index is valid.
-                srcToTrgIf[srcMapIf] = trgMapIf
-            end                 -- End map iterator loop.
-        end)                    -- End transaction.
+                        end -- End map entry not in dictionary.
+                    end     -- End non zero source flag.
+                end         -- End source index is valid.
+
+                srcToTrgif[srcMapif] = trgMapif
+                i = i + 1
+            end
+        end)
 
         app.transaction("Update Map", function()
-            local trgMap <const> = srcMap:clone()
-            local trgItr <const> = trgMap:pixels()
-            for mapEntry in trgItr do
-                mapEntry(srcToTrgIf[mapEntry()])
+            local trgMap <const> = Image(srcMap.spec)
+            ---@type string[]
+            local trgByteArr <const> = {}
+            local j = 0
+            while j < areaSrc do
+                local j4 <const> = j * 4
+                local srcMapif <const> = strunpack("<I4", strsub(
+                    srcBytes, 1 + j4, 4 + j4))
+                local trgMapif <const> = srcToTrgif[srcMapif]
+                trgByteArr[1 + j] = strpack("<I4", trgMapif)
+                j = j + 1
             end
+            trgMap.bytes = table.concat(trgByteArr)
             activeCel.image = trgMap
         end)
 
