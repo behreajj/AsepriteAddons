@@ -1603,7 +1603,6 @@ dlg:button {
                             else
                                 trgMapif = 0
                             end -- End tile is valid.
-                            srcToTrgif[srcMapif] = trgMapif
                         end     -- End map entry not in dictionary.
                     end         -- End non zero source flag.
                 end             -- End source index is valid.
