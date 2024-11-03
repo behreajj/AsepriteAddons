@@ -639,26 +639,11 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
             local csp <const> = args.clrSpacePreset --[[@as string]]
             local isPolar <const> = csp == "SR_LCH"
 
-            dlg:modify {
-                id = "clrSpacePreset",
-                visible = isMixed
-            }
-            dlg:modify {
-                id = "huePreset",
-                visible = isMixed and isPolar
-            }
-            dlg:modify {
-                id = "quantize",
-                visible = isMixed
-            }
-            dlg:modify {
-                id = "bayerIndex",
-                visible = isBayer
-            }
-            dlg:modify {
-                id = "ditherPath",
-                visible = isCustom
-            }
+            dlg:modify { id = "clrSpacePreset", visible = isMixed }
+            dlg:modify { id = "huePreset", visible = isMixed and isPolar }
+            dlg:modify { id = "quantize", visible = isMixed }
+            dlg:modify { id = "bayerIndex", visible = isBayer }
+            dlg:modify { id = "ditherPath", visible = isCustom }
         end
     }
 
@@ -677,10 +662,7 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
             local csp <const> = args.clrSpacePreset --[[@as string]]
             local isPolar <const> = csp == "SR_LCH"
             local isMixed <const> = style == "MIXED"
-            dlg:modify {
-                id = "huePreset",
-                visible = isMixed and isPolar
-            }
+            dlg:modify { id = "huePreset", visible = isMixed and isPolar }
             dlg:repaint()
         end
     }

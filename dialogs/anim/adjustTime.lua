@@ -3,8 +3,6 @@ dofile("../../support/canvasutilities.lua")
 dofile("../../support/clrgradient.lua")
 
 local modes <const> = {
-    -- TODO: Add a remap mode, which remaps the animation's total time to
-    -- a target time, similiar to expandFrames cross fade match time.
     "ADD",
     "DIVIDE",
     "MIX",
@@ -470,7 +468,6 @@ dlg:button {
                 end
             end)
         elseif mode == "REMAP" then
-            -- TODO: Implement.
             local opNum <const> = args.opNum --[[@as number]]
             local opNumVerif <const> = math.floor(math.abs(opNum) + 0.5)
             if opNumVerif < lenFrObjs then

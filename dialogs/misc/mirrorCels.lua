@@ -233,6 +233,7 @@ dlg:button {
         local trimAlpha <const> = AseUtilities.trimImageAlpha
         local tilesToImage <const> = AseUtilities.tileMapToImage
         local strfmt <const> = string.format
+        local strpack <const> = string.pack
         local strsub <const> = string.sub
         local transact <const> = app.transaction
         local tconcat <const> = table.concat
@@ -274,7 +275,7 @@ dlg:button {
                 local rgtByteArr <const> = {}
                 local flatBytes <const> = flatImg.bytes
                 local flatBpp <const> = flatImg.bytesPerPixel
-                local pxAlpha <const> = string.pack(
+                local pxAlpha <const> = strpack(
                     "<I" .. flatBpp, alphaIndex)
 
                 local j = 0
@@ -311,8 +312,8 @@ dlg:button {
                     rgtByteArr[j] = rgtStr
                 end
 
-                lftImg.bytes = tconcat(lftByteArr, "")
-                rgtImg.bytes = tconcat(rgtByteArr, "")
+                lftImg.bytes = tconcat(lftByteArr)
+                rgtImg.bytes = tconcat(rgtByteArr)
 
                 local xTrimLft = 0
                 local yTrimLft = 0

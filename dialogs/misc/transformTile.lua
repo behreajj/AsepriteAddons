@@ -54,8 +54,8 @@ local function getSelectedTiles(
 
     -- Unpack tile set.
     local tileDim <const> = tileSet.grid.tileSize
-    local wTile <const> = tileDim.width
-    local hTile <const> = tileDim.height
+    local wTile <const> = math.max(1, math.abs(tileDim.width))
+    local hTile <const> = math.max(1, math.abs(tileDim.height))
     local flatDimTile <const> = wTile * hTile
     local lenTileSet <const> = #tileSet
 
