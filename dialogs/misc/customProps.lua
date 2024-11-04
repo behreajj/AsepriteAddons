@@ -71,7 +71,6 @@ local function getProperties(target)
             return nil, false, "Range doesn't belong to sprite."
         end
 
-        -- range.tiles Does not work as a getter.
         local rangeType <const> = range.type
         if rangeType == RangeType.CELS then
             local rangeImages <const> = range.images
@@ -211,10 +210,9 @@ local function getProperties(target)
             return properties, true, ""
         end
 
-        local colorBarPrefs <const> = app.preferences.color_bar
         local tifCurr <const> = target == "BACK_TILE"
-            and colorBarPrefs["bg_tile"]
-            or colorBarPrefs["fg_tile"] --[[@as integer]]
+            and app.bgTile
+            or app.fgTile
 
         local tiCurr <const> = app.pixelColor.tileI(tifCurr)
         if tiCurr == 0 then
