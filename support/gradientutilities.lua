@@ -399,7 +399,7 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         local xNorm <const> = wCanvas > 1
             and event.x / (wCanvas - 1.0)
             or 0.0
-        local maxKeys <const> = 2 * GradientUtilities.MAX_KEYS // 3
+        local maxKeys <const> = 3 * GradientUtilities.MAX_KEYS
         local xq <const> = quantizeUnsigned(xNorm, maxKeys)
 
         local keys <const> = gradient:getKeys()
@@ -430,7 +430,7 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         if x >= wCanvas then return end
 
         local quantizeUnsigned <const> = Utilities.quantizeUnsigned
-        local maxKeys <const> = 2 * GradientUtilities.MAX_KEYS // 3
+        local maxKeys <const> = 3 * GradientUtilities.MAX_KEYS
 
         local xNorm <const> = wCanvas > 1
             and x / (wCanvas - 1.0)
