@@ -116,9 +116,9 @@ dlg:button {
         -- Attrib name and URL are comments, and will
         -- be omitted if they have no length.
         if #palName < 1 then palName = "Palette" end
-        palName = palName:sub(1, 64)
-        attribName = attribName:sub(1, 64)
-        attribUrl = attribUrl:sub(1, 96)
+        palName = string.sub(palName, 1, 64)
+        attribName = string.sub(attribName, 1, 64)
+        attribUrl = string.sub(attribUrl, 1, 96)
 
         local strfmt <const> = string.format
         local gplStr = strfmt(

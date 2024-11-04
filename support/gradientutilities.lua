@@ -104,21 +104,62 @@ function GradientUtilities.clearGradient(gr)
             local validColors <const> = {}
             local lenValidColors = 0
             local rangeClrIdcs <const> = appRange.colors
-            local lenRangeClrIdcs <const> = math.min(
-                GradientUtilities.MAX_KEYS,
-                #rangeClrIdcs)
+            local lenRangeClrIdcs <const> = #rangeClrIdcs
 
-            local h = 0
-            while h < lenRangeClrIdcs do
-                h = h + 1
-                local rangeClrIdx <const> = rangeClrIdcs[h]
-                if rangeClrIdx >= 0 and rangeClrIdx < lenPalette then
-                    local aseColor <const> = palette:getColor(rangeClrIdx)
-                    lenValidColors = lenValidColors + 1
-                    local clr <const> = aseColorToClr(aseColor)
-                    validColors[lenValidColors] = clr
-                end -- End index is valid.
-            end     -- End range colors loop.
+            if lenRangeClrIdcs > GradientUtilities.MAX_KEYS then
+                local floor <const> = math.floor
+                local mix <const> = Clr.mixSrLab2Internal
+                local toFac <const> = 1.0 / (GradientUtilities.MAX_KEYS - 1.0)
+
+                local idxFirst <const> = rangeClrIdcs[1]
+                local clrFirst <const> = (idxFirst >= 0 and idxFirst < lenPalette)
+                    and aseColorToClr(palette:getColor(idxFirst))
+                    or Clr.new(0.0, 0.0, 0.0, 1.0)
+
+                local idxLast <const> = rangeClrIdcs[lenRangeClrIdcs]
+                local clrLast <const> = (idxLast >= 0 and idxLast < lenPalette)
+                    and aseColorToClr(palette:getColor(idxLast))
+                    or Clr.new(1.0, 1.0, 1.0, 1.0)
+
+                local h = 0
+                while h < GradientUtilities.MAX_KEYS do
+                    local t <const> = h * toFac
+                    if t <= 0.0 then
+                        lenValidColors = lenValidColors + 1
+                        validColors[lenValidColors] = clrFirst
+                    elseif t >= 1.0 then
+                        lenValidColors = lenValidColors + 1
+                        validColors[lenValidColors] = clrLast
+                    else
+                        local tScaled <const> = t * (lenRangeClrIdcs - 1)
+                        local i <const> = floor(tScaled)
+                        local idxOrig <const> = rangeClrIdcs[1 + i]
+                        local idxDest <const> = rangeClrIdcs[2 + i]
+                        if idxOrig >= 0 and idxOrig < lenPalette
+                            and idxDest >= 0 and idxDest < lenPalette then
+                            local mixed <const> = mix(aseColorToClr(
+                                palette:getColor(idxOrig)), aseColorToClr(
+                                palette:getColor(idxDest)), tScaled - i)
+                            lenValidColors = lenValidColors + 1
+                            validColors[lenValidColors] = mixed
+                        end
+                    end
+
+                    h = h + 1
+                end
+            else
+                local h = 0
+                while h < lenRangeClrIdcs do
+                    h = h + 1
+                    local rangeClrIdx <const> = rangeClrIdcs[h]
+                    if rangeClrIdx >= 0 and rangeClrIdx < lenPalette then
+                        local aseColor <const> = palette:getColor(rangeClrIdx)
+                        local clr <const> = aseColorToClr(aseColor)
+                        lenValidColors = lenValidColors + 1
+                        validColors[lenValidColors] = clr
+                    end -- End index is valid.
+                end     -- End range colors loop.
+            end         -- End max count check.
 
             local iToFac <const> = lenValidColors > 1
                 and 1.0 / (lenValidColors - 1.0)
