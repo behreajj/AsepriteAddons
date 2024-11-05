@@ -308,7 +308,7 @@ dlg:newrow { always = false }
 dlg:slider {
     id = "factor",
     label = "Factor:",
-    min = 1,
+    min = 0,
     max = 100,
     value = defaults.factor
 }
