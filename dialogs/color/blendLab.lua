@@ -480,9 +480,9 @@ dlg:button {
         local lPreset <const> = args.lComp
             or defaults.lComp --[[@as string]]
         local cPreset <const> = args.cComp
+            or defaults.cComp --[[@as string]]
         local abPreset <const> = args.abComp
             or defaults.abComp --[[@as string]]
-            or defaults.cComp --[[@as string]]
         local hPreset <const> = args.huePreset
             or defaults.hueMix --[[@as string]]
 
