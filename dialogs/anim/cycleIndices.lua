@@ -110,7 +110,6 @@ dlg:button {
         -- Unpack sprite spec.
         local activeSpec <const> = activeSprite.spec
         local colorMode <const> = activeSpec.colorMode
-        local alphaIndex <const> = activeSpec.transparentColor
 
         local isTileMap = false
         local tileSet = nil
@@ -234,6 +233,10 @@ dlg:button {
                         chosenIdcs[h] = rangeColors[h]
                     end
                 else
+                    -- This filters out alpha index, while other clauses don't,
+                    -- because it is the second backup for invalid chosen
+                    -- indices, and just gets any reasonable palette swatch.
+                    local alphaIndex <const> = activeSpec.transparentColor
                     local h = 0
                     while h < lenPalActive do
                         if h ~= alphaIndex
