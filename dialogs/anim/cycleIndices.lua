@@ -170,45 +170,52 @@ dlg:button {
             end
         end
 
-        -- Create target layer.
-        local trgLayer <const> = activeSprite:newLayer()
-        app.transaction("Set Layer Props", function()
-            local srcLayerName = "Layer"
-            if #srcLayer.name > 0 then
-                srcLayerName = srcLayer.name
-            end
-            trgLayer.name = string.format(
-                "%s Cycled", srcLayerName)
-            trgLayer.parent = AseUtilities.getTopVisibleParent(srcLayer)
-            trgLayer.opacity = srcLayer.opacity or 255
-            trgLayer.blendMode = srcLayer.blendMode
-                or BlendMode.NORMAL
-        end)
-
         local usePerFrame <const> = incrType == "PER_FRAME"
         local incrSigned <const> = incrDir == "LEFT"
             and -incrAmt
             or incrAmt
         local idxIncr = incrSigned
 
+        -- Cache methods used in loop.
+        local pxTilei <const> = app.pixelColor.tileI
+        local pxTilef <const> = app.pixelColor.tileF
+        local pxTile <const> = app.pixelColor.tile
+        local strbyte <const> = string.byte
+        local strchar <const> = string.char
+        local strpack <const> = string.pack
+        local strsub <const> = string.sub
+        local strunpack <const> = string.unpack
+        local tconcat <const> = table.concat
+        local tilesToImage <const> = AseUtilities.tileMapToImage
+
         ---@type integer[]
         local chosenIdcs = {}
         if isTileMap then
-            -- range.tile doesn't work as a getter.
-            -- If it did work, you'd have to make sure to isolate
-            -- map flags from indices.
-
             -- Parse range was designed for frames,
             -- in [1, len], not tiles in [0, len - 1].
             chosenIdcs = Utilities.parseRangeStringUnique(
                 rangeStr, lenTileSet - 1, baseIndex - 1)
+
             if #chosenIdcs < 1 then
-                local h = 1
-                while h < lenTileSet do
-                    chosenIdcs[#chosenIdcs + 1] = h
-                    h = h + 1
-                end
-            end
+                local range <const> = app.range
+                local rangeIsValid <const> = range.sprite == activeSprite
+                local rangeTiles <const> = range.tiles
+                local lenRangeTiles <const> = #rangeTiles
+
+                if rangeIsValid and lenRangeTiles > 1 then
+                    local h = 0
+                    while h < lenRangeTiles do
+                        h = h + 1
+                        chosenIdcs[h] = pxTilei(rangeTiles[h])
+                    end
+                else
+                    local h = 1
+                    while h < lenTileSet do
+                        chosenIdcs[#chosenIdcs + 1] = h
+                        h = h + 1
+                    end -- End tileset loop.
+                end     -- End range is valid check.
+            end         -- End no chosen indices.
         else
             local activeFrame <const> = site.frame
                 or activeSprite.frames[1]
@@ -217,7 +224,7 @@ dlg:button {
             local lenPalActive <const> = #palActive
 
             -- Parse range was designed for frames,
-            -- in [1, len], not colorsin [0, len - 1].
+            -- in [1, len], not colors in [0, len - 1].
             chosenIdcs = Utilities.parseRangeStringUnique(
                 rangeStr, lenPalActive - 1, 0)
 
@@ -244,23 +251,29 @@ dlg:button {
                             chosenIdcs[#chosenIdcs + 1] = h
                         end
                         h = h + 1
-                    end
-                end
-            end
-        end
+                    end -- End palette loop.
+                end     -- End range is valid check.
+            end         -- End no chosen indices.
+        end             -- End isTileMap block.
+
         local lenChosenIdcs <const> = #chosenIdcs
 
-        -- Cache methods used in loop.
-        local pxTilei <const> = app.pixelColor.tileI
-        local pxTilef <const> = app.pixelColor.tileF
-        local pxTile <const> = app.pixelColor.tile
-        local strbyte <const> = string.byte
-        local strchar <const> = string.char
-        local strpack <const> = string.pack
-        local strsub <const> = string.sub
-        local strunpack <const> = string.unpack
-        local tconcat <const> = table.concat
-        local tilesToImage <const> = AseUtilities.tileMapToImage
+        -- Create target layer.
+        -- This must be done after chosen indices block above, so as to not
+        -- clear range.
+        local trgLayer <const> = activeSprite:newLayer()
+        app.transaction("Set Layer Props", function()
+            local srcLayerName = "Layer"
+            if #srcLayer.name > 0 then
+                srcLayerName = srcLayer.name
+            end
+            trgLayer.name = string.format(
+                "%s Cycled", srcLayerName)
+            trgLayer.parent = AseUtilities.getTopVisibleParent(srcLayer)
+            trgLayer.opacity = srcLayer.opacity or 255
+            trgLayer.blendMode = srcLayer.blendMode
+                or BlendMode.NORMAL
+        end)
 
         app.transaction("Cycle Indices", function()
             local i = 0
@@ -286,11 +299,10 @@ dlg:button {
                     local trgStrsArr <const> = {}
 
                     if isTileMap then
-                        local bpp <const> = srcImg.bytesPerPixel
                         local j = 0
                         while j < lenSrc do
-                            local jbpp <const> = j * bpp
-                            local str <const> = strsub(srcBytes, 1 + jbpp, bpp + jbpp)
+                            local j4 <const> = j * 4
+                            local str <const> = strsub(srcBytes, 1 + j4, 4 + j4)
                             local srcMapIf <const> = strunpack("I4", str)
                             local srcIdx <const> = pxTilei(srcMapIf)
                             local srcFlags <const> = pxTilef(srcMapIf)
