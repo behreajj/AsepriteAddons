@@ -578,36 +578,6 @@ function Vec3.insortRight(arr, elm, compare)
     return true
 end
 
----Finds the linear step between a left and right edge given a factor.
----@param edge0 Vec3 left edge
----@param edge1 Vec3 right edge
----@param x Vec3 factor
----@return Vec3
----@nodiscard
-function Vec3.linearstep(edge0, edge1, x)
-    local cx, cy, cz = 0.0, 0.0, 0.0
-
-    local xDenom <const> = edge1.x - edge0.x
-    if xDenom ~= 0.0 then
-        cx = math.min(1.0, math.max(0.0,
-            (x.x - edge0.x) / xDenom))
-    end
-
-    local yDenom <const> = edge1.y - edge0.y
-    if yDenom ~= 0.0 then
-        cy = math.min(1.0, math.max(0.0,
-            (x.y - edge0.y) / yDenom))
-    end
-
-    local zDenom <const> = edge1.z - edge0.z
-    if zDenom ~= 0.0 then
-        cz = math.min(1.0, math.max(0.0,
-            (x.z - edge0.z) / zDenom))
-    end
-
-    return Vec3.new(cx, cy, cz)
-end
-
 ---Finds a vector's magnitude, or length.
 ---@param v Vec3 vector
 ---@return number
@@ -681,8 +651,7 @@ function Vec3.mixNum(a, b, t)
         u * a.z + v * b.z)
 end
 
----Mixes two vectors together by a step. The step is a vector. Use with step,
----linearstep and smoothstep.
+---Mixes two vectors together by a step. The step is a vector.
 ---@param a Vec3 origin
 ---@param b Vec3 destination
 ---@param t Vec3 step
@@ -959,51 +928,6 @@ function Vec3.sign(v)
         v.x < -0.0 and -1.0 or v.x > 0.0 and 1.0 or 0.0,
         v.y < -0.0 and -1.0 or v.y > 0.0 and 1.0 or 0.0,
         v.z < -0.0 and -1.0 or v.z > 0.0 and 1.0 or 0.0)
-end
-
----Finds the smooth step between a left and right edge given a factor.
----@param edge0 Vec3 left edge
----@param edge1 Vec3 right edge
----@param x Vec3 factor
----@return Vec3
----@nodiscard
-function Vec3.smoothstep(edge0, edge1, x)
-    local cx, cy, cz = 0.0, 0.0, 0.0
-
-    local xDenom <const> = edge1.x - edge0.x
-    if xDenom ~= 0.0 then
-        cx = math.min(1.0, math.max(0.0,
-            (x.x - edge0.x) / xDenom))
-        cx = cx * cx * (3.0 - (cx + cx))
-    end
-
-    local yDenom <const> = edge1.y - edge0.y
-    if yDenom ~= 0.0 then
-        cy = math.min(1.0, math.max(0.0,
-            (x.y - edge0.y) / yDenom))
-        cy = cy * cy * (3.0 - (cy + cy))
-    end
-
-    local zDenom <const> = edge1.z - edge0.z
-    if zDenom ~= 0.0 then
-        cz = math.min(1.0, math.max(0.0,
-            (x.z - edge0.z) / zDenom))
-        cz = cz * cz * (3.0 - (cz + cz))
-    end
-
-    return Vec3.new(cx, cy, cz)
-end
-
----Finds the step between an edge and factor.
----@param edge Vec3 edge
----@param x Vec3 factor
----@return Vec3
----@nodiscard
-function Vec3.step(edge, x)
-    return Vec3.new(
-        x.x < edge.x and 0.0 or 1.0,
-        x.y < edge.y and 0.0 or 1.0,
-        x.z < edge.z and 0.0 or 1.0)
 end
 
 ---Subtracts the right vector from the left.

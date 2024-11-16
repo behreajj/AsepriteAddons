@@ -338,42 +338,6 @@ function Vec4.hashCode(v)
         * 16777619 ~ wBits
 end
 
----Finds the linear step between a left and right edge given a factor.
----@param edge0 Vec4 left edge
----@param edge1 Vec4 right edge
----@param x Vec4 factor
----@return Vec4
----@nodiscard
-function Vec4.linearstep(edge0, edge1, x)
-    local cx, cy, cz, cw = 0.0, 0.0, 0.0, 0.0
-
-    local xDenom <const> = edge1.x - edge0.x
-    if xDenom ~= 0.0 then
-        cx = math.min(1.0, math.max(0.0,
-            (x.x - edge0.x) / xDenom))
-    end
-
-    local yDenom <const> = edge1.y - edge0.y
-    if yDenom ~= 0.0 then
-        cy = math.min(1.0, math.max(0.0,
-            (x.y - edge0.y) / yDenom))
-    end
-
-    local zDenom <const> = edge1.z - edge0.z
-    if zDenom ~= 0.0 then
-        cz = math.min(1.0, math.max(0.0,
-            (x.z - edge0.z) / zDenom))
-    end
-
-    local wDenom <const> = edge1.w - edge0.w
-    if wDenom ~= 0.0 then
-        cw = math.min(1.0, math.max(0.0,
-            (x.w - edge0.w) / wDenom))
-    end
-
-    return Vec4.new(cx, cy, cz, cw)
-end
-
 ---Finds a vector's magnitude, or length.
 ---@param v Vec4 vector
 ---@return number
@@ -452,8 +416,7 @@ function Vec4.mixNum(a, b, t)
         u * a.w + v * b.w)
 end
 
----Mixes two vectors together by a step. The step is a vector. Use with step,
----linearstep and smoothstep.
+---Mixes two vectors together by a step. The step is a vector.
 ---@param a Vec4 origin
 ---@param b Vec4 destination
 ---@param t Vec4 step
@@ -622,59 +585,6 @@ function Vec4.sign(v)
         v.y < -0.0 and -1.0 or v.y > 0.0 and 1.0 or 0.0,
         v.z < -0.0 and -1.0 or v.z > 0.0 and 1.0 or 0.0,
         v.w < -0.0 and -1.0 or v.w > 0.0 and 1.0 or 0.0)
-end
-
----Finds the smooth step between a left and right edge given a factor.
----@param edge0 Vec4 left edge
----@param edge1 Vec4 right edge
----@param x Vec4 factor
----@return Vec4
----@nodiscard
-function Vec4.smoothstep(edge0, edge1, x)
-    local cx, cy, cz, cw = 0.0, 0.0, 0.0, 0.0
-
-    local xDenom <const> = edge1.x - edge0.x
-    if xDenom ~= 0.0 then
-        cx = math.min(1.0, math.max(0.0,
-            (x.x - edge0.x) / xDenom))
-        cx = cx * cx * (3.0 - (cx + cx))
-    end
-
-    local yDenom <const> = edge1.y - edge0.y
-    if yDenom ~= 0.0 then
-        cy = math.min(1.0, math.max(0.0,
-            (x.y - edge0.y) / yDenom))
-        cy = cy * cy * (3.0 - (cy + cy))
-    end
-
-    local zDenom <const> = edge1.z - edge0.z
-    if zDenom ~= 0.0 then
-        cz = math.min(1.0, math.max(0.0,
-            (x.z - edge0.z) / zDenom))
-        cz = cz * cz * (3.0 - (cz + cz))
-    end
-
-    local wDenom <const> = edge1.w - edge0.w
-    if wDenom ~= 0.0 then
-        cw = math.min(1.0, math.max(0.0,
-            (x.w - edge0.w) / wDenom))
-        cw = cw * cw * (3.0 - (cw + cw))
-    end
-
-    return Vec4.new(cx, cy, cz, cw)
-end
-
----Finds the step between an edge and factor.
----@param edge Vec4 edge
----@param x Vec4 factor
----@return Vec4
----@nodiscard
-function Vec4.step(edge, x)
-    return Vec4.new(
-        x.x < edge.x and 0.0 or 1.0,
-        x.y < edge.y and 0.0 or 1.0,
-        x.z < edge.z and 0.0 or 1.0,
-        x.w < edge.w and 0.0 or 1.0)
 end
 
 ---Subtracts the right vector from the left.

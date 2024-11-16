@@ -391,30 +391,6 @@ function Vec2.headingUnsigned(v)
     return math.atan(v.y, v.x) % 6.2831853071796
 end
 
----Finds the linear step between a left and right edge given a factor.
----@param edge0 Vec2 left edge
----@param edge1 Vec2 right edge
----@param x Vec2 factor
----@return Vec2
----@nodiscard
-function Vec2.linearstep(edge0, edge1, x)
-    local cx, cy = 0.0, 0.0
-
-    local xDenom <const> = edge1.x - edge0.x
-    if xDenom ~= 0.0 then
-        cx = math.min(1.0, math.max(0.0,
-            (x.x - edge0.x) / xDenom))
-    end
-
-    local yDenom <const> = edge1.y - edge0.y
-    if yDenom ~= 0.0 then
-        cy = math.min(1.0, math.max(0.0,
-            (x.y - edge0.y) / yDenom))
-    end
-
-    return Vec2.new(cx, cy)
-end
-
 ---Finds a vector's magnitude, or length.
 ---@param v Vec2 vector
 ---@return number
@@ -480,8 +456,7 @@ function Vec2.mixNum(a, b, t)
         u * a.y + v * b.y)
 end
 
----Mixes two vectors together by a step. The step is a vector. Use with step,
----linearstep and smoothstep.
+---Mixes two vectors together by a step. The step is a vector.
 ---@param a Vec2 origin
 ---@param b Vec2 destination
 ---@param t Vec2 step
@@ -661,43 +636,6 @@ function Vec2.sign(v)
     return Vec2.new(
         v.x < -0.0 and -1.0 or v.x > 0.0 and 1.0 or 0.0,
         v.y < -0.0 and -1.0 or v.y > 0.0 and 1.0 or 0.0)
-end
-
----Finds the smooth step between a left and right edge given a factor.
----@param edge0 Vec2 left edge
----@param edge1 Vec2 right edge
----@param x Vec2 factor
----@return Vec2
----@nodiscard
-function Vec2.smoothstep(edge0, edge1, x)
-    local cx, cy = 0.0, 0.0
-
-    local xDenom <const> = edge1.x - edge0.x
-    if xDenom ~= 0.0 then
-        cx = math.min(1.0, math.max(0.0,
-            (x.x - edge0.x) / xDenom))
-        cx = cx * cx * (3.0 - (cx + cx))
-    end
-
-    local yDenom <const> = edge1.y - edge0.y
-    if yDenom ~= 0.0 then
-        cy = math.min(1.0, math.max(0.0,
-            (x.y - edge0.y) / yDenom))
-        cy = cy * cy * (3.0 - (cy + cy))
-    end
-
-    return Vec2.new(cx, cy)
-end
-
----Finds the step between an edge and factor.
----@param edge Vec2 edge
----@param x Vec2 factor
----@return Vec2
----@nodiscard
-function Vec2.step(edge, x)
-    return Vec2.new(
-        x.x < edge.x and 0.0 or 1.0,
-        x.y < edge.y and 0.0 or 1.0)
 end
 
 ---Subtracts the right vector from the left.
