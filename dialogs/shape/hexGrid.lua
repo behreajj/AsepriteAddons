@@ -8,8 +8,8 @@ local defaults <const> = {
     margin = 0,
     useStroke = true,
     strokeWeight = 1,
-    useFill = false,
-    pullFocus = false
+    useFill = true,
+    useAntialias = false,
 }
 
 local dlg <const> = Dialog { title = "Hexagon Grid" }
@@ -19,7 +19,8 @@ dlg:slider {
     label = "Rings:",
     min = 1,
     max = 32,
-    value = defaults.rings
+    value = defaults.rings,
+    focus = true
 }
 
 dlg:newrow { always = false }
@@ -81,11 +82,8 @@ dlg:check {
     onclick = function()
         local args <const> = dlg.data
         local useStroke <const> = args.useStroke --[[@as boolean]]
-        local useFill <const> = args.useFill --[[@as boolean]]
         dlg:modify { id = "strokeWeight", visible = useStroke }
         dlg:modify { id = "strokeClr", visible = useStroke }
-        dlg:modify { id = "useFill", visible = useStroke }
-        dlg:modify { id = "fillClr", visible = useStroke and useFill }
     end
 }
 
@@ -110,8 +108,6 @@ dlg:check {
     label = "Fill:",
     text = "Enable",
     selected = defaults.useFill,
-    visible = defaults.useStroke,
-    -- enabled = false,
     onclick = function()
         local args <const> = dlg.data
         local useFill <const> = args.useFill --[[@as boolean]]
@@ -125,9 +121,16 @@ dlg:check {
 dlg:color {
     id = "fillClr",
     color = app.preferences.color_bar.bg_color --[[@as Color]],
-    -- enabled = false,
     visible = defaults.useFill
-        and defaults.useStroke
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "useAntialias",
+    label = "Antialias:",
+    text = "Enable",
+    selected = defaults.useAntialias
 }
 
 dlg:newrow { always = false }
@@ -135,7 +138,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "confirm",
     text = "&OK",
-    focus = defaults.pullFocus,
+    focus = false,
     onclick = function()
         local site <const> = app.site
         local sprite <const> = site.sprite
@@ -175,6 +178,7 @@ dlg:button {
         local strokeColor <const> = args.strokeClr --[[@as Color]]
         local useFill <const> = args.useFill --[[@as boolean]]
         local fillColor <const> = args.fillClr --[[@as Color]]
+        local useAntialias <const> = args.useAntialias --[[@as boolean]]
 
         if xScale < 2.0 then xScale = 2.0 end
         if yScale < 2.0 then yScale = 2.0 end
@@ -201,11 +205,12 @@ dlg:button {
         local layer <const> = sprite:newLayer()
         layer.name = mesh.name
 
-        ShapeUtilities.drawMesh2(sprite,
+        local useTrim <const> = true
+        ShapeUtilities.drawMesh2Beta(sprite,
             mesh, useFill, fillColor,
             useStroke, strokeColor,
-            Brush { size = strokeWeight },
-            frame, layer)
+            strokeWeight,
+            frame, layer, useAntialias, useTrim)
 
         app.refresh()
     end
