@@ -4,6 +4,7 @@ ShapeUtilities = {}
 ShapeUtilities.__index = ShapeUtilities
 
 setmetatable(ShapeUtilities, {
+    -- TODO: Reimplement drawCurve2?
     -- Last commit with old drawCurve2:
     -- 91c2511cc032c2fa95d4271102fc0411dba286c1
     __call = function(cls, ...)

@@ -1761,6 +1761,11 @@ function AseUtilities.flattenGroup(
     colorSpace, alphaIndex,
     includeLocked, includeHidden,
     includeTiles, includeBkg)
+
+    -- TODO: As of version 1.3.11-beta1, this would be complicated by group
+    -- layers having opacity. appendLeaves may have to return a separate array
+    -- of multiplied opacities.
+
     local aiVerif = 0
     if alphaIndex then aiVerif = alphaIndex end
 
@@ -1818,7 +1823,7 @@ function AseUtilities.flattenGroup(
                 blendMode = leafLayer.blendMode,
                 image = leafImage,
                 opacityCel = leafCel.opacity,
-                opacityLayer = leafLayer.opacity,
+                opacityLayer = leafLayer.opacity or 255,
                 order = order,
                 xtl = xTlCel,
                 ytl = yTlCel,
