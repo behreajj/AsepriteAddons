@@ -48,6 +48,12 @@ app.transaction("Flatten Group", function()
     end
     flattened.name = layerName
 
+    -- TODO: Ideally, these properties would be baked into the images
+    -- created by AseUtilities.flattenGroup. Until then, this is better
+    -- than nothing.
+    flattened.blendMode = activeLayer.blendMode or BlendMode.NORMAL
+    flattened.opacity = activeLayer.opacity or 255
+
     flattened.color = AseUtilities.aseColorCopy(activeLayer.color, "")
     flattened.data = activeLayer.data
     flattened.parent = activeLayer.parent
