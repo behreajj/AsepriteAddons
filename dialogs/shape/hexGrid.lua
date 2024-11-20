@@ -206,7 +206,7 @@ dlg:button {
         layer.name = mesh.name
 
         local useTrim <const> = true
-        ShapeUtilities.drawMesh2Beta(sprite,
+        ShapeUtilities.drawMesh2(sprite,
             mesh, useFill, fillColor,
             useStroke, strokeColor,
             strokeWeight,

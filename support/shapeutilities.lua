@@ -25,7 +25,7 @@ setmetatable(ShapeUtilities, {
 ---@param layer Layer layer
 ---@param useAntiAlias boolean? use antialias
 ---@param useTrim boolean? trim image
-function ShapeUtilities.drawMesh2Beta(
+function ShapeUtilities.drawMesh2(
     sprite, mesh,
     useFill, fillClr,
     useStroke, strokeClr, strokeWeight,
