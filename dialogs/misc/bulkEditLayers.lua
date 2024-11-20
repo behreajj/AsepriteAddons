@@ -9,6 +9,9 @@ local blendModes <const> = {
 }
 
 local defaults <const> = {
+    -- As of version 1.3.11-beta1, group layers support opacity if Compose
+    -- groups separately is enabled under Edit > Preferences > Experimental.
+    -- However, this setting is not available via script.
     nameEntry = "Layer",
     blendMode = "NORMAL",
     reverse = false

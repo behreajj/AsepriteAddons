@@ -38,7 +38,7 @@ function ShapeUtilities.drawMesh2(
     local spriteSpec <const> = sprite.spec
     local trgImg = Image(spriteSpec)
 
-    local context <const> = trgImg.context --[[@as GraphicsContext]]
+    local context <const> = trgImg.context
     if not context then return end
 
     local useFillVerif <const> = useFill

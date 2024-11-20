@@ -132,6 +132,9 @@ if (not isBkg) and (not isGroup) then
 
     dlg:newrow { always = false }
 
+    -- As of version 1.3.11-beta1, group layers support opacity if Compose
+    -- groups separately is enabled under Edit > Preferences > Experimental.
+    -- However, this setting is not available via script.
     dlg:slider {
         id = "layerOpacity",
         label = "Opacity:",
