@@ -21,7 +21,8 @@ dlg:slider {
     label = "Sides:",
     min = 3,
     max = 16,
-    value = defaults.sides
+    value = defaults.sides,
+    focus = true
 }
 
 dlg:newrow { always = false }
@@ -143,7 +144,6 @@ dlg:check {
     label = "Fill:",
     text = "Enable",
     selected = defaults.useFill,
-    visible = true,
     onclick = function()
         local args <const> = dlg.data
         local useFill <const> = args.useFill --[[@as boolean]]
