@@ -193,6 +193,7 @@ local function getProperties(target)
             return { tileSet.properties }, true, ""
         end
 
+        -- TODO: Tiles as a getter now works.
         local lenTileSet <const> = #tileSet
         if target == "TILES" then
             ---@type table<string, any>[]

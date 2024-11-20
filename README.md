@@ -10,7 +10,7 @@ There is a [known issue](https://community.aseprite.org/t/script-folder-path-can
 
 ## Usage
 
-Aseprite version 1.3.9.2 is the minimum supported version to run these scripts.
+Aseprite version 1.3.10 is the minimum supported version to run these scripts.
 
 To use, go to `File > Scripts` and choose from entries in the `dialogs` or `commands` folder.
 

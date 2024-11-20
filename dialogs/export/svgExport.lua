@@ -1057,12 +1057,11 @@ dlg:button {
                         -- because duration was truncated from millis.
                         durStr = strfmt("%.6fs", timeScaleVrf * duration)
                     end
-                    local pixelFrameStr <const> = strfmt(
+                    pixelFrameStrs[i] = strfmt(
                         frameFormat,
                         frameUiOffset + frIdx, i,
                         animBeginStr, durStr,
                         imgStr)
-                    pixelFrameStrs[i] = pixelFrameStr
 
                     -- Update for next iteration in loop.
                     animBeginStr = strfmt("anim%d.end", i)
@@ -1222,10 +1221,9 @@ dlg:button {
                 local fwStr <const> = j % lblBold == 0
                     and " font-weight=\"bold\""
                     or ""
-                local labelStr <const> = strfmt(
+                labelsStrArr[#labelsStrArr + 1] = strfmt(
                     "<text id=\"collabel%d\" x=\"%.1f\" y=\"%.1f\"%s>%d</text>",
                     j, cx, yColLabel, fwStr, j % lblReset)
-                labelsStrArr[#labelsStrArr + 1] = labelStr
                 j = j + 1
             end
             labelsStrArr[#labelsStrArr + 1] = "</g>"
@@ -1240,10 +1238,9 @@ dlg:button {
                 local fwStr <const> = i % lblBold == 0
                     and " font-weight=\"bold\""
                     or ""
-                local labelStr <const> = strfmt(
+                labelsStrArr[#labelsStrArr + 1] = strfmt(
                     "<text id=\"rowlabel%d\" x=\"%.1f\" y=\"%.1f\"%s>%d</text>",
                     i, xRowLabel, cy, fwStr, i % lblReset)
-                labelsStrArr[#labelsStrArr + 1] = labelStr
                 i = i + 1
             end
             labelsStrArr[#labelsStrArr + 1] = "</g>"

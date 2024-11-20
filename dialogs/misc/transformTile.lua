@@ -1091,14 +1091,6 @@ dlg:button {
 
         if srcImg:isEmpty() then return end
 
-        -- local trimmed <const>,
-        -- xTrimmed <const>,
-        -- yTrimmed <const> = AseUtilities.trimImageAlpha(
-        --     srcImg, 0, alphaIndex, 8, 8)
-        -- srcImg = trimmed
-        -- xtl = xtl + xTrimmed
-        -- ytl = ytl + yTrimmed
-
         local wTile, hTile = 8, 8
         local docPrefs <const> = app.preferences.document(activeSprite)
         if docPrefs then

@@ -40,18 +40,6 @@ if app.theme then
     end
 end
 
----Durations need to be rounded after scaling due to precision differences
----between seconds (internal) and milliseconds (UI).
----@param duration number
----@param scalar number
----@return number
----@nodiscard
-local function mulRoundDur(duration, scalar)
-    local durNew <const> = duration * scalar
-    local durNewMs <const> = math.floor(durNew * 1000.0 + 0.5)
-    return math.min(math.max(durNewMs * 0.001, 0.001), 65.535)
-end
-
 local defaults <const> = {
     mode = "SET",
     alpSampleCount = 96,
@@ -69,6 +57,18 @@ local defaults <const> = {
     lbDur = 0.001,
     ubDur = 65.535,
 }
+
+---Durations need to be rounded after scaling due to precision differences
+---between seconds (internal) and milliseconds (UI).
+---@param duration number
+---@param scalar number
+---@return number
+---@nodiscard
+local function mulRoundDur(duration, scalar)
+    local durNew <const> = duration * scalar
+    local durNewMs <const> = math.floor(durNew * 1000.0 + 0.5)
+    return math.min(math.max(durNewMs * 0.001, 0.001), 65.535)
+end
 
 ---@return integer frIdx
 ---@return number duration
@@ -255,7 +255,7 @@ dlg:number {
         and 0 or ((defaults.mode == "MULTIPLY" or defaults.mode == "DIVIDE")
             and 1 or 100)),
     decimals = 0,
-    focus = false,
+    focus = defaults.mode ~= "MIX",
     visible = defaults.mode ~= "MIX"
 }
 
@@ -361,6 +361,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "confirm",
     text = "&OK",
+    focus = false,
     onclick = function()
         local site <const> = app.site
         local activeSprite <const> = site.sprite
