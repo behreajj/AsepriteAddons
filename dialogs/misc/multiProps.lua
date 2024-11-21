@@ -110,6 +110,10 @@ dlg:entry {
 }
 
 if (not isBkg) and (not isGroup) then
+    -- As of version 1.3.11-beta1, group layers support opacity and blend modes
+    -- if Compose groups separately is enabled under Edit > Preferences >
+    -- Experimental. However, this preference is not available via script.
+
     dlg:newrow { always = false }
 
     -- This cannot have focus because it may not even be created if the layer
@@ -132,9 +136,6 @@ if (not isBkg) and (not isGroup) then
 
     dlg:newrow { always = false }
 
-    -- As of version 1.3.11-beta1, group layers support opacity if Compose
-    -- groups separately is enabled under Edit > Preferences > Experimental.
-    -- However, this setting is not available via script.
     dlg:slider {
         id = "layerOpacity",
         label = "Opacity:",
@@ -438,5 +439,6 @@ dlg:button {
 -- Dialog bounds cannot be realigned because of wait = true.
 dlg:show {
     autoscrollbars = true,
+    hand = true,
     wait = true
 }

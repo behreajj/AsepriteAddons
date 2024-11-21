@@ -455,6 +455,9 @@ dlg:button {
                 end
             end
 
+            -- TODO: If pixelWidth and pixelHeight are different than these
+            -- below, then you need to scroll center on the sprite.
+
             app.refresh()
             dlg:close()
         else
@@ -480,5 +483,6 @@ dlg:button {
 -- Dialog bounds cannot be realigned because of this.
 dlg:show {
     autoscrollbars = true,
+    hand = true,
     wait = true
 }

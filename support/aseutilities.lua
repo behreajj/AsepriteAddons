@@ -1763,8 +1763,7 @@ function AseUtilities.flattenGroup(
     includeTiles, includeBkg)
 
     -- TODO: As of version 1.3.11-beta1, this would be complicated by group
-    -- layers having opacity. appendLeaves may have to return a separate array
-    -- of multiplied opacities.
+    -- layers having opacity and blend modes.
 
     local aiVerif = 0
     if alphaIndex then aiVerif = alphaIndex end
