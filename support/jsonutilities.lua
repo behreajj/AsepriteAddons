@@ -342,7 +342,6 @@ function JsonUtilities.spriteToJson(sprite)
     local spec <const> = sprite.spec
     local pxa <const> = sprite.pixelRatio
 
-    -- TODO: Write app working profile and display profile?
     return string.format(
         JsonUtilities.SPRITE_FORMAT,
         sprite.id,

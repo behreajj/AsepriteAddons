@@ -45,7 +45,6 @@ local tCompOptions <const> = {
 }
 
 local defaults <const> = {
-    -- TODO: Is this leaking memory somewhere?
     target = "ACTIVE",
     compMode = "LAB",
     lComp = "BLEND",

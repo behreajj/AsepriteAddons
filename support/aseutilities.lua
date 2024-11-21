@@ -1763,7 +1763,8 @@ function AseUtilities.flattenGroup(
     includeTiles, includeBkg)
 
     -- TODO: As of version 1.3.11-beta1, this would be complicated by group
-    -- layers having opacity and blend modes.
+    -- layers having opacity and blend modes. See
+    -- app.preferences.experimental.compose_groups, a boolean.
 
     local aiVerif = 0
     if alphaIndex then aiVerif = alphaIndex end

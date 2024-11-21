@@ -55,8 +55,8 @@ local function adjustOpacity(sprite, range, opFlag, opNum)
             while i < lenRangeLayers do
                 i = i + 1
                 local layer <const> = rangeLayers[i]
-                if not (layer.isGroup or layer.isBackground) then
-                    local opLayer <const> = layer.opacity
+                if not layer.isBackground then
+                    local opLayer <const> = layer.opacity or 255
                     local opSum <const> = opLayer + opNum
                     layer.opacity = min(max(opSum, 0), 255)
                 end
@@ -68,8 +68,8 @@ local function adjustOpacity(sprite, range, opFlag, opNum)
             while i < lenRangeLayers do
                 i = i + 1
                 local layer <const> = rangeLayers[i]
-                if not (layer.isGroup or layer.isBackground) then
-                    local opLayer <const> = layer.opacity
+                if not layer.isBackground then
+                    local opLayer <const> = layer.opacity or 255
                     local opDiff <const> = opLayer - opNum
                     layer.opacity = min(max(opDiff, 0), 255)
                 end
@@ -82,8 +82,9 @@ local function adjustOpacity(sprite, range, opFlag, opNum)
             while i < lenRangeLayers do
                 i = i + 1
                 local layer <const> = rangeLayers[i]
-                if not (layer.isGroup or layer.isBackground) then
-                    local opLayer01 <const> = layer.opacity / 255.0
+                if not layer.isBackground then
+                    local opLayer <const> = layer.opacity or 255
+                    local opLayer01 <const> = opLayer / 255.0
                     local opProd01 <const> = min(max(opLayer01 * op01, 0.0), 1.0)
                     layer.opacity = floor(opProd01 * 255.0 + 0.5)
                 end
@@ -96,8 +97,9 @@ local function adjustOpacity(sprite, range, opFlag, opNum)
             while i < lenRangeLayers do
                 i = i + 1
                 local layer <const> = rangeLayers[i]
-                if not (layer.isGroup or layer.isBackground) then
-                    local opLayer01 <const> = layer.opacity / 255.0
+                if not layer.isBackground then
+                    local opLayer <const> = layer.opacity or 255
+                    local opLayer01 <const> = opLayer / 255.0
                     local opQuot01 <const> = min(max(opLayer01 * op01, 0.0), 1.0)
                     layer.opacity = floor(opQuot01 * 255.0 + 0.5)
                 end
@@ -110,7 +112,7 @@ local function adjustOpacity(sprite, range, opFlag, opNum)
             while i < lenRangeLayers do
                 i = i + 1
                 local layer <const> = rangeLayers[i]
-                if not (layer.isGroup or layer.isBackground) then
+                if not layer.isBackground then
                     layer.opacity = opNum
                 end
             end

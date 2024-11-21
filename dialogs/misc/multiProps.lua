@@ -58,7 +58,6 @@ if not sprite then return end
 local layer <const> = site.layer or sprite.layers[1]
 local isBkg <const> = layer.isBackground
 local isTilemap <const> = layer.isTilemap
-local isGroup <const> = layer.isGroup
 
 local frame <const> = site.frame or sprite.frames[1]
 local cel <const> = layer:cel(frame)
@@ -109,11 +108,7 @@ dlg:entry {
     end
 }
 
-if (not isBkg) and (not isGroup) then
-    -- As of version 1.3.11-beta1, group layers support opacity and blend modes
-    -- if Compose groups separately is enabled under Edit > Preferences >
-    -- Experimental. However, this preference is not available via script.
-
+if (not isBkg) then
     dlg:newrow { always = false }
 
     -- This cannot have focus because it may not even be created if the layer
@@ -121,11 +116,11 @@ if (not isBkg) and (not isGroup) then
     dlg:combobox {
         id = "layerBlend",
         label = "Blend:",
-        option = blendModeToStr(layer.blendMode),
+        option = blendModeToStr(layer.blendMode or BlendMode.NORMAL),
         options = blendModes,
         focus = false,
         onchange = function()
-            if (not isBkg) and (not isGroup) then
+            if (not isBkg) then
                 local args <const> = dlg.data
                 local blendStr <const> = args.layerBlend --[[@as string]]
                 layer.blendMode = BlendMode[blendStr]
@@ -144,7 +139,7 @@ if (not isBkg) and (not isGroup) then
         value = layer.opacity or 255,
         focus = false,
         onchange = function()
-            if (not isBkg) and (not isGroup) then
+            if (not isBkg) then
                 local args <const> = dlg.data
                 local layerOpacity <const> = args.layerOpacity --[[@as integer]]
                 layer.opacity = layerOpacity

@@ -8,7 +8,6 @@ local paletteTypes <const> = {
 }
 
 local defaults <const> = {
-    --TODO: Make zoom option, or zoom to fit, explicit?
     --TODO: Option to open sequences from directory?
     removeBkg = true,
     trimCels = true,
