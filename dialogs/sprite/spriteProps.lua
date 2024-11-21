@@ -455,8 +455,9 @@ dlg:button {
                 end
             end
 
-            -- TODO: If pixelWidth and pixelHeight are different than these
-            -- below, then you need to scroll center on the sprite.
+            if aPxRatio ~= pixelWidth or bPxRatio ~= pixelHeight then
+                app.command.ScrollCenter()
+            end
 
             app.refresh()
             dlg:close()
