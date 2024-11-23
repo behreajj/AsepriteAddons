@@ -472,6 +472,7 @@ local function layerToSvgStr(
                         childStrs)
                 end
 
+                -- TODO: Support group blend modes and opacity.
                 local grpStr <const> = string.format(
                     "<g id=\"%s\"%s>\n%s\n</g>",
                     layerName, visStr, table.concat(childStrs, "\n"))

@@ -1741,6 +1741,190 @@ function AseUtilities.filterLayers(
     end
 end
 
+---Flattens a group layer to a composite image. First return is a boolean
+---stating whether the composite was valid.
+---@param layer Layer group layer
+---@param frame Frame|integer frame
+---@param colorMode ColorMode|integer sprite color mode
+---@param colorSpace ColorSpace color space
+---@param alphaIndex integer alpha mask index
+---@return boolean isValid
+---@return Image image
+---@return integer xTl
+---@return integer yTl
+---@return integer blendMode
+---@return integer layerOpacity
+---@return integer celOpacity
+---@return integer zIndex
+function AseUtilities.flattenGroup2(
+    layer, frame,
+    wSprite, hSprite,
+    colorMode, colorSpace, alphaIndex)
+    -- TODO: Replace all instances of old flattenGroup with this, starting
+    -- with the flattenGroup command.
+
+    local isValid = false
+    local image = nil
+    local xTl = 0
+    local yTl = 0
+    local blendMode = BlendMode.NORMAL
+    local layerOpacity = 255
+    local celOpacity = 255
+    local zIndex = 0
+
+    if layer.isVisible then
+        blendMode = layer.blendMode or BlendMode.NORMAL
+        layerOpacity = layer.opacity or 255
+
+        if layer.isGroup then
+            local children <const> = layer.layers
+            if children then
+                local flattenGroup <const> = AseUtilities.flattenGroup2
+                local blendImage <const> = AseUtilities.blendImage
+                local floor <const> = math.floor
+
+                ---@type table[]
+                local packets <const> = {}
+                local xTlGroup = 2147483647
+                local yTlGroup = 2147483647
+                local xBrGroup = -2147483648
+                local yBrGroup = -2147483648
+                local lenChildren <const> = #children
+                local lenPackets = 0
+
+                local i = 0
+                while i < lenChildren do
+                    i = i + 1
+
+                    local isValidChild <const>,
+                    imageChild <const>,
+                    xTlChild <const>,
+                    yTlChild <const>,
+                    blendModeChild <const>,
+                    layerOpacityChild <const>,
+                    celOpacityChild <const>,
+                    zIndexChild <const> = flattenGroup(children[i], frame,
+                        wSprite, hSprite, colorMode, colorSpace, alphaIndex)
+
+                    if isValidChild then
+                        isValid = true
+
+                        local order <const> = (i - 1) + zIndex
+
+                        local xBrChild <const> = xTlChild + imageChild.width - 1
+                        local yBrChild <const> = yTlChild + imageChild.height - 1
+
+                        if xTlChild < xTlGroup then xTlGroup = xTlChild end
+                        if yTlChild < yTlGroup then yTlGroup = yTlChild end
+                        if xBrChild > xBrGroup then xBrGroup = xBrChild end
+                        if yBrChild > yBrGroup then yBrGroup = yBrChild end
+
+                        lenPackets = lenPackets + 1
+                        packets[lenPackets] = {
+                            blendMode = blendModeChild,
+                            celOpacity = celOpacityChild,
+                            image = imageChild,
+                            layerOpacity = layerOpacityChild,
+                            order = order,
+                            xTl = xTlChild,
+                            yTl = yTlChild,
+                            zIndex = zIndexChild,
+                        }
+                    end -- End child is valid.
+                end     -- End children loop.
+
+                --https://github.com/aseprite/aseprite/blob/main/docs/ase-file-specs.md#note5
+                table.sort(packets, function(a, b)
+                    return (a.order < b.order)
+                        or ((a.order == b.order)
+                            and (a.zIndex < b.zIndex))
+                end)
+
+                local wGroup <const> = 1 + xBrGroup - xTlGroup
+                local hGroup <const> = 1 + yBrGroup - yTlGroup
+
+                if isValid and wGroup > 0 and hGroup > 0 then
+                    local compSpec <const> = ImageSpec {
+                        width = wGroup,
+                        height = hGroup,
+                        colorMode = colorMode,
+                        transparentColor = alphaIndex
+                    }
+                    compSpec.colorSpace = colorSpace
+
+                    image = Image(compSpec)
+                    xTl = xTlGroup
+                    yTl = yTlGroup
+
+                    local isIndexed <const> = colorMode == ColorMode.INDEXED
+
+                    local j = 0
+                    while j < lenPackets do
+                        j = j + 1
+                        local packet <const> = packets[j]
+                        local imageChild <const> = packet.image --[[@as Image]]
+                        local xTlChild <const> = packet.xTl --[[@as integer]]
+                        local yTlChild <const> = packet.yTl --[[@as integer]]
+
+                        local xBlit <const> = xTlChild - xTlGroup
+                        local yBlit <const> = yTlChild - yTlGroup
+
+                        if isIndexed then
+                            image = blendImage(image, imageChild,
+                                0, 0, xBlit, yBlit)
+                        else
+                            local blendModeChild <const> = packet.blendMode --[[@as BlendMode]]
+                            local layerOpacityChild <const> = packet.layerOpacity --[[@as integer]]
+                            local celOpacityChild <const> = packet.celOpacity --[[@as integer]]
+
+                            local lOpac01 <const> = layerOpacityChild / 255.0
+                            local cOpac01 <const> = celOpacityChild / 255.0
+                            local lcOpac01 <const> = lOpac01 * cOpac01
+                            local opacityChild <const> = floor(lcOpac01 * 255.0 + 0.5)
+
+                            image:drawImage(imageChild, Point(xBlit, yBlit),
+                                opacityChild, blendModeChild)
+                        end -- End color mode is indexed.
+                    end     -- End packets loop.
+                end         -- End group width and height valid.
+            end             -- End child layers exist.
+        elseif (not layer.isReference) then
+            local cel <const> = layer:cel(frame)
+            if cel then
+                isValid = true
+
+                image = cel.image
+                if layer.isTilemap then
+                    local tileSet <const> = layer.tileset
+                    image = AseUtilities.tileMapToImage(
+                        image, tileSet, colorMode)
+                end -- End layer is tile map.s
+
+                local celPos <const> = cel.position
+                xTl = celPos.x
+                yTl = celPos.y
+
+                celOpacity = cel.opacity
+                zIndex = cel.zIndex
+            end -- End cel exists.
+        end     -- End layer is group or is not ref.
+    end         -- End layer is visible.
+
+    if image == nil then
+        local defaultSpec <const> = ImageSpec {
+            width = wSprite,
+            height = hSprite,
+            colorMode = colorMode,
+            transparentColor = alphaIndex
+        }
+        defaultSpec.colorSpace = colorSpace
+        image = Image(defaultSpec)
+    end
+
+    return isValid, image, xTl, yTl, blendMode,
+        layerOpacity, celOpacity, zIndex
+end
+
 ---Flattens a group layer to a composite image. Does not verify that a layer is
 ---a group. Child layers are filtered according to the provided criteria.
 ---Returns an image and a cel bounds. If no composite could be made, returns a
@@ -1761,11 +1945,6 @@ function AseUtilities.flattenGroup(
     colorSpace, alphaIndex,
     includeLocked, includeHidden,
     includeTiles, includeBkg)
-
-    -- TODO: As of version 1.3.11-beta1, this would be complicated by group
-    -- layers having opacity and blend modes. See
-    -- app.preferences.experimental.compose_groups, a boolean.
-
     local aiVerif = 0
     if alphaIndex then aiVerif = alphaIndex end
 
