@@ -492,15 +492,18 @@ dlg:button {
             end
 
             if activeLayer.isGroup then
-                local flat <const>, rect <const> = AseUtilities.flattenGroup(
-                    activeLayer, activeFrame, colorMode, colorSpace, alphaIndex,
-                    true, true, true, true)
+                local isValid <const>,
+                flatImg <const>,
+                xTlFlat <const>,
+                yTlFlat <const> = AseUtilities.flattenGroup(
+                    activeLayer, activeFrame,
+                    colorMode, colorSpace, alphaIndex)
 
-                image = flat
-                xtl = rect.x
-                ytl = rect.y
-                wImage = rect.width
-                hImage = rect.height
+                image = flatImg
+                xtl = xTlFlat
+                ytl = yTlFlat
+                wImage = image.width
+                hImage = image.height
             else
                 local activeCel <const> = activeLayer:cel(activeFrame)
                 if not activeCel then

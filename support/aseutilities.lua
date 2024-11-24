@@ -1745,74 +1745,76 @@ end
 ---stating whether the composite was valid.
 ---@param layer Layer group layer
 ---@param frame Frame|integer frame
----@param colorMode ColorMode|integer sprite color mode
+---@param colorMode ColorMode sprite color mode
 ---@param colorSpace ColorSpace color space
 ---@param alphaIndex integer alpha mask index
+---@param wDefault integer? invalid image width
+---@param hDefault integer? invalid image height
 ---@return boolean isValid
 ---@return Image image
 ---@return integer xTl
 ---@return integer yTl
----@return integer blendMode
----@return integer layerOpacity
 ---@return integer celOpacity
 ---@return integer zIndex
-function AseUtilities.flattenGroup2(
+function AseUtilities.flattenGroup(
     layer, frame,
-    wSprite, hSprite,
-    colorMode, colorSpace, alphaIndex)
-    -- TODO: Replace all instances of old flattenGroup with this, starting
-    -- with the flattenGroup command.
+    colorMode, colorSpace, alphaIndex,
+    wDefault, hDefault)
 
     local isValid = false
     local image = nil
     local xTl = 0
     local yTl = 0
-    local blendMode = BlendMode.NORMAL
-    local layerOpacity = 255
     local celOpacity = 255
     local zIndex = 0
 
     if layer.isVisible then
-        blendMode = layer.blendMode or BlendMode.NORMAL
-        layerOpacity = layer.opacity or 255
-
         if layer.isGroup then
             local children <const> = layer.layers
             if children then
-                local flattenGroup <const> = AseUtilities.flattenGroup2
+                local lenChildren <const> = #children
+
+                local flattenGroup <const> = AseUtilities.flattenGroup
                 local blendImage <const> = AseUtilities.blendImage
                 local floor <const> = math.floor
 
                 ---@type table[]
                 local packets <const> = {}
+                local lenPackets = 0
+
                 local xTlGroup = 2147483647
                 local yTlGroup = 2147483647
                 local xBrGroup = -2147483648
                 local yBrGroup = -2147483648
-                local lenChildren <const> = #children
-                local lenPackets = 0
 
                 local i = 0
                 while i < lenChildren do
                     i = i + 1
 
+                    local child <const> = children[i]
+                    local blendModeChild <const> = child.blendMode
+                        or BlendMode.NORMAL
+                    local layerOpacityChild <const> = child.opacity
+                        or 255
+
                     local isValidChild <const>,
                     imageChild <const>,
                     xTlChild <const>,
                     yTlChild <const>,
-                    blendModeChild <const>,
-                    layerOpacityChild <const>,
                     celOpacityChild <const>,
-                    zIndexChild <const> = flattenGroup(children[i], frame,
-                        wSprite, hSprite, colorMode, colorSpace, alphaIndex)
+                    zIndexChild <const> = flattenGroup(children[i],
+                        frame, colorMode, colorSpace, alphaIndex,
+                        wDefault, hDefault)
 
                     if isValidChild then
                         isValid = true
 
                         local order <const> = (i - 1) + zIndex
 
-                        local xBrChild <const> = xTlChild + imageChild.width - 1
-                        local yBrChild <const> = yTlChild + imageChild.height - 1
+                        local xBrChild <const> = xTlChild
+                            + imageChild.width - 1
+                        local yBrChild <const> = yTlChild
+                            + imageChild.height - 1
 
                         if xTlChild < xTlGroup then xTlGroup = xTlChild end
                         if yTlChild < yTlGroup then yTlGroup = yTlChild end
@@ -1910,174 +1912,12 @@ function AseUtilities.flattenGroup2(
         end     -- End layer is group or is not ref.
     end         -- End layer is visible.
 
-    if image == nil then
-        local defaultSpec <const> = ImageSpec {
-            width = wSprite,
-            height = hSprite,
-            colorMode = colorMode,
-            transparentColor = alphaIndex
-        }
-        defaultSpec.colorSpace = colorSpace
-        image = Image(defaultSpec)
+    if not image then
+        image = Image(AseUtilities.createSpec(wDefault, hDefault, colorMode,
+            colorSpace, alphaIndex))
     end
 
-    return isValid, image, xTl, yTl, blendMode,
-        layerOpacity, celOpacity, zIndex
-end
-
----Flattens a group layer to a composite image. Does not verify that a layer is
----a group. Child layers are filtered according to the provided criteria.
----Returns an image and a cel bounds. If no composite could be made, returns a
----1 by 1 image and a rectangle in the top left corner.
----@param group Layer group layer
----@param frame Frame|integer frame
----@param sprClrMode ColorMode|integer sprite color mode
----@param colorSpace? ColorSpace color space
----@param alphaIndex? integer alpha mask index
----@param includeLocked? boolean include locked layers
----@param includeHidden? boolean include hidden layers
----@param includeTiles? boolean include tile maps
----@param includeBkg? boolean include backgrounds
----@return Image
----@return Rectangle
-function AseUtilities.flattenGroup(
-    group, frame, sprClrMode,
-    colorSpace, alphaIndex,
-    includeLocked, includeHidden,
-    includeTiles, includeBkg)
-    local aiVerif = 0
-    if alphaIndex then aiVerif = alphaIndex end
-
-    local leaves <const> = AseUtilities.appendLeaves(
-        group, {},
-        includeLocked, includeHidden,
-        includeTiles, includeBkg)
-    local lenLeaves <const> = #leaves
-
-    local packets <const> = {}
-    local lenPackets = 0
-
-    local isIndexed <const> = sprClrMode == ColorMode.INDEXED
-    local tilesToImage <const> = AseUtilities.tileMapToImage
-    local blendImage <const> = AseUtilities.blendImage
-    local xTlGroup = 2147483647
-    local yTlGroup = 2147483647
-    local xBrGroup = -2147483648
-    local yBrGroup = -2147483648
-
-    local image = nil
-    local bounds = nil
-
-    local i = 0
-    while i < lenLeaves do
-        i = i + 1
-        local leafLayer <const> = leaves[i]
-        local leafCel <const> = leafLayer:cel(frame)
-        if leafCel then
-            local leafImage = leafCel.image
-            if leafLayer.isTilemap then
-                local tileSet <const> = leafLayer.tileset
-                leafImage = tilesToImage(leafImage, tileSet, sprClrMode)
-            end
-
-            -- An Image:isEmpty check could be used here, but
-            -- it was avoided to not incur performance cost.
-            -- Calculate manually. Do not use cel bounds.
-            local leafPos <const> = leafCel.position
-            local xTlCel <const> = leafPos.x
-            local yTlCel <const> = leafPos.y
-            local xBrCel <const> = xTlCel + leafImage.width - 1
-            local yBrCel <const> = yTlCel + leafImage.height - 1
-
-            if xTlCel < xTlGroup then xTlGroup = xTlCel end
-            if yTlCel < yTlGroup then yTlGroup = yTlCel end
-            if xBrCel > xBrGroup then xBrGroup = xBrCel end
-            if yBrCel > yBrGroup then yBrGroup = yBrCel end
-
-            local zIndex <const> = leafCel.zIndex
-            local order <const> = (i - 1) + zIndex
-
-            lenPackets = lenPackets + 1
-            packets[lenPackets] = {
-                blendMode = leafLayer.blendMode,
-                image = leafImage,
-                opacityCel = leafCel.opacity,
-                opacityLayer = leafLayer.opacity or 255,
-                order = order,
-                xtl = xTlCel,
-                ytl = yTlCel,
-                zIndex = zIndex
-            }
-        end
-    end
-
-    --https://github.com/aseprite/aseprite/blob/main/docs/ase-file-specs.md#note5
-    table.sort(packets, function(a, b)
-        return (a.order < b.order)
-            or ((a.order == b.order)
-                and (a.zIndex < b.zIndex))
-    end)
-
-    local wGroup <const> = 1 + xBrGroup - xTlGroup
-    local hGroup <const> = 1 + yBrGroup - yTlGroup
-    if wGroup > 0 and hGroup > 0 then
-        bounds = Rectangle(xTlGroup, yTlGroup, wGroup, hGroup)
-
-        local compSpec <const> = ImageSpec {
-            width = wGroup,
-            height = hGroup,
-            colorMode = sprClrMode,
-            transparentColor = aiVerif
-        }
-        if colorSpace then compSpec.colorSpace = colorSpace end
-        image = Image(compSpec)
-
-        local floor <const> = math.floor
-
-        local j = 0
-        while j < lenPackets do
-            j = j + 1
-            local packet <const> = packets[j]
-            local leafBlendMode <const> = packet.blendMode --[[@as BlendMode]]
-            local leafImage <const> = packet.image --[[@as Image]]
-            local leafCelOpacity <const> = packet.opacityCel --[[@as integer]]
-            local leafLayerOpacity <const> = packet.opacityLayer --[[@as integer]]
-            local xTlLeaf <const> = packet.xtl --[[@as integer]]
-            local yTlLeaf <const> = packet.ytl --[[@as integer]]
-
-            local celOpac01 <const> = leafCelOpacity / 255.0
-            local layerOpac01 <const> = leafLayerOpacity / 255.0
-            local leafOpac01 <const> = celOpac01 * layerOpac01
-            local leafOpacity <const> = floor(leafOpac01 * 255.0 + 0.5)
-
-            local compPos <const> = Point(
-                xTlLeaf - xTlGroup,
-                yTlLeaf - yTlGroup)
-
-            if isIndexed then
-                image = blendImage(image, leafImage,
-                    0, 0, compPos.x, compPos.y)
-            else
-                image:drawImage(
-                    leafImage, compPos,
-                    leafOpacity, leafBlendMode)
-            end
-        end
-    end
-
-    if (not image) or (not bounds) then
-        bounds = Rectangle(0, 0, 1, 1)
-        local invalSpec <const> = ImageSpec {
-            width = 1,
-            height = 1,
-            colorMode = sprClrMode,
-            transparentColor = aiVerif
-        }
-        if colorSpace then invalSpec.colorSpace = colorSpace end
-        image = Image(invalSpec)
-    end
-
-    return image, bounds
+    return isValid, image, xTl, yTl, celOpacity, zIndex
 end
 
 ---Returns a copy of the source image that has been flipped and transposed.

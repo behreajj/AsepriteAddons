@@ -1064,12 +1064,14 @@ dlg:button {
         local blendMode = BlendMode.NORMAL
         local zIndex = 0
         if activeLayer.isGroup then
-            local flat <const>,
-            bounds <const> = AseUtilities.flattenGroup(
+            local isValid <const>,
+            flatImg <const>,
+            xTlFlat <const>,
+            yTlFlat <const> = AseUtilities.flattenGroup(
                 activeLayer, activeFrame,
-                colorMode, colorSpace, alphaIndex,
-                true, false, true, true)
-            srcImg, xtl, ytl = flat, bounds.x, bounds.y
+                colorMode, colorSpace, alphaIndex)
+
+            srcImg, xtl, ytl = flatImg, xTlFlat, yTlFlat
         else
             layerOpacity = activeLayer.opacity or 255
             blendMode = activeLayer.blendMode or BlendMode.NORMAL
@@ -1089,7 +1091,7 @@ dlg:button {
             end
         end
 
-        if srcImg:isEmpty() then return end
+        if srcImg == nil or srcImg:isEmpty() then return end
 
         local wTile, hTile = 8, 8
         local docPrefs <const> = app.preferences.document(activeSprite)

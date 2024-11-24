@@ -673,22 +673,27 @@ dlg:button {
         local alphaIndex <const> = spriteSpec.transparentColor
 
         local srcImg = nil
-        local tlxSrc = 0
-        local tlySrc = 0
+        local xTlSrc = 0
+        local yTlSrc = 0
         if srcLayer.isGroup then
-            local flatImg <const>,
-            flatRect <const> = AseUtilities.flattenGroup(
-                srcLayer, srcFrame, colorMode, colorSpace, alphaIndex,
-                true, false, true, true)
-            srcImg = flatImg
-            tlxSrc = flatRect.x
-            tlySrc = flatRect.y
+            local isValid <const>,
+            flatImg <const>,
+            xTlFlat <const>,
+            yTlFlat <const> = AseUtilities.flattenGroup(
+                srcLayer, srcFrame, colorMode,
+                colorSpace, alphaIndex)
+
+            if isValid then
+                srcImg = flatImg
+                xTlSrc = xTlFlat
+                yTlSrc = yTlFlat
+            end
         else
             local srcCel <const> = srcLayer:cel(srcFrame)
             if srcCel then
                 local celPos <const> = srcCel.position
-                tlxSrc = celPos.x
-                tlySrc = celPos.y
+                xTlSrc = celPos.x
+                yTlSrc = celPos.y
 
                 local celImg <const> = srcCel.image
                 if srcLayer.isTilemap then
@@ -755,11 +760,11 @@ dlg:button {
         local trimCel <const> = true
         if trimCel then
             local trimmed <const>,
-            tlxTrm <const>,
-            tlyTrm <const> = AseUtilities.trimImageAlpha(srcImg, 0, alphaIndex)
+            xTlTrim <const>,
+            yTlTrim <const> = AseUtilities.trimImageAlpha(srcImg, 0, alphaIndex)
             srcImg = trimmed
-            tlxSrc = tlxSrc + tlxTrm
-            tlySrc = tlySrc + tlyTrm
+            xTlSrc = xTlSrc + xTlTrim
+            yTlSrc = yTlSrc + yTlTrim
         end
 
         local args <const> = dlg.data
@@ -882,8 +887,8 @@ dlg:button {
             local currDeg = 0
             local wCurr = srcImg.width
             local hCurr = srcImg.height
-            local xCurr = tlxSrc + wCurr * 0.5
-            local yCurr = tlySrc + hCurr * 0.5
+            local xCurr = xTlSrc + wCurr * 0.5
+            local yCurr = yTlSrc + hCurr * 0.5
 
             local usePreIncr = args.usePreIncr --[[@as boolean]]
             if usePreIncr then

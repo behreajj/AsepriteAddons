@@ -295,7 +295,7 @@ dlg:slider {
             visible = (octCap >= defaults.showRefineAt)
         }
 
-        local r = (1 << octCap) // 2
+        local r = (1 << octCap) // 2 --[[@as integer]]
         dlg:modify { id = "refineCapacity", min = -r }
         dlg:modify { id = "refineCapacity", max = r }
     end
@@ -407,17 +407,16 @@ dlg:button {
             end
 
             if srcLayer.isGroup then
-                local includeLocked <const> = true
-                local includeHidden <const> = false
-                local includeTiles <const> = true
-                local includeBkg <const> = true
-                local boundingRect = Rectangle()
-                srcImg, boundingRect = AseUtilities.flattenGroup(
+                local isValid <const>,
+                flatImg <const>,
+                xTlFlat <const>,
+                yTlFlat <const> = AseUtilities.flattenGroup(
                     srcLayer, srcFrame,
-                    colorMode, colorSpace, alphaIndex,
-                    includeLocked, includeHidden, includeTiles, includeBkg)
-                xtl = boundingRect.x
-                ytl = boundingRect.y
+                    colorMode, colorSpace, alphaIndex)
+
+                srcImg = flatImg
+                xtl = xTlFlat
+                ytl = yTlFlat
             else
                 local srcCel <const> = srcLayer:cel(srcFrame)
                 if not srcCel then

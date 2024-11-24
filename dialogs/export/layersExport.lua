@@ -534,16 +534,21 @@ dlg:button {
                 local layerBlendMode = blendModeNormal
 
                 if chosenLayer.isGroup then
-                    -- print("Layer is a group")
-                    image, bounds = AseUtilities.flattenGroup(
+                    local isValid <const>,
+                    flatImg <const>,
+                    xTlFlat <const>,
+                    yTlFlat <const> = AseUtilities.flattenGroup(
                         chosenLayer, frIdx,
                         spriteColorMode,
                         spriteColorSpace,
-                        spriteAlphaIndex,
-                        includeLocked,
-                        includeHidden,
-                        includeTiles,
-                        includeBkg)
+                        spriteAlphaIndex)
+
+                    if isValid then
+                        image = flatImg
+                        bounds = Rectangle(
+                            xTlFlat, yTlFlat,
+                            flatImg.width, flatImg.height)
+                    end
                 else
                     layerOpacity = chosenLayer.opacity
                     layerBlendMode = chosenLayer.blendMode

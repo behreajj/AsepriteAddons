@@ -22,7 +22,7 @@ local alphaIndex <const> = spriteSpec.transparentColor
 local frObjs <const> = activeSprite.frames
 local lenFrObjs <const> = #frObjs
 
-local flatGroup <const> = AseUtilities.flattenGroup
+local flattenGroup <const> = AseUtilities.flattenGroup
 
 app.transaction("Flatten Group", function()
     local flattened <const> = activeSprite:newLayer()
@@ -31,14 +31,16 @@ app.transaction("Flatten Group", function()
     while i < lenFrObjs do
         i = i + 1
         local frObj <const> = frObjs[i]
-        local comp <const>, bounds <const> = flatGroup(
+        local isValid <const>,
+        flatImg <const>,
+        xTl <const>,
+        yTl <const> = flattenGroup(
             activeLayer, frObj,
-            sprClrMode, colorSpace, alphaIndex,
-            true, false, true, true)
-        if not comp:isEmpty() then
+            sprClrMode, colorSpace, alphaIndex)
+        if isValid then
             activeSprite:newCel(
-                flattened, frObj, comp,
-                Point(bounds.x, bounds.y))
+                flattened, frObj, flatImg,
+                Point(xTl, yTl))
         end
     end
 
@@ -48,9 +50,6 @@ app.transaction("Flatten Group", function()
     end
     flattened.name = layerName
 
-    -- TODO: Ideally, these properties would be baked into the images
-    -- created by AseUtilities.flattenGroup. Until then, this is better
-    -- than nothing.
     flattened.blendMode = activeLayer.blendMode or BlendMode.NORMAL
     flattened.opacity = activeLayer.opacity or 255
 
