@@ -229,7 +229,7 @@ function JsonUtilities.layerToJson(layer)
         JsonUtilities.blendModeToStr(layer.blendMode),
         layerDataVrf,
         layer.name,
-        layer.opacity,
+        layer.opacity or 255,
         parentVrf,
         layer.stackIndex,
         tileSetVrf,
