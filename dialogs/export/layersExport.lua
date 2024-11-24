@@ -530,8 +530,9 @@ dlg:button {
                 local celData = nil
                 local celOpacity = 255
                 local zIndex = 0
-                local layerOpacity = 255
-                local layerBlendMode = blendModeNormal
+                local layerOpacity = chosenLayer.opacity or 255
+                local layerBlendMode = chosenLayer.blendMode
+                    or blendModeNormal
 
                 if chosenLayer.isGroup then
                     local isValid <const>,
@@ -550,9 +551,6 @@ dlg:button {
                             flatImg.width, flatImg.height)
                     end
                 else
-                    layerOpacity = chosenLayer.opacity
-                    layerBlendMode = chosenLayer.blendMode
-
                     local cel <const> = chosenLayer:cel(frIdx)
                     if cel then
                         -- print("Cel was found.")
