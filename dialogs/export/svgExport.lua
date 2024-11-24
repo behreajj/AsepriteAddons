@@ -453,6 +453,11 @@ local function layerToSvgStr(
 
         local isGroup <const> = layer.isGroup
         local isTilemap <const> = layer.isTilemap
+        local lyrAlpha <const> = layer.opacity or 255
+        -- feBlend seems more backward compatible, but inline
+        -- CSS style results in shorter code.
+        local bmStr <const> = blendModeToStr(layer.blendMode
+            or BlendMode.NORMAL)
 
         if isGroup then
             ---@type string[]
@@ -472,10 +477,17 @@ local function layerToSvgStr(
                         childStrs)
                 end
 
-                -- TODO: Support group blend modes and opacity.
+                local alphaStr = ""
+                if lyrAlpha < 0xff then
+                    local cmpAlpha <const> = lyrAlpha / 255.0
+                    alphaStr = string.format(
+                        " opacity=\"%.3f\"",
+                        cmpAlpha)
+                end
+
                 local grpStr <const> = string.format(
-                    "<g id=\"%s\"%s>\n%s\n</g>",
-                    layerName, visStr, table.concat(childStrs, "\n"))
+                    "<g id=\"%s\"%s style=\"mix-blend-mode: %s;\"%s>\n%s\n</g>",
+                    layerName, visStr, bmStr, alphaStr, table.concat(childStrs, "\n"))
                 layersStrArr[#layersStrArr + 1] = grpStr
             end
         elseif (not layer.isReference)
@@ -494,7 +506,6 @@ local function layerToSvgStr(
 
                 if not celImg:isEmpty() then
                     -- Layer opacity and cel opacity are compounded.
-                    local lyrAlpha <const> = layer.opacity or 255
                     local celAlpha <const> = cel.opacity
 
                     local alphaStr = ""
@@ -505,11 +516,6 @@ local function layerToSvgStr(
                             " opacity=\"%.3f\"",
                             cmpAlpha)
                     end
-
-                    -- feBlend seems more backward compatible, but inline
-                    -- CSS style results in shorter code.
-                    local bmStr <const> = blendModeToStr(layer.blendMode
-                        or BlendMode.NORMAL)
 
                     local celPos <const> = cel.position
                     local xCel <const> = celPos.x
