@@ -1804,7 +1804,7 @@ function AseUtilities.flattenGroup(
                     xTlChild <const>,
                     yTlChild <const>,
                     celOpacityChild <const>,
-                    zIndexChild <const> = flattenGroup(children[i],
+                    zIndexChild <const> = flattenGroup(child,
                         frame, colorMode, colorSpace, alphaIndex,
                         includeLocked, includeHidden, includeTiles, includeBkg,
                         wDefault, hDefault)
@@ -1838,9 +1838,8 @@ function AseUtilities.flattenGroup(
                     end -- End child is valid.
                 end     -- End children loop.
 
-                -- TODO: Composite order here is not accurate to how
-                -- Aseprite does it. Might have to accumulate packets
-                -- with an internal helper function.
+                -- TODO: Composite order here does not match Aseprite.
+                -- Might have to accumulate packet with internal helper.
 
                 --https://github.com/aseprite/aseprite/blob/main/docs/ase-file-specs.md#note5
                 table.sort(packets, function(a, b)
@@ -1906,10 +1905,9 @@ function AseUtilities.flattenGroup(
 
                 image = cel.image
                 if layer.isTilemap then
-                    local tileSet <const> = layer.tileset
                     image = AseUtilities.tileMapToImage(
-                        image, tileSet, colorMode)
-                end -- End layer is tile map.s
+                        image, layer.tileset, colorMode)
+                end
 
                 local celPos <const> = cel.position
                 xTl = celPos.x
