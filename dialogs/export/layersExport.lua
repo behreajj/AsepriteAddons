@@ -542,7 +542,11 @@ dlg:button {
                         chosenLayer, frIdx,
                         spriteColorMode,
                         spriteColorSpace,
-                        spriteAlphaIndex)
+                        spriteAlphaIndex,
+                        includeLocked,
+                        includeHidden,
+                        includeTiles,
+                        includeBkg)
 
                     if isValid then
                         image = flatImg

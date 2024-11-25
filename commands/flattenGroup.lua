@@ -36,7 +36,8 @@ app.transaction("Flatten Group", function()
         xTl <const>,
         yTl <const> = flattenGroup(
             activeLayer, frObj,
-            sprClrMode, colorSpace, alphaIndex)
+            sprClrMode, colorSpace, alphaIndex,
+            true, false, true, true)
         if isValid then
             activeSprite:newCel(
                 flattened, frObj, flatImg,

@@ -1069,7 +1069,8 @@ dlg:button {
             xTlFlat <const>,
             yTlFlat <const> = AseUtilities.flattenGroup(
                 activeLayer, activeFrame,
-                colorMode, colorSpace, alphaIndex)
+                colorMode, colorSpace, alphaIndex,
+                true, false, true, true)
 
             srcImg, xtl, ytl = flatImg, xTlFlat, yTlFlat
         else

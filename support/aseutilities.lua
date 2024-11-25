@@ -125,7 +125,6 @@ end
 ---@return Layer[]
 function AseUtilities.appendGroups(
     layer, array, includeLocked, includeHidden)
-    -- TODO: Option to include or exclude collapsed?
     if layer.isGroup
         and (includeLocked or layer.isEditable)
         and (includeHidden or layer.isVisible) then
@@ -1741,13 +1740,16 @@ function AseUtilities.filterLayers(
     end
 end
 
----Flattens a group layer to a composite image. First return is a boolean
----stating whether the composite was valid.
+---Flattens a group layer to a composite image.
 ---@param layer Layer group layer
 ---@param frame Frame|integer frame
 ---@param colorMode ColorMode sprite color mode
 ---@param colorSpace ColorSpace color space
 ---@param alphaIndex integer alpha mask index
+---@param includeLocked? boolean include locked layers
+---@param includeHidden? boolean include hidden layers
+---@param includeTiles? boolean include tile maps
+---@param includeBkg? boolean include backgrounds
 ---@param wDefault integer? invalid image width
 ---@param hDefault integer? invalid image height
 ---@return boolean isValid
@@ -1757,10 +1759,9 @@ end
 ---@return integer celOpacity
 ---@return integer zIndex
 function AseUtilities.flattenGroup(
-    layer, frame,
-    colorMode, colorSpace, alphaIndex,
+    layer, frame, colorMode, colorSpace, alphaIndex,
+    includeLocked, includeHidden, includeTiles, includeBkg,
     wDefault, hDefault)
-
     local isValid = false
     local image = nil
     local xTl = 0
@@ -1768,7 +1769,8 @@ function AseUtilities.flattenGroup(
     local celOpacity = 255
     local zIndex = 0
 
-    if layer.isVisible then
+    if (includeLocked or layer.isEditable)
+        and (includeHidden or layer.isVisible) then
         if layer.isGroup then
             local children <const> = layer.layers
             if children then
@@ -1804,6 +1806,7 @@ function AseUtilities.flattenGroup(
                     celOpacityChild <const>,
                     zIndexChild <const> = flattenGroup(children[i],
                         frame, colorMode, colorSpace, alphaIndex,
+                        includeLocked, includeHidden, includeTiles, includeBkg,
                         wDefault, hDefault)
 
                     if isValidChild then
@@ -1834,6 +1837,10 @@ function AseUtilities.flattenGroup(
                         }
                     end -- End child is valid.
                 end     -- End children loop.
+
+                -- TODO: Composite order here is not accurate to how
+                -- Aseprite does it. Might have to accumulate packets
+                -- with an internal helper function.
 
                 --https://github.com/aseprite/aseprite/blob/main/docs/ase-file-specs.md#note5
                 table.sort(packets, function(a, b)
@@ -1890,7 +1897,9 @@ function AseUtilities.flattenGroup(
                     end     -- End packets loop.
                 end         -- End group width and height valid.
             end             -- End child layers exist.
-        elseif (not layer.isReference) then
+        elseif (not layer.isReference)
+            and (includeTiles or (not layer.isTilemap))
+            and (includeBkg or (not layer.isBackground)) then
             local cel <const> = layer:cel(frame)
             if cel then
                 isValid = true

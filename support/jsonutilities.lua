@@ -95,8 +95,7 @@ function JsonUtilities.aniDirToStr(ad)
     return "FORWARD"
 end
 
----Converts a layer blend mode to a string. If the layer is a group layer, it
----does not have a blend mode. "NORMAL" is returned as a default.
+---Converts a layer blend mode to a string. "NORMAL" is returned as a default.
 ---@param bm BlendMode|integer|nil blend mode
 ---@return string
 ---@nodiscard
