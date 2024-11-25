@@ -60,7 +60,7 @@ end
 ---@param radius number radius
 ---@param x number x origin
 ---@param y number y origin
----@param rotation number? rotation
+---@param rotation? number rotation
 function CanvasUtilities.drawPolygon(
     context, sides, radius, x, y, rotation)
     local aVrf <const> = rotation or 0.0
@@ -92,7 +92,7 @@ end
 ---@param barWidth integer bar width
 ---@param barHeight integer bar height
 ---@param fillColor Color fill color
----@param triSize number? triangle size
+---@param triSize? number triangle size
 function CanvasUtilities.drawSliderReticle(
     context, fac,
     barWidth, barHeight,
@@ -124,20 +124,20 @@ end
 ---@param label string canvas label
 ---@param width integer canvas width
 ---@param height integer canvas height
----@param isVisible boolean? is visible
----@param visNumbers boolean? visible numbers
----@param visButtons boolean? visible buttons
----@param visFuncs boolean? visible functions
----@param allowApMove boolean? allow anchor points
----@param gridCount integer? grid count
----@param cp0xDef number? x control point 0 default
----@param cp0yDef number? y control point 0 default
----@param cp1xDef number? x control point 1 default
----@param cp1yDef number? y control point 1 default
----@param curveColor Color? curve color
----@param gridColor Color? grid color
----@param cp0Color Color? control point 0 color
----@param cp1Color Color? control point 1 color
+---@param isVisible? boolean is visible
+---@param visNumbers? boolean visible numbers
+---@param visButtons? boolean visible buttons
+---@param visFuncs? boolean visible functions
+---@param allowApMove? boolean allow anchor points
+---@param gridCount? integer grid count
+---@param cp0xDef? number x control point 0 default
+---@param cp0yDef? number y control point 0 default
+---@param cp1xDef? number x control point 1 default
+---@param cp1yDef? number y control point 1 default
+---@param curveColor? Color curve color
+---@param gridColor? Color grid color
+---@param cp0Color? Color control point 0 color
+---@param cp1Color? Color control point 1 color
 ---@return Dialog
 function CanvasUtilities.graphBezier(
     dialog, id, label, width, height,
@@ -625,15 +625,15 @@ end
 ---@param label string canvas label
 ---@param width integer canvas width
 ---@param height integer canvas height
----@param isVisible boolean? is visible
----@param visSlide boolean? visible sliders
----@param gridCount integer? grid count
----@param lineColor Color? line color
----@param gridColor Color? grid color
----@param xOrig integer? x origin
----@param yOrig integer? y origin
----@param xDest integer? x destination
----@param yDest integer? y destination
+---@param isVisible? boolean is visible
+---@param visSlide? boolean visible sliders
+---@param gridCount? integer grid count
+---@param lineColor? Color line color
+---@param gridColor? Color grid color
+---@param xOrig? integer x origin
+---@param yOrig? integer y origin
+---@param xDest? integer x destination
+---@param yDest? integer y destination
 ---@return Dialog
 function CanvasUtilities.graphLine(
     dialog, id, label, width, height,
@@ -889,11 +889,11 @@ end
 ---@param label string canvas label
 ---@param width integer canvas weight
 ---@param height integer canvas height
----@param isVisible boolean? is visible
----@param lDef number? lightness default
----@param cDef number? chroma default
----@param hDef number? hue default
----@param aDef number? alpha default
+---@param isVisible? boolean is visible
+---@param lDef? number lightness default
+---@param cDef? number chroma default
+---@param hDef? number hue default
+---@param aDef? number alpha default
 ---@return Dialog
 function CanvasUtilities.spectrum(
     dialog, id, label, width, height,
