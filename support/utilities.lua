@@ -162,7 +162,7 @@ function Utilities.flipPixelsAll(source, w, h, bpp)
     while i < len do
         local y <const> = i // w
         local x <const> = i % w
-        -- You could multiply wn1 * h before the loop then just x * h within?
+        -- You could multiply wn1 * h before the loop then just x * h within.
         local j <const> = 1 + (wn1 - x) * h + hn1 - y
         local ibpp <const> = i * bpp
         transposed[j] = strsub(source, 1 + ibpp, bpp + ibpp)
@@ -215,7 +215,7 @@ function Utilities.flipPixelsY(source, w, h, bpp)
     while i < len do
         local y <const> = i // w
         local x <const> = i % w
-        -- You could multiply hn1 * w before the loop then just y * w within?
+        -- You could multiply hn1 * w before the loop then just y * w within.
         local j <const> = 1 + (hn1 - y) * w + x
         local ibpp <const> = i * bpp
         flipped[j] = strsub(source, 1 + ibpp, bpp + ibpp)
@@ -311,8 +311,8 @@ end
 ---Generates a random number with normal distribution. Based on the Box-Muller
 ---transform as described here:
 ---https://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform .
----@param sigma number? scalar
----@param mu number? offset
+---@param sigma? number scalar
+---@param mu? number offset
 ---@return number
 ---@nodiscard
 function Utilities.gaussian(sigma, mu)
@@ -378,7 +378,7 @@ end
 ---@param origin number origin angle
 ---@param dest number destination angle
 ---@param t number factor
----@param range number? range
+---@param range? number range
 ---@return number
 ---@nodiscard
 function Utilities.lerpAngleCcw(origin, dest, t, range)
@@ -402,7 +402,7 @@ end
 ---@param origin number origin angle
 ---@param dest number destination angle
 ---@param t number factor
----@param range number? range
+---@param range? number range
 ---@return number
 ---@nodiscard
 function Utilities.lerpAngleCw(origin, dest, t, range)
@@ -426,7 +426,7 @@ end
 ---@param origin number origin angle
 ---@param dest number destination angle
 ---@param t number factor
----@param range number? range
+---@param range? number range
 ---@return number
 ---@nodiscard
 function Utilities.lerpAngleFar(origin, dest, t, range)
@@ -452,7 +452,7 @@ end
 ---@param origin number origin angle
 ---@param dest number destination angle
 ---@param t number factor
----@param range number? range
+---@param range? number range
 ---@return number
 ---@nodiscard
 function Utilities.lerpAngleNear(origin, dest, t, range)
@@ -553,8 +553,8 @@ end
 ---Returns an array of arrays. Inner arrays can hold duplicate frame indices,
 ---as the user may intend for the same frame to appear in multiple groups.
 ---@param s string range string
----@param maxIdx integer? maximum index
----@param offset integer? offset
+---@param maxIdx? integer maximum index
+---@param offset? integer offset
 ---@return integer[][]
 ---@nodiscard
 function Utilities.parseRangeStringOverlap(s, maxIdx, offset)
@@ -650,8 +650,8 @@ end
 ---
 ---Returns an ordered set of integers.
 ---@param s string range string
----@param maxIdx integer? maximum index
----@param offset integer? offset
+---@param maxIdx? integer maximum index
+---@param offset? integer offset
 ---@return integer[]
 ---@nodiscard
 function Utilities.parseRangeStringUnique(s, maxIdx, offset)

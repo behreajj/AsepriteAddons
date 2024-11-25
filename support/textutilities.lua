@@ -318,7 +318,7 @@ end
 ---words. Returns a table of tables. Each inner table contains characters
 ---representing a line of text. Tabs are treated as spaces.
 ---@param srcStr string source string
----@param limit integer? character limit per line
+---@param limit? integer character limit per line
 ---@return string[][]
 function TextUtilities.lineWrapStringToChars(srcStr, limit)
     if srcStr and #srcStr > 0 then
