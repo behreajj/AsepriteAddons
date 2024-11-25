@@ -24,8 +24,8 @@ setmetatable(ShapeUtilities, {
 ---@param strokeWeight integer stroke weight
 ---@param frame Frame|integer frame
 ---@param layer Layer layer
----@param useAntiAlias boolean? use antialias
----@param useTrim boolean? trim image
+---@param useAntiAlias? boolean use antialias
+---@param useTrim? boolean trim image
 function ShapeUtilities.drawMesh2(
     sprite, mesh,
     useFill, fillClr,

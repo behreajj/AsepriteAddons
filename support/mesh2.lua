@@ -17,7 +17,7 @@ setmetatable(Mesh2, {
 ---Constructs a 2D mesh with a variable number of vertices per face.
 ---@param fs integer[][] faces
 ---@param vs Vec2[] coordinates
----@param name string? name
+---@param name? string name
 ---@return Mesh2
 function Mesh2.new(fs, vs, name)
     local inst <const> = setmetatable({}, Mesh2)
@@ -38,7 +38,7 @@ end
 ---Insets a face by calculating its center then easing from the face's vertices
 ---toward the center by the factor, in [0.0, 1.0]. The factor defaults to 0.5.
 ---@param faceIndex integer face index
----@param fac number? inset factor
+---@param fac? number inset factor
 ---@return Mesh2
 function Mesh2:insetFace(faceIndex, fac)
     local t <const> = fac or 0.5
@@ -226,7 +226,7 @@ end
 ---@param startWeight number start weight
 ---@param stopWeight number stop weight
 ---@param sectors integer sectors
----@param useQuads boolean? use quads
+---@param useQuads? boolean use quads
 ---@return Mesh2
 function Mesh2.arc(
     startAngle, stopAngle,
@@ -488,9 +488,9 @@ end
 ---[0.0, 1.0] that is multiplied by the polygon radius. The default is to pick
 ---1, skip 1, and inset by 0.5.
 ---@param sectors integer sides
----@param skip integer? vertices to skip
----@param pick integer? vertices to inset
----@param inset number? percent inset
+---@param skip? integer vertices to skip
+---@param pick? integer vertices to inset
+---@param inset? number percent inset
 ---@return Mesh2
 function Mesh2.star(sectors, skip, pick, inset)
     -- Early return for invalid skip or pick.

@@ -76,7 +76,7 @@ end
 ---bisectRight. Does not check for duplicates. Returns true if the key was
 ---successfully inserted.
 ---@param ck ClrKey color key
----@param tol number? tolerance
+---@param tol? number tolerance
 ---@return boolean
 function ClrGradient:insortRight(ck, tol)
     local eps <const> = tol or ClrGradient.TOLERANCE
@@ -185,7 +185,7 @@ end
 ---destination color and a number as a step. If nil, it defaults to a mix in
 ---standard RGB.
 ---@param cg ClrGradient color gradient
----@param step number? step
+---@param step? number step
 ---@param easing? fun(o: Clr, d: Clr, t: number): Clr easing function
 ---@return Clr
 ---@nodiscard
@@ -203,7 +203,7 @@ end
 ---Internal helper to find the previous and next key to ease between at the
 ---local level. Returns the previous key, the next key and the validated step.
 ---@param cg ClrGradient color gradient
----@param step number? step
+---@param step? number step
 ---@return ClrKey
 ---@return ClrKey
 ---@return number

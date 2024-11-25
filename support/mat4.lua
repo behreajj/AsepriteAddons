@@ -132,7 +132,7 @@ end
 ---@param xRef number reference x
 ---@param yRef number reference y
 ---@param zRef number reference z
----@param handedness string? handedness
+---@param handedness? string handedness
 ---@return Mat4
 ---@nodiscard
 function Mat4.camera(
@@ -258,7 +258,7 @@ end
 ---@param xLoc number location x
 ---@param yLoc number location y
 ---@param zLoc number location z
----@param handedness string? handedness
+---@param handedness? string handedness
 ---@return Mat4
 ---@nodiscard
 function Mat4.cameraIsometric(xLoc, yLoc, zLoc, handedness)
@@ -304,7 +304,7 @@ end
 ---@param xLoc number location x
 ---@param yLoc number location y
 ---@param zLoc number location z
----@param handedness string? handedness
+---@param handedness? string handedness
 ---@return Mat4
 ---@nodiscard
 function Mat4.cameraDimetric(xLoc, yLoc, zLoc, handedness)

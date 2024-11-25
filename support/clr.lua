@@ -28,7 +28,7 @@ Clr.SR_LCH_MAX_CHROMA = 119.07602046756
 ---@param r number red channel
 ---@param g number green channel
 ---@param b number blue channel
----@param a number? opacity
+---@param a? number opacity
 ---@return Clr
 ---@nodiscard
 function Clr.new(r, g, b, a)
@@ -62,7 +62,7 @@ end
 
 ---Returns true if the alpha channel is within the range [0.0, 1.0].
 ---@param c Clr color
----@param tol number? tolerance
+---@param tol? number tolerance
 ---@return boolean
 ---@nodiscard
 function Clr.alphaIsInGamut(c, tol)
@@ -644,7 +644,7 @@ end
 ---Returns true if the red, green and blue channels are within the range
 ---[0.0, 1.0].
 ---@param c Clr color
----@param tol number? tolerance
+---@param tol? number tolerance
 ---@return boolean
 ---@nodiscard
 function Clr.rgbIsInGamut(c, tol)
@@ -656,7 +656,7 @@ end
 
 ---Returns true if all color channels are within the range [0.0, 1.0].
 ---@param c Clr color
----@param tol number? tolerance
+---@param tol? number tolerance
 ---@return boolean
 ---@nodiscard
 function Clr.rgbaIsInGamut(c, tol)
@@ -723,7 +723,7 @@ end
 ---The return table uses the keys l, c, h and a.
 ---The alpha channel is unaffected by the transform.
 ---@param c Clr color
----@param tol number? gray tolerance
+---@param tol? number gray tolerance
 ---@return { l: number, c: number, h: number, a: number }
 ---@nodiscard
 function Clr.sRgbToSrLch(c, tol)
@@ -796,7 +796,7 @@ end
 ---@param a number a, green to red
 ---@param b number b, blue to yellow
 ---@param alpha number opacity
----@param tol number? gray tolerance
+---@param tol? number gray tolerance
 ---@return { l: number, c: number, h: number, a: number }
 ---@nodiscard
 function Clr.srLab2ToSrLch(l, a, b, alpha, tol)
@@ -831,7 +831,7 @@ end
 ---@param c number chromaticity
 ---@param h number hue
 ---@param a number opacity
----@param tol number? gray tolerance
+---@param tol? number gray tolerance
 ---@return Clr
 ---@nodiscard
 function Clr.srLchTosRgb(l, c, h, a, tol)
@@ -847,7 +847,7 @@ end
 ---@param c number chromaticity
 ---@param h number hue
 ---@param a number opacity
----@param tol number? gray tolerance
+---@param tol? number gray tolerance
 ---@return { l: number, a: number, b: number, alpha: number }
 ---@nodiscard
 function Clr.srLchToSrLab2(l, c, h, a, tol)

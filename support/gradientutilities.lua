@@ -772,8 +772,8 @@ end
 ---"DITHER_BAYER" returns a Bayer matrix.
 ---Defaults to a smooth mix.
 ---@param stylePreset string style preset
----@param bayerIndex integer? Bayer exponent, 2^1
----@param ditherPath string? dither image path
+---@param bayerIndex? integer Bayer exponent, 2^1
+---@param ditherPath? string dither image path
 ---@return fun(cg: ClrGradient, step: number, x: integer, y: integer): Clr
 ---@nodiscard
 function GradientUtilities.ditherFromPreset(

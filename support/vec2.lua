@@ -20,8 +20,8 @@ setmetatable(Vec2, {
 })
 
 ---Constructs a new vector from two numbers.
----@param x number? x component
----@param y number? y component
+---@param x? number x component
+---@param y? number y component
 ---@return Vec2
 ---@nodiscard
 function Vec2.new(x, y)
@@ -130,7 +130,7 @@ end
 ---Evaluates whether two vectors are, within a tolerance, approximately equal.
 ---@param a Vec2 left operand
 ---@param b Vec2 right operand
----@param tol number? tolerance
+---@param tol? number tolerance
 ---@return boolean
 ---@nodiscard
 function Vec2.approx(a, b, tol)
@@ -334,7 +334,7 @@ end
 ---Converts from polar to Cartesian coordinates. The heading, or azimuth, is in
 ---radians. The radius defaults to 1.0.
 ---@param heading number heading, theta
----@param radius number? radius, rho
+---@param radius? number radius, rho
 ---@return Vec2
 ---@nodiscard
 function Vec2.fromPolar(heading, radius)
@@ -445,7 +445,7 @@ end
 ---Mixes two vectors together by a step. The step is a number.
 ---@param a Vec2 origin
 ---@param b Vec2 destination
----@param t number? step
+---@param t? number step
 ---@return Vec2
 ---@nodiscard
 function Vec2.mixNum(a, b, t)
@@ -548,8 +548,8 @@ end
 
 ---Creates a random point in Cartesian space given a lower and an upper bound.
 ---If lower and upper bounds are not given, defaults to [-1.0, 1.0].
----@param lb Vec2? lower bound
----@param ub Vec2? upper bound
+---@param lb? Vec2 lower bound
+---@param ub? Vec2 upper bound
 ---@return Vec2
 ---@nodiscard
 function Vec2.randomCartesian(lb, ub)

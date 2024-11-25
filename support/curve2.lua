@@ -18,7 +18,7 @@ setmetatable(Curve2, {
 ---closed loop if true. The second parameter should be a table of Knot2s.
 ---@param cl boolean closed loop
 ---@param knots Knot2[] knots
----@param name string? name
+---@param name? string name
 ---@return Curve2
 ---@nodiscard
 function Curve2.new(cl, knots, name)
@@ -140,7 +140,7 @@ end
 ---@param curve Curve2 curve
 ---@param totalLength number curve length
 ---@param arcLengths number[] cumulative lengths
----@param sampleCount integer? sample count
+---@param sampleCount? integer sample count
 ---@return Vec2[]
 ---@nodiscard
 function Curve2.paramPoints(

@@ -21,9 +21,9 @@ setmetatable(Vec3, {
 })
 
 ---Constructs a new vector from three numbers.
----@param x number? x component
----@param y number? y component
----@param z number? z component
+---@param x? number x component
+---@param y? number y component
+---@param z? number z component
 ---@return Vec3
 ---@nodiscard
 function Vec3.new(x, y, z)
@@ -139,7 +139,7 @@ end
 ---Evaluates whether two vectors are, within a tolerance, approximately equal.
 ---@param a Vec3 left operand
 ---@param b Vec3 right operand
----@param tol number? tolerance
+---@param tol? number tolerance
 ---@return boolean
 ---@nodiscard
 function Vec3.approx(a, b, tol)
@@ -422,7 +422,7 @@ end
 ---poles are upright in a Z-Up coordinate system.
 ---@param azimuth number azimuth, yaw, theta
 ---@param inclination number inclination, pitch, phi
----@param radius number? radius, rho
+---@param radius? number radius, rho
 ---@return Vec3
 ---@nodiscard
 function Vec3.fromSpherical(azimuth, inclination, radius)
@@ -639,7 +639,7 @@ end
 ---Mixes two vectors together by a step. The step is a number.
 ---@param a Vec3 origin
 ---@param b Vec3 destination
----@param t number? step
+---@param t? number step
 ---@return Vec3
 ---@nodiscard
 function Vec3.mixNum(a, b, t)
@@ -724,8 +724,8 @@ end
 
 ---Creates a random point in Cartesian space given a lower and an upper bound.
 ---If lower and upper bounds are not given, defaults to [-1.0, 1.0].
----@param lb Vec3? lower bound
----@param ub Vec3? upper bound
+---@param lb? Vec3 lower bound
+---@param ub? Vec3 upper bound
 ---@return Vec3
 ---@nodiscard
 function Vec3.randomCartesian(lb, ub)

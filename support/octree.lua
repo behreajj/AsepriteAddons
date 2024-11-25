@@ -45,7 +45,7 @@ Octree.FRONT_NORTH_EAST = 8
 ---into children.
 ---@param bounds Bounds3 bounding volume
 ---@param capacity integer point capacity
----@param level integer? level, or depth
+---@param level? integer level, or depth
 ---@return Octree
 function Octree.new(bounds, capacity, level)
     local inst <const> = setmetatable({}, Octree)
@@ -80,7 +80,7 @@ end
 ---Finds the mean center of each leaf node in an octree. Appends centers to an
 ---array if provided, otherwise creates a new array.
 ---@param o Octree octree
----@param arr Vec3[]? array
+---@param arr? Vec3[] array
 ---@return Vec3[]
 function Octree.centersMean(o, arr)
     local arrVrf <const> = arr or {}
@@ -350,7 +350,7 @@ end
 ---Splits the octree node into eight child nodes. If a child capacity is not
 ---provided, defaults to the parent's capacity.
 ---@param o Octree octree
----@param childCapacity integer? child capacity
+---@param childCapacity? integer child capacity
 ---@return Octree
 function Octree.split(o, childCapacity)
     local chCpVerif <const> = childCapacity or o.capacity
@@ -406,7 +406,7 @@ end
 ---raised to the power of iterations, e.g.: 8, 64, 512, etc.
 ---@param o Octree octree
 ---@param itr integer iterations
----@param childCapacity integer? child capacity
+---@param childCapacity? integer child capacity
 ---@return Octree
 function Octree.subdivide(o, itr, childCapacity)
     if (not itr) or (itr < 1) then return o end

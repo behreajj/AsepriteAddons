@@ -22,10 +22,10 @@ setmetatable(Vec4, {
 })
 
 ---Constructs a new vector from four numbers.
----@param x number? x component
----@param y number? y component
----@param z number? z component
----@param w number? w component
+---@param x? number x component
+---@param y? number y component
+---@param z? number z component
+---@param w? number w component
 ---@return Vec4
 ---@nodiscard
 function Vec4.new(x, y, z, w)
@@ -146,7 +146,7 @@ end
 ---Evaluates whether two vectors are, within a tolerance, approximately equal.
 ---@param a Vec4 left operand
 ---@param b Vec4 right operand
----@param tol number? tolerance
+---@param tol? number tolerance
 ---@return boolean
 ---@nodiscard
 function Vec4.approx(a, b, tol)
@@ -403,7 +403,7 @@ end
 ---Mixes two vectors together by a step.
 ---@param a Vec4 origin
 ---@param b Vec4 destination
----@param t number? step
+---@param t? number step
 ---@return Vec4
 ---@nodiscard
 function Vec4.mixNum(a, b, t)
@@ -497,8 +497,8 @@ end
 
 ---Creates a random point in Cartesian space given a lower and an upper bound.
 ---If lower and upper bounds are not given, defaults to [-1.0, 1.0].
----@param lb Vec4? lower bound
----@param ub Vec4? upper bound
+---@param lb? Vec4 lower bound
+---@param ub? Vec4 upper bound
 ---@return Vec4
 ---@nodiscard
 function Vec4.randomCartesian(lb, ub)
