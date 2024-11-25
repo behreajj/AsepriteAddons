@@ -287,9 +287,9 @@ end
 ---Aseprite does not support color management for palettes.
 ---@param palType string enumeration
 ---@param filePath string file path
----@param startIndex integer? start index
----@param count integer? count of colors to sample
----@param correctZeroAlpha boolean? alpha correction flag
+---@param startIndex? integer start index
+---@param count? integer count of colors to sample
+---@param correctZeroAlpha? boolean alpha correction flag
 ---@return integer[]
 ---@return integer[]
 function AseUtilities.asePaletteLoad(
@@ -305,7 +305,7 @@ function AseUtilities.asePaletteLoad(
             if isFile then
                 -- Loading an .aseprite file with multiple palettes will
                 -- register only the first palette. Also may be problems with
-                -- color profiles being ignored?
+                -- color profiles being ignored.
                 local palFile <const> = Palette { fromFile = filePath }
                 if palFile then
                     local cntVrf <const> = count or 256
@@ -391,8 +391,8 @@ end
 ---palette is nil, returns a default table. Assumes palette is in sRGB. The
 ---start index defaults to 0. The count defaults to 256.
 ---@param pal Palette aseprite palette
----@param startIndex integer? start index
----@param count integer? sample count
+---@param startIndex? integer start index
+---@param count? integer sample count
 ---@return integer[]
 ---@nodiscard
 function AseUtilities.asePaletteToHexArr(pal, startIndex, count)
@@ -701,7 +701,7 @@ end
 ---and converted. Otherwise, returns false. Ignores linked cels. Always sets
 ---the new layer to stack index 1, parented to the sprite.
 ---@param sprite Sprite sprite
----@param overrideLock boolean? ignore layer lock
+---@param overrideLock? boolean ignore layer lock
 ---@returns boolean
 function AseUtilities.bkgToLayer(sprite, overrideLock)
     local bkgLayer <const> = sprite.backgroundLayer
@@ -746,12 +746,12 @@ end
 ---corner. Does not support tile maps or images with mismatched color modes.
 ---@param under Image under image
 ---@param over Image overlay image
----@param uxCel integer? under cel top left corner x
----@param uyCel integer? under cel top left corner y
----@param oxCel integer? overlay cel top left corner x
----@param oyCel integer? overlay cel top left corner y
----@param mask Selection? selection
----@param cumulative boolean? under ignore mask
+---@param uxCel? integer under cel top left corner x
+---@param uyCel? integer under cel top left corner y
+---@param oxCel? integer overlay cel top left corner x
+---@param oyCel? integer overlay cel top left corner y
+---@param mask? Selection selection
+---@param cumulative? boolean under ignore mask
 ---@returns Image
 ---@returns integer
 ---@returns integer
@@ -1139,8 +1139,8 @@ end
 ---@param lyrStrtIdx integer layer start index
 ---@param lyrCount integer layer count
 ---@param image Image cel image
----@param position Point? cel position
----@param guiClr integer? hexadecimal color
+---@param position? Point cel position
+---@param guiClr? integer hexadecimal color
 ---@return Cel[]
 function AseUtilities.createCels(
     sprite, frStrtIdx, frCount, lyrStrtIdx,
@@ -1320,9 +1320,9 @@ end
 -- color, use a hexadecimal integer as an argument. Returns a table of layers.
 ---@param sprite Sprite sprite
 ---@param count integer number of layers to create
----@param blendMode BlendMode? blend mode
----@param opacity integer? layer opacity
----@param guiClr integer? rgba color
+---@param blendMode? BlendMode blend mode
+---@param opacity? integer layer opacity
+---@param guiClr? integer rgba color
 ---@return Layer[]
 function AseUtilities.createLayers(
     sprite, count, blendMode, opacity, guiClr)
@@ -1750,8 +1750,8 @@ end
 ---@param includeHidden? boolean include hidden layers
 ---@param includeTiles? boolean include tile maps
 ---@param includeBkg? boolean include backgrounds
----@param wDefault integer? invalid image width
----@param hDefault integer? invalid image height
+---@param wDefault? integer invalid image width
+---@param hDefault? integer invalid image height
 ---@return boolean isValid
 ---@return Image image
 ---@return integer xTl
@@ -1841,7 +1841,7 @@ function AseUtilities.flattenGroup(
                 -- TODO: Composite order here does not match Aseprite.
                 -- Might have to accumulate packet with internal helper.
 
-                --https://github.com/aseprite/aseprite/blob/main/docs/ase-file-specs.md#note5
+                -- https://github.com/aseprite/aseprite/blob/main/docs/ase-file-specs.md#note5
                 table.sort(packets, function(a, b)
                     return (a.order < b.order)
                         or ((a.order == b.order)
@@ -2062,9 +2062,9 @@ end
 ---returned. The batched flag will break the return array into sequences.
 ---@param sprite Sprite sprite
 ---@param target string preset
----@param batch boolean? batch
----@param mnStr string? manual
----@param tags Tag[]? tags
+---@param batch? boolean batch
+---@param mnStr? string manual
+---@param tags? Tag[] tags
 ---@return integer[][]
 ---@nodiscard
 function AseUtilities.getFrames(sprite, target, batch, mnStr, tags)
@@ -2396,7 +2396,7 @@ end
 ---For best results, prior to use, trim images of excess alpha and filter out
 ---empty images.
 ---@param source Image source image
----@param sizeThresh integer? size threshold
+---@param sizeThresh? integer size threshold
 function AseUtilities.hashImage(source, sizeThresh)
     -- Aseprite uses city hash, but only returns a 32 bit integer:
     -- https://github.com/aseprite/aseprite/blob/main/src/doc/primitives.cpp#L545
@@ -3089,7 +3089,7 @@ end
 ---with the sprite bounds, if provided, for cases where cel may be partially
 ---outside the canvas edges.
 ---@param cel Cel cel
----@param spriteBounds Rectangle? sprite bounds
+---@param spriteBounds? Rectangle sprite bounds
 ---@return Selection
 ---@nodiscard
 function AseUtilities.selectCel(cel, spriteBounds)
@@ -3105,8 +3105,8 @@ end
 ---@param image Image source image
 ---@param xtl integer cel position x
 ---@param ytl integer cel position y
----@param tileSet Tileset? tile set
----@param spriteBounds Rectangle? sprite bounds
+---@param tileSet? Tileset tile set
+---@param spriteBounds? Rectangle sprite bounds
 ---@return Selection
 ---@nodiscard
 function AseUtilities.selectImage(image, xtl, ytl, tileSet, spriteBounds)
@@ -3183,8 +3183,8 @@ end
 ---Creates a transaction.
 ---@param arr integer[] color array
 ---@param sprite Sprite sprite
----@param paletteIndex integer? index
----@param keepMaxLen boolean? keep maximum length
+---@param paletteIndex? integer index
+---@param keepMaxLen? boolean keep maximum length
 function AseUtilities.setPalette(arr, sprite, paletteIndex, keepMaxLen)
     local palIdxVerif = paletteIndex or 1
     local palettes <const> = sprite.palettes
@@ -3331,7 +3331,7 @@ end
 ---is nil, uses the cel image's alpha mask.
 ---@param cel Cel source cel
 ---@param mask Selection selection
----@param hexDefault integer? default color
+---@param hexDefault? integer default color
 function AseUtilities.trimCelToSelect(cel, mask, hexDefault)
     -- Beware naming, 'select' is a method built-in to Lua.
     local selBounds <const> = mask.bounds
@@ -3453,8 +3453,8 @@ end
 ---@param image Image aseprite image
 ---@param padding integer padding
 ---@param alphaIndex integer alpha mask index
----@param wDefault integer? width default
----@param hDefault integer? height default
+---@param wDefault? integer width default
+---@param hDefault? integer height default
 ---@return Image trimmed
 ---@return integer xShift
 ---@return integer yShift
@@ -3515,8 +3515,8 @@ end
 ---@param alphaIndex integer alpha mask index
 ---@param wTile integer tile width
 ---@param hTile integer tile height
----@param wDefault integer? map width default
----@param hDefault integer? map height default
+---@param wDefault? integer map width default
+---@param hDefault? integer map height default
 ---@return Image trimmed
 ---@return integer xShift
 ---@return integer yShift
