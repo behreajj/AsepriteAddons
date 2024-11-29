@@ -52,7 +52,7 @@ local defaults <const> = {
     wGrid = 20,
     hGrid = 20,
     pullFocus = true,
-    maxSize = 65535
+    maxSize = 32767
 }
 
 ---@param dialog Dialog
