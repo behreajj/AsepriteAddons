@@ -34,8 +34,8 @@ local defaults <const> = {
 ---@param tileMap Image tile map, an image
 ---@param tileSet Tileset tile set
 ---@param mask Selection selection mask
----@param xtlCel integer? cel top left corner x
----@param ytlCel integer? cel top left corner y
+---@param xtlCel? integer cel top left corner x
+---@param ytlCel? integer cel top left corner y
 ---@return table<integer, Tile> tiles
 ---@return integer[] coords
 local function getSelectedTiles(

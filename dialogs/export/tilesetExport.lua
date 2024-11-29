@@ -139,7 +139,7 @@ local tsxTileFormat <const> = table.concat({
 })
 
 ---@param mapPacket table
----@param idxOffset integer?
+---@param idxOffset? integer
 ---@return string[] csvData
 ---@return integer wMap
 ---@return integer hMap
