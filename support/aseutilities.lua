@@ -2164,6 +2164,8 @@ end
 ---@return integer
 ---@nodiscard
 function AseUtilities.getMouse()
+    -- TODO: Return tiledMode integer third?
+
     -- With View Tiled Mode, the sprite position shifts to
     -- the top left corner tile, not the center tile.
     -- See https://github.com/aseprite/aseprite/issues/4659 .
