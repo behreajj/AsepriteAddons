@@ -1395,7 +1395,7 @@ function AseUtilities.createLayers(
     return layers
 end
 
----Creates a new ImageSpec. Width and height will be clamped to [1, 65535].
+---Creates a new ImageSpec. Width and height will be clamped to [1, 32767].
 ---If they are not defined, they default to new file preferences. The color
 ---mode defaults to RGB. The transparent color defaults to zero. If a color
 ---space is provided, it is assigned to the spec after construction. Otherwise,
@@ -1421,14 +1421,14 @@ function AseUtilities.createSpec(
 
     local wVerif = 320
     if width then
-        wVerif = math.min(math.max(math.abs(width), 1), 65535)
+        wVerif = math.min(math.max(math.abs(width), 1), 32767)
     else
         wVerif = app.preferences.new_file.width --[[@as integer]]
     end
 
     local hVerif = 180
     if height then
-        hVerif = math.min(math.max(math.abs(height), 1), 65535)
+        hVerif = math.min(math.max(math.abs(height), 1), 32767)
     else
         hVerif = app.preferences.new_file.height --[[@as integer]]
     end
