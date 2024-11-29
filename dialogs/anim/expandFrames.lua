@@ -173,8 +173,8 @@ local function crossFade(
                 wComp, hComp,
                 colorMode, colorSpace, alphaIndex)
 
-            local bytesPrev <const> = AseUtilities.getPixels(imgPrev)
-            local bytesNext <const> = AseUtilities.getPixels(imgNext)
+            local bytesPrev <const> = AseUtilities.getBytes(imgPrev)
+            local bytesNext <const> = AseUtilities.getBytes(imgNext)
             local packZero <const> = string.pack("B B B B", 0, 0, 0, 0)
 
             app.transaction(trName, function()

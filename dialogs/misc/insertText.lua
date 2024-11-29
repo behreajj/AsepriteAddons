@@ -231,8 +231,8 @@ dlg:button {
 
         -- Cache methods used in for loops to local.
         local displayString <const> = TextUtilities.drawString
-        local getPixels <const> = AseUtilities.getPixels
-        local setPixels <const> = AseUtilities.setPixels
+        local getBytes <const> = AseUtilities.getBytes
+        local setBytes <const> = AseUtilities.setBytes
 
         -- Unpack arguments.
         local msgSrc <const> = args.msgSrc or defaults.msgSrc --[[@as string]]
@@ -486,7 +486,7 @@ dlg:button {
                                 animPosx = animPosx + dispWidth - j * dw
                             end
 
-                            local pixels <const> = getPixels(animImage)
+                            local pixels <const> = getBytes(animImage)
                             if useShadow then
                                 displayString(
                                     lut, pixels, widthImg, animSlice,
@@ -497,7 +497,7 @@ dlg:button {
                                 lut, pixels, widthImg, animSlice,
                                 rFill, gFill, bFill, aFill,
                                 animPosx, yCaret, gw, gh, scale)
-                            setPixels(animImage, pixels)
+                            setBytes(animImage, pixels)
 
                             animCel.image = animImage
                         end
@@ -511,7 +511,7 @@ dlg:button {
             local activeCel <const> = layer:cel(actFrIdx)
                 or sprite:newCel(layer, actFrIdx)
             activeCel.position = stillPos
-            local pixels <const> = getPixels(bkgSrcImg)
+            local pixels <const> = getBytes(bkgSrcImg)
 
             app.transaction("Insert Text", function()
                 local yCaret = 0
@@ -533,7 +533,7 @@ dlg:button {
                         lineOffset, yCaret, gw, gh, scale)
                     yCaret = yCaret + dh + scale + leading
                 end
-                setPixels(bkgSrcImg, pixels)
+                setBytes(bkgSrcImg, pixels)
                 activeCel.image = bkgSrcImg
             end)
         end

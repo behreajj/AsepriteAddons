@@ -183,7 +183,7 @@ dlg:button {
         local sRgbaToLab <const> = Clr.sRgbToSrLab2
 
         local drawCircleFill <const> = AseUtilities.drawCircleFill
-        local setPixels <const> = AseUtilities.setPixels
+        local setBytes <const> = AseUtilities.setBytes
 
         -- Unpack arguments.
         local args <const> = dlg.data
@@ -465,7 +465,7 @@ dlg:button {
                 end
             end
 
-            setPixels(plotImage, plotPixels)
+            setBytes(plotImage, plotPixels)
             local plotPalLayer <const> = sprite:newLayer()
             plotPalLayer.name = "Palette"
 

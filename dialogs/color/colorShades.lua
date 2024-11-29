@@ -153,7 +153,7 @@ dlg:button {
         local sRgbaToLch <const> = Clr.sRgbToSrLch
 
         local drawCircleFill <const> = AseUtilities.drawCircleFill
-        local setPixels <const> = AseUtilities.setPixels
+        local setBytes <const> = AseUtilities.setBytes
 
         local quantize <const> = Utilities.quantizeUnsigned
 
@@ -406,7 +406,7 @@ dlg:button {
                 end
             end
 
-            setPixels(plotImage, plotPixels)
+            setBytes(plotImage, plotPixels)
             local plotPalLayer <const> = sprite:newLayer()
             plotPalLayer.name = "Palette"
 

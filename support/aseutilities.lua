@@ -2265,7 +2265,7 @@ end
 ---@param image Image
 ---@return integer[]
 ---@nodiscard
-function AseUtilities.getPixels(image)
+function AseUtilities.getBytes(image)
     return Utilities.stringToByteArr(image.bytes)
 end
 
@@ -3228,10 +3228,10 @@ end
 ---elements or length. The length should be width times height times bytes per
 ---pixel.
 ---@param image Image
----@param pixels integer[]
+---@param bytes integer[]
 ---@return Image
-function AseUtilities.setPixels(image, pixels)
-    image.bytes = Utilities.bytesArrToString(pixels)
+function AseUtilities.setBytes(image, bytes)
+    image.bytes = Utilities.bytesArrToString(bytes)
     return image
 end
 

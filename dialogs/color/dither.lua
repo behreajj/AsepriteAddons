@@ -420,8 +420,8 @@ dlg:button {
         local strfmt <const> = string.format
         local tilesToImage <const> = AseUtilities.tileMapToImage
         local transact <const> = app.transaction
-        local getPixels <const> = AseUtilities.getPixels
-        local setPixels <const> = AseUtilities.setPixels
+        local getBytes <const> = AseUtilities.getBytes
+        local setBytes <const> = AseUtilities.setBytes
 
         -- String that is assigned to new layer name to clarify operation.
         local dmStr = ""
@@ -726,10 +726,10 @@ dlg:button {
                     local wSrc <const> = srcSpec.width
                     local hSrc <const> = srcSpec.height
                     local srcBpp <const> = srcImg.bytesPerPixel
-                    local trgPixels <const> = getPixels(srcImg)
+                    local trgPixels <const> = getBytes(srcImg)
                     fsDither(trgPixels, wSrc, hSrc, srcBpp, factor, closestFunc)
                     trgImg = Image(srcSpec)
-                    setPixels(trgImg, trgPixels)
+                    setBytes(trgImg, trgPixels)
                     premadeTrgImgs[srcImgId] = trgImg
                 end
 

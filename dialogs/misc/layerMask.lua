@@ -116,8 +116,8 @@ dlg:button {
         local min <const> = math.min
         local max <const> = math.max
         local getPalette <const> = AseUtilities.getPalette
-        local getPixels <const> = AseUtilities.getPixels
-        local setPixels <const> = AseUtilities.setPixels
+        local getBytes <const> = AseUtilities.getBytes
+        local setBytes <const> = AseUtilities.setBytes
         local tilesToImage <const> = AseUtilities.tileMapToImage
         local trim <const> = AseUtilities.trimImageAlpha
         local createSpec <const> = AseUtilities.createSpec
@@ -253,8 +253,8 @@ dlg:button {
                         local overCompOpacity <const> = (overLyrOpacity * overCelOpacity) // 255
                         local underCompOpacity <const> = (underLyrOpacity * underCelOpacity) // 255
 
-                        local pxOver <const> = getPixels(imgOver)
-                        local pxUnder <const> = getPixels(imgUnder)
+                        local pxOver <const> = getBytes(imgOver)
+                        local pxUnder <const> = getBytes(imgUnder)
 
                         ---@type integer[]
                         local pxTarget <const> = {}
@@ -372,7 +372,7 @@ dlg:button {
                             colorMode, colorSpace, alphaIndex)
                         local trgImage <const> = Image(trgSpec)
                         local trgPos <const> = Point(xTlTarget, yTlTarget)
-                        setPixels(trgImage, pxTarget)
+                        setBytes(trgImage, pxTarget)
 
                         -- Do NOT assign source cel opacity,
                         -- as that is baked into the mask.

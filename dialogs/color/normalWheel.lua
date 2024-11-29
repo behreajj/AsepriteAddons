@@ -501,7 +501,7 @@ dlg:button {
                     end
                 end
 
-                AseUtilities.setPixels(plotImage, plotPixels)
+                AseUtilities.setBytes(plotImage, plotPixels)
                 local plotPalLayer <const> = sprite:newLayer()
                 plotPalLayer.name = "Palette"
                 sprite:newCel(

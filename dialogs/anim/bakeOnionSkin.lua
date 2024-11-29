@@ -211,8 +211,8 @@ dlg:button {
         local floor <const> = math.floor
         local blend <const> = AseUtilities.blendRgba
         local createSpec <const> = AseUtilities.createSpec
-        local getPixels <const> = AseUtilities.getPixels
-        local setPixels <const> = AseUtilities.setPixels
+        local getBytes <const> = AseUtilities.getBytes
+        local setBytes <const> = AseUtilities.setBytes
         local strfmt <const> = string.format
         local transact <const> = app.transaction
 
@@ -363,7 +363,7 @@ dlg:button {
                         if yBottomRight > yMax then yMax = yBottomRight end
 
                         -- Get pixels as an array of bytes, 4 bytes per pixel.
-                        local pixels <const> = getPixels(currImg)
+                        local pixels <const> = getBytes(currImg)
 
                         -- Group all data into a packet.
                         packetIdx = packetIdx + 1
@@ -393,7 +393,7 @@ dlg:button {
                 local trgSpec = createSpec(wTrg, hTrg, rgbColorMode,
                     colorSpace, alphaIndex)
                 local trgImg <const> = Image(trgSpec)
-                local pxTrg <const> = getPixels(trgImg)
+                local pxTrg <const> = getBytes(trgImg)
 
                 local j = 0
                 while j < sampleCount do
@@ -482,7 +482,7 @@ dlg:button {
                     end     -- End packet exists check.
                 end         -- End sample count loop.
 
-                setPixels(trgImg, pxTrg)
+                setBytes(trgImg, pxTrg)
 
                 -- Important to break this into separate transactions
                 -- in case there is a bug that is causing an Aseprite crash.

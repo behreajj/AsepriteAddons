@@ -282,8 +282,8 @@ dlg:button {
         end
         local screen <const> = Utilities.toScreen
         local drawCirc <const> = AseUtilities.drawCircleFill
-        local getPixels <const> = AseUtilities.getPixels
-        local setPixels <const> = AseUtilities.setPixels
+        local getBytes <const> = AseUtilities.getBytes
+        local setBytes <const> = AseUtilities.setBytes
         local tablesort <const> = table.sort
 
         -- Create Octree.
@@ -481,7 +481,7 @@ dlg:button {
         local bkgColor <const> = args.bkgColor --[[@as Color]]
         local bkgHex <const> = AseUtilities.aseColorToHex(bkgColor, ColorMode.RGB)
         bkgImg:clear(bkgHex)
-        local bkgPixels <const> = getPixels(bkgImg)
+        local bkgPixels <const> = getBytes(bkgImg)
         local lenBkgPixels <const> = #bkgPixels
 
         local fps <const> = args.fps or defaults.fps --[[@as integer]]
@@ -521,7 +521,7 @@ dlg:button {
                 end
 
                 local img <const> = Image(width, height)
-                setPixels(img, imgPixels)
+                setBytes(img, imgPixels)
                 coverSprite:newCel(layer, frame, img)
             end
         end)
