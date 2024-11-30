@@ -197,12 +197,12 @@ dlg:button {
                 if useAseGpl then
                     local a <const> = aseColor.alpha
                     entryStr = strfmt(
-                        "%3d %3d %3d %3d 0x%08x",
+                        "%03d %03d %03d %03d 0x%08x",
                         r, g, b, a,
                         a << 0x18 | b << 0x10 | g << 0x08 | r)
                 else
                     entryStr = strfmt(
-                        "%3d %3d %3d %06X",
+                        "%03d %03d %03d %06X",
                         r, g, b,
                         r << 0x10 | g << 0x08 | b)
                 end
