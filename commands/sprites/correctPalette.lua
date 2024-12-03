@@ -1,4 +1,4 @@
-dofile("../support/aseutilities.lua")
+dofile("../../support/aseutilities.lua")
 
 local activeSprite <const> = app.site.sprite
 if not activeSprite then return end

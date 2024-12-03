@@ -1,4 +1,4 @@
-dofile("../support/aseutilities.lua")
+dofile("../../support/aseutilities.lua")
 local appTool <const> = app.tool
 if appTool then
     if appTool.id == "slice" then
@@ -6,4 +6,4 @@ if appTool then
     end
 end
 AseUtilities.preserveForeBack()
-app.command.GotoPreviousTab()
+app.command.GotoNextTab()

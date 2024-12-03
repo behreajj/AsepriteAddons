@@ -68,11 +68,9 @@ Unlike `dialog` scripts, it's not always apparent what `commands` scripts do. No
 
 - `prevSwatchFore`: Moves the active foreground color to the previous palette index. If the tile map mode is `TilemapMode.TILES`, then moves the active tile.
 
-## Miscellaneous
+## Sprites
 
 - `bakeChecker`: Creates a layer that replicates the size and color of a sprite's background checker. Ignores the checker zoom preference.
-
-- `brushFromMask`: Creates a brush from a selection. If snap to grid is enabled, sets the brush center to top-left; otherwise, uses the selection pivot. If a tile map is active, sets the brush alignment.
 
 - `correctPalette`: Prepends `0x00000000`, clear black, to a palette at index 0 if it doesn't already exist. Removes duplicate palette entries. Converts a sprite to and from RGB color mode and sets its `transparentColor` to `0`. This is to avoid a number of issues in indexed color mode, e.g., with the outline tool or with exporting.
 
@@ -85,3 +83,7 @@ Unlike `dialog` scripts, it's not always apparent what `commands` scripts do. No
 - `prevTab`: Moves the active sprite to the previous tab. Converts the fore- and background colors to RGB. If the slice tool is active, switches to the hand tool.
 
 - `shareChecker`: Shares the background checker preferences for the active sprite across other open sprites. Ignores zoom preference.
+
+## Miscellaneous
+
+- `brushFromMask`: Creates a brush from a selection. If snap to grid is enabled, sets the brush center to top-left; otherwise, uses the selection pivot. If a tile map is active, sets the brush alignment.
