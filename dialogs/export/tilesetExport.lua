@@ -154,8 +154,9 @@ local function writeCsv(mapPacket, idxOffset)
 
         local indices <const> = mapPacket.indices
         local flags <const> = mapPacket.flags
-
+        local tconcat <const> = table.concat
         local idxOffVrf <const> = idxOffset or 0
+
         local y = 0
         while y < hMap do
             local yw <const> = y * wMap
@@ -167,16 +168,15 @@ local function writeCsv(mapPacket, idxOffset)
                 local index <const> = indices[flat]
                 local comp = 0
                 if index ~= 0 then
-                    comp = idxOffVrf + index
                     local flag <const> = flags[flat]
-                    comp = flag | comp
+                    comp = flag | (idxOffVrf + index)
                 end
                 x = x + 1
                 colArr[x] = comp
             end
 
             y = y + 1
-            csvData[y] = table.concat(colArr, ",")
+            csvData[y] = tconcat(colArr, ",")
         end
     end
 
@@ -221,7 +221,6 @@ local function writeProps(properties)
                 tStr = isFile(v) and "file" or "string"
                 vStr = v
             elseif typev == "table" then
-                -- Ideally this would be recursive.
                 tStr = "string"
                 vStr = tconcat(v, ", ")
             end
@@ -727,6 +726,8 @@ dlg:button {
                     if props["probability"] then
                         tileChance = props["probability"] --[[@as number]]
                     end
+
+                    -- TODO: Track lenTileData manually?
                     tileData[#tileData + 1] = {
                         id = id,
                         probability = tileChance,

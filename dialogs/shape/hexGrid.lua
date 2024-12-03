@@ -1,6 +1,7 @@
 dofile("../../support/shapeutilities.lua")
 
 local defaults <const> = {
+    -- TODO: Use a curve object instead of a mesh?
     rings = 4,
     xScale = 32,
     yScale = 32,

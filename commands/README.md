@@ -26,6 +26,8 @@ Unlike `dialog` scripts, it's not always apparent what `commands` scripts do. No
  
 - `cycleSwatchRight`: If the foreground color has an exact palette match, moves the palette swatch to the right. Does not trigger a palette remap.
 
+- `deleteLayer`: Deletes layers in the range. Children of group layers will be unparented.
+
 - `expandGroups`: Opens all group layers in the timeline.
 
 - `dereference`: Converts a reference layer to a normal layer. Transfers the reference layer's parent to the new layer.
