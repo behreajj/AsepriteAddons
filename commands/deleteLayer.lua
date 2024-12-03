@@ -1,5 +1,3 @@
-dofile("../support/aseutilities.lua")
-
 local site <const> = app.site
 local activeSprite <const> = site.sprite
 if not activeSprite then return end
@@ -10,15 +8,45 @@ local rangeLayers <const> = range.layers
 local lenRangeLayers <const> = #rangeLayers
 if lenRangeLayers <= 0 then return end
 
-local includeLocked <const> = true
-local includeHidden <const> = true
-local includeTiles <const> = true
-local includeBkg <const> = true
+---@param layer Layer
+---@param tally integer
+---@param idTallyDict table<integer, integer>
+---@return integer
+local function tallyLeaves(layer, tally, idTallyDict)
+    if layer.isGroup then
+        local children <const> = layer.layers
+        if children then
+            local lenChildren <const> = #children
+            local i = 0
+            while i < lenChildren do
+                i = i + 1
+                tally = tallyLeaves(children[i], tally, idTallyDict)
+            end
+        end
+    else
+        idTallyDict[layer.id] = tally + 1
+    end
 
-local leaves <const> = AseUtilities.getLayerHierarchy(
-    activeSprite,
-    includeLocked, includeHidden, includeTiles, includeBkg)
-local lenLeaves <const> = #leaves
+    return tally + 1
+end
+
+---@param sprite Sprite
+---@return integer
+local function tallySpriteLeaves(sprite)
+    ---@type table<integer, integer>
+    local idTallyDict <const> = {}
+    local tally = 0
+    local topLayers <const> = sprite.layers
+    local lenTopLayers <const> = #topLayers
+    local h = 0
+    while h < lenTopLayers do
+        h = h + 1
+        tally = tallyLeaves(topLayers[h], tally, idTallyDict)
+    end
+    return tally
+end
+
+local lenLeaves = tallySpriteLeaves(activeSprite)
 
 ---@type Layer[]
 local rangeGroups <const> = {}
@@ -49,8 +77,6 @@ app.transaction("Delete Layers", function()
         if leaf then
             leavesRemaining = leavesRemaining - 1
             if leavesRemaining == 0 then
-                -- TODO: Problem with this is that it ignores
-                -- reference layers.
                 activeSprite:newLayer()
             end
             activeSprite:deleteLayer(leaf)
