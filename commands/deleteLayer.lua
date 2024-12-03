@@ -46,7 +46,7 @@ local function tallySpriteLeaves(sprite)
     return tally
 end
 
-local lenLeaves = tallySpriteLeaves(activeSprite)
+local lenLeaves <const> = tallySpriteLeaves(activeSprite)
 
 ---@type Layer[]
 local rangeGroups <const> = {}

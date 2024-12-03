@@ -26,9 +26,9 @@ Unlike `dialog` scripts, it's not always apparent what `commands` scripts do. No
  
 - `cycleSwatchRight`: If the foreground color has an exact palette match, moves the palette swatch to the right. Does not trigger a palette remap.
 
-- `deleteFrame`: Deletes frames in the timeline range. Sets active frame to earliest prior to deleted.
+- `deleteFrame`: Deletes frames in the timeline range. Sets active frame to earliest prior to deleted range.
 
-- `deleteLayer`: Deletes layers in the timeline range. Children of group layers will be unparented.
+- `deleteLayer`: Deletes layers in the timeline range. Children of group layers will be unparented and appended to a range. Creates a new layer if all existing layers are deleted.
 
 - `expandGroups`: Opens all group layers in the timeline.
 
