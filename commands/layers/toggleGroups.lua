@@ -1,4 +1,4 @@
-dofile("../support/aseutilities.lua")
+dofile("../../support/aseutilities.lua")
 
 local sprite <const> = app.sprite
 if not sprite then return end
@@ -9,7 +9,8 @@ local lenGroups <const> = #groups
 local i = 0
 while i < lenGroups do
     i = i + 1
-    groups[i].isExpanded = true
+    local group <const> = groups[i]
+    group.isExpanded = not group.isExpanded
 end
 
 app.layer = app.layer

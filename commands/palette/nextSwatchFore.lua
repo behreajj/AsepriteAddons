@@ -1,2 +1,2 @@
-dofile("../support/aseutilities.lua")
+dofile("../../support/aseutilities.lua")
 AseUtilities.changeActiveSwatch(1, false)

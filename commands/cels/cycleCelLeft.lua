@@ -1,4 +1,4 @@
-dofile("../support/aseutilities.lua")
+dofile("../../support/aseutilities.lua")
 
 local site <const> = app.site
 local activeSprite <const> = site.sprite
@@ -10,7 +10,7 @@ if not activeLayer then return end
 local origFrObj <const> = site.frame
 if not origFrObj then return end
 
-local shift <const> = 1
+local shift <const> = -1
 local frames <const> = activeSprite.frames
 local lenFrames <const> = #frames
 local origFrIdx <const> = origFrObj.frameNumber
@@ -31,7 +31,7 @@ if activeLayer.isBackground then
         local destColor <const> = AseUtilities.aseColorCopy(destCel.color, "")
         local destzIndex <const> = destCel.zIndex
 
-        app.transaction("Cycle Cel Right", function()
+        app.transaction("Cycle Cel Left", function()
             origCel.image = destImg
             origCel.data = destData
             origCel.color = destColor
@@ -54,7 +54,7 @@ else
         true, true, true, false)
     local lenLeaves <const> = #leaves
     if lenLeaves > 0 then
-        app.transaction("Cycle Cel Right", function()
+        app.transaction("Cycle Cel Left", function()
             local tempFrObj <const> = activeSprite:newEmptyFrame()
             local i = 0
             while i < lenLeaves do

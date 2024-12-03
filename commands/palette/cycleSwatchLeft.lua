@@ -1,4 +1,4 @@
-dofile("../support/aseutilities.lua")
+dofile("../../support/aseutilities.lua")
 
 -- TODO: Support the same operation on tile sets?
 local site <const> = app.site
