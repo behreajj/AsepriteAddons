@@ -1,3 +1,5 @@
+dofile("../support/aseutilities.lua")
+
 local site <const> = app.site
 local activeSprite <const> = site.sprite
 if not activeSprite then return end
@@ -47,6 +49,8 @@ app.transaction("Delete Layers", function()
         if leaf then
             leavesRemaining = leavesRemaining - 1
             if leavesRemaining == 0 then
+                -- TODO: Problem with this is that it ignores
+                -- reference layers.
                 activeSprite:newLayer()
             end
             activeSprite:deleteLayer(leaf)
