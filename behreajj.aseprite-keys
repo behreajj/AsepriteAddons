@@ -1,0 +1,694 @@
+<?xml version="1.0" encoding="utf-8"?>
+<keyboard version="1">
+    <commands>
+        <key command="ShowMenu" shortcut="Alt+T" removed="true">
+            <param name="menu" value="select_menu"/>
+        </key>
+        <key command="NewFile" shortcut="Ctrl+N" removed="true"/>
+        <key command="OpenFile" shortcut="Ctrl+O" removed="true"/>
+        <key command="ReopenClosedFile" shortcut="Ctrl+Shift+T" removed="true"/>
+        <key command="SaveFileCopyAs" shortcut="Ctrl+Alt+Shift+S" removed="true"/>
+        <key command="SaveFileCopyAs" shortcut="Ctrl+E" removed="true"/>
+        <key command="SaveFileCopyAs" shortcut="Ctrl+Shift+E"/>
+        <key command="ImportSpriteSheet" shortcut="Ctrl+I" removed="true"/>
+        <key command="ExportSpriteSheet" shortcut="Ctrl+E" removed="true"/>
+        <key command="RepeatLastExport" shortcut="Ctrl+Shift+X" removed="true"/>
+        <key command="AdvancedMode" shortcut="Ctrl+F" removed="true"/>
+        <key command="AdvancedMode" shortcut="Space+Tab" removed="true"/>
+        <key command="Cancel" shortcut="Esc">
+            <param name="type" value="all"/>
+        </key>
+        <key command="Redo" shortcut="Ctrl+R" removed="true"/>
+        <key command="Redo" shortcut="Ctrl+Y" removed="true"/>
+        <key command="Redo" shortcut="Ctrl+Shift+Z"/>
+        <key command="Cut" shortcut="Shift+Del" removed="true"/>
+        <key command="Cut" shortcut="Ctrl+X"/>
+        <key command="Copy" shortcut="Ctrl+Ins" removed="true"/>
+        <key command="Copy" shortcut="Ctrl+C"/>
+        <key command="CopyMerged" shortcut="Ctrl+." removed="true"/>
+        <key command="CopyMerged" shortcut="Ctrl+C" removed="true"/>
+        <key command="CopyMerged" shortcut="Ctrl+Shift+C"/>
+        <key command="Paste" shortcut="Shift+Ins" removed="true"/>
+        <key command="Paste" shortcut="Ctrl+V"/>
+        <key command="ReplaceColor" shortcut="Shift+R" removed="true"/>
+        <key command="HueSaturation" shortcut="Ctrl+U" removed="true"/>
+        <key command="ConvolutionMatrix" shortcut="F9" removed="true"/>
+        <key command="Outline" shortcut="Shift+O" removed="true"/>
+        <key command="ColorCurve" shortcut="Ctrl+M" removed="true"/>
+        <key command="ColorCurve" shortcut="F10" removed="true"/>
+        <key command="Options" shortcut="Ctrl+K" removed="true"/>
+        <key command="Options" shortcut="Ctrl+P"/>
+        <key command="KeyboardShortcuts" shortcut="Ctrl+Alt+Shift+K" removed="true"/>
+        <key command="SpriteProperties" shortcut="Ctrl+P" removed="true"/>
+        <key command="SpriteSize" shortcut="Shift+C"/>
+        <key command="CanvasSize" shortcut="C" removed="true"/>
+        <key command="LayerProperties" shortcut="Shift+P" removed="true"/>
+        <key command="LayerProperties" context="Normal" shortcut="F2" removed="true"/>
+        <key command="LayerVisibility" shortcut="Shift+X" removed="true"/>
+        <key command="LayerVisibility" shortcut="5" removed="true"/>
+        <key command="NewLayer" shortcut="Alt+Shift+N" removed="true">
+            <param name="group" value="true"/>
+        </key>
+        <key command="GotoPreviousLayer" context="Normal" shortcut="Down" removed="true"/>
+        <key command="GotoNextLayer" context="Normal" shortcut="I" removed="true"/>
+        <key command="GotoNextLayer" context="Normal" shortcut="Up" removed="true"/>
+        <key command="GotoNextLayer" context="Normal" shortcut="Shift+Up" removed="true"/>
+        <key command="GotoNextLayer" context="Normal" shortcut="Ctrl+U" removed="true"/>
+        <key command="GotoNextLayer" context="Normal" shortcut="Ctrl+8" removed="true"/>
+        <key command="GotoNextLayer" context="Normal" shortcut="Ctrl+R" removed="true"/>
+        <key command="NewFrame" shortcut="Alt+N" removed="true"/>
+        <key command="NewFrame" shortcut="Alt+B" removed="true">
+            <param name="content" value="empty"/>
+        </key>
+        <key command="NewFrame" shortcut="Alt+N" removed="true">
+            <param name="content" value="empty"/>
+        </key>
+        <key command="NewFrame" shortcut="Alt+D" removed="true">
+            <param name="content" value="celcopies"/>
+        </key>
+        <key command="RemoveFrame" shortcut="Alt+C" removed="true"/>
+        <key command="RemoveFrame" shortcut="Alt+Del" removed="true"/>
+        <key command="FrameProperties" shortcut="P" removed="true">
+            <param name="frame" value="current"/>
+        </key>
+        <key command="FrameProperties" shortcut="Shift+P" removed="true">
+            <param name="frame" value="current"/>
+        </key>
+        <key command="ReverseFrames" shortcut="Alt+I" removed="true"/>
+        <key command="GotoPreviousFrame" context="Normal" shortcut="Left" removed="true"/>
+        <key command="GotoPreviousFrame" context="Normal" shortcut="4" removed="true"/>
+        <key command="GotoNextFrame" context="Normal" shortcut="Right" removed="true"/>
+        <key command="GotoNextFrame" context="Normal" shortcut="6" removed="true"/>
+        <key command="GotoPreviousFrameWithSameTag" shortcut="," removed="true"/>
+        <key command="GotoNextFrameWithSameTag" shortcut="." removed="true"/>
+        <key command="GotoFrame" shortcut="Alt+G" removed="true"/>
+        <key command="PlayAnimation" shortcut="Enter" removed="true"/>
+        <key command="PlayAnimation" shortcut="Enter Pad" removed="true"/>
+        <key command="PlayAnimation" shortcut="Space" removed="true"/>
+        <key command="PlayPreviewAnimation" shortcut="Shift+Enter" removed="true"/>
+        <key command="PlayPreviewAnimation" shortcut="Shift+Space" removed="true"/>
+        <key command="MaskContent" shortcut="Ctrl+T" removed="true"/>
+        <key command="Refresh" shortcut="F5" removed="true"/>
+        <key command="Refresh" shortcut="Ctrl+Shift+K"/>
+        <key command="TogglePreview" shortcut="F7" removed="true"/>
+        <key command="FullscreenPreview" shortcut="F8" removed="true"/>
+        <key command="FullscreenMode" shortcut="F11" removed="true"/>
+        <key command="ShowGrid" shortcut="Ctrl+&apos;" removed="true"/>
+        <key command="ShowGrid" shortcut="Ctrl+G"/>
+        <key command="ShowPixelGrid" shortcut="Ctrl+Shift+&apos;" removed="true"/>
+        <key command="ShowPixelGrid" shortcut="Ctrl+Shift+G"/>
+        <key command="SetLoopSection" context="FramesSelection" shortcut="F2" removed="true"/>
+        <key command="ShowOnionSkin" shortcut="F3" removed="true"/>
+        <key command="ShowOnionSkin" shortcut="Ctrl+." removed="true"/>
+        <key command="ToggleTimelineThumbnails" shortcut="F6" removed="true"/>
+        <key command="ToggleTimelineThumbnails" shortcut="Alt+X" removed="true"/>
+        <key command="ToggleTilesMode" shortcut="Space+Tab" removed="true"/>
+        <key command="PaletteEditor" shortcut="F4" removed="true">
+            <param name="edit" value="switch"/>
+            <param name="popup" value="foreground"/>
+        </key>
+        <key command="ShowExtras" shortcut="Ctrl+H" removed="true"/>
+        <key command="GotoNextTab" shortcut="Ctrl+PgDn" removed="true"/>
+        <key command="GotoNextTab" shortcut="Ctrl+Tab" removed="true"/>
+        <key command="GotoPreviousTab" shortcut="Ctrl+PgUp" removed="true"/>
+        <key command="GotoPreviousTab" shortcut="Ctrl+Shift+Tab" removed="true"/>
+        <key command="SwitchColors" shortcut="X"/>
+        <key command="ChangeColor" shortcut="9" removed="true">
+            <param name="change" value="decrement-index"/>
+            <param name="target" value="foreground"/>
+        </key>
+        <key command="ChangeColor" shortcut="[" removed="true">
+            <param name="change" value="decrement-index"/>
+            <param name="target" value="foreground"/>
+        </key>
+        <key command="ChangeColor" shortcut="0" removed="true">
+            <param name="change" value="increment-index"/>
+            <param name="target" value="foreground"/>
+        </key>
+        <key command="ChangeColor" shortcut="]" removed="true">
+            <param name="change" value="increment-index"/>
+            <param name="target" value="foreground"/>
+        </key>
+        <key command="ChangeColor" shortcut="Shift+[" removed="true">
+            <param name="change" value="decrement-index"/>
+            <param name="target" value="background"/>
+        </key>
+        <key command="ChangeColor" shortcut="Shift+]" removed="true">
+            <param name="change" value="increment-index"/>
+            <param name="target" value="background"/>
+        </key>
+        <key command="ChangeBrush" shortcut="=" removed="true">
+            <param name="change" value="increment-size"/>
+        </key>
+        <key command="ChangeBrush" shortcut="+" removed="true">
+            <param name="change" value="increment-size"/>
+        </key>
+        <key command="ChangeBrush" shortcut="-" removed="true">
+            <param name="change" value="decrement-size"/>
+        </key>
+        <key command="ChangeBrush" shortcut="Space+X" removed="true">
+            <param name="change" value="flip-x"/>
+        </key>
+        <key command="ChangeBrush" shortcut="Space+Y" removed="true">
+            <param name="change" value="flip-y"/>
+        </key>
+        <key command="ChangeBrush" shortcut="Alt+1" removed="true">
+            <param name="change" value="custom"/>
+            <param name="slot" value="1"/>
+        </key>
+        <key command="ChangeBrush" shortcut="Alt+2" removed="true">
+            <param name="change" value="custom"/>
+            <param name="slot" value="2"/>
+        </key>
+        <key command="ChangeBrush" shortcut="Alt+3" removed="true">
+            <param name="change" value="custom"/>
+            <param name="slot" value="3"/>
+        </key>
+        <key command="ChangeBrush" shortcut="Alt+4" removed="true">
+            <param name="change" value="custom"/>
+            <param name="slot" value="4"/>
+        </key>
+        <key command="ChangeBrush" shortcut="Alt+5" removed="true">
+            <param name="change" value="custom"/>
+            <param name="slot" value="5"/>
+        </key>
+        <key command="ChangeBrush" shortcut="Alt+6" removed="true">
+            <param name="change" value="custom"/>
+            <param name="slot" value="6"/>
+        </key>
+        <key command="ChangeBrush" shortcut="Alt+7" removed="true">
+            <param name="change" value="custom"/>
+            <param name="slot" value="7"/>
+        </key>
+        <key command="ChangeBrush" shortcut="Alt+8" removed="true">
+            <param name="change" value="custom"/>
+            <param name="slot" value="8"/>
+        </key>
+        <key command="ChangeBrush" shortcut="Alt+9" removed="true">
+            <param name="change" value="custom"/>
+            <param name="slot" value="9"/>
+        </key>
+        <key command="Zoom" shortcut="~" removed="true">
+            <param name="percentage" value="50"/>
+        </key>
+        <key command="Zoom" shortcut="`" removed="true">
+            <param name="percentage" value="50"/>
+        </key>
+        <key command="Zoom" shortcut="1" removed="true">
+            <param name="percentage" value="100"/>
+        </key>
+        <key command="Zoom" shortcut="2" removed="true">
+            <param name="percentage" value="200"/>
+        </key>
+        <key command="Zoom" shortcut="3" removed="true">
+            <param name="percentage" value="400"/>
+        </key>
+        <key command="Zoom" shortcut="4" removed="true">
+            <param name="percentage" value="800"/>
+        </key>
+        <key command="Zoom" shortcut="5" removed="true">
+            <param name="percentage" value="1600"/>
+        </key>
+        <key command="Zoom" shortcut="6" removed="true">
+            <param name="percentage" value="3200"/>
+        </key>
+        <key command="Zoom" shortcut="Ctrl+=" removed="true">
+            <param name="action" value="in"/>
+        </key>
+        <key command="Zoom" shortcut="Ctrl+Shift+=" removed="true">
+            <param name="action" value="in"/>
+        </key>
+        <key command="ToggleOtherLayersOpacity" shortcut="Shift+F7" removed="true">
+            <param name="checkedIfZero" value="true"/>
+            <param name="preview" value="true"/>
+        </key>
+        <key command="ScrollCenter" shortcut="Shift+Z" removed="true"/>
+        <key command="ScrollCenter" shortcut="Ctrl+0"/>
+        <key command="FitScreen" shortcut="Ctrl+0" removed="true"/>
+        <key command="FitScreen" shortcut="0"/>
+        <key command="NewBrush" shortcut="Ctrl+B" removed="true"/>
+        <key command="SetInkType" shortcut="Space+S">
+            <param name="type" value="shading"/>
+        </key>
+        <key command="AddColor" shortcut="Ctrl+." removed="true">
+            <param name="source" value="fg"/>
+        </key>
+        <key command="AddColor" shortcut=".">
+            <param name="source" value="fg"/>
+        </key>
+        <key command="ChangeBrush" shortcut="Alt++">
+            <param name="change" value="increment-angle"/>
+        </key>
+        <key command="ChangeBrush" shortcut="Alt+-">
+            <param name="change" value="decrement-angle"/>
+        </key>
+        <key command="Screenshot" shortcut="F12" removed="true">
+            <param name="steam" value="true"/>
+        </key>
+        <key command="PasteText" shortcut="T" removed="true"/>
+        <key command="SetLoopSection" shortcut="F2" removed="true"/>
+        <key command="OpenScriptFolder" shortcut="Ctrl+K"/>
+        <key command="RunScript" shortcut="Shift+G">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\gradients\gradientLinear.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+M" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\color\colorCurvePresets.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+Shift+M">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\color\colorCurvePresets.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+L">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\color\lchPicker.lua"/>
+        </key>
+        <key command="Home" shortcut="Ctrl+H" removed="true"/>
+        <key command="RunScript" shortcut="T">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\misc\insertText.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+N" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\misc\newSpritePlus.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+O" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\misc\openSpritePlus.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+U" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\color\adjustBriCtr.lua"/>
+        </key>
+        <key command="FlattenLayers" shortcut="Ctrl+F" removed="true"/>
+        <key command="RunScript" shortcut="Alt+Shift+G">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\gradients\gradientMap.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+Shift+O">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\palette\gplImport.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+Shift+L">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\color\normalPicker.lua"/>
+        </key>
+        <key command="NewFrameTag" shortcut="Alt+T" removed="true"/>
+        <key command="RunScript" shortcut="Shift+T" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\misc\transformCel.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+T">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\misc\transformCel.lua"/>
+        </key>
+        <key command="RunScript" shortcut="8" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\nextLayer.lua"/>
+        </key>
+        <key command="RunScript" shortcut="2" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\prevLayer.lua"/>
+        </key>
+        <key command="RunScript" shortcut="P" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\misc\spriteProps.lua"/>
+        </key>
+        <key command="Debugger" shortcut="Ctrl+R" removed="true"/>
+        <key command="MaskByColor" shortcut="Ctrl+Shift+R" removed="true"/>
+        <key command="RunScript" shortcut="Ctrl+Shift+E" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\misc\framesExport.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Shift+O">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\gradients\gradientOutline.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Shift+W" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\misc\waveAnim.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+E">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\misc\layersExport.lua"/>
+        </key>
+        <key command="RunScript" shortcut="6" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\testbed.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+." removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\testbed.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+Shift+]" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\testbed.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Shift+}" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\testbed.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+]" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\testbed.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+5" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\testbed.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+Space" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\testbed.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Shift+X" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\testbed.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+U" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\color\colorAdjust.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Shift+U">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\color\colorAdjust.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Shift+Q">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\color\colorQuantize.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Shift+D">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\shape\polygon.lua"/>
+        </key>
+        <key command="ModifySelection" shortcut="Ctrl+Shift+E" removed="true">
+            <param name="modifier" value="expand"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+I">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\misc\interlace.lua"/>
+        </key>
+        <key command="FlattenLayers" shortcut="Ctrl+F" removed="true">
+            <param name="visibleOnly" value="true"/>
+        </key>
+        <key command="RunScript" shortcut="Alt+Shift+T" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\misc\extrudeNudge.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+Shift+T" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\misc\extrudeNudge.lua"/>
+        </key>
+        <key command="RunScript" shortcut="6" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\nextFrame.lua"/>
+        </key>
+        <key command="RunScript" shortcut="4" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\prevFrame.lua"/>
+        </key>
+        <key command="GotoPreviousFrame" shortcut="J" removed="true"/>
+        <key command="SelectPaletteColors" shortcut="." removed="true">
+            <param name="modifier" value="unused_colors"/>
+        </key>
+        <key command="RunScript" shortcut="Shift+R">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\color\colorReplace.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+Tab" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\nextTab.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+Shift+Tab" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\prevTab.lua"/>
+        </key>
+        <key command="AddColor" shortcut="Ctrl+." removed="true"/>
+        <key command="RunScript" shortcut="Ctrl+Shift+R">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\color\colorSelect.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+." removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\selectCelsRange.lua"/>
+        </key>
+        <key command="ModifySelection" shortcut="Ctrl+." removed="true">
+            <param name="modifier" value="border"/>
+        </key>
+        <key command="UndoHistory" shortcut="Ctrl+U"/>
+        <key command="RunScript" shortcut="Alt+N" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\appendFrame.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Shift+F" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\appendFrame.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+F" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\appendFrame.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Alt+T">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\anim\createTags.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+8" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\cycleStackUp.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+2" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\cycleStackDown.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+Shift+N">
+            <param name="filename" value="path\to\Aseprite\scripts\gridTemplate.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+4" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\cycleFrameLeft.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+6" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\cycleFrameRight.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+4" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\cycleCelLeft.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+6" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\cycleCelRight.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+R">
+            <param name="filename" value="path\to\Aseprite\scripts\incrPalSwatch.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Shift+W">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\anim\waveAnim.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+M">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\color\colorCurves.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+Shift+M" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\color\colorLevels.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Space+G" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\gradients\gradientTime.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Alt+G">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\gradients\gradientTime.lua"/>
+        </key>
+        <key command="RemoveLayer" shortcut="Shift+Del" removed="true"/>
+        <key command="RunScript" shortcut="Ctrl+H">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\export\hexDump.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Shift+P">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\misc\multiProps.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Alt+Shift+T" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\misc\transformTile.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+T" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\misc\transformTile.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+Shift+T" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\misc\transformTile.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Space+T">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\misc\transformTile.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Alt+Shift+N" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\newGroup.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Alt+Shift+N" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\groupLayers.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+Shift+T" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\misc\maskPresets.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Shift+T">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\misc\maskPresets.lua"/>
+        </key>
+        <key command="DeveloperConsole" shortcut="Ctrl+Space"/>
+        <key command="RunScript" shortcut="Ctrl+B">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\brushFromMask.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+[" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\cycleSwatchLeft.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+]" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\cycleSwatchRight.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Alt+I">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\anim\adjustTime.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+Shift+T">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\misc\alignDistrCel.lua"/>
+        </key>
+        <key command="DuplicateLayer" shortcut="Alt+D"/>
+        <key command="RunScript" shortcut="Ctrl+Alt+6 Pad">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\shiftTagRight.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+Alt+4 Pad">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\shiftTagLeft.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Alt+N" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\ungroupLayers.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Shift+5" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\toggleGroups.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+5" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\toggleGroups.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Alt+Shift+T">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\anim\tweenTransform.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+N">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\sprite\newSpritePlus.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+O">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\sprite\openSpritePlus.lua"/>
+        </key>
+        <key command="RunScript" shortcut="P">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\sprite\spriteProps.lua"/>
+        </key>
+        <key command="RunScript" shortcut="5" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\toggleVisible.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Shift+&gt;" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\selectLayer.lua"/>
+        </key>
+        <key command="RunScript" shortcut="C">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\sprite\spriteTrim.lua"/>
+        </key>
+        <key command="ShowDynamics" shortcut="R" removed="true"/>
+        <key command="RunScript" shortcut="Alt+P">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\misc\bulkEditLayers.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Shift+X" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\expandLayerRange.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Shift+X" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\growRangeLayers.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+Shift+X" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\growRangeFrames.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Shift+[" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\nextSwatchBack.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Shift+]" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\nextSwatchBack.lua"/>
+        </key>
+        <key command="RunScript" shortcut="]" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\nextSwatchFore.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Shift+[" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\prevSwatchBack.lua"/>
+        </key>
+        <key command="RunScript" shortcut="[" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\prevSwatchFore.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+Shift+P">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\misc\customProps.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Alt+Del" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\deleteFrame.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Shift+Del" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\deleteLayer.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+4">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\cels\cycleCelLeft.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+6">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\cels\cycleCelRight.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+.">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\cels\selectCelsRange.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Shift+F">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\frames\appendFrame.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Shift+Del">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\frames\deleteFrame.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+Shift+X">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\frames\growRangeFrames.lua"/>
+        </key>
+        <key command="RunScript" shortcut="6">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\frames\nextFrame.lua"/>
+        </key>
+        <key command="RunScript" shortcut="4">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\frames\prevFrame.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+2">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\layers\cycleStackDown.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+8">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\layers\cycleStackUp.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Alt+Del">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\layers\deleteLayer.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Alt+Shift+N">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\layers\groupLayers.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Shift+X">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\layers\growRangeLayers.lua"/>
+        </key>
+        <key command="RunScript" shortcut="8">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\layers\nextLayer.lua"/>
+        </key>
+        <key command="RunScript" shortcut="2">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\layers\prevLayer.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Shift+.">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\layers\selectLayer.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+5">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\layers\toggleGroups.lua"/>
+        </key>
+        <key command="RunScript" shortcut="5">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\layers\toggleVisible.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Alt+N">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\layers\ungroupLayers.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+[">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\palette\cycleSwatchLeft.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+]">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\palette\cycleSwatchRight.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Shift+}" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\palette\nextSwatchBack.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Shift+]">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\palette\nextSwatchBack.lua"/>
+        </key>
+        <key command="RunScript" shortcut="]">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\palette\nextSwatchFore.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Shift+[">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\palette\prevSwatchBack.lua"/>
+        </key>
+        <key command="RunScript" shortcut="[">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\palette\prevSwatchFore.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+Tab">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\sprites\nextTab.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+Shift+Tab">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\sprites\prevTab.lua"/>
+        </key>
+    </commands>
+    <tools>
+        <key tool="polygonal_lasso" shortcut="Shift+Q" removed="true"/>
+        <key tool="slice" shortcut="Shift+C" removed="true"/>
+        <key tool="gradient" shortcut="Shift+G" removed="true"/>
+        <key tool="ellipse" shortcut="Shift+U" removed="true"/>
+        <key tool="filled_ellipse" shortcut="Shift+U" removed="true"/>
+        <key tool="polygon" shortcut="Shift+D" removed="true"/>
+        <key tool="blur" shortcut="R" removed="true"/>
+        <key tool="jumble" shortcut="R" removed="true"/>
+        <key tool="text" shortcut="T" removed="true"/>
+    </tools>
+    <quicktools>
+        <key tool="eyedropper" shortcut="Alt" removed="true"/>
+        <key tool="move" shortcut="Ctrl" removed="true"/>
+        <key tool="hand" shortcut="Space" removed="true"/>
+        <key tool="eraser" shortcut="Space" removed="true"/>
+        <key tool="eraser" shortcut="Shift" removed="true"/>
+        <key tool="line" shortcut="Ctrl" removed="true"/>
+    </quicktools>
+    <actions>
+        <key action="FineControl" context="ScalingSelection" shortcut="Ctrl" removed="true"/>
+        <key action="ScaleFromCenter" context="ScalingSelection" shortcut="Alt" removed="true"/>
+    </actions>
+    <wheel>
+        <key action="Zoom" shortcut="Ctrl" removed="true"/>
+        <key action="Zoom" shortcut=""/>
+        <key action="HScroll" shortcut="Shift"/>
+        <key action="FgColor" shortcut="Alt"/>
+        <key action="BgColor" shortcut="Alt+Shift"/>
+        <key action="BrushSize" shortcut="Ctrl"/>
+        <key action="VScroll" shortcut="" removed="true"/>
+        <key action="FgTile" shortcut="Ctrl+]" removed="true"/>
+        <key action="BgTile" shortcut="Ctrl+[" removed="true"/>
+        <key action="BgTile" shortcut="Ctrl" removed="true"/>
+    </wheel>
+    <drag>
+        <key action="BrushSize" vector="4,0" shortcut="Ctrl+Alt" removed="true"/>
+        <key action="FgTile" vector="8,0" shortcut="Ctrl+]" removed="true"/>
+        <key action="BgTile" vector="8,0" shortcut="Ctrl+[" removed="true"/>
+    </drag>
+</keyboard>
