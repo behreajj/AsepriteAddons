@@ -1,3 +1,5 @@
+dofile("../support/aseutilities.lua")
+
 local site <const> = app.site
 local sprite <const> = site.sprite
 if not sprite then return end
