@@ -1,10 +1,9 @@
 --[[To download some profiles:
-https://ninedegreesbelow.com/photography/lcms-make-icc-profiles.html
-https://github.com/ellelstone/elles_icc_profiles
+https://www.color.org/chardata/rgb/DisplayP3.xalter
+https://www.color.org/srgbprofiles.xalter
 
 For specific conversions (Adobe RGB, P3)
-https://stackoverflow.com/questions/40017741/
-mathematical-conversion-srgb-and-adobergb
+https://stackoverflow.com/questions/40017741/mathematical-conversion-srgb-and-adobergb
 https://www.w3.org/TR/css-color-4/#color-conversion-code
 ]]
 
