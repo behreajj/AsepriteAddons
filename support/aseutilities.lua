@@ -1985,6 +1985,8 @@ function AseUtilities.getBkgChecker(sprite)
     if not bgPref then return wCheck, hCheck, aAse, bAse end
 
     -- https://github.com/aseprite/aseprite/blob/main/data/pref.xml#L521
+    -- TODO: zoom field is relevant for the old render engine. See
+    -- app.preferences.experimental.new_render_engine , a boolean.
     local typePref <const> = bgPref.type --[[@as integer]]
     if typePref == 0 then
         wCheck, hCheck = 16, 16
