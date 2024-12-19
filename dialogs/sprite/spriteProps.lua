@@ -432,6 +432,11 @@ dlg:button {
             wGridNew = math.max(1, math.abs(wGridNew))
             hGridNew = math.max(1, math.abs(hGridNew))
 
+            local aPxRatio = args.aPxRatio --[[@as integer]]
+            local bPxRatio = args.bPxRatio --[[@as integer]]
+            aPxRatio, bPxRatio = Utilities.reduceRatio(
+                aPxRatio, bPxRatio)
+
             app.transaction("Set Sprite Props", function()
                 sprite.gridBounds = Rectangle(
                     xGridNew, yGridNew,
@@ -441,10 +446,6 @@ dlg:button {
 
                 -- See https://github.com/aseprite/aseprite/issues/4632
                 if allowPxRatio then
-                    local aPxRatio = args.aPxRatio --[[@as integer]]
-                    local bPxRatio = args.bPxRatio --[[@as integer]]
-                    aPxRatio, bPxRatio = Utilities.reduceRatio(
-                        aPxRatio, bPxRatio)
                     sprite.pixelRatio = Size(aPxRatio, bPxRatio)
                 end
             end)
