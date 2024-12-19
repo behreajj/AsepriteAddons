@@ -374,6 +374,7 @@ dlg:button {
         end
 
         app.layer = openSprite.layers[#openSprite.layers]
+        app.refresh()
 
         if autoFit then
             app.command.FitScreen()
@@ -386,7 +387,6 @@ dlg:button {
             app.command.ScrollCenter()
         end
 
-        app.refresh()
         dlg:close()
     end
 }
