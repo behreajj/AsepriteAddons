@@ -24,6 +24,7 @@ local defaults <const> = {
 }
 
 local showFullPath = false
+local allowPxRatio = false
 
 local appPrefs <const> = app.preferences
 if appPrefs then
@@ -31,6 +32,13 @@ if appPrefs then
     if generalPrefs then
         if generalPrefs.show_full_path then
             showFullPath = generalPrefs.show_full_path
+        end
+    end
+
+    local experimental <const> = appPrefs.experimental
+    if experimental then
+        if experimental.new_render_engine then
+            allowPxRatio = true
         end
     end
 end
@@ -330,7 +338,7 @@ dlg:slider {
     min = defaults.minPxRatio,
     max = defaults.maxPxRatio,
     value = pixelWidth,
-    visible = true
+    visible = allowPxRatio
 }
 
 dlg:slider {
@@ -338,7 +346,7 @@ dlg:slider {
     min = defaults.minPxRatio,
     max = defaults.maxPxRatio,
     value = pixelHeight,
-    visible = true
+    visible = allowPxRatio
 }
 
 dlg:newrow { always = false }
@@ -424,10 +432,6 @@ dlg:button {
             wGridNew = math.max(1, math.abs(wGridNew))
             hGridNew = math.max(1, math.abs(hGridNew))
 
-            local aPxRatio = args.aPxRatio --[[@as integer]]
-            local bPxRatio = args.bPxRatio --[[@as integer]]
-            aPxRatio, bPxRatio = Utilities.reduceRatio(aPxRatio, bPxRatio)
-
             app.transaction("Set Sprite Props", function()
                 sprite.gridBounds = Rectangle(
                     xGridNew, yGridNew,
@@ -436,7 +440,13 @@ dlg:button {
                 sprite.data = userDataNew
 
                 -- See https://github.com/aseprite/aseprite/issues/4632
-                sprite.pixelRatio = Size(aPxRatio, bPxRatio)
+                if allowPxRatio then
+                    local aPxRatio = args.aPxRatio --[[@as integer]]
+                    local bPxRatio = args.bPxRatio --[[@as integer]]
+                    aPxRatio, bPxRatio = Utilities.reduceRatio(
+                        aPxRatio, bPxRatio)
+                    sprite.pixelRatio = Size(aPxRatio, bPxRatio)
+                end
             end)
 
             if appPrefs then
