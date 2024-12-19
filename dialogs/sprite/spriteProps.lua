@@ -35,6 +35,9 @@ if appPrefs then
         end
     end
 
+    -- For old renderer, pixel ratios other than the default will cause
+    -- crashes under certain zoom levels.
+    -- See https://github.com/aseprite/aseprite/issues/4632
     local experimental <const> = appPrefs.experimental
     if experimental then
         if experimental.new_render_engine then
@@ -432,10 +435,14 @@ dlg:button {
             wGridNew = math.max(1, math.abs(wGridNew))
             hGridNew = math.max(1, math.abs(hGridNew))
 
-            local aPxRatio = args.aPxRatio --[[@as integer]]
-            local bPxRatio = args.bPxRatio --[[@as integer]]
-            aPxRatio, bPxRatio = Utilities.reduceRatio(
-                aPxRatio, bPxRatio)
+            local aPxRatio = pixelWidth
+            local bPxRatio = pixelHeight
+            if allowPxRatio then
+                aPxRatio = args.aPxRatio --[[@as integer]]
+                bPxRatio = args.bPxRatio --[[@as integer]]
+                aPxRatio, bPxRatio = Utilities.reduceRatio(
+                    aPxRatio, bPxRatio)
+            end
 
             app.transaction("Set Sprite Props", function()
                 sprite.gridBounds = Rectangle(
@@ -443,11 +450,7 @@ dlg:button {
                     wGridNew, hGridNew)
                 sprite.color = AseUtilities.aseColorCopy(sprColor, "")
                 sprite.data = userDataNew
-
-                -- See https://github.com/aseprite/aseprite/issues/4632
-                if allowPxRatio then
-                    sprite.pixelRatio = Size(aPxRatio, bPxRatio)
-                end
+                sprite.pixelRatio = Size(aPxRatio, bPxRatio)
             end)
 
             if appPrefs then
