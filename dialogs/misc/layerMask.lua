@@ -158,14 +158,8 @@ dlg:button {
             AseUtilities.getFrames(activeSprite, target))
 
         -- Unpack layer opacity.
-        local overLyrOpacity = 255
-        local underLyrOpacity = 255
-        if overLayer.opacity then
-            overLyrOpacity = overLayer.opacity
-        end
-        if underLayer.opacity then
-            underLyrOpacity = underLayer.opacity
-        end
+        local overLyrOpacity <const> = overLayer.opacity or 255
+        local underLyrOpacity <const> = underLayer.opacity or 255
 
         -- Create new layer.
         -- Layer and cel opacity are baked in loop below.
