@@ -1068,7 +1068,7 @@ dlg:button {
             layerName = activeLayer.name .. " Tile Map"
         end
         local blendMode <const> = activeLayer.blendMode or BlendMode.NORMAL
-        local layerOpacity = activeLayer.opacity or 255
+        local layerOpacity <const> = activeLayer.opacity or 255
         local parent <const> = activeLayer.parent
 
         if activeLayer.isGroup then
