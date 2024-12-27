@@ -15,7 +15,7 @@ local defaults <const> = {
     -- Size of tiles in color bar is determined by
     -- app.preferences.color_bar.tiles_box_size . Without a command, however,
     -- this value can be set, but it won't update until Aseprite is restarted.
-    target = "FORE_TILE",
+    target = "TILE_MAP",
     useXFlip = false,
     useYFlip = false,
     useDFlip = false,
@@ -1060,23 +1060,25 @@ dlg:button {
 
         local srcImg = nil
         local xtl, ytl = 0, 0
-        local layerOpacity, celOpacity = 255, 255
-        local blendMode = BlendMode.NORMAL
+        local celOpacity = 255
         local zIndex = 0
+
+        local layerName = "Tile Map"
+        if activeLayer.name and #activeLayer.name > 0 then
+            layerName = activeLayer.name .. " Tile Map"
+        end
+        local blendMode <const> = activeLayer.blendMode or BlendMode.NORMAL
+        local layerOpacity = activeLayer.opacity or 255
+        local parent <const> = activeLayer.parent
+
         if activeLayer.isGroup then
-            local isValid <const>,
-            flatImg <const>,
-            xTlFlat <const>,
-            yTlFlat <const> = AseUtilities.flattenGroup(
+            local isValid = false
+            isValid, srcImg, xtl, ytl,
+            celOpacity, zIndex = AseUtilities.flattenGroup(
                 activeLayer, activeFrame,
                 colorMode, colorSpace, alphaIndex,
                 true, false, true, true)
-
-            srcImg, xtl, ytl = flatImg, xTlFlat, yTlFlat
         else
-            layerOpacity = activeLayer.opacity or 255
-            blendMode = activeLayer.blendMode or BlendMode.NORMAL
-
             local cel <const> = activeLayer:cel(activeFrame)
             if cel then
                 celOpacity = cel.opacity
@@ -1230,15 +1232,22 @@ dlg:button {
         local tmLayer <const> = app.layer
         if tmLayer and tmLayer.isTilemap then
             app.transaction("Create Map Cel", function()
+                tmLayer.name = layerName
                 tmLayer.tileset = tileSet
                 tmLayer.blendMode = blendMode
                 tmLayer.opacity = layerOpacity
+
+                -- This needs to be set because otherwise a tile map created
+                -- from a group will be parented to the source group.
+                tmLayer.parent = parent
 
                 local tmCel <const> = activeSprite:newCel(
                     tmLayer, activeFrame, mapImage, Point(xtl, ytl))
                 tmCel.opacity = celOpacity
                 tmCel.zIndex = zIndex
             end)
+
+            app.layer = tmLayer
         end
 
         app.refresh()
