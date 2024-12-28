@@ -1,6 +1,5 @@
 dofile("../../support/aseutilities.lua")
 
-
 ---@param sprites Sprite[]
 ---@param hexes integer[]
 ---@param keepIndices boolean
