@@ -922,7 +922,7 @@ dlg:button {
                 local wCurr <const> = wSrc + step * wIncr
                 local hCurr <const> = hSrc + step * hIncr
                 local xCurr <const> = xTlSrc + wSrc * 0.5 + step * xIncr
-                local yCurr <const> = yTlSrc + hSrc * 0.5 + step * yIncr
+                local yCurr <const> = yTlSrc + hSrc * 0.5 - step * yIncr
 
                 local trgImg = resize(srcImg, wCurr, hCurr)
                 trgImg = rotateImage(trgImg, currDeg)
