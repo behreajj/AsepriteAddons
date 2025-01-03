@@ -10,7 +10,8 @@ end)
 local wCheck <const>,
 hCheck <const>,
 aAse <const>,
-bAse <const> = AseUtilities.getBkgChecker(activeSprite)
+bAse <const>,
+_ <const> = AseUtilities.getBkgChecker(activeSprite)
 
 local spriteSpec <const> = activeSprite.spec
 local colorMode <const> = spriteSpec.colorMode

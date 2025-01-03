@@ -1994,30 +1994,31 @@ function AseUtilities.frameObjsToIdcs(frObjs)
 end
 
 ---Gets the sprite's background checker width, height and colors from
----from preferences. Colors are retrieved by reference.
+---from preferences. Colors are retrieved by reference. The zoom boolean
+---applies to reference layers and to the old render engine.
 ---@param sprite Sprite sprite
 ---@return integer wCheck
 ---@return integer hCheck
 ---@return Color aAse
 ---@return Color bAse
+---@return boolean zoom
 ---@nodiscard
 function AseUtilities.getBkgChecker(sprite)
     local wCheck, hCheck = 8, 8
-    local aAse = Color { r = 128, g = 128, b = 128, a = 255 }
-    local bAse = Color { r = 202, g = 202, b = 202, a = 255 }
+    local aAse, bAse = Color { r = 128, g = 128, b = 128, a = 255 },
+        Color { r = 202, g = 202, b = 202, a = 255 }
+    local zoom = false
 
     local appPrefs <const> = app.preferences
-    if not appPrefs then return wCheck, hCheck, aAse, bAse end
+    if not appPrefs then return wCheck, hCheck, aAse, bAse, zoom end
 
     local docPrefs <const> = appPrefs.document(sprite)
-    if not docPrefs then return wCheck, hCheck, aAse, bAse end
+    if not docPrefs then return wCheck, hCheck, aAse, bAse, zoom end
 
     local bgPref <const> = docPrefs.bg
-    if not bgPref then return wCheck, hCheck, aAse, bAse end
+    if not bgPref then return wCheck, hCheck, aAse, bAse, zoom end
 
     -- https://github.com/aseprite/aseprite/blob/main/data/pref.xml#L521
-    -- TODO: zoom field is relevant for the old render engine. See
-    -- app.preferences.experimental.new_render_engine , a boolean.
     local typePref <const> = bgPref.type --[[@as integer]]
     if typePref == 0 then
         wCheck, hCheck = 16, 16
@@ -2043,7 +2044,9 @@ function AseUtilities.getBkgChecker(sprite)
     local bgPrefColor2 <const> = bgPref.color2 --[[@as Color]]
     if bgPrefColor2 then bAse = bgPrefColor2 end
 
-    return wCheck, hCheck, aAse, bAse
+    if bgPref.zoom then zoom = true end
+
+    return wCheck, hCheck, aAse, bAse, zoom
 end
 
 ---Gets an array of arrays of frame indices from a sprite according to a string.

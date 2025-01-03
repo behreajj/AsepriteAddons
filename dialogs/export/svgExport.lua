@@ -892,7 +892,8 @@ dlg:button {
             local wCheck <const>,
             hCheck <const>,
             aAse <const>,
-            bAse <const> = AseUtilities.getBkgChecker(activeSprite)
+            bAse <const>,
+            _ <const> = AseUtilities.getBkgChecker(activeSprite)
 
             local wCheckScaled <const> = wCheck * wPixel
             local hCheckScaled <const> = hCheck * hPixel

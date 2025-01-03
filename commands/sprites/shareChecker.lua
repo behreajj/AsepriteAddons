@@ -18,7 +18,8 @@ local hexToAseColor <const> = AseUtilities.hexToAseColor
 local wCheck <const>,
 hCheck <const>,
 aAse <const>,
-bAse <const> = AseUtilities.getBkgChecker(srcSprite)
+bAse <const>,
+useZoom <const> = AseUtilities.getBkgChecker(srcSprite)
 
 local a = 0xff000000 | AseUtilities.aseColorToHex(aAse, ColorMode.RGB)
 local b = 0xff000000 | AseUtilities.aseColorToHex(bAse, ColorMode.RGB)
@@ -41,6 +42,7 @@ while h < lenOpenSprites do
                 trgBgPref.color2 = hexToAseColor(b)
                 trgBgPref.size = Size(wCheck, hCheck)
                 trgBgPref.type = 5
+                trgBgPref.zoom = useZoom
             end
         end
     end
