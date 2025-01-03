@@ -680,6 +680,7 @@ dlg:button {
         local eval <const> = Curve2.eval
         local transact <const> = app.transaction
         local round <const> = Utilities.round
+        local strfmt <const> = string.format
         local strpack <const> = string.pack
         local strsub <const> = string.sub
 
@@ -930,10 +931,12 @@ dlg:button {
                     floor(xCurr - trgImg.width * 0.5),
                     floor(yCurr - trgImg.height * 0.5))
 
-                transact("Anim Cel", function()
-                    activeSprite:newCel(
-                        trgLayer, frIdx, trgImg, trgPoint)
-                end)
+                transact(
+                    strfmt("Anim Cel %d", frameUiOffset + frIdx),
+                    function()
+                        activeSprite:newCel(
+                            trgLayer, frIdx, trgImg, trgPoint)
+                    end)
 
                 j = j + 1
             end -- End of frames loop.
@@ -1081,10 +1084,12 @@ dlg:button {
                 local ytlInt <const> = round(ytl)
                 local trgPoint <const> = Point(xtlInt, ytlInt)
 
-                transact("Anim Cel", function()
-                    activeSprite:newCel(
-                        trgLayer, frIdx, trgImg, trgPoint)
-                end)
+                transact(
+                    strfmt("Anim Cel %d", frameUiOffset + frIdx),
+                    function()
+                        activeSprite:newCel(
+                            trgLayer, frIdx, trgImg, trgPoint)
+                    end)
 
                 j = j + 1
             end -- End of frames loop.
