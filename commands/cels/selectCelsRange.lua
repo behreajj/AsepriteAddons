@@ -15,9 +15,12 @@ if appRange.sprite == activeSprite then
     local spriteBounds <const> = activeSprite.bounds
 
     if appRange.isEmpty then
-        local activeLayer <const> = site.layer
         local activeFrame <const> = site.frame
-        if activeLayer and activeFrame then
+        if not activeFrame then return end
+
+        -- TODO: Seek the topmost layer under the cursor?
+        local activeLayer <const> = site.layer
+        if activeLayer then
             if activeLayer.isBackground then
                 activeSprite.selection = Selection(spriteBounds)
             else
@@ -41,7 +44,7 @@ if appRange.sprite == activeSprite then
                     activeSprite.selection = union
                 end -- Non empty union.
             end     -- Layer is background check.
-        end         -- Active Layer and frame exist.
+        end         -- Active Layer exists.
     else
         local images <const> = appRange.images
         local lenImages <const> = #images

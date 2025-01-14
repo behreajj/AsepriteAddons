@@ -27,7 +27,8 @@ if xMouse >= wSprite or yMouse >= hSprite then return end
 ---@param palette Palette
 ---@return boolean
 local function eval(
-    x, y, wImage, colorMode, bpp, bytesStr, aComp01, alphaIndex, palette)
+    x, y, wImage, colorMode, bpp, bytesStr,
+    aComp01, alphaIndex, palette)
     local dataIdx <const> = (y * wImage + x) * bpp
     local dataStr <const> = string.sub(bytesStr,
         1 + dataIdx, bpp + dataIdx)
