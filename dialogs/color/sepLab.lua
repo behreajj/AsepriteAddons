@@ -408,7 +408,7 @@ dlg:button {
             local i = 0
             while i < lenFrames do
                 i = i + 1
-                local srcFrame = frames[i]
+                local srcFrame <const> = frames[i]
 
                 local xSrcPos = 0
                 local ySrcPos = 0
