@@ -110,6 +110,7 @@ dlg:button {
         local refLab <const> = Clr.sRgbToSrLab2(refClr)
         local refHex <const> = Clr.toHexWeb(refClr)
         local normChroma <const> = 1.0 / Clr.SR_LCH_MAX_CHROMA
+        local normLab <const> = normChroma + 0.01
 
         local trgLayer <const> = activeSprite:newLayer()
         app.transaction("Set Layer Props", function()
@@ -189,7 +190,7 @@ dlg:button {
                             local db <const> = lab.b - refLab.b
                             local abDist <const> = sqrt(da * da + db * db)
 
-                            local labFac <const> = min(max((lDist + abDist) * 0.01, 0.0), 1.0)
+                            local labFac <const> = min(max((lDist + abDist) * normLab, 0.0), 1.0)
 
                             local abFac <const> = min(max(abDist * normChroma, 0.0), 1.0)
                             local abCompl <const> = 1.0 - abFac
