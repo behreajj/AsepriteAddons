@@ -1,14 +1,16 @@
 dofile("../../support/aseutilities.lua")
 
 local targets <const> = { "ACTIVE", "ALL", "RANGE" }
+local lOptions <const> = { "BLEND", "SOURCE" }
 local delOptions <const> = { "DELETE_CELS", "DELETE_LAYER", "HIDE", "NONE" }
 
 local defaults <const> = {
     -- TODO: For targets, include selection.
     -- https://community.aseprite.org/t/request-color-to-alpha-extension/24200
 
-    target = "ACTIVE",
-    delSrc = "NONE",
+    target  = "ACTIVE",
+    delSrc  = "NONE",
+    lOption = "SOURCE",
 }
 
 local dlg <const> = Dialog { title = "Color Dist To Alpha" }
@@ -27,6 +29,15 @@ dlg:combobox {
     label = "Source:",
     option = defaults.delSrc,
     options = delOptions
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "lOption",
+    label = "L:",
+    option = defaults.lOption,
+    options = lOptions
 }
 
 dlg:newrow { always = false }
@@ -101,6 +112,7 @@ dlg:button {
             or defaults.target --[[@as string]]
         local delSrcStr <const> = args.delSrc
             or defaults.delSrc --[[@as string]]
+        local lOption <const> = args.lOption or defaults.lOption --[[@as string]]
         local refColor <const> = args.refColor --[[@as Color]]
 
         local frames <const> = Utilities.flatArr2(
@@ -110,7 +122,8 @@ dlg:button {
         local refLab <const> = Clr.sRgbToSrLab2(refClr)
         local refHex <const> = Clr.toHexWeb(refClr)
         local normChroma <const> = 1.0 / Clr.SR_LCH_MAX_CHROMA
-        local normLab <const> = normChroma + 0.01
+        local normLab <const> = 1.0 / (Clr.SR_LCH_MAX_CHROMA + 10.0)
+        local useLBlend <const> = lOption == "BLEND"
 
         local trgLayer <const> = activeSprite:newLayer()
         app.transaction("Set Layer Props", function()
@@ -185,21 +198,24 @@ dlg:button {
 
                             local dl <const> = lab.l - refLab.l
                             local lDist <const> = abs(dl)
+                            local lFac <const> = min(max(lDist * 0.01, 0.0), 1.0)
+                            local lCompl <const> = 1.0 - lFac
 
                             local da <const> = lab.a - refLab.a
                             local db <const> = lab.b - refLab.b
                             local abDist <const> = sqrt(da * da + db * db)
-
-                            local labFac <const> = min(max((lDist + abDist) * normLab, 0.0), 1.0)
-
                             local abFac <const> = min(max(abDist * normChroma, 0.0), 1.0)
                             local abCompl <const> = 1.0 - abFac
 
-                            -- TODO: Should L be lerped as well? Maybe make it an option to toggle?
-                            local lTrg <const> = lab.l
+                            local lTrg <const> = useLBlend
+                                and (lCompl * dl + lFac * lab.l)
+                                or lab.l
                             local aTrg <const> = abCompl * da + abFac * lab.a
                             local bTrg <const> = abCompl * db + abFac * lab.b
-                            local tTrg <const> = labFac
+
+                            -- TODO: Maybe an option to set alpha to either lFac or abFac.
+                            -- local tTrg <const> = abFac
+                            local tTrg <const> = min(max((abDist+lDist) * normLab, 0.0), 1.0)
 
                             local clrTrg <const> = labTosRgb(lTrg, aTrg, bTrg, tTrg)
                             trgAbgr32 = toHex(clrTrg)
