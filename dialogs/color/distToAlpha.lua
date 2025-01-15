@@ -2,6 +2,7 @@ dofile("../../support/aseutilities.lua")
 
 local targets <const> = { "ACTIVE", "ALL", "RANGE" }
 local lOptions <const> = { "BLEND", "SOURCE" }
+local tOptions <const> = { "AB", "L" }
 local delOptions <const> = { "DELETE_CELS", "DELETE_LAYER", "HIDE", "NONE" }
 
 local defaults <const> = {
@@ -11,6 +12,7 @@ local defaults <const> = {
     target  = "ACTIVE",
     delSrc  = "NONE",
     lOption = "SOURCE",
+    tOption = "AB"
 }
 
 local dlg <const> = Dialog { title = "Color Dist To Alpha" }
@@ -38,6 +40,15 @@ dlg:combobox {
     label = "L:",
     option = defaults.lOption,
     options = lOptions
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "tOption",
+    label = "Alpha:",
+    option = defaults.tOption,
+    options = tOptions
 }
 
 dlg:newrow { always = false }
@@ -112,7 +123,10 @@ dlg:button {
             or defaults.target --[[@as string]]
         local delSrcStr <const> = args.delSrc
             or defaults.delSrc --[[@as string]]
-        local lOption <const> = args.lOption or defaults.lOption --[[@as string]]
+        local lOption <const> = args.lOption
+            or defaults.lOption --[[@as string]]
+        local tOption <const> = args.tOption
+            or defaults.tOption --[[@as string]]
         local refColor <const> = args.refColor --[[@as Color]]
 
         local frames <const> = Utilities.flatArr2(
@@ -124,6 +138,7 @@ dlg:button {
         local normChroma <const> = 1.0 / Clr.SR_LCH_MAX_CHROMA
         local normLab <const> = 1.0 / (Clr.SR_LCH_MAX_CHROMA + 10.0)
         local useLBlend <const> = lOption == "BLEND"
+        local useLAsAlpha <const> = tOption == "L"
 
         local trgLayer <const> = activeSprite:newLayer()
         app.transaction("Set Layer Props", function()
@@ -198,7 +213,10 @@ dlg:button {
 
                             local dl <const> = lab.l - refLab.l
                             local lDist <const> = abs(dl)
-                            local lFac <const> = min(max(lDist * 0.01, 0.0), 1.0)
+                            local lFac = min(max(lDist * 0.01, 0.0), 1.0)
+                            -- Fudge factor
+                            -- lFac = lFac ^ 0.5
+                            -- lFac = lFac * lFac * (3.0 - 2.0 * lFac)
                             local lCompl <const> = 1.0 - lFac
 
                             local da <const> = lab.a - refLab.a
@@ -212,10 +230,7 @@ dlg:button {
                                 or lab.l
                             local aTrg <const> = abCompl * da + abFac * lab.a
                             local bTrg <const> = abCompl * db + abFac * lab.b
-
-                            -- TODO: Maybe an option to set alpha to either lFac or abFac.
-                            -- local tTrg <const> = abFac
-                            local tTrg <const> = min(max((abDist+lDist) * normLab, 0.0), 1.0)
+                            local tTrg <const> = useLAsAlpha and lFac or abFac
 
                             local clrTrg <const> = labTosRgb(lTrg, aTrg, bTrg, tTrg)
                             trgAbgr32 = toHex(clrTrg)
