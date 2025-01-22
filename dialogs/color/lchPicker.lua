@@ -753,6 +753,7 @@ dlg:canvas {
     label = "Swatch:",
     width = defaults.barWidth,
     height = defaults.barHeight,
+    vexpand = false,
     onpaint = function(event)
         -- Unpack defaults.
         local inGamutEps <const> = defaults.inGamutEps
