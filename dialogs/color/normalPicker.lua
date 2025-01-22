@@ -351,7 +351,8 @@ dlg:canvas {
     id = "previewCanvas",
     label = "Color:",
     width = defaults.barWidth,
-    height = defaults.barheight,
+    height = defaults.barHeight,
+    vexpand = false,
     focus = true,
     onpaint = function(event)
         -- Unpack defaults.
@@ -429,7 +430,8 @@ dlg:canvas {
     id = "azimuthCanvas",
     label = "Azimuth:",
     width = defaults.barWidth,
-    height = defaults.barheight,
+    height = defaults.barHeight,
+    vexpand = false,
     onpaint = function(event)
         -- Unpack defaults.
         local reticleSize <const> = defaults.reticleSize
@@ -483,7 +485,8 @@ dlg:canvas {
     id = "inclCanvas",
     label = "Incline:",
     width = defaults.barWidth,
-    height = defaults.barheight,
+    height = defaults.barHeight,
+    vexpand = false,
     onpaint = function(event)
         -- Unpack defaults.
         local reticleSize <const> = defaults.reticleSize

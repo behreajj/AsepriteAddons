@@ -311,7 +311,8 @@ dlg:canvas {
     id = "previewCanvas",
     label = "Color:",
     width = defaults.barWidth,
-    height = defaults.barheight,
+    height = defaults.barHeight,
+    vexpand = false,
     focus = true,
     onpaint = function(event)
         -- Unpack defaults.
@@ -391,7 +392,8 @@ dlg:canvas {
     id = "lightCanvas",
     label = "L:",
     width = defaults.barWidth,
-    height = defaults.barheight,
+    height = defaults.barHeight,
+    vexpand = false,
     onpaint = function(event)
         -- Unpack theme.
         local bkgColor <const> = app.theme.color.window_face
@@ -455,7 +457,8 @@ dlg:canvas {
     id = "chromaCanvas",
     label = "C:",
     width = defaults.barWidth,
-    height = defaults.barheight,
+    height = defaults.barHeight,
+    vexpand = false,
     onpaint = function(event)
         -- Unpack theme.
         local bkgColor <const> = app.theme.color.window_face
@@ -520,7 +523,8 @@ dlg:canvas {
     id = "hueCanvas",
     label = "H:",
     width = defaults.barWidth,
-    height = defaults.barheight,
+    height = defaults.barHeight,
+    vexpand = false,
     onpaint = function(event)
         -- Unpack theme.
         local bkgColor <const> = app.theme.color.window_face
@@ -584,7 +588,8 @@ dlg:canvas {
     id = "alphaCanvas",
     label = "Alpha:",
     width = defaults.barWidth,
-    height = defaults.barheight,
+    height = defaults.barHeight,
+    vexpand = false,
     onpaint = function(event)
         local ctx <const> = event.context
         ctx.blendMode = BlendMode.SRC
