@@ -272,7 +272,8 @@ dlg:canvas {
     id = "lAdjCanvas",
     label = "L:",
     width = defaults.barWidth,
-    height = defaults.barheight,
+    height = defaults.barHeight,
+    vexpand = false,
     onpaint = function(event)
         local reticleSize <const> = defaults.reticleSize
 
@@ -329,7 +330,8 @@ dlg:canvas {
     id = "cAdjCanvas",
     label = "C:",
     width = defaults.barWidth,
-    height = defaults.barheight,
+    height = defaults.barHeight,
+    vexpand = false,
     visible = defaults.mode == "LCH",
     onpaint = function(event)
         local reticleSize <const> = defaults.reticleSize
@@ -380,7 +382,8 @@ dlg:canvas {
     id = "hAdjCanvas",
     label = "H:",
     width = defaults.barWidth,
-    height = defaults.barheight,
+    height = defaults.barHeight,
+    vexpand = false,
     visible = defaults.mode == "LCH",
     onpaint = function(event)
         local reticleSize <const> = defaults.reticleSize
@@ -430,7 +433,8 @@ dlg:canvas {
     id = "aAdjCanvas",
     label = "A:",
     width = defaults.barWidth,
-    height = defaults.barheight,
+    height = defaults.barHeight,
+    vexpand = false,
     visible = defaults.mode == "LAB",
     onpaint = function(event)
         local reticleSize <const> = defaults.reticleSize
@@ -483,7 +487,8 @@ dlg:canvas {
     id = "bAdjCanvas",
     label = "B:",
     width = defaults.barWidth,
-    height = defaults.barheight,
+    height = defaults.barHeight,
+    vexpand = false,
     visible = defaults.mode == "LAB",
     onpaint = function(event)
         local reticleSize <const> = defaults.reticleSize
@@ -536,7 +541,8 @@ dlg:canvas {
     id = "alphaAdjCanvas",
     label = "Alpha:",
     width = defaults.barWidth,
-    height = defaults.barheight,
+    height = defaults.barHeight,
+    vexpand = false,
     onpaint = function(event)
         local reticleSize <const> = defaults.reticleSize
 
