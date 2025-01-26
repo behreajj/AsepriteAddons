@@ -40,6 +40,7 @@ local tCompOptions <const> = {
     "BLEND",
     "MAX",
     "MIN",
+    "MULTIPLY",
     "OVER",
     "UNDER"
 }
@@ -468,6 +469,7 @@ dlg:button {
         -- print(string.format("alphaComp: %s", alphaComp))
         local useAlphaMax <const> = alphaComp == "MAX"
         local useAlphaMin <const> = alphaComp == "MIN"
+        local useAlphaMul <const> = alphaComp == "MULTIPLY"
         local useAlphaOver <const> = alphaComp == "OVER"
         local useAlphaUnder <const> = alphaComp == "UNDER"
 
@@ -720,10 +722,12 @@ dlg:button {
                     tuv = t
                 elseif useAlphaUnder then
                     tuv = v
-                elseif useAlphaMin then
-                    tuv = min(t, v)
                 elseif useAlphaMax then
                     tuv = max(t, v)
+                elseif useAlphaMin then
+                    tuv = min(t, v)
+                elseif useAlphaMul then
+                    tuv = t * v
                 end
 
                 -- Timeline overlays display colors that are transparent,
