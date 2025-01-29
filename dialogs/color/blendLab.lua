@@ -29,9 +29,7 @@ local hCompOptions <const> = {
 local lCompOptions <const> = {
     "ADD",
     "BLEND",
-    "CONTRAST",
     "DIVIDE",
-    "MIDDLE",
     "MULTIPLY",
     "OVER",
     "SUBTRACT",
@@ -190,48 +188,12 @@ end
 ---@param ut number under alpha
 ---@param ot number over alpha
 ---@return number cl
-local function lCompContrast(ul, ol, ut, ot)
-    local a = 0.0
-    if ol <= 0.0 or ol >= 100.0 then
-        a = 1.0
-    else
-        local b <const> = math.abs(1.0 - 2.0 * (ol * 0.01))
-        a = b * b * (3.0 - (b + b))
-    end
-    local c <const> = a * 100.0 - 50.0
-    local dl <const> = ut > 0.0 and ul + c or ol
-    return (1.0 - ot) * ul + ot * dl
-end
-
----@param ul number under light
----@param ol number over light
----@param ut number under alpha
----@param ot number over alpha
----@return number cl
 local function lCompDiv(ul, ol, ut, ot)
     local dl <const> = ut > 0.0
         and (ol ~= 0.0
             and ((ul * 0.01) / (ol * 0.01)) * 100.0
             or 0.0)
         or ol
-    return (1.0 - ot) * ul + ot * dl
-end
-
----@param ul number under light
----@param ol number over light
----@param ut number under alpha
----@param ot number over alpha
----@return number cl
-local function lCompMid(ul, ol, ut, ot)
-    local a = 0.0
-    if ol <= 0.0 or ol >= 100.0 then
-        a = 0.0
-    else
-        local b <const> = math.abs(2.0 * (ol * 0.01) - 1.0)
-        a = 1.0 - b * b * (3.0 - (b + b))
-    end
-    local c <const> = a * 100.0 - 50.0
-    local dl <const> = ut > 0.0 and ul + c or ol
     return (1.0 - ot) * ul + ot * dl
 end
 
@@ -527,12 +489,8 @@ dlg:button {
 
         if lPreset == "ADD" then
             lBlendFunc = lCompAdd
-        elseif lPreset == "CONTRAST" then
-            lBlendFunc = lCompContrast
         elseif lPreset == "DIVIDE" then
             lBlendFunc = lCompDiv
-        elseif lPreset == "MIDDLE" then
-            lBlendFunc = lCompMid
         elseif lPreset == "MULTIPLY" then
             lBlendFunc = lCompMul
         elseif lPreset == "OVER" then
