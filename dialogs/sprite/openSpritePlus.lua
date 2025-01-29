@@ -8,7 +8,8 @@ local paletteTypes <const> = {
 }
 
 local defaults <const> = {
-    --TODO: Option to open sequences from directory?
+    --TODO: The file widget submenu that asks to choose between absolute and
+    -- relative paths makes this cumbersome to use.
     removeBkg = true,
     trimCels = true,
     palType = "EMBEDDED",

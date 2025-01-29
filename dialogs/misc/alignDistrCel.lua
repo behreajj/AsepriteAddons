@@ -6,7 +6,6 @@ local referToOptions <const> = { "CELS", "SELECTION", "SPRITE", "SYMMETRY" }
 local inOutOptions <const> = { "INSIDE", "OUTSIDE" }
 
 local defaults <const> = {
-    -- Refer to Inkscape for UI/UX.
     layerTarget = "ALL",
     includeLocked = false,
     includeHidden = false,
@@ -626,6 +625,9 @@ local function alignCels(dialog, preset)
             end
         end
 
+        -- TODO: If there is only one cel, then distribute horizontally should
+        -- change to align x center, and distribute vertically should change to
+        -- align y center. Maybe create a presetVerif.
         if useAbsRef or lenCels < 2 then
             xMinEdge = xMinRef
             xMaxEdge = xMaxRef
