@@ -30,10 +30,8 @@ local lCompOptions <const> = {
     "ADD",
     "BLEND",
     "DIVIDE",
-    "DULL",
     "MULTIPLY",
     "OVER",
-    "SHARPEN",
     "SUBTRACT",
     "UNDER"
 }
@@ -204,22 +202,6 @@ end
 ---@param ut number under alpha
 ---@param ot number over alpha
 ---@return number cl
-local function lCompDull(ul, ol, ut, ot)
-    if ut <= 0.0 then return ul end
-    local fac = 0.0
-    if ol > 0.0 and ol < 100.0 then
-        local y <const> = 1.0 - math.abs(2.0 * (ol * 0.01) - 1.0)
-        fac = y * y * (3.0 - 2.0 * y)
-    end
-    fac = fac * ot
-    return (1.0 - fac) * ul + fac * 50.0
-end
-
----@param ul number under light
----@param ol number over light
----@param ut number under alpha
----@param ot number over alpha
----@return number cl
 local function lCompMul(ul, ol, ut, ot)
     local dl <const> = ut > 0.0
         and ((ul * 0.01) * (ol * 0.01)) * 100.0
@@ -243,25 +225,6 @@ end
 ---@return number cl
 local function lCompOver(ul, ol, ut, ot)
     return ol
-end
-
----@param ul number under light
----@param ol number over light
----@param ut number under alpha
----@param ot number over alpha
----@return number cl
-local function lCompSharpen(ul, ol, ut, ot)
-    if ut <= 0.0 then return ul end
-    local fac = 0.0
-    if ot <= 0.0 then
-        fac = 0.0
-    elseif ot >= 1.0 then
-        fac = 1.0
-    else
-        fac = ot * ot * (3.0 - 2.0 * ot)
-    end
-    local dl <const> = ul + (ol - 50.0)
-    return (1.0 - fac) * ul + fac * dl
 end
 
 ---@param ul number under light
@@ -528,14 +491,10 @@ dlg:button {
             lBlendFunc = lCompAdd
         elseif lPreset == "DIVIDE" then
             lBlendFunc = lCompDiv
-        elseif lPreset == "DULL" then
-            lBlendFunc = lCompDull
         elseif lPreset == "MULTIPLY" then
             lBlendFunc = lCompMul
         elseif lPreset == "OVER" then
             lBlendFunc = lCompOver
-        elseif lPreset == "SHARPEN" then
-            lBlendFunc = lCompSharpen
         elseif lPreset == "SUBTRACT" then
             lBlendFunc = lCompSub
         elseif lPreset == "UNDER" then
