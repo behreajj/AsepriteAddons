@@ -218,13 +218,13 @@ function Curve2.gridHex(rings, cellRadius, cellMargin, rounding)
                 end
             else
                 ---@type Vec2[]
-                local mp <const> = {}
+                local midPoints <const> = {}
                 local mpIdx = 0
                 while mpIdx < 6 do
                     local mpIdxNext <const> = (mpIdx + 1) % 6
                     local vCurr <const> = vs[1 + mpIdx]
                     local vNext <const> = vs[1 + mpIdxNext]
-                    mp[1 + mpIdx] = Vec2.mixNum(vCurr, vNext, 0.5)
+                    midPoints[1 + mpIdx] = Vec2.mixNum(vCurr, vNext, 0.5)
 
                     mpIdx = mpIdx + 1
                 end
@@ -235,7 +235,7 @@ function Curve2.gridHex(rings, cellRadius, cellMargin, rounding)
                         local vIdxNext <const> = (knIdxCurr + 1) % 6
                         local vPrev <const> = vs[1 + knIdxCurr]
                         local vNext <const> = vs[1 + vIdxNext]
-                        local co <const> = mp[1 + knIdxCurr]
+                        local co <const> = midPoints[1 + knIdxCurr]
 
                         kns[1 + knIdxCurr] = Knot2.new(
                             co,
@@ -255,8 +255,8 @@ function Curve2.gridHex(rings, cellRadius, cellMargin, rounding)
                         local vPrev <const> = vs[1 + vIdxPrev]
                         local vNext <const> = vs[1 + vIdxNext]
 
-                        local mpCurr <const> = mp[1 + vIdxCurr]
-                        local mpPrev <const> = mp[1 + vIdxPrev]
+                        local mpCurr <const> = midPoints[1 + vIdxCurr]
+                        local mpPrev <const> = midPoints[1 + vIdxPrev]
 
                         local isEven <const> = knIdxCurr % 2 ~= 1
                         if isEven then

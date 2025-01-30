@@ -30,8 +30,10 @@ local lCompOptions <const> = {
     "ADD",
     "BLEND",
     "DIVIDE",
+    "HARD_LIGHT",
     "MULTIPLY",
     "OVER",
+    "SCREEN",
     "SUBTRACT",
     "UNDER"
 }
@@ -191,8 +193,8 @@ end
 local function lCompDiv(ul, ol, ut, ot)
     local dl <const> = ut > 0.0
         and (ol ~= 0.0
-            and ((ul * 0.01) / (ol * 0.01)) * 100.0
-            or 0.0)
+            and (ul / ol) * 100.0
+            or 100.0)
         or ol
     return (1.0 - ot) * ul + ot * dl
 end
@@ -204,7 +206,7 @@ end
 ---@return number cl
 local function lCompMul(ul, ol, ut, ot)
     local dl <const> = ut > 0.0
-        and ((ul * 0.01) * (ol * 0.01)) * 100.0
+        and (ul * ol) * 0.01
         or ol
     return (1.0 - ot) * ul + ot * dl
 end
@@ -232,6 +234,18 @@ end
 ---@param ut number under alpha
 ---@param ot number over alpha
 ---@return number cl
+local function lCompScreen(ul, ol, ut, ot)
+    local dl <const> = ut > 0.0
+        and ul + ol - (ul * ol) * 0.01
+        or ol
+    return (1.0 - ot) * ul + ot * dl
+end
+
+---@param ul number under light
+---@param ol number over light
+---@param ut number under alpha
+---@param ot number over alpha
+---@return number cl
 local function lCompSub(ul, ol, ut, ot)
     local dl <const> = ut > 0.0 and ul - ol or ol
     return (1.0 - ot) * ul + ot * dl
@@ -244,6 +258,16 @@ end
 ---@return number cl
 local function lCompUnder(ul, ol, ut, ot)
     return ul
+end
+
+---@param ul number under light
+---@param ol number over light
+---@param ut number under alpha
+---@param ot number over alpha
+---@return number cl
+local function lCompHardlight(ul, ol, ut, ot)
+    if ol <= 50.0 then return lCompMul(ul, ol + ol, ut, ot) end
+    return lCompScreen(ul, ol + ol - 100.0, ut, ot)
 end
 
 local dlg <const> = Dialog { title = "Blend LAB" }
@@ -491,10 +515,14 @@ dlg:button {
             lBlendFunc = lCompAdd
         elseif lPreset == "DIVIDE" then
             lBlendFunc = lCompDiv
+        elseif lPreset == "HARD_LIGHT" then
+            lBlendFunc = lCompHardlight
         elseif lPreset == "MULTIPLY" then
             lBlendFunc = lCompMul
         elseif lPreset == "OVER" then
             lBlendFunc = lCompOver
+        elseif lPreset == "SCREEN" then
+            lBlendFunc = lCompScreen
         elseif lPreset == "SUBTRACT" then
             lBlendFunc = lCompSub
         elseif lPreset == "UNDER" then
