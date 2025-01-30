@@ -1,12 +1,12 @@
 dofile("../../support/shapeutilities.lua")
 
 local defaults <const> = {
-    -- TODO: Use a curve object instead of a mesh?
     rings = 4,
     xScale = 32,
     yScale = 32,
     useDimetric = false,
     margin = 0,
+    rounding = 0,
     useStroke = true,
     strokeWeight = 1,
     useFill = true,
@@ -71,6 +71,16 @@ dlg:slider {
     min = 0,
     max = 100,
     value = defaults.margin
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "rounding",
+    label = "Rounding:",
+    min = 0,
+    max = 100,
+    value = defaults.rounding
 }
 
 dlg:newrow { always = false }
@@ -172,6 +182,8 @@ dlg:button {
         local yOrig <const> = args.yOrig --[[@as number]]
         local margin100 <const> = args.margin
             or defaults.margin --[[@as integer]]
+        local rounding100 <const> = args.rounding
+            or defaults.rounding --[[@as integer]]
 
         local useStroke <const> = args.useStroke --[[@as boolean]]
         local strokeWeight <const> = args.strokeWeight
@@ -188,30 +200,30 @@ dlg:button {
             xScale = xScale * 1.1547005383793
         end
 
-        local mesh <const> = Mesh2.gridHex(rings)
+        local curves <const> = Curve2.gridHex(rings,
+            0.5, 0.5 * (margin100 * 0.01), rounding100 * 0.01)
 
         local t <const> = Mat3.fromTranslation(xOrig, yOrig)
         local s <const> = Mat3.fromScale(xScale, -yScale)
         local mat <const> = Mat3.mul(t, s)
-        Utilities.mulMat3Mesh2(mat, mesh)
-
-        -- Convert margin from [0, 100] to [0.0, 1.0].
-        -- Ensure that it is less than 100%.
-        local margin = margin100 * 0.01
-        if margin > 0.0 then
-            margin = 1.0 - math.min(margin, 0.99)
-            mesh:scaleFacesIndiv(margin)
-        end
 
         local layer <const> = sprite:newLayer()
-        layer.name = mesh.name
+        layer.name = "Hex Grid"
 
         local useTrim <const> = true
-        ShapeUtilities.drawMesh2(sprite,
-            mesh, useFill, fillColor,
-            useStroke, strokeColor,
-            strokeWeight,
-            frame, layer, useAntialias, useTrim)
+        local lenCurves <const> = #curves
+        local i = 0
+        while i < lenCurves do
+            i = i + 1
+            local curve <const> = curves[i]
+            Utilities.mulMat3Curve2(mat, curve)
+            ShapeUtilities.drawCurve2(
+                sprite, curve,
+                useFill, fillColor,
+                useStroke, strokeColor, strokeWeight,
+                frame, layer,
+                useAntialias, useTrim)
+        end
 
         app.refresh()
     end

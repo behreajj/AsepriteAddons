@@ -473,6 +473,32 @@ function Utilities.lerpAngleNear(origin, dest, t, range)
     end
 end
 
+---Multiplies a matrix with a Curve2. Changes the curve in place.
+---@param a Mat3 matrix
+---@param b Curve2 curve
+---@return Curve2
+function Utilities.mulMat3Curve2(a, b)
+    local kns <const> = b.knots
+    local knsLen <const> = #kns
+    local i = 0
+    while i < knsLen do
+        i = i + 1
+        Utilities.mulMat3Knot2(a, kns[i])
+    end
+    return b
+end
+
+---Multiplies a matrix with a Knot2. Changes the knot in place.
+---@param a Mat3 matrix
+---@param b Knot2 knot
+---@return Knot2
+function Utilities.mulMat3Knot2(a, b)
+    b.co = Utilities.mulMat3Point2(a, b.co)
+    b.fh = Utilities.mulMat3Point2(a, b.fh)
+    b.rh = Utilities.mulMat3Point2(a, b.rh)
+    return b
+end
+
 ---Multiplies a Mat3 with a Mesh2. Changes the mesh in place.
 ---@param a Mat3 matrix
 ---@param b Mesh2 mesh
