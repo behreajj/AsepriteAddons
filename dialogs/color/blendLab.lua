@@ -29,7 +29,11 @@ local hCompOptions <const> = {
 local lCompOptions <const> = {
     "ADD",
     "BLEND",
+    "COLOR_BURN",
+    "COLOR_DODGE",
+    "DIFFERENCE",
     "DIVIDE",
+    "EXCLUDE",
     "HARD_LIGHT",
     "MULTIPLY",
     "OVER",
@@ -190,11 +194,71 @@ end
 ---@param ut number under alpha
 ---@param ot number over alpha
 ---@return number cl
+local function lCompColorBurn(ul, ol, ut, ot)
+    local dl = ol
+    if ut > 0.0 then
+        if ul >= 100.0 then
+            dl = 100.0
+        elseif ol <= 0.0 then
+            dl = 0.0
+        else
+            dl = 100.0 - math.min(100.0, ((100.0 - ul) / ol) * 100.0)
+        end
+    end
+    return (1.0 - ot) * ul + ot * dl
+end
+
+---@param ul number under light
+---@param ol number over light
+---@param ut number under alpha
+---@param ot number over alpha
+---@return number cl
+local function lCompColorDodge(ul, ol, ut, ot)
+    local dl = ol
+    if ut > 0.0 then
+        if ul <= 0.0 then
+            dl = 0.0
+        elseif ol >= 100.0 then
+            dl = 100.0
+        else
+            dl = math.min(100.0, (ul / (100.0 - ol)) * 100.0)
+        end
+    end
+    return (1.0 - ot) * ul + ot * dl
+end
+
+---@param ul number under light
+---@param ol number over light
+---@param ut number under alpha
+---@param ot number over alpha
+---@return number cl
+local function lCompDiff(ul, ol, ut, ot)
+    local dl <const> = ut > 0.0 and math.abs(ul - ol) or ol
+    return (1.0 - ot) * ul + ot * dl
+end
+
+---@param ul number under light
+---@param ol number over light
+---@param ut number under alpha
+---@param ot number over alpha
+---@return number cl
 local function lCompDiv(ul, ol, ut, ot)
     local dl <const> = ut > 0.0
         and (ol ~= 0.0
             and (ul / ol) * 100.0
             or 100.0)
+        or ol
+    return (1.0 - ot) * ul + ot * dl
+end
+
+---@param ul number under light
+---@param ol number over light
+---@param ut number under alpha
+---@param ot number over alpha
+---@return number cl
+local function lCompExclude(ul, ol, ut, ot)
+    local dl <const> = ut > 0.0
+        and ul + ol - (2.0 * ul * ol) * 0.01
         or ol
     return (1.0 - ot) * ul + ot * dl
 end
@@ -237,6 +301,7 @@ end
 local function lCompScreen(ul, ol, ut, ot)
     local dl <const> = ut > 0.0
         and ul + ol - (ul * ol) * 0.01
+        -- and 100.0 - ((100.0 - ul) * (100.0 - ol)) * 0.01
         or ol
     return (1.0 - ot) * ul + ot * dl
 end
@@ -265,7 +330,7 @@ end
 ---@param ut number under alpha
 ---@param ot number over alpha
 ---@return number cl
-local function lCompHardlight(ul, ol, ut, ot)
+local function lCompHardLight(ul, ol, ut, ot)
     if ol <= 50.0 then return lCompMul(ul, ol + ol, ut, ot) end
     return lCompScreen(ul, ol + ol - 100.0, ut, ot)
 end
@@ -513,10 +578,18 @@ dlg:button {
 
         if lPreset == "ADD" then
             lBlendFunc = lCompAdd
+        elseif lPreset == "COLOR_BURN" then
+            lBlendFunc = lCompColorBurn
+        elseif lPreset == "COLOR_DODGE" then
+            lBlendFunc = lCompColorDodge
+        elseif lPreset == "DIFFERENCE" then
+            lBlendFunc = lCompDiff
         elseif lPreset == "DIVIDE" then
             lBlendFunc = lCompDiv
+        elseif lPreset == "EXCLUDE" then
+            lBlendFunc = lCompExclude
         elseif lPreset == "HARD_LIGHT" then
-            lBlendFunc = lCompHardlight
+            lBlendFunc = lCompHardLight
         elseif lPreset == "MULTIPLY" then
             lBlendFunc = lCompMul
         elseif lPreset == "OVER" then
