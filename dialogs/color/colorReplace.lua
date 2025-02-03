@@ -343,8 +343,12 @@ dlg:button {
                 return
             end
 
+            local trgFrames <const> = Utilities.flatArr2(
+                AseUtilities.getFrames(
+                    activeSprite, target ~= "SELECTION"
+                    and target or "ALL"))
             local trgCels <const> = AseUtilities.filterCels(
-                activeSprite, activeLayer, activeSprite.frames, target,
+                activeSprite, activeLayer, trgFrames, target,
                 includeLocked, includeHidden, false, includeBkg)
             local lenTrgCels <const> = #trgCels
 
