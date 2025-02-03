@@ -343,12 +343,10 @@ dlg:button {
                 return
             end
 
-            -- TODO: Problem is that target layers and
-            -- and target frames is ambiguous here.
-            local trgFrames <const> = (target == "ACTIVE"
-                    or target == "SELECTION")
-                and { activeFrame }
-                or activeSprite.frames
+            local trgFrames <const> = Utilities.flatArr2(
+                AseUtilities.getFrames(
+                    activeSprite, target ~= "SELECTION"
+                    and target or "ALL"))
             local trgCels <const> = AseUtilities.filterCels(
                 activeSprite, activeLayer, trgFrames, target,
                 includeLocked, includeHidden, false, includeBkg)
