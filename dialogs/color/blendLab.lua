@@ -6,6 +6,7 @@ local delOptions <const> = { "DELETE_CELS", "DELETE_LAYER", "HIDE", "NONE" }
 
 local abCompOptions <const> = {
     "ADD",
+    "AVERAGE",
     "BLEND",
     "OVER",
     "SUBTRACT",
@@ -30,6 +31,7 @@ local lCompOptions <const> = {
     -- Commit with expanded options:
     -- 67c3b47218af708e478d1b585d9c860148905772
     "ADD",
+    "AVERAGE",
     "BLEND",
     "DIVIDE",
     "MULTIPLY",
@@ -74,6 +76,23 @@ local function abCompAdd(ua, ub, oa, ob, ut, ot)
     local utgt0 <const> = ut > 0.0
     local da <const> = utgt0 and ua + oa or oa
     local db <const> = utgt0 and ub + ob or ob
+    return nt * ua + ot * da,
+        nt * ub + ot * db
+end
+
+---@param ua number under a
+---@param ub number under b
+---@param oa number over a
+---@param ob number over b
+---@param ut number under alpha
+---@param ot number over alpha
+---@return number ca
+---@return number cb
+local function abCompAverage(ua, ub, oa, ob, ut, ot)
+    local nt <const> = 1.0 - ot
+    local utgt0 <const> = ut > 0.0
+    local da <const> = utgt0 and (ua + oa) * 0.5 or oa
+    local db <const> = utgt0 and (ub + ob) * 0.5 or ob
     return nt * ua + ot * da,
         nt * ub + ot * db
 end
@@ -183,6 +202,16 @@ end
 ---@return number cl
 local function lCompAdd(ul, ol, ut, ot)
     local dl <const> = ut > 0.0 and ul + ol or ol
+    return (1.0 - ot) * ul + ot * dl
+end
+
+---@param ul number under light
+---@param ol number over light
+---@param ut number under alpha
+---@param ot number over alpha
+---@return number cl
+local function lCompAverage(ul, ol, ut, ot)
+    local dl <const> = ut > 0.0 and (ul + ol) * 0.5 or ol
     return (1.0 - ot) * ul + ot * dl
 end
 
@@ -505,6 +534,8 @@ dlg:button {
 
         if lPreset == "ADD" then
             lBlendFunc = lCompAdd
+        elseif lPreset == "AVERAGE" then
+            lBlendFunc = lCompAverage
         elseif lPreset == "DIVIDE" then
             lBlendFunc = lCompDiv
         elseif lPreset == "MULTIPLY" then
@@ -537,6 +568,8 @@ dlg:button {
         else
             if abPreset == "ADD" then
                 abBlendFunc = abCompAdd
+            elseif abPreset == "AVERAGE" then
+                abBlendFunc = abCompAverage
             elseif abPreset == "OVER" then
                 abBlendFunc = abCompOver
             elseif abPreset == "SUBTRACT" then

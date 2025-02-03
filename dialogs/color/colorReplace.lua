@@ -343,6 +343,7 @@ dlg:button {
                 return
             end
 
+            -- TODO: Separate target layer and frame in dialog GUI.
             local trgFrames <const> = Utilities.flatArr2(
                 AseUtilities.getFrames(
                     activeSprite, target ~= "SELECTION"
