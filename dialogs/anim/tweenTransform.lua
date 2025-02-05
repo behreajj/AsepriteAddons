@@ -671,7 +671,7 @@ dlg:button {
         end
 
         -- Cache global methods to local.
-        local flattenGroup <const> = AseUtilities.flattenGroup
+        local flatToImg <const> = AseUtilities.flatToImage
         local trimImageAlpha <const> = AseUtilities.trimImageAlpha
         local tileMapToImage <const> = AseUtilities.tileMapToImage
         local resize <const> = AseUtilities.resizeImageNearest
@@ -718,7 +718,7 @@ dlg:button {
                 local isValid <const>,
                 flatImg <const>,
                 xTlFlat <const>,
-                yTlFlat <const> = flattenGroup(
+                yTlFlat <const> = flatToImg(
                     srcLayer, srcFrIdx, colorMode,
                     colorSpace, alphaIndex,
                     true, false, true, true)

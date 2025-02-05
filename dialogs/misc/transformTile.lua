@@ -1074,7 +1074,7 @@ dlg:button {
         if activeLayer.isGroup then
             local isValid = false
             isValid, srcImg, xtl, ytl,
-            celOpacity, zIndex = AseUtilities.flattenGroup(
+            celOpacity, zIndex = AseUtilities.flatToImage(
                 activeLayer, activeFrame,
                 colorMode, colorSpace, alphaIndex,
                 true, false, true, true)

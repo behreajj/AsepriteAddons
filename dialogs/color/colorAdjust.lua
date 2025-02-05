@@ -24,8 +24,9 @@ local targets <const> = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
 local modes <const> = { "LAB", "LCH" }
 
 local defaults <const> = {
-    -- TODO: Separate frame target and layer target
-    -- at least for selections...
+    -- TODO: Separate frame target and layer target. See convention est.
+    -- by colorReplace (the relevant difference being that replace edits
+    -- a layer as is.)
     target = "ACTIVE",
     mode = "LCH",
     contrast = 0,
@@ -715,30 +716,24 @@ dlg:button {
 
         -- This needs to be done first, otherwise range will be lost.
         local isSelect <const> = target == "SELECTION"
-        local frames <const> = Utilities.flatArr2(
+        local frIdcs <const> = Utilities.flatArr2(
             AseUtilities.getFrames(activeSprite,
                 isSelect and "ALL" or target))
-        local lenFrames <const> = #frames
+        local lenFrIdcs <const> = #frIdcs
 
         -- If isSelect is true, then a new layer will be created.
         local srcLayer = site.layer --[[@as Layer]]
 
+        local removeSrcLayer = false
         if isSelect then
-            AseUtilities.filterCels(activeSprite, srcLayer, frames, "SELECTION")
+            AseUtilities.filterCels(activeSprite, srcLayer, frIdcs, "SELECTION")
             srcLayer = activeSprite.layers[#activeSprite.layers]
+            removeSrcLayer = true
         else
             if not srcLayer then
                 app.alert {
                     title = "Error",
                     text = "There is no active layer."
-                }
-                return
-            end
-
-            if srcLayer.isGroup then
-                app.alert {
-                    title = "Error",
-                    text = "Group layers are not supported."
                 }
                 return
             end
@@ -749,6 +744,15 @@ dlg:button {
                     text = "Reference layers are not supported."
                 }
                 return
+            end
+
+            if srcLayer.isGroup then
+                app.transaction("Flatten Group", function()
+                    srcLayer = AseUtilities.flattenGroup(
+                        activeSprite, srcLayer, frIdcs,
+                        true, false, true, true)
+                    removeSrcLayer = true
+                end)
             end
         end
 
@@ -861,9 +865,9 @@ dlg:button {
             -- Do not copy blend mode, it only confuses things.
 
             local h = 0
-            while h < lenFrames do
+            while h < lenFrIdcs do
                 h = h + 1
-                local srcFrame <const> = frames[h]
+                local srcFrame <const> = frIdcs[h]
                 local srcCel <const> = srcLayer:cel(srcFrame)
                 if srcCel then
                     local srcImg = srcCel.image
@@ -1031,7 +1035,7 @@ dlg:button {
             trgImg.bytes = tconcat(trgByteArr)
         end
 
-        if isSelect then
+        if removeSrcLayer then
             app.transaction("Delete Layer", function()
                 activeSprite:deleteLayer(srcLayer)
             end)

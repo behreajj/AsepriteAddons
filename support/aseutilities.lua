@@ -1745,7 +1745,82 @@ function AseUtilities.filterLayers(
     end
 end
 
----Flattens a group layer to a composite image.
+---Creates a composite image from a group at a given frame.
+---Generates multiple transactions: new layer, new cel,
+---setting layer properties.
+---Does not remove source layer from sprite.
+---@param sprite Sprite sprite
+---@param activeLayer Layer group layer
+---@param frames Frame[]|integer[] frames
+---@param includeLocked? boolean include locked layers
+---@param includeHidden? boolean include hidden layers
+---@param includeTiles? boolean include tile maps
+---@param includeBkg? boolean include backgrounds
+---@return Layer flattened
+function AseUtilities.flattenGroup(
+    sprite, activeLayer, frames,
+    includeLocked, includeHidden, includeTiles, includeBkg)
+    local ilVerif = true
+    local ihVerif = true
+    local itVerif = true
+    local ibVerif = true
+
+    if includeLocked ~= nil then ilVerif = includeLocked end
+    if includeHidden ~= nil then ihVerif = includeHidden end
+    if includeTiles ~= nil then itVerif = includeTiles end
+    if includeBkg ~= nil then ibVerif = includeBkg end
+
+    local flattened <const> = sprite:newLayer()
+
+    local spriteSpec <const> = sprite.spec
+    local colorMode <const> = spriteSpec.colorMode
+    local colorSpace <const> = spriteSpec.colorSpace
+    local alphaIndex <const> = spriteSpec.transparentColor
+
+    local flatToImg <const> = AseUtilities.flatToImage
+    local lenFrames <const> = #frames
+    local i = 0
+    while i < lenFrames do
+        i = i + 1
+        local frame <const> = frames[i]
+        local isValid <const>,
+        flatImg <const>,
+        xTl <const>,
+        yTl <const> = flatToImg(
+            activeLayer, frame,
+            colorMode, colorSpace, alphaIndex,
+            ilVerif, ihVerif, itVerif, ibVerif)
+        if isValid then
+            sprite:newCel(
+                flattened, frame, flatImg,
+                Point(xTl, yTl))
+        end
+    end
+
+    local layerName = "Flattened"
+    if activeLayer.name and #activeLayer.name > 0 then
+        local srcName <const> = activeLayer.name
+        if srcName ~= "Group" then
+            layerName = Utilities.validateFilename(srcName)
+        end
+    end
+    flattened.name = layerName
+
+    flattened.blendMode = activeLayer.blendMode or BlendMode.NORMAL
+    flattened.color = AseUtilities.aseColorCopy(activeLayer.color, "")
+    flattened.data = activeLayer.data
+    flattened.opacity = activeLayer.opacity or 255
+    flattened.parent = activeLayer.parent
+    flattened.stackIndex = activeLayer.stackIndex
+
+    flattened.isContinuous = activeLayer.isContinuous
+    flattened.isEditable = activeLayer.isEditable
+    flattened.isVisible = activeLayer.isVisible
+
+    return flattened
+end
+
+---Creates a composite image from a group at a given frame.
 ---@param layer Layer group layer
 ---@param frame Frame|integer frame
 ---@param colorMode ColorMode sprite color mode
@@ -1763,7 +1838,7 @@ end
 ---@return integer yTl
 ---@return integer celOpacity
 ---@return integer zIndex
-function AseUtilities.flattenGroup(
+function AseUtilities.flatToImage(
     layer, frame, colorMode, colorSpace, alphaIndex,
     includeLocked, includeHidden, includeTiles, includeBkg,
     wDefault, hDefault)
@@ -1781,7 +1856,7 @@ function AseUtilities.flattenGroup(
             if children then
                 local lenChildren <const> = #children
 
-                local flattenGroup <const> = AseUtilities.flattenGroup
+                local flatToImg <const> = AseUtilities.flatToImage
                 local blendImage <const> = AseUtilities.blendImage
                 local floor <const> = math.floor
 
@@ -1809,7 +1884,7 @@ function AseUtilities.flattenGroup(
                     xTlChild <const>,
                     yTlChild <const>,
                     celOpacityChild <const>,
-                    zIndexChild <const> = flattenGroup(child,
+                    zIndexChild <const> = flatToImg(child,
                         frame, colorMode, colorSpace, alphaIndex,
                         includeLocked, includeHidden, includeTiles, includeBkg,
                         wDefault, hDefault)
@@ -1843,8 +1918,8 @@ function AseUtilities.flattenGroup(
                     end -- End child is valid.
                 end     -- End children loop.
 
-                -- TODO: Composite order here does not match Aseprite.
-                -- Might have to accumulate packet with internal helper.
+                -- Composite order here does match Aseprite.... but for now
+                -- their composite is borked anyway.
 
                 -- https://github.com/aseprite/aseprite/blob/main/docs/ase-file-specs.md#note5
                 table.sort(packets, function(a, b)
@@ -1890,6 +1965,7 @@ function AseUtilities.flattenGroup(
                             local layerOpacityChild <const> = packet.layerOpacity --[[@as integer]]
                             local celOpacityChild <const> = packet.celOpacity --[[@as integer]]
 
+                            -- TODO: Make this multiplication more efficient.
                             local lOpac01 <const> = layerOpacityChild / 255.0
                             local cOpac01 <const> = celOpacityChild / 255.0
                             local lcOpac01 <const> = lOpac01 * cOpac01
@@ -1925,8 +2001,9 @@ function AseUtilities.flattenGroup(
     end         -- End layer is visible.
 
     if not image then
-        image = Image(AseUtilities.createSpec(wDefault, hDefault, colorMode,
-            colorSpace, alphaIndex))
+        image = Image(AseUtilities.createSpec(
+            wDefault, hDefault,
+            colorMode, colorSpace, alphaIndex))
     end
 
     return isValid, image, xTl, yTl, celOpacity, zIndex
