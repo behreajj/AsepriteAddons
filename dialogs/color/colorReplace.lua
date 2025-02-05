@@ -1,6 +1,7 @@
 dofile("../../support/aseutilities.lua")
 
-local targets <const> = {
+-- The layer target plus tile sets.
+local majorTargets <const> = {
     "ACTIVE",
     "ALL",
     "RANGE",
@@ -9,14 +10,22 @@ local targets <const> = {
     "TILE_SETS"
 }
 
+-- The frame target.
+local minorTargets <const> = {
+    "ACTIVE",
+    "ALL",
+    "RANGE",
+    "TAG"
+}
+
 local defaults <const> = {
-    target = "ACTIVE",
+    majorTarget = "ACTIVE",
+    minorTarget = "ACTIVE",
     includeLocked = false,
     includeHidden = false,
     tolerance = 0,
     switchColors = false,
     ignoreAlpha = false,
-    pullFocus = true
 }
 
 ---@param a { l: number, a: number, b: number, alpha: number }
@@ -82,25 +91,45 @@ end
 local dlg <const> = Dialog { title = "Replace Color" }
 
 dlg:combobox {
-    id = "target",
+    id = "majorTarget",
     label = "Target:",
-    option = defaults.target,
-    options = targets,
+    option = defaults.majorTarget,
+    options = majorTargets,
     onchange = function()
         local args <const> = dlg.data
-        local target <const> = args.target --[[@as string]]
+        local majorTarget <const> = args.majorTarget --[[@as string]]
         local tolerance <const> = args.tolerance --[[@as integer]]
 
-        local notTileset <const> = target ~= "TILE_SET"
-        local notTileSets <const> = target ~= "TILE_SETS"
-        local notSel <const> = target ~= "SELECTION"
+        local notTileset <const> = majorTarget ~= "TILE_SET"
+        local notTileSets <const> = majorTarget ~= "TILE_SETS"
+        local notSel <const> = majorTarget ~= "SELECTION"
 
+        dlg:modify { id = "minorTarget", visible = notTileset and notTileSets }
         dlg:modify { id = "includeLocked", visible = notSel and notTileSets }
         dlg:modify { id = "includeHidden", visible = notSel and notTileSets }
         dlg:modify { id = "tolerance", visible = notTileSets and notTileset }
         dlg:modify { id = "ignoreAlpha", visible = notTileSets and notTileset
             and tolerance > 0 }
+
+        if majorTarget == "ALL" then
+            dlg:modify { id = "minorTarget", option = "ALL" }
+        elseif majorTarget == "ACTIVE" then
+            dlg:modify { id = "minorTarget", option = "ACTIVE" }
+        elseif majorTarget == "RANGE" then
+            dlg:modify { id = "minorTarget", option = "RANGE" }
+        end
     end
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "minorTarget",
+    label = "Frames:",
+    option = defaults.minorTarget,
+    options = minorTargets,
+    visible = defaults.majorTarget ~= "TILE_SET"
+        and defaults.majorTarget ~= "TILE_SETS",
 }
 
 dlg:newrow { always = false }
@@ -110,16 +139,16 @@ dlg:check {
     label = "Include:",
     text = "&Locked",
     selected = defaults.includeLocked,
-    visible = defaults.target ~= "TILE_SETS"
-        and defaults.target ~= "SELECTION"
+    visible = defaults.majorTarget ~= "TILE_SETS"
+        and defaults.majorTarget ~= "SELECTION"
 }
 
 dlg:check {
     id = "includeHidden",
     text = "&Hidden",
     selected = defaults.includeHidden,
-    visible = defaults.target ~= "TILE_SETS"
-        and defaults.target ~= "SELECTION"
+    visible = defaults.majorTarget ~= "TILE_SETS"
+        and defaults.majorTarget ~= "SELECTION"
 }
 
 dlg:newrow { always = false }
@@ -146,15 +175,15 @@ dlg:slider {
     min = 0,
     max = 255,
     value = defaults.tolerance,
-    visible = defaults.target ~= "TILE_SET"
-        and defaults.target ~= "TILE_SETS",
+    visible = defaults.majorTarget ~= "TILE_SET"
+        and defaults.majorTarget ~= "TILE_SETS",
     onchange = function()
         local args <const> = dlg.data
-        local target <const> = args.target --[[@as string]]
+        local majorTarget <const> = args.majorTarget --[[@as string]]
         local tolerance <const> = args.tolerance --[[@as integer]]
 
         local tolGtZero <const> = tolerance > 0
-        local noTiles <const> = target ~= "TILE_SET" and target ~= "TILE_SETS"
+        local noTiles <const> = majorTarget ~= "TILE_SET" and majorTarget ~= "TILE_SETS"
 
         dlg:modify { id = "ignoreAlpha", visible = noTiles and tolGtZero }
         dlg:modify { id = "switchColors", visible = (not tolGtZero) }
@@ -168,8 +197,8 @@ dlg:check {
     label = "Ignore:",
     text = "&Alpha",
     selected = defaults.ignoreAlpha,
-    visible = defaults.target ~= "TILE_SET"
-        and defaults.target ~= "TILE_SETS"
+    visible = defaults.majorTarget ~= "TILE_SET"
+        and defaults.majorTarget ~= "TILE_SETS"
         and defaults.tolerance > 0
 }
 
@@ -188,7 +217,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "ok",
     text = "&OK",
-    focus = defaults.pullFocus,
+    focus = true,
     onclick = function()
         -- Early returns.
         local site <const> = app.site
@@ -201,8 +230,10 @@ dlg:button {
 
         -- Unpack arguments.
         local args <const> = dlg.data
-        local target <const> = args.target
-            or defaults.target --[[@as string]]
+        local majorTarget <const> = args.majorTarget
+            or defaults.majorTarget --[[@as string]]
+        local minorTarget <const> = args.minorTarget
+            or defaults.minorTarget --[[@as string]]
         local frColor <const> = args.fromColor --[[@as Color]]
         local toColor <const> = args.toColor --[[@as Color]]
         local tolerance <const> = args.tolerance
@@ -241,8 +272,8 @@ dlg:button {
             return
         end
 
-        local replaceTileSet <const> = target == "TILE_SET"
-        local replaceAllTiles <const> = target == "TILE_SETS"
+        local replaceTileSet <const> = majorTarget == "TILE_SET"
+        local replaceAllTiles <const> = majorTarget == "TILE_SETS"
         if frInt == toInt
             and (exactSearch
                 or (replaceTileSet or replaceAllTiles)) then
@@ -343,13 +374,11 @@ dlg:button {
                 return
             end
 
-            -- TODO: Separate target layer and frame in dialog GUI.
             local trgFrames <const> = Utilities.flatArr2(
                 AseUtilities.getFrames(
-                    activeSprite, target ~= "SELECTION"
-                    and target or "ALL"))
+                    activeSprite, minorTarget))
             local trgCels <const> = AseUtilities.filterCels(
-                activeSprite, activeLayer, trgFrames, target,
+                activeSprite, activeLayer, trgFrames, majorTarget,
                 includeLocked, includeHidden, false, includeBkg)
             local lenTrgCels <const> = #trgCels
 
