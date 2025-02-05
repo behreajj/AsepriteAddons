@@ -172,14 +172,6 @@ dlg:button {
             return
         end
 
-        if srcLayer.isGroup then
-            app.alert {
-                title = "Error",
-                text = "Group layers are not supported."
-            }
-            return
-        end
-
         if srcLayer.isReference then
             app.alert {
                 title = "Error",
@@ -192,6 +184,14 @@ dlg:button {
             app.alert {
                 title = "Error",
                 text = "Background layer cannot be the source."
+            }
+            return
+        end
+
+        if srcLayer.isGroup then
+            app.alert {
+                title = "Error",
+                text = "Group layers are not supported."
             }
             return
         end

@@ -460,18 +460,18 @@ dlg:button {
         local underIndex <const> = overIndex - 1
         local aLayer <const> = parent.layers[underIndex]
 
-        if bLayer.isGroup or aLayer.isGroup then
-            app.alert {
-                title = "Error",
-                text = "Group layers are not supported."
-            }
-            return
-        end
-
         if bLayer.isReference or aLayer.isReference then
             app.alert {
                 title = "Error",
                 text = "Reference layers are not supported."
+            }
+            return
+        end
+
+        if bLayer.isGroup or aLayer.isGroup then
+            app.alert {
+                title = "Error",
+                text = "Group layers are not supported."
             }
             return
         end

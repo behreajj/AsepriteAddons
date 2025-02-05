@@ -100,18 +100,18 @@ dlg:button {
                 return
             end
 
-            if srcLayer.isGroup then
-                app.alert {
-                    title = "Error",
-                    text = "Group layers are not supported."
-                }
-                return
-            end
-
             if srcLayer.isReference then
                 app.alert {
                     title = "Error",
                     text = "Reference layers are not supported."
+                }
+                return
+            end
+
+            if srcLayer.isGroup then
+                app.alert {
+                    title = "Error",
+                    text = "Group layers are not supported."
                 }
                 return
             end
