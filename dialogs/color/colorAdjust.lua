@@ -747,8 +747,6 @@ dlg:button {
             end
 
             if srcLayer.isGroup then
-                -- TODO: Support this pattern elsewhere.
-                -- Search for "Group layers are not supported."
                 app.transaction("Flatten Group", function()
                     srcLayer = AseUtilities.flattenGroup(
                         activeSprite, srcLayer, frIdcs,

@@ -108,6 +108,7 @@ dlg:button {
                 return
             end
 
+            -- TODO: Support groups as with colorAdjust.
             if srcLayer.isGroup then
                 app.alert {
                     title = "Error",
