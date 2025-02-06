@@ -1760,8 +1760,12 @@ end
 function AseUtilities.flattenGroup(
     sprite, activeLayer, frames,
     includeLocked, includeHidden, includeTiles, includeBkg)
+    -- The default policy for visibility is tricky. If false, then a single
+    -- active, invisible parent layer will yield an empty result, even when
+    -- other filters may have set it to hidden. If true, then children may
+    -- appear in result even when they've been hidden by the user.
     local ilVerif = true
-    local ihVerif = true
+    local ihVerif = false
     local itVerif = true
     local ibVerif = true
 

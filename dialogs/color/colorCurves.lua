@@ -249,17 +249,18 @@ dlg:button {
 
         -- This needs to be done first, otherwise range will be lost.
         local isSelect <const> = target == "SELECTION"
-        local frames <const> = Utilities.flatArr2(
+        local frIdcs <const> = Utilities.flatArr2(
             AseUtilities.getFrames(activeSprite,
                 isSelect and "ALL" or target))
-        local lenFrames <const> = #frames
+        local lenFrIdcs <const> = #frIdcs
 
-        -- If isSelect is true, then a new layer will be created.
         local srcLayer = site.layer --[[@as Layer]]
+        local removeSrcLayer = false
 
         if isSelect then
-            AseUtilities.filterCels(activeSprite, srcLayer, frames, "SELECTION")
+            AseUtilities.filterCels(activeSprite, srcLayer, frIdcs, "SELECTION")
             srcLayer = activeSprite.layers[#activeSprite.layers]
+            removeSrcLayer = true
         else
             if not srcLayer then
                 app.alert {
@@ -277,13 +278,14 @@ dlg:button {
                 return
             end
 
-            -- TODO: Support groups as with colorAdjust.
             if srcLayer.isGroup then
-                app.alert {
-                    title = "Error",
-                    text = "Group layers are not supported."
-                }
-                return
+                if srcLayer.isGroup then
+                    app.transaction("Flatten Group", function()
+                        srcLayer = AseUtilities.flattenGroup(
+                            activeSprite, srcLayer, frIdcs)
+                        removeSrcLayer = true
+                    end)
+                end
             end
         end
 
@@ -388,9 +390,9 @@ dlg:button {
         local transact <const> = app.transaction
 
         local k = 0
-        while k < lenFrames do
+        while k < lenFrIdcs do
             k = k + 1
-            local frIdx <const> = frames[k]
+            local frIdx <const> = frIdcs[k]
             local srcCel <const> = srcLayer:cel(frIdx)
 
             if srcCel then
@@ -540,7 +542,7 @@ dlg:button {
             end -- End cel exists.
         end     -- End frames loop.
 
-        if isSelect then
+        if removeSrcLayer then
             app.transaction("Delete Layer", function()
                 activeSprite:deleteLayer(srcLayer)
             end)

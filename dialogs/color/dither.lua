@@ -366,12 +366,13 @@ dlg:button {
                 isSelect and "ALL" or areaTarget))
         local lenFrIdcs <const> = #frIdcs
 
-        -- If isSelect is true, then a new layer will be created.
         local srcLayer = site.layer --[[@as Layer]]
+        local removeSrcLayer = false
 
         if isSelect then
             AseUtilities.filterCels(activeSprite, srcLayer, frIdcs, "SELECTION")
             srcLayer = activeSprite.layers[#activeSprite.layers]
+            removeSrcLayer = true
         else
             if not srcLayer then
                 app.alert {
@@ -389,13 +390,12 @@ dlg:button {
                 return
             end
 
-            -- TODO: Support groups as with colorAdjust.
             if srcLayer.isGroup then
-                app.alert {
-                    title = "Error",
-                    text = "Group layers are not supported."
-                }
-                return
+                app.transaction("Flatten Group", function()
+                    srcLayer = AseUtilities.flattenGroup(
+                        activeSprite, srcLayer, frIdcs)
+                    removeSrcLayer = true
+                end)
             end
         end
 
@@ -742,7 +742,7 @@ dlg:button {
             end -- End source cel exists.
         end     -- End frames loop.
 
-        if isSelect then
+        if removeSrcLayer then
             app.transaction("Delete Layer", function()
                 activeSprite:deleteLayer(srcLayer)
             end)

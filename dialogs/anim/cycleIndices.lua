@@ -102,10 +102,10 @@ dlg:button {
 
         -- This needs to be done first, otherwise range will be lost.
         local isSelect <const> = target == "SELECTION"
-        local frames <const> = Utilities.flatArr2(
+        local frIdcs <const> = Utilities.flatArr2(
             AseUtilities.getFrames(activeSprite,
                 isSelect and "ALL" or target))
-        local lenFrames <const> = #frames
+        local lenFrIdcs <const> = #frIdcs
 
         -- Unpack sprite spec.
         local activeSpec <const> = activeSprite.spec
@@ -117,6 +117,8 @@ dlg:button {
         local baseIndex = 0
 
         local srcLayer = site.layer --[[@as Layer]]
+        local removeSrcLayer = false
+
         if isSelect then
             if colorMode ~= ColorMode.INDEXED then
                 app.alert {
@@ -126,8 +128,9 @@ dlg:button {
                 return
             end
 
-            AseUtilities.filterCels(activeSprite, srcLayer, frames, "SELECTION")
+            AseUtilities.filterCels(activeSprite, srcLayer, frIdcs, "SELECTION")
             srcLayer = activeSprite.layers[#activeSprite.layers]
+            removeSrcLayer = true
         else
             if not srcLayer then
                 app.alert {
@@ -145,13 +148,12 @@ dlg:button {
                 return
             end
 
-            -- TODO: Support groups as with colorAdjust.
             if srcLayer.isGroup then
-                app.alert {
-                    title = "Error",
-                    text = "Group layers are not supported."
-                }
-                return
+                app.transaction("Flatten Group", function()
+                    srcLayer = AseUtilities.flattenGroup(
+                        activeSprite, srcLayer, frIdcs)
+                    removeSrcLayer = true
+                end)
             end
 
             -- Check for tile map support.
@@ -278,9 +280,9 @@ dlg:button {
 
         app.transaction("Cycle Indices", function()
             local i = 0
-            while i < lenFrames do
+            while i < lenFrIdcs do
                 i = i + 1
-                local srcFrame <const> = frames[i]
+                local srcFrame <const> = frIdcs[i]
                 local srcCel <const> = srcLayer:cel(srcFrame)
                 if srcCel then
                     local srcPos <const> = srcCel.position
@@ -379,7 +381,7 @@ dlg:button {
             end
         end)
 
-        if isSelect then
+        if removeSrcLayer then
             app.transaction("Delete Layer", function()
                 activeSprite:deleteLayer(srcLayer)
             end)

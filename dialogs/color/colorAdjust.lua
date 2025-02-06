@@ -721,10 +721,9 @@ dlg:button {
                 isSelect and "ALL" or target))
         local lenFrIdcs <const> = #frIdcs
 
-        -- If isSelect is true, then a new layer will be created.
         local srcLayer = site.layer --[[@as Layer]]
-
         local removeSrcLayer = false
+
         if isSelect then
             AseUtilities.filterCels(activeSprite, srcLayer, frIdcs, "SELECTION")
             srcLayer = activeSprite.layers[#activeSprite.layers]
@@ -749,8 +748,7 @@ dlg:button {
             if srcLayer.isGroup then
                 app.transaction("Flatten Group", function()
                     srcLayer = AseUtilities.flattenGroup(
-                        activeSprite, srcLayer, frIdcs,
-                        true, false, true, true)
+                        activeSprite, srcLayer, frIdcs)
                     removeSrcLayer = true
                 end)
             end
