@@ -1969,12 +1969,8 @@ function AseUtilities.flatToImage(
                             local layerOpacityChild <const> = packet.layerOpacity --[[@as integer]]
                             local celOpacityChild <const> = packet.celOpacity --[[@as integer]]
 
-                            -- TODO: Make this multiplication more efficient.
-                            local lOpac01 <const> = layerOpacityChild / 255.0
-                            local cOpac01 <const> = celOpacityChild / 255.0
-                            local lcOpac01 <const> = lOpac01 * cOpac01
-                            local opacityChild <const> = floor(lcOpac01 * 255.0 + 0.5)
-
+                            local opacityChild <const> = floor(
+                                (layerOpacityChild * celOpacityChild) / 255.0 + 0.5)
                             image:drawImage(imageChild, Point(xBlit, yBlit),
                                 opacityChild, blendModeChild)
                         end -- End color mode is indexed.
