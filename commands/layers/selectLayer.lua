@@ -92,6 +92,11 @@ local h = lenTopLayers + 1
 while h > 1 do
     h = h - 1
     local topLayer <const> = topLayers[h]
+    -- TODO: Bug as of 1.3.10 beta where a group layer with zero alpha will
+    -- still have its children selected. The problem with fixing this is that
+    -- appendLeaves includes a leaf layer as a child of itself, so its alpha
+    -- would be squared. Might have to do an id check to make sure a leaf
+    -- doesn't match top layer.
     local leaves <const> = appendLeaves(topLayer, {}, true, false, true, true)
     local lenLeaves <const> = #leaves
     local i = lenLeaves + 1
