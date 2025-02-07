@@ -110,3 +110,5 @@ This repo includes
   ![Cel Transformation](screencaps/transformCel.png)
 
 Appearances may vary as features are added to or removed from underlying scripts.
+
+🇹🇼 🇺🇦
