@@ -1,7 +1,5 @@
---[[This could respond to app.preferences.range.opacity being 0 (0 to 255)
-or 1 (0 to 100), some dialogs have wait=true and others wait=false, meaning the
-preference could be changed after the dialog window is opened.
-]]
+-- TODO: If selection exists, display its width and height? Enable movement
+-- of origin and bounds, use app.command?
 
 local aniDirs <const> = {
     "FORWARD",
@@ -24,7 +22,6 @@ local function aniDirToStr(aniDir)
     if aniDir == AniDir.PING_PONG then return "PING_PONG" end
     if aniDir == AniDir.PING_PONG_REVERSE then return "PING_PONG_REVERSE" end
     if aniDir == AniDir.REVERSE then return "REVERSE" end
-
     return "FORWARD"
 end
 
@@ -55,17 +52,21 @@ local site <const> = app.site
 local sprite <const> = site.sprite
 if not sprite then return end
 
+local appPrefs <const> = app.preferences
+local docPrefs <const> = appPrefs.document(sprite)
+local tlPrefs <const> = docPrefs.timeline
+local frameUiOffset <const> = tlPrefs.first_frame - 1 --[[@as integer]]
+local useNewBlend <const> = appPrefs.experimental.new_blend or false
+
 local layer <const> = site.layer or sprite.layers[1]
 local isBkg <const> = layer.isBackground
+local isGroup <const> = layer.isGroup
 local isTilemap <const> = layer.isTilemap
+local hasBlend <const> = (not isBkg) and (useNewBlend or (not isGroup))
 
 local frame <const> = site.frame or sprite.frames[1]
 local cel <const> = layer:cel(frame)
 local tag <const> = app.tag
-
-local docPrefs <const> = app.preferences.document(sprite)
-local tlPrefs <const> = docPrefs.timeline
-local frameUiOffset <const> = tlPrefs.first_frame - 1 --[[@as integer]]
 
 local dlg <const> = Dialog { title = "Properties" }
 
@@ -108,7 +109,7 @@ dlg:entry {
     end
 }
 
-if (not isBkg) then
+if hasBlend then
     dlg:newrow { always = false }
 
     -- This cannot have focus because it may not even be created if the layer
@@ -182,7 +183,9 @@ dlg:entry {
 if isTilemap then
     local tileSet <const> = layer.tileset
     if tileSet then
-        -- TODO: Any way to set the allowed flip flags (X, Y, D)?
+        -- Flip flags seem intended for layer creation, not to be edited in
+        -- an existing tile map, i.e., when to recognize that one tile should
+        -- be created with multiple flags assigned to the map?
 
         local gridSize <const> = tileSet.grid.tileSize
 
