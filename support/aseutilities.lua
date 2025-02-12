@@ -87,6 +87,7 @@ AseUtilities.FILE_FORMATS_PAL = {
 }
 
 ---Table of file extensions supported for save file dialogs.
+---Purposefully excludes jpeg and jpg extensions.
 AseUtilities.FILE_FORMATS_SAVE = {
     "aseprite", "bmp", "flc", "fli",
     "gif", "pcc", "pcx",

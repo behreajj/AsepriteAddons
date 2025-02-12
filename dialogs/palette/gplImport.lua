@@ -34,6 +34,8 @@ dlg:file {
     id = "filepath",
     label = "Path:",
     filetypes = { "gpl", "pal" },
+    -- filename = app.fs.joinPath(app.fs.userDocsPath, "*.gpl") or "",
+    -- entry = true,
     open = true,
     focus = true
 }

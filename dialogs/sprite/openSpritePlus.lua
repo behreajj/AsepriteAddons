@@ -9,7 +9,8 @@ local paletteTypes <const> = {
 
 local defaults <const> = {
     --TODO: The file widget submenu that asks to choose between absolute and
-    -- relative paths makes this cumbersome to use.
+    -- relative paths makes this cumbersome to use. Neither switching to an
+    -- entry formatted opener nor specifying a filename improve the UX.
     removeBkg = true,
     trimCels = true,
     palType = "EMBEDDED",
@@ -24,7 +25,7 @@ local defaults <const> = {
 ---@param filePath string
 ---@return Sprite|nil
 local function loadSprite(filePath)
-    -- GPL and PAL file formats cannot be loaded as sprites.
+    -- Palette file formats cannot be loaded as sprites.
     local fileExt <const> = app.fs.fileExtension(filePath)
     local fileExtLower <const> = string.lower(fileExt)
     local sprite = nil
@@ -99,6 +100,8 @@ dlg:file {
     id = "spriteFile",
     label = "File:",
     filetypes = AseUtilities.FILE_FORMATS_OPEN,
+    -- filename = app.fs.joinPath(app.fs.userDocsPath, "*.aseprite") or "",
+    -- entry = true,
     open = true,
     focus = true
 }
@@ -143,8 +146,11 @@ dlg:newrow { always = false }
 dlg:file {
     id = "palFile",
     filetypes = AseUtilities.FILE_FORMATS_PAL,
+    -- filename = app.fs.joinPath(app.fs.userDocsPath, "*.gpl") or "",
+    -- entry = true,
     open = true,
-    visible = defaults.palType == "FILE"
+    visible = defaults.palType == "FILE",
+    focus = false,
 }
 
 dlg:newrow { always = false }
