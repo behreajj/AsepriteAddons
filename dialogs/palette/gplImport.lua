@@ -220,12 +220,14 @@ dlg:button {
             local lenFileData <const> = #fileData
             -- print(string.format("lenFileData: %d", lenFileData))
 
+            -- YY-CHR generated pal files have no header.
+            -- https://github.com/aseprite/aseprite/issues/1206
             local magicWordRiff <const> = strunpack("<I4",
                 strsub(fileData, 1, 4))
             local magicCheckRiff <const> = strunpack("<I4", "RIFF")
             isValidRiff = magicWordRiff == magicCheckRiff
             -- print(string.format(
-            --     "magicWordRiff: %d, magicCheckRiff: %d %s",
+            --     "magicWordRiff: 0x%08x, magicCheckRiff: 0x%08x %s",
             --     magicWordRiff, magicCheckRiff,
             --     magicWordRiff == magicCheckRiff and "MATCH" or "MISMATCH"))
 
@@ -241,7 +243,7 @@ dlg:button {
             end
             isValidRiff = isValidRiff and magicWordPal == magicCheckPal
             -- print(string.format(
-            --     "i: %d, magicWordPal: %d, magicCheckPal: %d %s",
+            --     "i: %d, magicWordPal: 0x%08x, magicCheckPal: 0x%08x %s",
             --     i, magicWordPal, magicCheckPal,
             --     magicWordPal == magicCheckPal and "MATCH" or "MISMATCH"))
 
@@ -256,7 +258,7 @@ dlg:button {
             end
             isValidRiff = isValidRiff and magicWordData == magicCheckData
             -- print(string.format(
-            --     "i: %d, magicWordData: %d, magicCheckData: %d %s",
+            --     "i: %d, magicWordData: 0x%08x, magicCheckData: 0x%08x %s",
             --     i, magicWordData, magicCheckData,
             --     magicWordData == magicCheckData and "MATCH" or "MISMATCH"))
 

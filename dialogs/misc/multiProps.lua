@@ -1,6 +1,3 @@
--- TODO: If selection exists, display its width and height? Enable movement
--- of origin and bounds, use app.command?
-
 local aniDirs <const> = {
     "FORWARD",
     "REVERSE",
