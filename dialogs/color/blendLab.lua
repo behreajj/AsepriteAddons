@@ -8,6 +8,8 @@ local abCompOptions <const> = {
     "ADD",
     "AVERAGE",
     "BLEND",
+    "CHROMA",
+    "HUE",
     "OVER",
     "SUBTRACT",
     "UNDER"
@@ -76,6 +78,58 @@ local function abCompAdd(ua, ub, oa, ob, ut, ot)
     local utgt0 <const> = ut > 0.0
     local da <const> = utgt0 and ua + oa or oa
     local db <const> = utgt0 and ub + ob or ob
+    return nt * ua + ot * da,
+        nt * ub + ot * db
+end
+
+---@param ua number under a
+---@param ub number under b
+---@param oa number over a
+---@param ob number over b
+---@param ut number under alpha
+---@param ot number over alpha
+---@return number ca
+---@return number cb
+local function abCompChroma(ua, ub, oa, ob, ut, ot)
+    local da, db = oa, ob
+    if ut > 0.0 then
+        local ucsq <const> = ua * ua + ub * ub
+        if ucsq > 0.0 then
+            local ocsq <const> = oa * oa + ob * ob
+            local s <const> = math.sqrt(ocsq) / math.sqrt(ucsq)
+            da, db = s * ua, s * ub
+        else
+            da, db = 0.0, 0.0
+        end
+    end
+
+    local nt <const> = 1.0 - ot
+    return nt * ua + ot * da,
+        nt * ub + ot * db
+end
+
+---@param ua number under a
+---@param ub number under b
+---@param oa number over a
+---@param ob number over b
+---@param ut number under alpha
+---@param ot number over alpha
+---@return number ca
+---@return number cb
+local function abCompHue(ua, ub, oa, ob, ut, ot)
+    local da, db = oa, ob
+    if ut > 0.0 then
+        local ocsq <const> = oa * oa + ob * ob
+        if ocsq > 0.0 then
+            local ucsq <const> = ua * ua + ub * ub
+            local s <const> = math.sqrt(ucsq) / math.sqrt(ocsq)
+            da, db = s * oa, s * ob
+        else
+            da, db = 0.0, 0.0
+        end
+    end
+
+    local nt <const> = 1.0 - ot
     return nt * ua + ot * da,
         nt * ub + ot * db
 end
@@ -570,6 +624,10 @@ dlg:button {
                 abBlendFunc = abCompAdd
             elseif abPreset == "AVERAGE" then
                 abBlendFunc = abCompAverage
+            elseif abPreset == "CHROMA" then
+                abBlendFunc = abCompChroma
+            elseif abPreset == "HUE" then
+                abBlendFunc = abCompHue
             elseif abPreset == "OVER" then
                 abBlendFunc = abCompOver
             elseif abPreset == "SUBTRACT" then
