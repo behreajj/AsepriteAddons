@@ -18,7 +18,10 @@ Unlike `dialog` scripts, it's not always apparent what `commands` scripts do. No
 
 - `growRangeFrames`: Expands the existing range to include more frames. If there is no frame range, then creates one for either the active tag or the active frame.
 
-- `nextFrame`: Moves the active frame to the next frame index. Preserves timeline ranges of `RangeType.LAYERS`. If play once is false, then returns to the first frame after reaching the last.
+- `nextFrame`: Moves the active frame to the next frame index. Preserves timeline ranges of `RangeType.LAYERS`. If play once is 
+false, then returns to the first frame after reaching the last.
+
+- `prependFrame`: Adds a new empty frame before the active frame. The active frame *remains* active.
 
 - `prevFrame`: Moves the active frame to the previous frame index. Preserves timeline ranges of `RangeType.LAYERS`. If play once is false, then returns to the last frame after reaching the first.
 
