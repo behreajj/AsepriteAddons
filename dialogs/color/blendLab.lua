@@ -30,6 +30,8 @@ local hCompOptions <const> = {
 local lCompOptions <const> = {
     -- Commit with expanded options:
     -- 67c3b47218af708e478d1b585d9c860148905772
+    -- AB blend for adopt chroma and hue:
+    -- d69312be1d83862f0bb0c938cd78046c81db447b
     "ADD",
     "AVERAGE",
     "BLEND",
