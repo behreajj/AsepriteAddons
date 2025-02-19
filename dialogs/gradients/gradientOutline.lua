@@ -3,8 +3,6 @@ dofile("../../support/gradientutilities.lua")
 local targets <const> = { "ACTIVE", "ALL", "RANGE" }
 
 local defaults <const> = {
-    -- TODO: This should trim image of excess alpha on completion.
-
     target = "ACTIVE",
     iterations = 1,
     alphaFade = false,
@@ -172,7 +170,6 @@ dlg:button {
     text = "&OK",
     focus = defaults.pullFocus,
     onclick = function()
-        -- TODO: Expose this option?
         local printElapsed <const> = false
         local startTime <const> = os.clock()
 
@@ -449,8 +446,6 @@ dlg:button {
                     i = 0
                     while i < areaTrg do
                         local cRead <const> = read[1 + i]
-                        -- TODO: Make this line and the neighbor line below
-                        -- friendlier to any color mode?
                         if (cRead & 0xff000000) == 0x0
                             or cRead == bkgHex then
                             -- Loop through matrix, check neighbors against
