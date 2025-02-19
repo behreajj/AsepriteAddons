@@ -367,13 +367,13 @@ dlg:button {
             h = h + 1
 
             local srgb = cgeval(gradient, fac, mixFunc)
-            local t <const> = alphaFade
-                and (1.0 - fac) * alphaStart
-                + fac * alphaEnd
-                or srgb.a
+            local u <const> = alphaFade
+                and (1.0 - fac) * alphaEnd
+                + fac * alphaStart
+                or 1.0 - srgb.a
 
             local lab <const> = sRgbaToLab(srgb)
-            local u <const> = 1.0 - t
+            local t <const> = 1.0 - u
             local tuv <const> = t + u * bkgSrgb.a
             local cl <const> = u * bkgLab.l + t * lab.l
             local ca <const> = u * bkgLab.a + t * lab.a
