@@ -26,6 +26,7 @@ local defaults <const> = {
     tolerance = 0,
     switchColors = false,
     ignoreAlpha = false,
+    useTrim = true,
 }
 
 ---@param a { l: number, a: number, b: number, alpha: number }
@@ -214,6 +215,17 @@ dlg:check {
 
 dlg:newrow { always = false }
 
+dlg:check {
+    id = "useTrim",
+    label = "Trim:",
+    text = "Layer Ed&ges",
+    selected = defaults.useTrim,
+    visible = true,
+    focus = false
+}
+
+dlg:newrow { always = false }
+
 dlg:button {
     id = "ok",
     text = "&OK",
@@ -241,6 +253,7 @@ dlg:button {
         local includeLocked <const> = args.includeLocked --[[@as boolean]]
         local includeHidden <const> = args.includeHidden --[[@as boolean]]
         local switchColors <const> = args.switchColors --[[@as boolean]]
+        local useTrim <const> = args.useTrim --[[@as boolean]]
         local ignoreAlpha <const> = args.ignoreAlpha --[[@as boolean]]
 
         -- Cache methods used in all versions of replace.
@@ -248,6 +261,7 @@ dlg:button {
         local strsub <const> = string.sub
         local tconcat <const> = table.concat
         local createSpec <const> = AseUtilities.createSpec
+        local trimImageAlpha <const> = AseUtilities.trimImageAlpha
 
         -- Unpack sprite spec.
         local activeSpec <const> = activeSprite.spec
@@ -429,7 +443,19 @@ dlg:button {
                             colorMode, colorSpace, alphaIndex)
                         local trgImg <const> = Image(trgSpec)
                         trgImg.bytes = tconcat(trgByteStrs)
-                        cel.image = trgImg
+
+                        if useTrim then
+                            local trimmed <const>,
+                            xtlTrm <const>,
+                            ytlTrm <const> = trimImageAlpha(trgImg, 0, alphaIndex)
+                            cel.image = trimmed
+                            local srcPos <const> = cel.position
+                            cel.position = Point(
+                                srcPos.x + xtlTrm,
+                                srcPos.y + ytlTrm)
+                        else
+                            cel.image = trgImg
+                        end
                     end -- End of cels loop.
                 end)    -- End exact transaction.
             else
@@ -459,10 +485,10 @@ dlg:button {
                         local srcImg = cel.image
                         if useExpand then
                             local exp <const>,
-                            xtl <const>,
-                            ytl <const> = expandCelToCanvas(cel, activeSprite)
+                            xtlExp <const>,
+                            ytlExp <const> = expandCelToCanvas(cel, activeSprite)
                             srcImg = exp
-                            cel.position = Point(xtl, ytl)
+                            cel.position = Point(xtlExp, ytlExp)
                         end
 
                         local srcBytes <const> = srcImg.bytes
@@ -507,7 +533,19 @@ dlg:button {
                             colorMode, colorSpace, alphaIndex)
                         local trgImg <const> = Image(trgSpec)
                         trgImg.bytes = tconcat(trgByteStrs)
-                        cel.image = trgImg
+
+                        if useTrim then
+                            local trimmed <const>,
+                            xtlTrm <const>,
+                            ytlTrm <const> = trimImageAlpha(trgImg, 0, alphaIndex)
+                            cel.image = trimmed
+                            local srcPos <const> = cel.position
+                            cel.position = Point(
+                                srcPos.x + xtlTrm,
+                                srcPos.y + ytlTrm)
+                        else
+                            cel.image = trgImg
+                        end
                     end -- End of cels loop.
                 end)    -- End fuzzy transaction.
             end         -- End of exact vs. tolerance.

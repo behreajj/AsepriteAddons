@@ -3,6 +3,8 @@ dofile("../../support/gradientutilities.lua")
 local targets <const> = { "ACTIVE", "ALL", "RANGE" }
 
 local defaults <const> = {
+    -- TODO: This should trim image of excess alpha on completion.
+
     target = "ACTIVE",
     iterations = 1,
     alphaFade = false,

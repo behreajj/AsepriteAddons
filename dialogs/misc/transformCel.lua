@@ -5,6 +5,11 @@ local unitOptions <const> = { "PERCENT", "PIXEL" }
 local coordSystems <const> = { "CENTER", "TOP_LEFT" }
 
 local defaults <const> = {
+    -- TODO: When target is SELECTION, include checkbox to dismiss or
+    -- update the selection after the transformation (use select cel)?
+    -- Problem is that new layer from selection is created in filterCels
+    -- app, so you have to search for that and follow it up every time.
+
     -- Polar and Cartesian coordinates tried in commit
     -- 650a11ebc57a7e4539b5113297f5e2c404978e02 .
     -- Flip h and v position tried in commit
