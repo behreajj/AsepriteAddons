@@ -268,7 +268,7 @@ function Clr.gridsRgb(cols, rows, layers, alpha)
     local cVrf = cols or 2
 
     -- Validate arguments.
-    aVrf = math.min(math.max(aVrf, 0.003921568627451), 1.0)
+    aVrf = math.min(math.max(aVrf, 0.0), 1.0)
     lVrf = math.min(math.max(lVrf, 2), 256)
     rVrf = math.min(math.max(rVrf, 2), 256)
     cVrf = math.min(math.max(cVrf, 2), 256)
