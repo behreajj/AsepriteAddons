@@ -294,11 +294,8 @@ dlg:button {
         local cgeval <const> = ClrGradient.eval
         local toHex <const> = Clr.toHex
 
-        -- TODO: This is the only place where this function is used.
-        -- However, AseUtilities blendRGBA isn't optimal because it uses
-        -- RGB in 0-255, not 0-1. Maybe replace with a LAB blend instead?
-        local blend <const> = Clr.blendInternal
-        local clrNew <const> = Clr.new
+        local labTosRgb <const> = Clr.srLab2TosRgb
+        local sRgbaToLab <const> = Clr.sRgbToSrLab2
         local tilesToImage <const> = AseUtilities.tileMapToImage
         local createSpec <const> = AseUtilities.createSpec
         local strfmt <const> = string.format
@@ -308,8 +305,9 @@ dlg:button {
         local tconcat <const> = table.concat
         local transact <const> = app.transaction
 
-        local bkgClr <const> = AseUtilities.aseColorToClr(aseBkgColor)
-        local bkgHex <const> = toHex(bkgClr)
+        local bkgSrgb <const> = AseUtilities.aseColorToClr(aseBkgColor)
+        local bkgLab <const> = sRgbaToLab(bkgSrgb)
+        local bkgHex <const> = toHex(bkgSrgb)
 
         -- Problem where an iteration is lost when a gradient
         -- evaluate returns the background color. This could
@@ -368,17 +366,21 @@ dlg:button {
             fac = quantize(fac, levels)
             h = h + 1
 
-            local clr = cgeval(gradient, fac, mixFunc)
-            if alphaFade then
-                local a <const> = (1.0 - fac) * alphaStart
-                    + fac * alphaEnd
-                clr = clrNew(clr.r, clr.g, clr.b, a)
-            end
+            local srgb = cgeval(gradient, fac, mixFunc)
+            local t <const> = alphaFade
+                and (1.0 - fac) * alphaStart
+                + fac * alphaEnd
+                or srgb.a
 
-            -- This needs to be blended whether or not alpha fade is on auto,
-            -- because colors from shades may contain alpha as well.
-            clr = blend(bkgClr, clr)
-            local otlHex <const> = toHex(clr)
+            local lab <const> = sRgbaToLab(srgb)
+            local u <const> = 1.0 - t
+            local tuv <const> = t + u * bkgSrgb.a
+            local cl <const> = u * bkgLab.l + t * lab.l
+            local ca <const> = u * bkgLab.a + t * lab.a
+            local cb <const> = u * bkgLab.b + t * lab.b
+
+            srgb = labTosRgb(cl, ca, cb, tuv)
+            local otlHex <const> = toHex(srgb)
             hexesOutline[h] = otlHex
         end
 
