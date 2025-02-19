@@ -293,6 +293,10 @@ dlg:button {
         local quantize <const> = Utilities.quantizeUnsigned
         local cgeval <const> = ClrGradient.eval
         local toHex <const> = Clr.toHex
+
+        -- TODO: This is the only place where this function is used.
+        -- However, AseUtilities blendRGBA isn't optimal because it uses
+        -- RGB in 0-255, not 0-1. Maybe replace with a LAB blend instead?
         local blend <const> = Clr.blendInternal
         local clrNew <const> = Clr.new
         local tilesToImage <const> = AseUtilities.tileMapToImage
