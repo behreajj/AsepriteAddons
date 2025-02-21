@@ -593,10 +593,10 @@ dlg:button {
                                 local clr <const> = fromHex(srcAbgr32)
                                 local lab <const> = sRgbaToLab(clr)
                                 local fac <const> = toFac(lab)
-                                local facw <const> = responseFunc(fac)
 
-                                -- TODO: Shouldn't this multiply against the
-                                -- source alpha?
+                                -- Multiply results with source alpha even when
+                                -- source color is not chosen.
+                                local facw = lab.alpha * responseFunc(fac)
                                 local a8Trg <const> = floor(facw * 255.0 + 0.5)
 
                                 local trgRgb <const> = useSrcClr
