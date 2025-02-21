@@ -26,7 +26,7 @@ local defaults <const> = {
     cVivid = true,
 
     trgHue = 0,
-    hueFocus = 67,
+    respFocus = 67,
 
     -- Because a and b need to be centered about 0.0,
     -- the range is based on the greater number.
@@ -41,6 +41,13 @@ local defaults <const> = {
     bAbsMin = -110.47816964815,
     bAbsRange = 220.9563392963,
     maxChroma = 119.07602046756,
+
+    -- Based on a color with l and alpha zero,
+    -- plus the non-centered a and b minima above,
+    -- distance calculation to a color with l and
+    -- alpha max plus the non-centered a and b max.
+    -- normDist = 1.0 / 295.14803275438,
+    normDist = 0.01,
 }
 
 ---@param x number
@@ -139,7 +146,7 @@ dlg:combobox {
         dlg:modify { id = "cVivid", visible = isc }
 
         dlg:modify { id = "trgHue", visible = ish }
-        dlg:modify { id = "hueFocus", visible = ish }
+        dlg:modify { id = "respFocus", visible = ish or isDist }
         dlg:modify { id = "getHue", visible = ish }
 
         dlg:modify { id = "refColor", visible = isDist }
@@ -242,12 +249,13 @@ dlg:check {
 dlg:newrow { always = false }
 
 dlg:slider {
-    id = "hueFocus",
+    id = "respFocus",
     label = "Focus:",
     min = 0,
-    max = 100,
-    value = defaults.hueFocus,
+    max = 99,
+    value = defaults.respFocus,
     visible = defaults.channel == "H"
+        or defaults.channel == "DIST"
 }
 
 dlg:newrow { always = false }
@@ -491,18 +499,18 @@ dlg:button {
         elseif channel == "H" then
             local trgHueDeg <const> = args.trgHue
                 or defaults.trgHue --[[@as integer]]
-            local hueFocus100 <const> = args.hueFocus
-                or defaults.hueFocus --[[@as integer]]
+            local respFocus100 <const> = args.respFocus
+                or defaults.respFocus --[[@as integer]]
 
             biasLabel = string.format(
                 " H %03d F %03d",
-                trgHueDeg, hueFocus100)
+                trgHueDeg, respFocus100)
 
-            local hueFocus01 <const> = hueFocus100 * 0.01
+            local respFocus01 <const> = respFocus100 * 0.01
             responseFunc = function(x)
-                if hueFocus01 >= 1.0 then return 0.0 end
-                if x <= hueFocus01 then return 0.0 end
-                local y <const> = (x - hueFocus01) / (1.0 - hueFocus01)
+                if respFocus01 >= 1.0 then return 0.0 end
+                if x <= respFocus01 then return 0.0 end
+                local y <const> = (x - respFocus01) / (1.0 - respFocus01)
                 return y * y * (3.0 - (y + y))
             end
 
@@ -539,22 +547,30 @@ dlg:button {
             local refColor <const> = args.refColor --[[@as Color]]
             local refSrgb <const> = AseUtilities.aseColorToClr(refColor)
             local refLab <const> = Clr.sRgbToSrLab2(refSrgb)
-
+            local normDist <const> = defaults.normDist
             toFac = function(lab)
-                local dt <const> = 100.0 * (refLab.alpha - lab.alpha)
                 local dl <const> = refLab.l - lab.l
                 local da <const> = refLab.a - lab.a
                 local db <const> = refLab.b - lab.b
-                local x <const> = 0.01 * math.sqrt(
-                    dt * dt + dl * dl + da * da + db * db)
+                local x <const> = normDist * math.sqrt(
+                    dl * dl + da * da + db * db)
                 return 1.0 - x
             end
 
-            -- TODO: Should this use the hueFocus slider as well?
-            responseFunc = fullResponse
+            local respFocus100 <const> = args.respFocus
+                or defaults.respFocus --[[@as integer]]
+            local respFocus01 <const> = respFocus100 * 0.01
+            responseFunc = function(x)
+                if respFocus01 >= 1.0 then return 0.0 end
+                if x <= respFocus01 then return 0.0 end
+                local y <const> = (x - respFocus01) / (1.0 - respFocus01)
+                return y * y * (3.0 - (y + y))
+            end
+
             biasLabel = string.format(
-                " Dist %s",
-                Clr.toHexWeb(refSrgb))
+                " Dist %s F %03d",
+                Clr.toHexWeb(refSrgb),
+                respFocus100)
         else
             -- Default to lightness.
             toFac = function(lab) return lab.l * 0.01 end
