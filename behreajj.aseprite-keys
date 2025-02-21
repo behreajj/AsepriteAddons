@@ -63,6 +63,12 @@
         <key command="NewFrame" shortcut="Alt+N" removed="true">
             <param name="content" value="empty"/>
         </key>
+        <key command="NewFrame" shortcut="Alt+Shift+D" removed="true">
+            <param name="content" value="cellinked"/>
+        </key>
+        <key command="NewFrame" shortcut="Alt+M" removed="true">
+            <param name="content" value="cellinked"/>
+        </key>
         <key command="NewFrame" shortcut="Alt+D" removed="true">
             <param name="content" value="celcopies"/>
         </key>
@@ -337,6 +343,12 @@
         <key command="RunScript" shortcut="Shift+X" removed="true">
             <param name="filename" value="path\to\Aseprite\scripts\testbed.lua"/>
         </key>
+        <key command="RunScript" shortcut="Ctrl+Space+." removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\testbed.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Ctrl+Alt+.">
+            <param name="filename" value="path\to\Aseprite\scripts\testbed.lua"/>
+        </key>
         <key command="RunScript" shortcut="Ctrl+U" removed="true">
             <param name="filename" value="path\to\Aseprite\scripts\dialogs\color\colorAdjust.lua"/>
         </key>
@@ -492,7 +504,7 @@
         <key command="RunScript" shortcut="Ctrl+Shift+T">
             <param name="filename" value="path\to\Aseprite\scripts\dialogs\misc\alignDistrCel.lua"/>
         </key>
-        <key command="DuplicateLayer" shortcut="Alt+D"/>
+        <key command="DuplicateLayer" shortcut="Alt+D" removed="true"/>
         <key command="RunScript" shortcut="Ctrl+Alt+6 Pad">
             <param name="filename" value="path\to\Aseprite\scripts\commands\shiftTagRight.lua"/>
         </key>
@@ -581,7 +593,10 @@
         <key command="RunScript" shortcut="Shift+Del">
             <param name="filename" value="path\to\Aseprite\scripts\commands\frames\deleteFrame.lua"/>
         </key>
-        <key command="RunScript" shortcut="Ctrl+Shift+X">
+        <key command="RunScript" shortcut="Ctrl+Shift+X" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\frames\growRangeFrames.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Shift+X">
             <param name="filename" value="path\to\Aseprite\scripts\commands\frames\growRangeFrames.lua"/>
         </key>
         <key command="RunScript" shortcut="6">
@@ -602,7 +617,10 @@
         <key command="RunScript" shortcut="Alt+Shift+N">
             <param name="filename" value="path\to\Aseprite\scripts\commands\layers\groupLayers.lua"/>
         </key>
-        <key command="RunScript" shortcut="Shift+X">
+        <key command="RunScript" shortcut="Shift+X" removed="true">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\layers\growRangeLayers.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Alt+X">
             <param name="filename" value="path\to\Aseprite\scripts\commands\layers\growRangeLayers.lua"/>
         </key>
         <key command="RunScript" shortcut="8">
@@ -649,6 +667,12 @@
         </key>
         <key command="RunScript" shortcut="Ctrl+Shift+Tab">
             <param name="filename" value="path\to\Aseprite\scripts\commands\sprites\prevTab.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Alt+Shift+D">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\shape\arcMesh.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Alt+Shift+F">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\frames\prependFrame.lua"/>
         </key>
     </commands>
     <tools>
