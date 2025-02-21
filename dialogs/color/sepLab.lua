@@ -113,7 +113,7 @@ dlg:newrow { always = false }
 
 dlg:combobox {
     id = "channel",
-    label = "Channel:",
+    label = "Criterion:",
     options = channels,
     option = defaults.channel,
     onchange = function()
