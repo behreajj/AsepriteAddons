@@ -6,7 +6,6 @@ local delOptions <const> = { "DELETE_CELS", "DELETE_LAYER", "HIDE", "NONE" }
 
 local defaults <const> = {
     -- TODO: Color distance option?
-    -- TODO: Option to get hue from a sample, see color curves and LCH picker.
 
     target = "ACTIVE",
     delSrc = "NONE",
@@ -142,6 +141,7 @@ dlg:combobox {
 
         dlg:modify { id = "trgHue", visible = ish }
         dlg:modify { id = "hueFocus", visible = ish }
+        dlg:modify { id = "getHue", visible = ish }
     end
 }
 
@@ -215,7 +215,7 @@ dlg:newrow { always = false }
 
 dlg:check {
     id = "cGray",
-    text = "Gray",
+    text = "G&ray",
     selected = defaults.cGray,
     visible = defaults.channel == "C"
 }
@@ -224,7 +224,7 @@ dlg:newrow { always = false }
 
 dlg:check {
     id = "cMiddle",
-    text = "Middle",
+    text = "Mi&ddle",
     selected = defaults.cMiddle,
     visible = defaults.channel == "C"
 }
@@ -233,20 +233,9 @@ dlg:newrow { always = false }
 
 dlg:check {
     id = "cVivid",
-    text = "Vivid",
+    text = "&Vivid",
     selected = defaults.cVivid,
     visible = defaults.channel == "C"
-}
-
-dlg:newrow { always = false }
-
-dlg:slider {
-    id = "trgHue",
-    label = "Hue:",
-    min = 0,
-    max = 360,
-    value = defaults.trgHue,
-    visible = defaults.channel == "H"
 }
 
 dlg:newrow { always = false }
@@ -262,11 +251,51 @@ dlg:slider {
 
 dlg:newrow { always = false }
 
+dlg:slider {
+    id = "trgHue",
+    label = "Hue:",
+    min = 0,
+    max = 360,
+    value = defaults.trgHue,
+    visible = defaults.channel == "H"
+}
+
+dlg:newrow { always = false }
+
+dlg:button {
+    id = "getHue",
+    label = "Get:",
+    text = "C&ANVAS",
+    visible = defaults.channel == "H",
+    focus = false,
+    onclick = function()
+        local site <const> = app.site
+        local sprite <const> = site.sprite
+        if not sprite then return end
+        local frObj <const> = site.frame
+        if not frObj then return end
+
+        local lab <const> = AseUtilities.averageColor(
+            sprite, frObj.frameNumber)
+        if lab.alpha > 0.0 then
+            local lch <const> = Clr.srLab2ToSrLch(
+                lab.l, lab.a, lab.b, lab.alpha)
+            if lch.c > 0.000001 then
+                local deg <const> = Utilities.round(lch.h * 360.0)
+                dlg:modify { id = "trgHue", value = deg }
+            end
+        end
+    end
+}
+
+dlg:newrow { always = false }
+
 dlg:check {
     id = "useSrcClr",
     label = "Color:",
     text = "Source",
     selected = defaults.useSrcClr,
+    focus = true,
     onclick = function()
         local args <const> = dlg.data
         local useSrcClr <const> = args.useSrcClr --[[@as boolean]]
