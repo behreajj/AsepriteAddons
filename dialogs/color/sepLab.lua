@@ -5,6 +5,9 @@ local channels <const> = { "L", "A", "B", "C", "H" }
 local delOptions <const> = { "DELETE_CELS", "DELETE_LAYER", "HIDE", "NONE" }
 
 local defaults <const> = {
+    -- TODO: Color distance option?
+    -- TODO: Option to get hue from a sample, see color curves and LCH picker.
+
     target = "ACTIVE",
     delSrc = "NONE",
     channel = "L",
@@ -452,7 +455,9 @@ dlg:button {
             local hueFocus100 <const> = args.hueFocus
                 or defaults.hueFocus --[[@as integer]]
 
-            biasLabel = " H"
+            biasLabel = string.format(
+                " H %03d F %03d",
+                trgHueDeg, hueFocus100)
 
             local hueFocus01 <const> = hueFocus100 * 0.01
             responseFunc = function(x)
