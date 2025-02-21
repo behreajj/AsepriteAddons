@@ -29,28 +29,28 @@ local defaults <const> = {
     useTrim = true,
 }
 
----@param a { l: number, a: number, b: number, alpha: number }
----@param b { l: number, a: number, b: number, alpha: number }
+---@param o { l: number, a: number, b: number, alpha: number }
+---@param d { l: number, a: number, b: number, alpha: number }
 ---@param alphaScale number
 ---@return number
-local function distSqInclAlpha(a, b, alphaScale)
+local function distSqInclAlpha(o, d, alphaScale)
     -- Scale alpha to be at least somewhat
     -- proportional to other channels.
-    local dt <const> = alphaScale * (b.alpha - a.alpha)
-    local dl <const> = b.l - a.l
-    local da <const> = b.a - a.a
-    local db <const> = b.b - a.b
-    return dt * dt + dl * dl + da * da + db * db
+    local ct <const> = alphaScale * (d.alpha - o.alpha)
+    local cl <const> = d.l - o.l
+    local ca <const> = d.a - o.a
+    local cb <const> = d.b - o.b
+    return ct * ct + cl * cl + ca * ca + cb * cb
 end
 
----@param a { l: number, a: number, b: number, alpha: number }
----@param b { l: number, a: number, b: number, alpha: number }
+---@param o { l: number, a: number, b: number, alpha: number }
+---@param d { l: number, a: number, b: number, alpha: number }
 ---@return number
-local function distSqNoAlpha(a, b)
-    local dl <const> = b.l - a.l
-    local da <const> = b.a - a.a
-    local db <const> = b.b - a.b
-    return dl * dl + da * da + db * db
+local function distSqNoAlpha(o, d)
+    local cl <const> = d.l - o.l
+    local ca <const> = d.a - o.a
+    local cb <const> = d.b - o.b
+    return cl * cl + ca * ca + cb * cb
 end
 
 ---@param cel Cel
