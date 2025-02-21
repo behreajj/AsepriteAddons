@@ -1,7 +1,7 @@
 dofile("../../support/aseutilities.lua")
 
 local targets <const> = { "ACTIVE", "ALL", "RANGE" }
-local channels <const> = { "L", "A", "B" }
+local channels <const> = { "L", "A", "B", "C" }
 local delOptions <const> = { "DELETE_CELS", "DELETE_LAYER", "HIDE", "NONE" }
 
 local defaults <const> = {
@@ -21,6 +21,10 @@ local defaults <const> = {
     bBlues = true,
     bYellows = true,
 
+    cGray = true,
+    cMiddle = true,
+    cVivid = true,
+
     -- Because a and b need to be centered about 0.0,
     -- the range is based on the greater number.
     -- aAbsMin = -82.709187739605,
@@ -32,7 +36,8 @@ local defaults <const> = {
     aAbsMin = -104.18850360397,
     aAbsRange = 208.37700720794,
     bAbsMin = -110.47816964815,
-    bAbsRange = 220.9563392963
+    bAbsRange = 220.9563392963,
+    maxChroma = 119.07602046756,
 }
 
 ---@param x number
@@ -112,6 +117,7 @@ dlg:combobox {
         local isl <const> = channel == "L"
         local isa <const> = channel == "A"
         local isb <const> = channel == "B"
+        local isc <const> = channel == "C"
 
         dlg:modify { id = "lShadows", visible = isl }
         dlg:modify { id = "lMidtones", visible = isl }
@@ -122,6 +128,10 @@ dlg:combobox {
 
         dlg:modify { id = "bBlues", visible = isb }
         dlg:modify { id = "bYellows", visible = isb }
+
+        dlg:modify { id = "cGray", visible = isc }
+        dlg:modify { id = "cMiddle", visible = isc }
+        dlg:modify { id = "cVivid", visible = isc }
     end
 }
 
@@ -189,6 +199,33 @@ dlg:check {
     text = "&Yellows",
     selected = defaults.bYellows,
     visible = defaults.channel == "B"
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "cGray",
+    text = "Gray",
+    selected = defaults.cGray,
+    visible = defaults.channel == "C"
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "cMiddle",
+    text = "Middle",
+    selected = defaults.cMiddle,
+    visible = defaults.channel == "C"
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "cVivid",
+    text = "Vivid",
+    selected = defaults.cVivid,
+    visible = defaults.channel == "C"
 }
 
 dlg:newrow { always = false }
@@ -345,6 +382,40 @@ dlg:button {
             else
                 responseFunc = midResponse
                 biasLabel = " B Central"
+            end
+        elseif channel == "C" then
+            toFac = function(lab)
+                return math.sqrt(lab.a * lab.a + lab.b * lab.b)
+                    / defaults.maxChroma
+            end
+
+            local cGray <const> = args.cGray --[[@as boolean]]
+            local cMiddle <const> = args.cMiddle --[[@as boolean]]
+            local cVivid <const> = args.cVivid --[[@as boolean]]
+
+            biasLabel = " C"
+            if cGray and cMiddle and cVivid then
+                responseFunc = fullResponse
+            elseif cGray and cVivid then
+                responseFunc = splitResponse
+            elseif cGray and cMiddle then
+                responseFunc = lowHalfResponse
+            elseif cMiddle and cVivid then
+                responseFunc = highHalfResponse
+            elseif cGray then
+                responseFunc = lowThirdResponse
+                biasLabel = " Gray"
+            elseif cMiddle then
+                responseFunc = midResponse
+            elseif cVivid then
+                responseFunc = highThirdResponse
+                biasLabel = " Vivid"
+            else
+                app.alert {
+                    title = "Error",
+                    text = "No biases selected."
+                }
+                return
             end
         else
             -- Default to lightness.
