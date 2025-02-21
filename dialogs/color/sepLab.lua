@@ -1,12 +1,10 @@
 dofile("../../support/aseutilities.lua")
 
 local targets <const> = { "ACTIVE", "ALL", "RANGE" }
-local channels <const> = { "L", "A", "B", "C", "H" }
+local channels <const> = { "L", "A", "B", "C", "H", "DIST" }
 local delOptions <const> = { "DELETE_CELS", "DELETE_LAYER", "HIDE", "NONE" }
 
 local defaults <const> = {
-    -- TODO: Color distance option?
-
     target = "ACTIVE",
     delSrc = "NONE",
     channel = "L",
@@ -124,6 +122,7 @@ dlg:combobox {
         local isb <const> = channel == "B"
         local isc <const> = channel == "C"
         local ish <const> = channel == "H"
+        local isDist <const> = channel == "DIST"
 
         dlg:modify { id = "lShadows", visible = isl }
         dlg:modify { id = "lMidtones", visible = isl }
@@ -142,6 +141,8 @@ dlg:combobox {
         dlg:modify { id = "trgHue", visible = ish }
         dlg:modify { id = "hueFocus", visible = ish }
         dlg:modify { id = "getHue", visible = ish }
+
+        dlg:modify { id = "refColor", visible = isDist }
     end
 }
 
@@ -290,6 +291,15 @@ dlg:button {
 
 dlg:newrow { always = false }
 
+dlg:color {
+    id = "refColor",
+    label = "To:",
+    color = Color { r = 0, g = 0, b = 0, a = 255 },
+    visible = defaults.channel == "DIST"
+}
+
+dlg:newrow { always = false }
+
 dlg:check {
     id = "useSrcClr",
     label = "Color:",
@@ -307,7 +317,7 @@ dlg:newrow { always = false }
 
 dlg:color {
     id = "maskColor",
-    color = Color { r = 255, g = 255, b = 255 },
+    color = Color { r = 255, g = 255, b = 255, a = 255 },
     visible = not defaults.useSrcClr
 }
 
@@ -525,6 +535,26 @@ dlg:button {
                 local acosNorm <const> = math.acos(dotNorm) * 0.31830988618379
                 return c * (1.0 - acosNorm)
             end
+        elseif channel == "DIST" then
+            local refColor <const> = args.refColor --[[@as Color]]
+            local refSrgb <const> = AseUtilities.aseColorToClr(refColor)
+            local refLab <const> = Clr.sRgbToSrLab2(refSrgb)
+
+            toFac = function(lab)
+                local dt <const> = 100.0 * (refLab.alpha - lab.alpha)
+                local dl <const> = refLab.l - lab.l
+                local da <const> = refLab.a - lab.a
+                local db <const> = refLab.b - lab.b
+                local x <const> = 0.01 * math.sqrt(
+                    dt * dt + dl * dl + da * da + db * db)
+                return 1.0 - x
+            end
+
+            -- TODO: Should this use the hueFocus slider as well?
+            responseFunc = fullResponse
+            biasLabel = string.format(
+                " Dist %s",
+                Clr.toHexWeb(refSrgb))
         else
             -- Default to lightness.
             toFac = function(lab) return lab.l * 0.01 end
