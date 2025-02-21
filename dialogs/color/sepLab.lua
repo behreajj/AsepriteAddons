@@ -1,7 +1,7 @@
 dofile("../../support/aseutilities.lua")
 
 local targets <const> = { "ACTIVE", "ALL", "RANGE" }
-local channels <const> = { "L", "A", "B", "C" }
+local channels <const> = { "L", "A", "B", "C", "H" }
 local delOptions <const> = { "DELETE_CELS", "DELETE_LAYER", "HIDE", "NONE" }
 
 local defaults <const> = {
@@ -24,6 +24,9 @@ local defaults <const> = {
     cGray = true,
     cMiddle = true,
     cVivid = true,
+
+    trgHue = 0,
+    hueFocus = 67,
 
     -- Because a and b need to be centered about 0.0,
     -- the range is based on the greater number.
@@ -118,6 +121,7 @@ dlg:combobox {
         local isa <const> = channel == "A"
         local isb <const> = channel == "B"
         local isc <const> = channel == "C"
+        local ish <const> = channel == "H"
 
         dlg:modify { id = "lShadows", visible = isl }
         dlg:modify { id = "lMidtones", visible = isl }
@@ -132,6 +136,9 @@ dlg:combobox {
         dlg:modify { id = "cGray", visible = isc }
         dlg:modify { id = "cMiddle", visible = isc }
         dlg:modify { id = "cVivid", visible = isc }
+
+        dlg:modify { id = "trgHue", visible = ish }
+        dlg:modify { id = "hueFocus", visible = ish }
     end
 }
 
@@ -226,6 +233,28 @@ dlg:check {
     text = "Vivid",
     selected = defaults.cVivid,
     visible = defaults.channel == "C"
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "trgHue",
+    label = "Hue:",
+    min = 0,
+    max = 360,
+    value = defaults.trgHue,
+    visible = defaults.channel == "H"
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "hueFocus",
+    label = "Focus:",
+    min = 0,
+    max = 100,
+    value = defaults.hueFocus,
+    visible = defaults.channel == "H"
 }
 
 dlg:newrow { always = false }
@@ -417,6 +446,51 @@ dlg:button {
                 }
                 return
             end
+        elseif channel == "H" then
+            local trgHueDeg <const> = args.trgHue
+                or defaults.trgHue --[[@as integer]]
+            local hueFocus100 <const> = args.hueFocus
+                or defaults.hueFocus --[[@as integer]]
+
+            biasLabel = " H"
+
+            local hueFocus01 <const> = hueFocus100 * 0.01
+            responseFunc = function(x)
+                if hueFocus01 >= 1.0 then return 0.0 end
+                if x <= hueFocus01 then return 0.0 end
+                local y <const> = (x - hueFocus01) / (1.0 - hueFocus01)
+                return y * y * (3.0 - (y + y))
+            end
+
+            local trgHueRad <const> = 0.017453292519943 * trgHueDeg
+            local oa <const> = math.cos(trgHueRad)
+            local ob <const> = math.sin(trgHueRad)
+
+            toFac = function(lab)
+                local da <const> = lab.a
+                local db <const> = lab.b
+                local dSqChroma <const> = da * da + db * db
+                if dSqChroma < 0.000001 then return 0.0 end
+
+                -- Mitigate discontinuities between gray and saturated colors
+                -- by creating a knee at 0.1.
+                local dChroma <const> = math.sqrt(dSqChroma)
+                local chromaNorm <const> = dChroma / defaults.maxChroma
+                local c = 1.0
+                if chromaNorm < 0.1 then
+                    c = chromaNorm * 10.0
+                    c = c * c * (3.0 - (c + c))
+                end
+
+                -- angDist = acos(dot(o, d) / (mag(o) * mag(d)))
+                -- Normalization of dot product can be simplified because
+                -- oChroma is already known to be one.
+                local dotNorm <const> = (oa * da + ob * db) / dChroma
+
+                -- acos returns a value within [0, pi].
+                local acosNorm <const> = math.acos(dotNorm) * 0.31830988618379
+                return c * (1.0 - acosNorm)
+            end
         else
             -- Default to lightness.
             toFac = function(lab) return lab.l * 0.01 end
@@ -521,6 +595,8 @@ dlg:button {
                                 local fac <const> = toFac(lab)
                                 local facw <const> = responseFunc(fac)
 
+                                -- TODO: Shouldn't this multiply against the
+                                -- source alpha?
                                 local a8Trg <const> = floor(facw * 255.0 + 0.5)
 
                                 local trgRgb <const> = useSrcClr
