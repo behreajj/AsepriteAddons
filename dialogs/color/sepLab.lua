@@ -1,7 +1,7 @@
 dofile("../../support/aseutilities.lua")
 
 local targets <const> = { "ACTIVE", "ALL", "RANGE" }
-local channels <const> = { "L", "A", "B", "C", "H", "DIST" }
+local channels <const> = { "LIGHT", "A", "B", "CHROMA", "HUE", "DIST" }
 local delOptions <const> = { "DELETE_CELS", "DELETE_LAYER", "HIDE", "NONE" }
 
 local defaults <const> = {
@@ -124,11 +124,11 @@ dlg:combobox {
         local args <const> = dlg.data
         local channel <const> = args.channel --[[@as string]]
 
-        local isl <const> = channel == "L"
+        local isl <const> = channel == "LIGHT"
         local isa <const> = channel == "A"
         local isb <const> = channel == "B"
-        local isc <const> = channel == "C"
-        local ish <const> = channel == "H"
+        local isc <const> = channel == "CHROMA"
+        local ish <const> = channel == "HUE"
         local isDist <const> = channel == "DIST"
 
         dlg:modify { id = "lShadows", visible = isl }
@@ -160,7 +160,7 @@ dlg:check {
     label = "Bias:",
     text = "&Shadows",
     selected = defaults.lShadows,
-    visible = defaults.channel == "L"
+    visible = defaults.channel == "LIGHT"
 }
 
 dlg:newrow { always = false }
@@ -169,7 +169,7 @@ dlg:check {
     id = "lMidtones",
     text = "&Midtones",
     selected = defaults.lMidtones,
-    visible = defaults.channel == "L"
+    visible = defaults.channel == "LIGHT"
 }
 
 dlg:newrow { always = false }
@@ -178,7 +178,7 @@ dlg:check {
     id = "lHighlights",
     text = "&Highlights",
     selected = defaults.lHighlights,
-    visible = defaults.channel == "L"
+    visible = defaults.channel == "LIGHT"
 }
 
 dlg:newrow { always = false }
@@ -225,7 +225,7 @@ dlg:check {
     id = "cGray",
     text = "G&ray",
     selected = defaults.cGray,
-    visible = defaults.channel == "C"
+    visible = defaults.channel == "CHROMA"
 }
 
 dlg:newrow { always = false }
@@ -234,7 +234,7 @@ dlg:check {
     id = "cMiddle",
     text = "Mi&ddle",
     selected = defaults.cMiddle,
-    visible = defaults.channel == "C"
+    visible = defaults.channel == "CHROMA"
 }
 
 dlg:newrow { always = false }
@@ -243,7 +243,7 @@ dlg:check {
     id = "cVivid",
     text = "&Vivid",
     selected = defaults.cVivid,
-    visible = defaults.channel == "C"
+    visible = defaults.channel == "CHROMA"
 }
 
 dlg:newrow { always = false }
@@ -254,7 +254,7 @@ dlg:slider {
     min = 0,
     max = 99,
     value = defaults.respFocus,
-    visible = defaults.channel == "H"
+    visible = defaults.channel == "HUE"
         or defaults.channel == "DIST"
 }
 
@@ -266,7 +266,7 @@ dlg:slider {
     min = 0,
     max = 360,
     value = defaults.trgHue,
-    visible = defaults.channel == "H"
+    visible = defaults.channel == "HUE"
 }
 
 dlg:newrow { always = false }
@@ -275,7 +275,7 @@ dlg:button {
     id = "getHue",
     label = "Get:",
     text = "C&ANVAS",
-    visible = defaults.channel == "H",
+    visible = defaults.channel == "HUE",
     focus = false,
     onclick = function()
         local site <const> = app.site
@@ -462,7 +462,7 @@ dlg:button {
                 responseFunc = midResponse
                 biasLabel = " B Central"
             end
-        elseif channel == "C" then
+        elseif channel == "CHROMA" then
             toFac = function(lab)
                 return math.sqrt(lab.a * lab.a + lab.b * lab.b)
                     / defaults.maxChroma
@@ -496,7 +496,7 @@ dlg:button {
                 }
                 return
             end
-        elseif channel == "H" then
+        elseif channel == "HUE" then
             local trgHueDeg <const> = args.trgHue
                 or defaults.trgHue --[[@as integer]]
             local respFocus100 <const> = args.respFocus

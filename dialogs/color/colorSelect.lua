@@ -6,8 +6,6 @@ local sampleModes <const> = { "ACTIVE", "COMPOSITE" }
 local connections <const> = { "DIAMOND", "SQUARE" }
 
 local defaults <const> = {
-    -- TODO: Redo the hue criterion based on sepLab?
-
     -- Original colorSelect script:
     -- 894bd701787526bae1786364073b8bc263d3a032
     uiMode = "COLOR",
@@ -109,7 +107,6 @@ end
 local dlg <const> = Dialog { title = "Select Color" }
 
 dlg:combobox {
-    -- TODO: Base this on preferences?
     id = "selMode",
     label = "Logic:",
     option = defaults.selMode,
