@@ -503,7 +503,7 @@ dlg:button {
                 or defaults.respFocus --[[@as integer]]
 
             biasLabel = string.format(
-                " H %03d F %03d",
+                " H %03d F %02d",
                 trgHueDeg, respFocus100)
 
             local respFocus01 <const> = respFocus100 * 0.01
@@ -568,7 +568,7 @@ dlg:button {
             end
 
             biasLabel = string.format(
-                " Dist %s F %03d",
+                " Dist %s F %02d",
                 Clr.toHexWeb(refSrgb),
                 respFocus100)
         else
