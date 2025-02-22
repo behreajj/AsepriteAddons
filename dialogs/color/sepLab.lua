@@ -7,7 +7,7 @@ local delOptions <const> = { "DELETE_CELS", "DELETE_LAYER", "HIDE", "NONE" }
 local defaults <const> = {
     target = "ACTIVE",
     delSrc = "NONE",
-    channel = "L",
+    channel = "LIGHT",
     useSrcClr = false,
     trimCels = true,
 
