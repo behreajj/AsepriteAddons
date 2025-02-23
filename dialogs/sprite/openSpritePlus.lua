@@ -425,6 +425,8 @@ dlg:button {
                     "Sequence")
 
                 app.transaction("Open Sequence", function()
+                    -- While you could open the primary file as a palette,
+                    -- grayscale images make that a poor option.
                     AseUtilities.setPalette(
                         AseUtilities.DEFAULT_PAL_ARR, openSprite)
 
@@ -439,7 +441,9 @@ dlg:button {
                     while k < lenImages do
                         local m <const> = (preferredIdx + k) % lenImages
                         local image <const> = images[1 + m]
-                        openSprite:newCel(firstLayer, 1 + k, image)
+                        local x <const> = (wMax - image.width) // 2
+                        local y <const> = (hMax - image.height) // 2
+                        openSprite:newCel(firstLayer, 1 + k, image, Point(x, y))
                         k = k + 1
                     end -- End frame, cel creation loop.
                 end)    -- End transaction.
