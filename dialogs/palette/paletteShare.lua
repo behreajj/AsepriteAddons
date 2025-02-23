@@ -74,6 +74,7 @@ dlg:newrow { always = false }
 dlg:file {
     id = "palFile",
     filetypes = AseUtilities.FILE_FORMATS_PAL,
+    filename = app.fs.joinPath(app.fs.userConfigPath, "palettes", "*.*"),
     open = true,
     visible = false
 }

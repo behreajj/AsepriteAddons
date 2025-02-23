@@ -78,6 +78,7 @@ dlg:file {
     id = "importFilepath",
     label = "File:",
     filetypes = importFileExts,
+    filename = app.fs.joinPath(app.fs.userDocsPath, "*.*"),
     open = true,
     focus = false,
     visible = defaults.inputType == "FILE"

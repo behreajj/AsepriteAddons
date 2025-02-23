@@ -38,6 +38,7 @@ dlg:newrow { always = false }
 dlg:file {
     id = "profilePath",
     filetypes = { "icc" },
+    filename = app.fs.joinPath(app.fs.userDocsPath, "*.icc"),
     open = true,
     visible = defaults.colorSpaceType == "FILE"
 }

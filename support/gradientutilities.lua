@@ -760,6 +760,7 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         id = "ditherPath",
         label = "File:",
         filetypes = AseUtilities.FILE_FORMATS_OPEN,
+        filename = app.fs.joinPath(app.fs.userDocsPath, "*.*"),
         open = true,
         focus = false,
         visible = showStyle
