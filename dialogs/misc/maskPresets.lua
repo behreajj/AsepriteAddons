@@ -147,13 +147,14 @@ dlg:slider {
     value = defaults.amount
 }
 
-dlg:separator { id = "extrudeSep", text = "Extrude" }
+-- dlg:separator { id = "extrudeSep", text = "Extrude" }
 
 dlg:combobox {
     id = "shiftOption",
     label = "Grid:",
     option = defaults.shiftOption,
-    options = shiftOptions
+    options = shiftOptions,
+    visible = false
 }
 
 dlg:newrow { always = false }
@@ -171,6 +172,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "wExtrude",
     text = "&W",
+    visible = false,
     focus = false,
     onclick = function()
         local args <const> = dlg.data
@@ -186,6 +188,7 @@ dlg:button {
 dlg:button {
     id = "aExtrude",
     text = "&A",
+    visible = false,
     focus = false,
     onclick = function()
         local args <const> = dlg.data
@@ -201,6 +204,7 @@ dlg:button {
 dlg:button {
     id = "sExtrude",
     text = "&S",
+    visible = false,
     focus = false,
     onclick = function()
         local args <const> = dlg.data
@@ -216,6 +220,7 @@ dlg:button {
 dlg:button {
     id = "dExtrude",
     text = "&D",
+    visible = false,
     focus = false,
     onclick = function()
         local args <const> = dlg.data
@@ -391,54 +396,6 @@ dlg:button {
     end
 }
 
-dlg:button {
-    id = "inCircButton",
-    text = "C&IRCLE",
-    focus = false,
-    visible = false,
-    onclick = function()
-        local site <const> = app.site
-        local sprite <const> = site.sprite
-        if not sprite then return end
-        local spec <const> = sprite.spec
-        local args <const> = dlg.data
-        local selMode <const> = args.selMode
-            or defaults.selMode --[[@as string]]
-
-        local w <const> = spec.width
-        local h <const> = spec.height
-        local short <const> = math.min(w, h)
-        local len <const> = short * short
-
-        local pxRect <const> = Rectangle(0, 0, 1, 1)
-        local xtl <const> = (w == short) and 0 or (w - short) // 2
-        local ytl <const> = (h == short) and 0 or (h - short) // 2
-        local trgSel <const> = Selection(Rectangle(xtl, ytl, short, short))
-
-        local radius <const> = short * 0.5
-        local rsq <const> = radius * radius
-        local cx <const> = w // 2
-        local cy <const> = h // 2
-
-        local i = 0
-        while i < len do
-            local x <const> = xtl + i % short
-            local y <const> = ytl + i // short
-            local dx <const> = x - cx
-            local dy <const> = y - cy
-            if (dx * dx + dy * dy) >= rsq then
-                pxRect.x = x
-                pxRect.y = y
-                trgSel:subtract(pxRect)
-            end
-            i = i + 1
-        end
-
-        updateSel(sprite, trgSel, selMode)
-        app.refresh()
-    end
-}
-
 dlg:newrow { always = false }
 
 dlg:button {
@@ -500,11 +457,61 @@ dlg:button {
     end
 }
 
+dlg:newrow { always = false }
+
+dlg:button {
+    id = "inCircButton",
+    text = "C&IRCLE",
+    focus = false,
+    visible = true,
+    onclick = function()
+        local site <const> = app.site
+        local sprite <const> = site.sprite
+        if not sprite then return end
+        local spec <const> = sprite.spec
+        local args <const> = dlg.data
+        local selMode <const> = args.selMode
+            or defaults.selMode --[[@as string]]
+
+        local w <const> = spec.width
+        local h <const> = spec.height
+        local short <const> = math.min(w, h)
+        local len <const> = short * short
+
+        local pxRect <const> = Rectangle(0, 0, 1, 1)
+        local xtl <const> = (w == short) and 0 or (w - short) // 2
+        local ytl <const> = (h == short) and 0 or (h - short) // 2
+        local trgSel <const> = Selection(Rectangle(xtl, ytl, short, short))
+
+        local radius <const> = short * 0.5
+        local rsq <const> = radius * radius
+        local cx <const> = w // 2
+        local cy <const> = h // 2
+
+        local i = 0
+        while i < len do
+            local x <const> = xtl + i % short
+            local y <const> = ytl + i // short
+            local dx <const> = x - cx
+            local dy <const> = y - cy
+            if (dx * dx + dy * dy) >= rsq then
+                pxRect.x = x
+                pxRect.y = y
+                trgSel:subtract(pxRect)
+            end
+            i = i + 1
+        end
+
+        updateSel(sprite, trgSel, selMode)
+        app.refresh()
+    end
+}
+
 dlg:button {
     id = "cursorSelectButton",
     text = "C&URSOR",
     focus = false,
-    visible = false,
+    visible = true,
     onclick = function()
         local site <const> = app.site
         local activeSprite <const> = site.sprite
