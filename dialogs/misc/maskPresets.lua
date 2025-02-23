@@ -151,7 +151,7 @@ dlg:separator { id = "extrudeSep", text = "Extrude" }
 
 dlg:combobox {
     id = "shiftOption",
-    label = "Direction:",
+    label = "Grid:",
     option = defaults.shiftOption,
     options = shiftOptions
 }
