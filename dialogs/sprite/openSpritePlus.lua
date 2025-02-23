@@ -11,6 +11,7 @@ local defaults <const> = {
     --TODO: The file widget submenu that asks to choose between absolute and
     -- relative paths makes this cumbersome to use. Neither switching to an
     -- entry formatted opener nor specifying a filename improve the UX.
+    asSeq = false,
     removeBkg = true,
     trimCels = true,
     palType = "EMBEDDED",
@@ -100,10 +101,18 @@ dlg:file {
     id = "spriteFile",
     label = "File:",
     filetypes = AseUtilities.FILE_FORMATS_OPEN,
-    -- filename = app.fs.joinPath(app.fs.userDocsPath, "*.aseprite") or "",
-    -- entry = true,
+    filename = app.fs.joinPath(app.fs.userDocsPath, "*.*"),
     open = true,
     focus = true
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "asSeq",
+    label = "Folder:",
+    text = "Se&quence",
+    selected = defaults.asSeq
 }
 
 dlg:newrow { always = false }
@@ -146,8 +155,7 @@ dlg:newrow { always = false }
 dlg:file {
     id = "palFile",
     filetypes = AseUtilities.FILE_FORMATS_PAL,
-    -- filename = app.fs.joinPath(app.fs.userDocsPath, "*.gpl") or "",
-    -- entry = true,
+    filename = app.fs.joinPath(app.fs.userConfigPath, "palettes", "*.*"),
     open = true,
     visible = defaults.palType == "FILE",
     focus = false,
@@ -187,13 +195,20 @@ dlg:button {
     onclick = function()
         local args <const> = dlg.data
         local spriteFile <const> = args.spriteFile --[[@as string]]
+        local asSeq <const> = args.asSeq --[[@as boolean]]
 
-        if (not spriteFile)
-            or (#spriteFile < 1)
-            or (not app.fs.isFile(spriteFile)) then
+        if (not spriteFile) or (#spriteFile < 1) then
             app.alert {
                 title = "Error",
                 text = "Invalid file path."
+            }
+            return
+        end
+
+        if (not asSeq) and (not app.fs.isFile(spriteFile)) then
+            app.alert {
+                title = "Error",
+                text = "Path is not a file."
             }
             return
         end
@@ -202,15 +217,20 @@ dlg:button {
         -- Since this will be set to hand later on anyway, simplify.
         app.tool = "hand"
 
+        -- Change fore and background colors to RGB mode.
+        AseUtilities.preserveForeBack()
+
         -- Do not ask to open animation sequences.
         -- https://github.com/aseprite/aseprite/blob/main/data/pref.xml#L125
         -- Do not automatically handle any color profiles.
         -- https://github.com/aseprite/aseprite/blob/main/data/pref.xml#L107
-        local appPrefs <const> = app.preferences
         local oldOpSeqPref = 0  -- Ask
         local oldAskProfile = 4 -- Ask
         local oldAskMissing = 4 -- Ask
         local oldQuantAlg = 0   -- Default
+        local autoFit = false
+
+        local appPrefs <const> = app.preferences
         if appPrefs then
             local openFilePrefs <const> = appPrefs.open_file
             if openFilePrefs then
@@ -227,10 +247,17 @@ dlg:button {
                 cmPrefs.missing_profile = 0    -- Disable
             end
 
+            -- TODO: Set to LAB fit criteria?
+            -- https://github.com/aseprite/aseprite/blob/main/data/pref.xml#L325
             local quantPrefs <const> = appPrefs.quantization
             if quantPrefs then
                 oldQuantAlg = quantPrefs.rgbmap_algorithm or 0 --[[@as integer]]
                 quantPrefs.rgbmap_algorithm = 1 -- RGB5A3
+            end
+
+            local editorPrefs <const> = appPrefs.editor
+            if editorPrefs then
+                autoFit = editorPrefs.auto_fit
             end
         end
 
@@ -262,10 +289,165 @@ dlg:button {
             -- end
         end
 
-        -- Shift indexed fore- and back colors to RGB.
-        AseUtilities.preserveForeBack()
+        local openSprite = nil
+        if asSeq then
+            local fileSys <const> = app.fs
+            local tconcat <const> = table.concat
+            local strbyte <const> = string.byte
+            local strchar <const> = string.char
 
-        local openSprite <const> = loadSprite(spriteFile)
+            local folder <const> = fileSys.filePath(spriteFile)
+            local relFilePaths <const> = fileSys.listFiles(folder)
+            local lenRelFilePaths <const> = #relFilePaths
+            local supportedExts <const> = AseUtilities.FILE_FORMATS_OPEN
+            local lenSupportedExts <const> = #supportedExts
+
+            ---@type Image[]
+            local images <const> = {}
+            local lenImages = 0
+            local wMax = -2147483648
+            local hMax = -2147483648
+            local preferredIdx = 0
+
+            local i = 0
+            while i < lenRelFilePaths do
+                i = i + 1
+                local relFilePath <const> = relFilePaths[i]
+                local fileExt <const> = fileSys.fileExtension(relFilePath)
+
+                local isSupported = false
+                local j = 0
+                while (not isSupported) and j < lenSupportedExts do
+                    j = j + 1
+                    local supportedExt <const> = supportedExts[j]
+                    if fileExt == supportedExt then
+                        isSupported = true
+                    end -- End check if ext is supported.
+                end     -- End supported extensions loop.
+
+                if isSupported then
+                    local absFilePath <const> = fileSys.joinPath(
+                        folder, relFilePath)
+                    local srcImg <const> = Image { fromFile = absFilePath }
+                    if srcImg then
+                        local srcImgSpec <const> = srcImg.spec
+                        local wSrcImg <const> = srcImgSpec.width
+                        local hSrcImg <const> = srcImgSpec.height
+                        local cmSrcImg <const> = srcImgSpec.colorMode
+
+                        if wSrcImg > wMax then wMax = wSrcImg end
+                        if hSrcImg > hMax then hMax = hSrcImg end
+
+                        local trgImage = srcImg
+                        if cmSrcImg ~= ColorMode.RGB then
+                            ---@type string[]
+                            local trgByteArr <const> = {}
+                            local srcBytes <const> = srcImg.bytes
+                            local areaSrcImg <const> = wSrcImg * hSrcImg
+
+                            if cmSrcImg == ColorMode.GRAY then
+                                local k = 0
+                                while k < areaSrcImg do
+                                    local k2 <const> = k * 2
+                                    local v8 <const>, t8 <const> = strbyte(
+                                        srcBytes, 1 + k2, 2 + k2)
+
+                                    local r8, g8, b8 = 0, 0, 0
+                                    if t8 > 0 then
+                                        r8, g8, b8 = v8, v8, v8
+                                    end
+
+                                    local k4 <const> = k * 4
+                                    trgByteArr[1 + k4] = strchar(r8)
+                                    trgByteArr[2 + k4] = strchar(g8)
+                                    trgByteArr[3 + k4] = strchar(b8)
+                                    trgByteArr[4 + k4] = strchar(t8)
+
+                                    k = k + 1
+                                end -- End pixels loop.
+                            elseif cmSrcImg == ColorMode.INDEXED then
+                                local palette <const> = Palette { fromFile = absFilePath }
+                                if palette then
+                                    local lenPalette <const> = #palette
+                                    local alphaIndex <const> = srcImgSpec.transparentColor
+
+                                    local k = 0
+                                    while k < areaSrcImg do
+                                        local i8 <const> = strbyte(srcBytes, 1 + k)
+
+                                        local r8, g8, b8, t8 = 0, 0, 0, 0
+                                        if i8 ~= alphaIndex
+                                            and i8 >= 0
+                                            and i8 < lenPalette then
+                                            local aseColor <const> = palette:getColor(i8)
+                                            t8 = aseColor.alpha
+                                            if t8 > 0 then
+                                                r8 = aseColor.red
+                                                g8 = aseColor.green
+                                                b8 = aseColor.blue
+                                            end
+                                        end
+
+                                        local k4 <const> = k * 4
+                                        trgByteArr[1 + k4] = strchar(r8)
+                                        trgByteArr[2 + k4] = strchar(g8)
+                                        trgByteArr[3 + k4] = strchar(b8)
+                                        trgByteArr[4 + k4] = strchar(t8)
+
+                                        k = k + 1
+                                    end -- End pixels loop.
+                                end     -- End palette exists.
+                            end         -- End color mode block.
+
+                            trgImage = Image(ImageSpec {
+                                width = wSrcImg,
+                                height = hSrcImg,
+                                colorMode = ColorMode.RGB
+                            })
+                            trgImage.bytes = tconcat(trgByteArr)
+                        end -- End image is not RGB.
+
+                        lenImages = lenImages + 1
+                        images[lenImages] = trgImage
+
+                        if absFilePath == spriteFile then
+                            preferredIdx = lenImages - 1
+                        end
+                    end -- End image exists.
+                end     -- End extension is supported.
+            end         -- End relative paths loop.
+
+            if lenImages > 0
+                and wMax > 0
+                and hMax > 0 then
+                openSprite = AseUtilities.createSprite(
+                    AseUtilities.createSpec(wMax, hMax),
+                    "Sequence")
+
+                app.transaction("Open Sequence", function()
+                    AseUtilities.setPalette(
+                        AseUtilities.DEFAULT_PAL_ARR, openSprite)
+
+                    local j = 1
+                    while j < lenImages do
+                        j = j + 1
+                        openSprite:newEmptyFrame()
+                    end
+
+                    local firstLayer <const> = openSprite.layers[1]
+                    local k = 0
+                    while k < lenImages do
+                        local m <const> = (preferredIdx + k) % lenImages
+                        local image <const> = images[1 + m]
+                        openSprite:newCel(firstLayer, 1 + k, image)
+                        k = k + 1
+                    end -- End frame, cel creation loop.
+                end)    -- End transaction.
+            end         -- End valid images exist.
+        else
+            openSprite = loadSprite(spriteFile)
+        end -- End as sequence check.
+
         if not openSprite then
             app.alert {
                 title = "Error",
@@ -273,7 +455,6 @@ dlg:button {
             }
             return
         end
-
         app.sprite = openSprite
 
         local oldColorMode <const> = openSprite.colorMode
@@ -356,7 +537,7 @@ dlg:button {
             end)
         end
 
-        local autoFit = false
+        -- Restore old preferences.
         if appPrefs then
             local openFilePrefs <const> = appPrefs.open_file
             if openFilePrefs then
@@ -373,13 +554,9 @@ dlg:button {
             if quantPrefs then
                 quantPrefs.rgbmap_algorithm = oldQuantAlg
             end
-
-            local editorPrefs <const> = appPrefs.editor
-            if editorPrefs then
-                autoFit = editorPrefs.auto_fit
-            end
         end
 
+        app.frame = openSprite.frames[1]
         app.layer = openSprite.layers[#openSprite.layers]
         app.refresh()
 
