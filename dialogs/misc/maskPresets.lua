@@ -540,8 +540,12 @@ dlg:button {
         else
             local amount <const> = args.amount
                 or defaults.amount --[[@as integer]]
-            local area <const> = amount * amount
-            local center <const> = amount * 0.5
+            local brushSize <const> = brush.size
+            local diam <const> = brushSize <= 1
+                and amount * 2
+                or brushSize
+            local area <const> = diam * diam
+            local center <const> = diam * 0.5
             local xtl <const> = xMouse - center
             local ytl <const> = yMouse - center
             local rsq <const> = center * center
@@ -550,8 +554,8 @@ dlg:button {
 
             local i = 0
             while i < area do
-                local x <const> = xtl + i % amount
-                local y <const> = ytl + i // amount
+                local x <const> = xtl + i % diam
+                local y <const> = ytl + i // diam
                 local dx <const> = x - xMouse
                 local dy <const> = y - yMouse
                 if dx * dx + dy * dy < rsq then
