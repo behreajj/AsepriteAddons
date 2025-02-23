@@ -170,7 +170,6 @@ dlg:newrow { always = false }
 
 dlg:button {
     id = "wExtrude",
-    label = "Extrude:",
     text = "&W",
     focus = false,
     onclick = function()
