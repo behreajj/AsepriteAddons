@@ -5,6 +5,9 @@ AseUtilities = {}
 AseUtilities.__index = AseUtilities
 
 setmetatable(AseUtilities, {
+    -- UUID conversion to and from integers:
+    -- 04684a1dd3cf8ad52752fabe8773a200d926ce56 .
+
     __call = function(cls, ...)
         return cls.new(...)
     end

@@ -319,8 +319,7 @@ dlg:button {
                 local j = 0
                 while (not isSupported) and j < lenSupportedExts do
                     j = j + 1
-                    local supportedExt <const> = supportedExts[j]
-                    if fileExt == supportedExt then
+                    if fileExt == supportedExts[j] then
                         isSupported = true
                     end -- End check if ext is supported.
                 end     -- End supported extensions loop.
