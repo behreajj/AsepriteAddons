@@ -1082,17 +1082,19 @@ end
 function AseUtilities.changePixelFormat(format)
     if format == ColorMode.INDEXED then
         app.command.ChangePixelFormat {
+            ui = false,
             format = "indexed",
             fitCriteria = "cielab",
             rgbmap = "octree"
         }
     elseif format == ColorMode.GRAY then
         app.command.ChangePixelFormat {
+            ui = false,
             format = "gray",
             toGray = "luma"
         }
     elseif format == ColorMode.RGB then
-        app.command.ChangePixelFormat { format = "rgb" }
+        app.command.ChangePixelFormat { ui = false, format = "rgb" }
     end
 end
 
