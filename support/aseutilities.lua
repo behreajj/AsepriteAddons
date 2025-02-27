@@ -1081,14 +1081,16 @@ end
 ---@param format ColorMode format constant
 function AseUtilities.changePixelFormat(format)
     if format == ColorMode.INDEXED then
-        -- TODO: For now, CIE LAB preference would need to be set through
-        -- preferences.
-        -- https://github.com/aseprite/aseprite/pull/4925
-        -- https://github.com/aseprite/aseprite/blob/main/src/doc/fit_criteria.h
-        -- https://github.com/aseprite/aseprite/blob/main/data/pref.xml#L324
-        app.command.ChangePixelFormat { format = "indexed" }
+        app.command.ChangePixelFormat {
+            format = "indexed",
+            fitCriteria = "cielab",
+            rgbmap = "octree"
+        }
     elseif format == ColorMode.GRAY then
-        app.command.ChangePixelFormat { format = "gray" }
+        app.command.ChangePixelFormat {
+            format = "gray",
+            toGray = "luma"
+        }
     elseif format == ColorMode.RGB then
         app.command.ChangePixelFormat { format = "rgb" }
     end
