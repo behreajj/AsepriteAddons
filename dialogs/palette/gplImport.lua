@@ -355,6 +355,7 @@ dlg:button {
                                 and lenTokens > 3 then
                                 local aPrs <const> = tonumber(tokens[4], 10)
                                 if aPrs then a = aPrs end
+                                if a < 0 then a = 0 elseif a > 255 then a = 255 end
                             end
 
                             if a > 0 then
@@ -365,14 +366,12 @@ dlg:button {
                                 if bPrs then b = bPrs end
                                 if gPrs then g = gPrs end
                                 if rPrs then r = rPrs end
+
+                                if b < 0 then b = 0 elseif b > 255 then b = 255 end
+                                if g < 0 then g = 0 elseif g > 255 then g = 255 end
+                                if r < 0 then r = 0 elseif r > 255 then r = 255 end
                             end
                         end
-
-                        -- Saturation arithmetic instead of modular.
-                        if a < 0 then a = 0 elseif a > 255 then a = 255 end
-                        if b < 0 then b = 0 elseif b > 255 then b = 255 end
-                        if g < 0 then g = 0 elseif g > 255 then g = 255 end
-                        if r < 0 then r = 0 elseif r > 255 then r = 255 end
 
                         local hex <const> = a << 0x18 | b << 0x10 | g << 0x08 | r
                         lenColors = lenColors + 1
