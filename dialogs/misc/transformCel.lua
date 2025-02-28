@@ -29,7 +29,6 @@ local defaults <const> = {
     prcHeight = 100,
     units = "PERCENT",
     coordSystem = "TOP_LEFT",
-    dismissSel = true,
 }
 
 ---@param dialog Dialog
@@ -88,10 +87,6 @@ local function translateCels(dialog, x, y)
                 end
                 cel.position = Point(xn, yn)
             end
-
-            if defaults.dismissSel and target == "SELECTION" then
-                activeSprite.selection:deselect()
-            end
         end)
     else
         app.transaction("Move Cels", function()
@@ -101,10 +96,6 @@ local function translateCels(dialog, x, y)
                 local cel <const> = cels[i]
                 local op <const> = cel.position
                 cel.position = Point(op.x + x, op.y - y)
-            end
-
-            if defaults.dismissSel and target == "SELECTION" then
-                activeSprite.selection:deselect()
             end
         end)
     end
@@ -214,10 +205,6 @@ dlg:button {
                         yCenter - y - image.height // 2)
                     -- end
                 end
-
-                if defaults.dismissSel and target == "SELECTION" then
-                    activeSprite.selection:deselect()
-                end
             end)
         else
             local pt <const> = Point(x, y)
@@ -233,10 +220,6 @@ dlg:button {
                     -- else
                     cel.position = pt
                     -- end
-                end
-
-                if defaults.dismissSel and target == "SELECTION" then
-                    activeSprite.selection:deselect()
                 end
             end)
         end
@@ -320,10 +303,6 @@ dlg:button {
                     cel.image = imgTrg
                     cel.position = Point(xTrg, yTrg)
                 end
-
-                if defaults.dismissSel and target == "SELECTION" then
-                    activeSprite.selection:deselect()
-                end
             end)
         elseif tiledMode == 2 then
             -- Vertical tiling.
@@ -340,10 +319,6 @@ dlg:button {
                     imgTrg, xTrg, yTrg = trimAlpha(imgTrg, 0, alphaIndex)
                     cel.image = imgTrg
                     cel.position = Point(xTrg + dx, yTrg)
-                end
-
-                if defaults.dismissSel and target == "SELECTION" then
-                    activeSprite.selection:deselect()
                 end
             end)
         elseif tiledMode == 1 then
@@ -362,10 +337,6 @@ dlg:button {
                     cel.image = imgTrg
                     cel.position = Point(xTrg, yTrg - dy)
                 end
-
-                if defaults.dismissSel and target == "SELECTION" then
-                    activeSprite.selection:deselect()
-                end
             end)
         else
             -- No tiling.
@@ -375,10 +346,6 @@ dlg:button {
                     i = i + 1
                     local cel <const> = cels[i]
                     cel.image = wrap(cel.image, dx, dy)
-                end
-
-                if defaults.dismissSel and target == "SELECTION" then
-                    activeSprite.selection:deselect()
                 end
             end)
         end
@@ -502,10 +469,6 @@ dlg:button {
                     cel.image = trgImg
                 end
             end
-
-            if defaults.dismissSel and target == "SELECTION" then
-                activeSprite.selection:deselect()
-            end
         end)
 
         app.refresh()
@@ -576,10 +539,6 @@ dlg:button {
                     cel.image = trgImg
                 end
             end
-
-            if defaults.dismissSel and target == "SELECTION" then
-                activeSprite.selection:deselect()
-            end
         end)
 
         app.refresh()
@@ -648,10 +607,6 @@ dlg:button {
                         celPos.x + xSrcHalf - ySrcHalf,
                         celPos.y + ySrcHalf - xSrcHalf)
                 end
-
-                if defaults.dismissSel and target == "SELECTION" then
-                    activeSprite.selection:deselect()
-                end
             end)
         elseif is180 then
             local rot180 <const> = AseUtilities.rotateImage180
@@ -661,10 +616,6 @@ dlg:button {
                     i = i + 1
                     local cel <const> = cels[i]
                     cel.image = rot180(cel.image)
-                end
-
-                if defaults.dismissSel and target == "SELECTION" then
-                    activeSprite.selection:deselect()
                 end
             end)
         else
@@ -710,10 +661,6 @@ dlg:button {
                         cel.position = Point(floor(xtlTrg), floor(ytlTrg))
                         cel.image = trgImg
                     end
-                end
-
-                if defaults.dismissSel and target == "SELECTION" then
-                    activeSprite.selection:deselect()
                 end
             end)
         end
@@ -886,10 +833,6 @@ dlg:button {
                 flipped:flip(fliph)
                 cel.image = flipped
             end
-
-            if defaults.dismissSel and target == "SELECTION" then
-                activeSprite.selection:deselect()
-            end
         end)
 
         app.refresh()
@@ -930,10 +873,6 @@ dlg:button {
                 local flipped <const> = cel.image:clone()
                 flipped:flip(flipv)
                 cel.image = flipped
-            end
-
-            if defaults.dismissSel and target == "SELECTION" then
-                activeSprite.selection:deselect()
             end
         end)
 
@@ -1027,10 +966,6 @@ dlg:button {
                     cel.position = Point(floor(xtlTrg), floor(ytlTrg))
                     cel.image = trgImg
                 end
-            end
-
-            if defaults.dismissSel and target == "SELECTION" then
-                activeSprite.selection:deselect()
             end
         end)
 
