@@ -312,6 +312,8 @@ dlg:file {
     id = "filename",
     label = "File:",
     filetypes = tiledImgExts,
+    filename = app.fs.joinPath(
+        app.fs.userDocsPath, "*.png"),
     save = true,
     focus = true
 }

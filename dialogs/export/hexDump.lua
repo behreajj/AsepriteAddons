@@ -140,6 +140,8 @@ dlg:file {
     filetypes = exportFileExts,
     save = true,
     focus = false,
+    filename = app.fs.joinPath(
+        app.fs.userDocsPath, "*.*"),
     visible = defaults.outputType == "FILE"
 }
 

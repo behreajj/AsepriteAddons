@@ -784,7 +784,8 @@ dlg:file {
     label = "Path:",
     filetypes = { "svg" },
     save = true,
-
+    filename = app.fs.joinPath(
+        app.fs.userDocsPath, "*.svg"),
     focus = true
 }
 

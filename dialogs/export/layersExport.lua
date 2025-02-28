@@ -198,6 +198,10 @@ dlg:file {
     id = "filename",
     label = "File:",
     filetypes = AseUtilities.FILE_FORMATS_SAVE,
+    filename = app.fs.joinPath(
+        app.fs.userDocsPath,
+        string.format("*.%s",
+            app.preferences.export_file.image_default_extension)),
     save = true,
     focus = true
 }
