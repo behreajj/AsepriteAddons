@@ -5,19 +5,21 @@ local unitOptions <const> = { "PERCENT", "PIXEL" }
 local coordSystems <const> = { "CENTER", "TOP_LEFT" }
 
 local defaults <const> = {
-    -- TODO: When target is SELECTION, include checkbox to dismiss or
-    -- update the selection after the transformation (use select cel)?
-    -- Problem is that new layer from selection is created in filterCels
-    -- app, so you have to search for that and follow it up every time.
-
     -- Polar and Cartesian coordinates tried in commit
     -- 650a11ebc57a7e4539b5113297f5e2c404978e02 .
+    --
     -- Flip h and v position tried in commit
     -- f8adad7ce334553e16701cae83cdf5a4657f8c4a .
+    --
     -- Scaling with a pivot tried in commit
     -- 27bacf304eae29d0ecb4c2780ab77b59789af7ff .
+    --
     -- Setting cel position with shrink bounds tried in commit
     -- 67d333c2e9cd9ab2724091d9044cae87117eca8c .
+    --
+    -- Dismiss selection after transformation tried in commit
+    -- 08ac54d4dd95b748dd3277f7cb951e828e1c5bd3 .
+
     target = "ACTIVE",
     xTranslate = 0,
     yTranslate = 0,
