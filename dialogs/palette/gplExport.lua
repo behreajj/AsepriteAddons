@@ -69,7 +69,8 @@ dlg:file {
     label = "Path:",
     filetypes = { "gpl" },
     save = true,
-
+    filename = app.fs.joinPath(
+        app.fs.userDocsPath, "*.gpl"),
     focus = true
 }
 
