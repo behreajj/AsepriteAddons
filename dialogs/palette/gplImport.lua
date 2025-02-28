@@ -34,7 +34,7 @@ dlg:file {
     id = "filepath",
     label = "Path:",
     filetypes = { "gpl", "pal" },
-    filename = app.fs.joinPath(app.fs.userConfigPath, "palettes", "*.*"),
+    filename = app.fs.joinPath(app.fs.userConfigPath, "palettes", "*.gpl"),
     open = true,
     focus = true
 }
