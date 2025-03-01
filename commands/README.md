@@ -27,8 +27,6 @@ false, then returns to the first frame after reaching the last.
 
 ## Layers
 
-- `collapseGroups`: Collapses all group layers in the timeline. If the active layer is a child, sets its top-level ancestor to the active layer.
-
 - `copyLayer`: Duplicates a layer, including group opacity and blend mode. Ignores reference layers. Tile map layers are copied to regular layers (to avoid ambiguities with tile set reference vs. copy by value).
 
 - `cycleStackDown`: Moves a layer down the stack. Ignores background layers. If the layer is at the bottom of the stack and its parent does not contain a background layer, moves it to the top.
@@ -38,8 +36,6 @@ false, then returns to the first frame after reaching the last.
 - `deleteLayer`: Deletes layers in the timeline range. Children of group layers will be unparented. Creates a new layer if all existing layers are deleted. Does not delete tile set if layer is a tile map layer and is the only one using the tile set.
 
 - `dereference`: Converts a reference layer to a normal layer. Transfers the reference layer's parent to the new layer.
-
-- `expandGroups`: Opens all group layers in the timeline.
 
 - `flattenGroup`: Flattens a group layer. Includes locked layers, but excludes hidden layers.
 
