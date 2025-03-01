@@ -29,6 +29,8 @@ false, then returns to the first frame after reaching the last.
 
 - `collapseGroups`: Collapses all group layers in the timeline. If the active layer is a child, sets its top-level ancestor to the active layer.
 
+- `copyLayer`: Duplicates a layer, including group opacity and blend mode. Ignores reference layers. Tile map layers are copied to regular layers (to avoid ambiguities with tile set reference vs. copy by value).
+
 - `cycleStackDown`: Moves a layer down the stack. Ignores background layers. If the layer is at the bottom of the stack and its parent does not contain a background layer, moves it to the top.
 
 - `cycleStackUp`: Moves a layer up the stack. Ignores background layers. If the layer is at the top of the stack and its parent does not contain a background layer, moves it to the bottom.

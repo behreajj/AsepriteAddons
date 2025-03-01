@@ -27,8 +27,7 @@ local function dupeLayer(
         if appPrefs then
             local experimental <const> = appPrefs.experimental
             if experimental then
-                useNewBlend = experimental.new_blend
-                    or false
+                useNewBlend = experimental.new_blend or false
             end
         end
 
