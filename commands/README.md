@@ -33,7 +33,7 @@ false, then returns to the first frame after reaching the last.
 
 - `cycleStackUp`: Moves a layer up the stack. Ignores background layers. If the layer is at the top of the stack and its parent does not contain a background layer, moves it to the bottom.
 
-- `deleteLayer`: Deletes layers in the timeline range. Children of group layers will be unparented and appended to a range. Creates a new layer if all existing layers are deleted. Does not delete tile set if layer is a tile map layer and is the only one using the tile set.
+- `deleteLayer`: Deletes layers in the timeline range. Children of group layers will be unparented. Creates a new layer if all existing layers are deleted. Does not delete tile set if layer is a tile map layer and is the only one using the tile set.
 
 - `dereference`: Converts a reference layer to a normal layer. Transfers the reference layer's parent to the new layer.
 

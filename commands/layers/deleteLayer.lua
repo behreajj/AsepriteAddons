@@ -23,11 +23,11 @@ local function tallyLeaves(layer, tally, idTallyDict)
                 tally = tallyLeaves(children[i], tally, idTallyDict)
             end
         end
+        return tally
     else
         idTallyDict[layer.id] = tally + 1
+        return tally + 1
     end
-
-    return tally + 1
 end
 
 ---@param sprite Sprite
@@ -70,6 +70,10 @@ end
 
 app.transaction("Delete Layers", function()
     local leavesRemaining = lenLeaves
+    if leavesRemaining == 0 then
+        activeSprite:newLayer()
+    end
+
     local i = lenRangeLeaves + 1
     while i > 1 do
         i = i - 1
