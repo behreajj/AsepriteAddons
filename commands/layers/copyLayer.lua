@@ -1,7 +1,5 @@
 dofile("../../support/aseutilities.lua")
 
---Built-in duplicate layer does not copy group blend mode or opacity.
-
 local site <const> = app.site
 local activeSprite <const> = site.sprite
 if not activeSprite then return end
@@ -14,7 +12,7 @@ if activeLayer.isReference then return end
 ---@param parent Layer|Sprite
 ---@param spriteColorMode ColorMode
 ---@return Layer trgLayer
-local function dupeLayer(
+local function copyLayer(
     srcLayer,
     parent,
     spriteColorMode)
@@ -43,8 +41,7 @@ local function dupeLayer(
             local i = 0
             while i < lenChildren do
                 i = i + 1
-                local srcChild <const> = srcChildren[i]
-                dupeLayer(srcChild, trgLayer, spriteColorMode)
+                copyLayer(srcChildren[i], trgLayer, spriteColorMode)
             end -- End child layer loop.
         end     -- End children array exist.
     else
@@ -102,7 +99,7 @@ local function dupeLayer(
 end
 
 app.transaction("Copy Layer", function()
-    local trgLayer <const> = dupeLayer(
+    local trgLayer <const> = copyLayer(
         activeLayer,
         activeLayer.parent,
         activeSprite.colorMode)

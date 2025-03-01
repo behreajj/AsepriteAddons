@@ -70,6 +70,7 @@ end
 
 app.transaction("Delete Layers", function()
     local leavesRemaining = lenLeaves
+    -- It's possible to have one group with no children.
     if leavesRemaining == 0 then
         activeSprite:newLayer()
     end
@@ -98,9 +99,9 @@ app.transaction("Delete Layers", function()
         if group then
             local children <const> = group.layers
             if children then
-                local lenChildren <const> = #children
                 local stackIndex <const> = group.stackIndex
                 local grandParent <const> = group.parent or activeSprite
+                local lenChildren <const> = #children
 
                 local k = 0
                 while k < lenChildren do
