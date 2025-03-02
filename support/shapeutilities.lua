@@ -9,6 +9,7 @@ setmetatable(ShapeUtilities, {
     end
 })
 
+---Rasterizes a mesh to an image using a graphics context.
 ---@param mesh Mesh2 mesh
 ---@param refSpec ImageSpec image spec
 ---@param useFill boolean use fill
