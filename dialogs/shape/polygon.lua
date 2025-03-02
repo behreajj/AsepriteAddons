@@ -20,7 +20,7 @@ dlg:slider {
     id = "sides",
     label = "Sides:",
     min = 3,
-    max = 16,
+    max = 32,
     value = defaults.sides,
     focus = true
 }
