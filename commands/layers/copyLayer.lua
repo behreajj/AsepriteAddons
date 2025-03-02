@@ -109,6 +109,11 @@ local filtered <const> = AseUtilities.filterLayers(
 local lenFiltered <const> = #filtered
 
 if lenFiltered > 1 then
+    -- Layers in a range can be out of order.
+    table.sort(filtered, function(a, b)
+        return a.stackIndex < b.stackIndex
+    end)
+
     app.transaction("Copy Range Layers", function()
         local i = 0
         while i < lenFiltered do
