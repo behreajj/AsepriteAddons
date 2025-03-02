@@ -273,8 +273,9 @@ dlg:button {
 
         -- The brush image size must account for the stroke, and to center
         -- the mesh within the image, the translation must use image size.
-        local wImage <const> = math.ceil(sclVerif + strokeWeight)
-        local hImage <const> = math.ceil(sclVerif + strokeWeight)
+        -- Fudge factor needed for, e.g., triangle corners.
+        local wImage <const> = math.ceil(sclVerif + strokeWeight + 5)
+        local hImage <const> = math.ceil(sclVerif + strokeWeight + 5)
         local t <const> = Mat3.fromTranslation(
             wImage * 0.5, hImage * 0.5)
 
