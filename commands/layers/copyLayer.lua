@@ -7,6 +7,7 @@ if not activeSprite then return end
 local activeLayer <const> = app.layer
 if not activeLayer then return end
 if activeLayer.isReference then return end
+if activeLayer.isBackground then return end
 
 ---@param srcLayer Layer
 ---@param parent Layer|Sprite
