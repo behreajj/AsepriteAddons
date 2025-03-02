@@ -4,11 +4,6 @@ local site <const> = app.site
 local activeSprite <const> = site.sprite
 if not activeSprite then return end
 
-local activeLayer <const> = app.layer
-if not activeLayer then return end
-if activeLayer.isReference then return end
-if activeLayer.isBackground then return end
-
 ---@param srcLayer Layer
 ---@param parent Layer|Sprite
 ---@param spriteColorMode ColorMode
@@ -99,13 +94,48 @@ local function copyLayer(
     return trgLayer
 end
 
-app.transaction("Copy Layer", function()
-    local trgLayer <const> = copyLayer(
-        activeLayer,
-        activeLayer.parent,
-        activeSprite.colorMode)
-    trgLayer.stackIndex = activeLayer.stackIndex + 1
-    app.layer = trgLayer
-end)
+local activeLayer <const> = site.layer
+    or activeSprite.layers[1]
+local spriteSpec <const> = activeSprite.spec
+local colorMode <const> = spriteSpec.colorMode
+
+local includeLocked <const> = true
+local includeHidden <const> = true
+local includeTiles <const> = true
+local includeBkg <const> = colorMode ~= ColorMode.INDEXED
+local filtered <const> = AseUtilities.filterLayers(
+    activeSprite, site.layer, "RANGE",
+    includeLocked, includeHidden, includeTiles, includeBkg)
+local lenFiltered <const> = #filtered
+
+if lenFiltered > 1 then
+    app.transaction("Copy Range Layers", function()
+        local i = 0
+        while i < lenFiltered do
+            i = i + 1
+            copyLayer(filtered[i], activeSprite, colorMode)
+        end
+        app.layer = activeLayer
+    end)
+else
+    if activeLayer.isReference then return end
+    if activeLayer.isGroup
+        and (activeLayer.layers == nil
+            or #activeLayer.layers <= 0) then
+        return
+    end
+    if activeLayer.isBackground and (not includeBkg) then
+        return
+    end
+
+    app.transaction("Copy Layer", function()
+        local trgLayer <const> = copyLayer(
+            activeLayer,
+            activeLayer.parent,
+            activeSprite.colorMode)
+        trgLayer.stackIndex = activeLayer.stackIndex + 1
+        app.layer = trgLayer
+    end)
+end
 
 app.refresh()

@@ -303,7 +303,7 @@ dlg:button {
         }
         refSpec.colorSpace = colorSpace
 
-        local image <const>,
+        local trimmed <const>,
         _ <const>,
         _ <const> = ShapeUtilities.mesh2ToImage(
             mesh, refSpec,
@@ -313,10 +313,10 @@ dlg:button {
 
         app.brush = Brush {
             type = BrushType.IMAGE,
-            image = image,
+            image = trimmed,
             center = Point(
-                image.width // 2,
-                image.height // 2)
+                trimmed.width // 2,
+                trimmed.height // 2)
         }
         app.refresh()
     end
