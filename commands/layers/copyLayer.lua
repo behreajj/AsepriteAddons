@@ -111,6 +111,9 @@ local lenFiltered <const> = #filtered
 if lenFiltered > 1 then
     -- Layers in a range can be out of order.
     table.sort(filtered, function(a, b)
+        if a.stackIndex == b.stackIndex then
+            return a.name < b.name
+        end
         return a.stackIndex < b.stackIndex
     end)
 
@@ -120,8 +123,11 @@ if lenFiltered > 1 then
             i = i + 1
             copyLayer(filtered[i], activeSprite, colorMode)
         end
-        app.layer = activeLayer
     end)
+
+    app.layer = activeLayer
+
+    -- TODO: Restore original range if it was of type layers?
 else
     if activeLayer.isReference then return end
     if activeLayer.isGroup
