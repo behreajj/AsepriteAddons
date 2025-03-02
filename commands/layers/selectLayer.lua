@@ -178,7 +178,6 @@ local function evalLayer(
     return 0.0, layer
 end
 
-
 local sprite <const> = app.sprite
 if not sprite then return end
 

@@ -58,7 +58,7 @@ false, then returns to the first frame after reaching the last.
 ## Palette
 
 - `cycleSwatchLeft`: If the foreground color has an exact palette match, moves the palette swatch to the left. Does not trigger a palette remap.
- 
+
 - `cycleSwatchRight`: If the foreground color has an exact palette match, moves the palette swatch to the right. Does not trigger a palette remap.
 
 - `nextSwatchBack`: Moves the active background color to the next palette index. If the tile map mode is `TilemapMode.TILES`, then moves the active tile.

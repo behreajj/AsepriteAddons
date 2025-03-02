@@ -8,9 +8,6 @@ local paletteTypes <const> = {
 }
 
 local defaults <const> = {
-    --TODO: The file widget submenu that asks to choose between absolute and
-    -- relative paths makes this cumbersome to use. Neither switching to an
-    -- entry formatted opener nor specifying a filename improve the UX.
     asSeq = false,
     removeBkg = true,
     trimCels = true,
@@ -247,8 +244,6 @@ dlg:button {
                 cmPrefs.missing_profile = 0    -- Disable
             end
 
-            -- TODO: Set to LAB fit criteria?
-            -- https://github.com/aseprite/aseprite/blob/main/data/pref.xml#L325
             local quantPrefs <const> = appPrefs.quantization
             if quantPrefs then
                 oldQuantAlg = quantPrefs.rgbmap_algorithm or 0 --[[@as integer]]
