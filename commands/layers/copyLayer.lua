@@ -126,8 +126,6 @@ if lenFiltered > 1 then
     end)
 
     app.layer = activeLayer
-
-    -- TODO: Restore original range if it was of type layers?
 else
     if activeLayer.isReference then return end
     if activeLayer.isGroup

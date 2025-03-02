@@ -27,7 +27,7 @@ false, then returns to the first frame after reaching the last.
 
 ## Layers
 
-- `copyLayer`: Duplicates a layer, including group opacity and blend mode. Ignores reference layers. Tile map layers are copied to regular layers (to avoid ambiguities with tile set reference vs. copy by value).
+- `copyLayer`: Duplicates a layer, including group opacity and blend mode. Ignores reference layers. Ignores background layers in indexed color mode. Tile map layers are copied to regular layers (to avoid ambiguities with tile set reference vs. copy by value). For ranges, group layers are ignored and duplicates are parented to the sprite.
 
 - `cycleStackDown`: Moves a layer down the stack. Ignores background layers. If the layer is at the bottom of the stack and its parent does not contain a background layer, moves it to the top.
 
