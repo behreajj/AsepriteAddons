@@ -49,6 +49,7 @@ local defaults <const> = {
     -- alpha max plus the non-centered a and b max.
     -- normDist = 1.0 / 295.14803275438,
     normDist = 0.01,
+    useInvert = false,
 }
 
 ---@param x number
@@ -151,6 +152,7 @@ dlg:combobox {
         dlg:modify { id = "getHue", visible = ish }
 
         dlg:modify { id = "refColor", visible = isDist }
+        dlg:modify { id = "useInvert", visible = isDist }
     end
 }
 
@@ -253,7 +255,7 @@ dlg:slider {
     id = "respFocus",
     label = "Focus:",
     min = 0,
-    max = 99,
+    max = 100,
     value = defaults.respFocus,
     visible = defaults.channel == "HUE"
         or defaults.channel == "DIST"
@@ -305,6 +307,17 @@ dlg:color {
     label = "To:",
     color = Color { r = 0, g = 0, b = 0, a = 255 },
     visible = defaults.channel == "DIST"
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id       = "useInvert",
+    label    = "Invert:",
+    text     = "&Factor",
+    selected = defaults.useInvert,
+    visible  = defaults.channel == "DIST",
+    focus    = false,
 }
 
 dlg:newrow { always = false }
@@ -507,11 +520,11 @@ dlg:button {
                 " H %03d F %02d",
                 trgHueDeg, respFocus100)
 
-            local respFocus01 <const> = respFocus100 * 0.01
+            local respFocus01 <const> = math.min(respFocus100 * 0.01, 0.999999)
             responseFunc = function(x)
-                if respFocus01 >= 1.0 then return 0.0 end
-                if x <= respFocus01 then return 0.0 end
                 local y <const> = (x - respFocus01) / (1.0 - respFocus01)
+                if y <= 0.0 then return 0.0 end
+                if y >= 1.0 then return 1.0 end
                 return y * y * (3.0 - (y + y))
             end
 
@@ -549,22 +562,23 @@ dlg:button {
             local refSrgb <const> = AseUtilities.aseColorToClr(refColor)
             local refLab <const> = Clr.sRgbToSrLab2(refSrgb)
             local normDist <const> = defaults.normDist
+            local useInvert <const> = args.useInvert --[[@as boolean]]
             toFac = function(lab)
                 local dl <const> = refLab.l - lab.l
                 local da <const> = refLab.a - lab.a
                 local db <const> = refLab.b - lab.b
                 local x <const> = normDist * math.sqrt(
                     dl * dl + da * da + db * db)
-                return 1.0 - x
+                return useInvert and x or 1.0 - x
             end
 
             local respFocus100 <const> = args.respFocus
                 or defaults.respFocus --[[@as integer]]
-            local respFocus01 <const> = respFocus100 * 0.01
+            local respFocus01 <const> = math.min(respFocus100 * 0.01, 0.999999)
             responseFunc = function(x)
-                if respFocus01 >= 1.0 then return 0.0 end
-                if x <= respFocus01 then return 0.0 end
                 local y <const> = (x - respFocus01) / (1.0 - respFocus01)
+                if y <= 0.0 then return 0.0 end
+                if y >= 1.0 then return 1.0 end
                 return y * y * (3.0 - (y + y))
             end
 
