@@ -311,14 +311,16 @@ dlg:button {
             useStroke, strokeColor, strokeWeight,
             useAntialias, true)
 
-        app.brush = Brush {
-            type = BrushType.IMAGE,
-            image = trimmed,
-            center = Point(
-                trimmed.width // 2,
-                trimmed.height // 2)
-        }
-        app.refresh()
+        if not trimmed:isEmpty() then
+            app.brush = Brush {
+                type = BrushType.IMAGE,
+                image = trimmed,
+                center = Point(
+                    trimmed.width // 2,
+                    trimmed.height // 2)
+            }
+            app.refresh()
+        end
     end
 }
 
