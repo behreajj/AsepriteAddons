@@ -216,10 +216,11 @@ dlg:button {
             or defaults.removePalette --[[@as boolean]]
 
         if opaqueLayer ~= "NONE" then
-            -- TODO: As of 1.3.10 beta, this also has to do groups.
-            local chosenLayers = AseUtilities.filterLayers(activeSprite,
-                site.layer, opaqueLayer, includeLocked, includeHidden,
-                includeTiles, false)
+            -- TODO: As of 1.3.10 beta, this also has to do groups. Is it worth
+            -- making a filterGroups function?
+            local chosenLayers <const> = AseUtilities.filterLayers(
+                activeSprite, site.layer, opaqueLayer, includeLocked,
+                includeHidden, includeTiles, false)
             local lenChosenLayers <const> = #chosenLayers
 
             if lenChosenLayers > 0 then
