@@ -28,7 +28,6 @@ function ShapeUtilities.mesh2ToImage(
     useStroke, strokeClr, strokeWeight,
     useAntiAlias, useTrim)
     local trgImg = Image(refSpec)
-
     local context <const> = trgImg.context
     if not context then return trgImg, 0, 0 end
 
@@ -37,6 +36,9 @@ function ShapeUtilities.mesh2ToImage(
     local useStrokeVerif <const> = useStroke
         and strokeWeight > 0
         and strokeClr.alpha > 0
+    if (not useFillVerif) and (not useStrokeVerif) then
+        return trgImg, 0, 0
+    end
 
     local faces <const> = mesh.fs
     local coords <const> = mesh.vs
