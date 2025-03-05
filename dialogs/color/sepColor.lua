@@ -32,7 +32,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "confirm",
     text = "&OK",
-    focus = false,
+    focus = true,
     onclick = function()
         local site <const> = app.site
         local activeSprite <const> = site.sprite
