@@ -291,7 +291,8 @@ dlg:button {
                         -- TODO: Ideally for large images, there'd be an option
                         -- to quantize the color that collected coordinates,
                         -- then here you would use the actual color from the
-                        -- source image, not the quantized.
+                        -- source image, not the quantized. Drawback is that
+                        -- this could only work in RGB color mode.
                         trgByteArr[1 + flat] = pixelPacked
                     end
 
