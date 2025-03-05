@@ -3,7 +3,7 @@ dofile("../../support/shapeutilities.lua")
 local defaults <const> = {
     cells = 8,
     margin = 0,
-    useStroke = true,
+    useStroke = false,
     strokeWeight = 1,
     useFill = true,
     useAntialias = false,
@@ -83,7 +83,7 @@ dlg:slider {
 
 dlg:color {
     id = "strokeClr",
-    color = app.preferences.color_bar.fg_color --[[@as Color]],
+    color = app.preferences.color_bar.bg_color --[[@as Color]],
     visible = defaults.useStroke
 }
 
@@ -106,7 +106,7 @@ dlg:check {
 
 dlg:color {
     id = "fillClr",
-    color = app.preferences.color_bar.bg_color --[[@as Color]],
+    color = app.preferences.color_bar.fg_color --[[@as Color]],
     visible = defaults.useFill
 }
 
