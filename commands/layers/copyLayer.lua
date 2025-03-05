@@ -121,6 +121,9 @@ if lenFiltered > 1 then
         local i = 0
         while i < lenFiltered do
             i = i + 1
+            -- TODO: Use has same parent test to decide whether
+            -- to parent to sprite or not? See similar idea in
+            -- groupLayers?
             copyLayer(filtered[i], activeSprite, colorMode)
         end
     end)

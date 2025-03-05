@@ -974,6 +974,9 @@ dlg:button {
             end
 
             if useLabAdj then
+                -- TODO: Now that you have a separate method dedicated to
+                -- removing alpha, wouldn't it make sense to exclude zero
+                -- alpha from the alpha adjust?
                 tTrg = tTrg + alphaAdj
                 lTrg = lTrg + lAdj
                 aTrg = aTrg + aAdj

@@ -181,10 +181,10 @@ dlg:button {
             local xAxis <const> = symPrefs.x_axis --[[@as number]]
             local yAxis <const> = symPrefs.y_axis --[[@as number]]
 
-            local xCenter <const> = (symMode == 1 or symMode == 3)
+            local xCenter <const> = (symMode & 1) ~= 0
                 and math.floor(xAxis)
                 or activeSprite.width // 2
-            local yCenter <const> = (symMode == 2 or symMode == 3)
+            local yCenter <const> = (symMode & 2) ~= 0
                 and math.floor(yAxis)
                 or activeSprite.height // 2
 
