@@ -225,7 +225,7 @@ dlg:button {
 
                 if colorMode == ColorMode.RGB then
                     local uiColor <const> = AseUtilities.hexToAseColor(
-                        pixel & 0xc0ffffff)
+                        pixel & 0x80ffffff)
                     trgLayer.color = uiColor
                 end
             end)
