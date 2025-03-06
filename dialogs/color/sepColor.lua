@@ -101,8 +101,8 @@ dlg:button {
         local layerNameFormat <const> = "%0" .. (srcBpp * 2) .. "x"
 
         local alphaIndexVerif <const> = (colorMode ~= ColorMode.INDEXED
-                or (alphaIndex >= 0 and alphaIndex < 256)) and
-            alphaIndex or 0
+                or (alphaIndex >= 0 and alphaIndex < 256))
+            and alphaIndex or 0
         local alphaIndexPacked <const> = string.pack(
             packFmt, alphaIndexVerif)
 

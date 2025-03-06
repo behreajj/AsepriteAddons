@@ -702,8 +702,8 @@ dlg:button {
 
         local alphaIndex <const> = sprSpec.transparentColor
         local alphaIndexVerif <const> = (colorMode ~= ColorMode.INDEXED
-                or (alphaIndex >= 0 and alphaIndex < 256)) and
-            alphaIndex or 0
+                or (alphaIndex >= 0 and alphaIndex < 256))
+            and alphaIndex or 0
 
         local selSpec <const> = AseUtilities.createSpec(wSel, hSel,
             colorMode, sprSpec.colorSpace, alphaIndex)

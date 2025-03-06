@@ -338,8 +338,8 @@ dlg:button {
 
         local itr2 <const> = iterations + iterations
         local alphaIndexVerif <const> = (colorMode ~= ColorMode.INDEXED
-                or (alphaIndex >= 0 and alphaIndex < 256)) and
-            alphaIndex or 0
+                or (alphaIndex >= 0 and alphaIndex < 256))
+            and alphaIndex or 0
 
         -- Convert iterations to a factor given to gradient.
         local toFac <const> = iterations > 1

@@ -1122,8 +1122,7 @@ dlg:button {
         local fmtStr <const> = "<I" .. srcBpp
         local alphaIndexVerif <const> = (colorMode ~= ColorMode.INDEXED
                 or (alphaIndex >= 0 and alphaIndex < 256))
-            and alphaIndex
-            or 0
+            and alphaIndex or 0
         local alphaIndexPacked <const> = string.pack(fmtStr, alphaIndexVerif)
 
         -- Cache global methods used in loop.

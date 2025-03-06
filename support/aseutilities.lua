@@ -2508,8 +2508,7 @@ function AseUtilities.hashImage(source, sizeThresh)
             local alphaIndex <const> = srcSpec.transparentColor
             local alphaIndexVerif <const> = (cmSrc ~= ColorMode.INDEXED
                     or (alphaIndex >= 0 and alphaIndex < 256))
-                and alphaIndex
-                or 0
+                and alphaIndex or 0
             bytes = Utilities.resizePixelsNearest(bytes, wSrc, hSrc,
                 sizeThresh, sizeThresh, source.bytesPerPixel, alphaIndexVerif)
         end
@@ -3470,8 +3469,8 @@ function AseUtilities.trimCelToSelect(cel, mask, hexDefault)
             255, BlendMode.SRC)
 
         local alphaIndexVerif <const> = (colorMode ~= ColorMode.INDEXED
-                or (alphaIndex >= 0 and alphaIndex < 256)) and
-            alphaIndex or 0
+                or (alphaIndex >= 0 and alphaIndex < 256))
+            and alphaIndex or 0
         local hexVerif <const> = hexDefault or alphaIndexVerif
         local trimBytesStr <const> = trimImage.bytes
         local bpp <const> = trimImage.bytesPerPixel
