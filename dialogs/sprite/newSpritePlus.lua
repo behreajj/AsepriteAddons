@@ -411,7 +411,7 @@ dlg:button {
         -- Store new dimensions in preferences.
         local autoFit = false
         local appPrefs <const> = app.preferences
-        local showLayerEdges = false
+
         if appPrefs then
             local newFilePrefs <const> = appPrefs.new_file
             if newFilePrefs then
@@ -423,18 +423,7 @@ dlg:button {
             if editorPrefs then
                 autoFit = editorPrefs.auto_fit
             end
-
-            local prevSprite <const> = app.sprite
-            if prevSprite then
-                local docPrefs <const> = appPrefs.document(prevSprite)
-                if docPrefs then
-                    local showPrefs <const> = docPrefs.show
-                    if showPrefs then
-                        showLayerEdges = showPrefs.layer_edges or false
-                    end -- Show preferences exists.
-                end     -- Doc preferences exists.
-            end         -- Sprite exists.
-        end             -- App preferences exists.
+        end -- App preferences exists.
 
         AseUtilities.preserveForeBack()
 
@@ -447,7 +436,7 @@ dlg:button {
 
         local spec <const> = AseUtilities.createSpec(width, height)
         local newSprite <const> = AseUtilities.createSprite(
-            spec, filename, showLayerEdges)
+            spec, filename, false)
         app.sprite = newSprite
 
         -- Only assign palette here if not gray.
