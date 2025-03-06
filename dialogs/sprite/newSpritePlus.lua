@@ -27,6 +27,12 @@ if app.preferences then
     end
 end
 
+local clipImage <const> = app.clipboard.image
+if clipImage then
+    setWidth = clipImage.width
+    setHeight = clipImage.height
+end
+
 -- New Sprite Plus doesn't support Color Space conversion
 -- because setting color space via script interferes with
 -- Aseprite's routine to ask the user what to do when
