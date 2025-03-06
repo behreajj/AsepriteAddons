@@ -1094,7 +1094,10 @@ function AseUtilities.changePixelFormat(format)
             toGray = "luma"
         }
     elseif format == ColorMode.RGB then
-        app.command.ChangePixelFormat { ui = false, format = "rgb" }
+        app.command.ChangePixelFormat {
+            ui = false,
+            format = "rgb"
+        }
     end
 end
 
@@ -1511,7 +1514,7 @@ function AseUtilities.createSprite(spec, fileName, showLayerEdges)
             local onionSkinPrefs <const> = docPrefs.onionskin
             if onionSkinPrefs then
                 onionSkinPrefs.loop_tag = false
-            end
+            end -- Onion skin preferences exists.
 
             -- Default overlay_size is 5.
             local thumbPrefs <const> = docPrefs.thumbnails
@@ -1519,17 +1522,16 @@ function AseUtilities.createSprite(spec, fileName, showLayerEdges)
                 thumbPrefs.enabled = true
                 thumbPrefs.zoom = 1
                 thumbPrefs.overlay_enabled = true
-            end
+            end -- Thumb preferences exists.
 
-            -- TODO: Supply this parameter to function calls.
             if showLayerEdges then
                 local showPrefs <const> = docPrefs.show
                 if showPrefs then
                     showPrefs.layer_edges = true
-                end
-            end
-        end
-    end
+                end -- Show preferences exists.
+            end     -- Show layer edges.
+        end         -- Doc preferences exists.
+    end             -- App preferences exists.
 
     return sprite
 end

@@ -431,10 +431,10 @@ dlg:button {
                     local showPrefs <const> = docPrefs.show
                     if showPrefs then
                         showLayerEdges = showPrefs.layer_edges or false
-                    end
-                end
-            end
-        end
+                    end -- Show preferences exists.
+                end     -- Doc preferences exists.
+            end         -- Sprite exists.
+        end             -- App preferences exists.
 
         AseUtilities.preserveForeBack()
 

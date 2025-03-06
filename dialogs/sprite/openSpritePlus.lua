@@ -21,8 +21,9 @@ local defaults <const> = {
 }
 
 ---@param filePath string
+---@param showLayerEdges? boolean
 ---@return Sprite|nil
-local function loadSprite(filePath)
+local function loadSprite(filePath, showLayerEdges)
     -- Palette file formats cannot be loaded as sprites.
     local fileExt <const> = app.fs.fileExtension(filePath)
     local fileExtLower <const> = string.lower(fileExt)
@@ -69,14 +70,12 @@ local function loadSprite(filePath)
             and fileExtLower ~= "aseprite" then
             local appPrefs <const> = app.preferences
             if appPrefs then
-                -- appPrefs.selection.pivot_position = 4
-
                 local docPrefs <const> = appPrefs.document(sprite)
                 if docPrefs then
                     local onionSkinPrefs <const> = docPrefs.onionskin
                     if onionSkinPrefs then
                         onionSkinPrefs.loop_tag = false
-                    end
+                    end -- Onion skin preferences exists.
 
                     local thumbPrefs <const> = docPrefs.thumbnails
                     if thumbPrefs then
@@ -84,10 +83,17 @@ local function loadSprite(filePath)
                         thumbPrefs.zoom = 1
                         thumbPrefs.overlay_enabled = true
                     end -- Thumb preferences exists.
-                end     -- Doc preferences exists.
-            end         -- App preferences exists.
-        end             -- File ext is neither ase nor aseprite.
-    end                 -- File ext match block.
+
+                    if showLayerEdges then
+                        local showPrefs <const> = docPrefs.show
+                        if showPrefs then
+                            showPrefs.layer_edges = true
+                        end -- Show preferences exists.
+                    end     -- Show layer edges.
+                end         -- Doc preferences exists.
+            end             -- App preferences exists.
+        end                 -- File ext is neither ase nor aseprite.
+    end                     -- File ext match block.
 
     return sprite
 end
@@ -226,6 +232,7 @@ dlg:button {
         local oldAskMissing = 4 -- Ask
         local oldQuantAlg = 0   -- Default
         local autoFit = false
+        local showLayerEdges = false
 
         local appPrefs <const> = app.preferences
         if appPrefs then
@@ -254,7 +261,18 @@ dlg:button {
             if editorPrefs then
                 autoFit = editorPrefs.auto_fit
             end
-        end
+
+            local prevSprite <const> = app.sprite
+            if prevSprite then
+                local docPrefs <const> = appPrefs.document(prevSprite)
+                if docPrefs then
+                    local showPrefs <const> = docPrefs.show
+                    if showPrefs then
+                        showLayerEdges = showPrefs.layer_edges or false
+                    end -- Show preferences exists.
+                end     -- Doc preferences exists.
+            end         -- Sprite exists.
+        end             -- App preferences exists.
 
         -- Palettes need to be retrieved before a new sprite is created in case
         -- it sets the app.sprite to the new sprite. Unfortunately, that
@@ -416,7 +434,7 @@ dlg:button {
                 and hMax > 0 then
                 openSprite = AseUtilities.createSprite(
                     AseUtilities.createSpec(wMax, hMax),
-                    "Sequence")
+                    "Sequence", showLayerEdges)
 
                 app.transaction("Open Sequence", function()
                     -- While you could open the primary file as a palette,
@@ -443,7 +461,7 @@ dlg:button {
                 end)    -- End transaction.
             end         -- End valid images exist.
         else
-            openSprite = loadSprite(spriteFile)
+            openSprite = loadSprite(spriteFile, showLayerEdges)
         end -- End as sequence check.
 
         if not openSprite then
