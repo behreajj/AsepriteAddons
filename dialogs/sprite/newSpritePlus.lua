@@ -27,6 +27,8 @@ if app.preferences then
     end
 end
 
+-- The drawback to this is that new sprite plus now
+-- requires security authorization from user.
 local clipImage <const> = app.clipboard.image
 if clipImage then
     setWidth = clipImage.width
@@ -42,8 +44,6 @@ local palTypes <const> = { "ACTIVE", "DEFAULT", "FILE" }
 local sizeModes <const> = { "ASPECT", "CUSTOM" }
 
 local defaults <const> = {
-    -- TODO: For width and height number entry, validate them as the user
-    -- enters the inputs. Otherwise wrap around to negative is possible.
     filename = "Sprite",
     sizeMode = "CUSTOM",
     aRatio = 16,
