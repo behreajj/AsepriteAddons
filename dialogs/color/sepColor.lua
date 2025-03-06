@@ -91,10 +91,6 @@ dlg:button {
         local colorSpace <const> = spriteSpec.colorSpace
         local alphaIndex <const> = spriteSpec.transparentColor
 
-        local alphaIndexVerif <const> = (colorMode ~= ColorMode.INDEXED
-                or (alphaIndex >= 0 and alphaIndex < 256)) and
-            alphaIndex or 0
-
         local srcBpp = 4
         if colorMode == ColorMode.GRAY then
             srcBpp = 2
@@ -103,6 +99,10 @@ dlg:button {
         end
         local packFmt <const> = "<I" .. srcBpp
         local layerNameFormat <const> = "%0" .. (srcBpp * 2) .. "x"
+
+        local alphaIndexVerif <const> = (colorMode ~= ColorMode.INDEXED
+                or (alphaIndex >= 0 and alphaIndex < 256)) and
+            alphaIndex or 0
         local alphaIndexPacked <const> = string.pack(
             packFmt, alphaIndexVerif)
 
@@ -147,9 +147,8 @@ dlg:button {
                     srcImg = tilesToImage(srcImg, tileSet, colorMode)
                 end
 
-                local srcSpec <const> = srcImg.spec
-                wSrcImg = srcSpec.width
-                local srcPxLen <const> = wSrcImg * srcSpec.height
+                wSrcImg = srcImg.width
+                local srcPxLen <const> = wSrcImg * srcImg.height
                 local srcBytes <const> = srcImg.bytes
 
                 local j = 0
@@ -176,14 +175,13 @@ dlg:button {
                 end -- End pixels loop.
             end     -- End source cel check.
 
-            local packet <const> = {
+            packets[i] = {
                 celOpacity = celOpacity,
                 uniquesPerFrame = uniquesPerFrame,
                 wSrcImg = wSrcImg,
                 xTlSrc = xTlSrc,
                 yTlSrc = yTlSrc,
             }
-            packets[i] = packet
         end -- End frames loop.
 
         if lenUniques > defaults.maxUniques then
@@ -224,9 +222,8 @@ dlg:button {
                 trgLayer.stackIndex = stackIndex
 
                 if colorMode == ColorMode.RGB then
-                    local uiColor <const> = AseUtilities.hexToAseColor(
+                    trgLayer.color = AseUtilities.hexToAseColor(
                         pixel & 0x80ffffff)
-                    trgLayer.color = uiColor
                 end
             end)
         end
@@ -288,19 +285,18 @@ dlg:button {
                         local yTrg <const> = (coord // wSrcImg) - yMin
                         local flat <const> = yTrg * wTrg + xTrg
 
-                        -- TODO: Ideally for large images, there'd be an option
+                        -- TODO: Ideally, for large images, there'd be an option
                         -- to quantize the color that collected coordinates,
                         -- then here you would use the actual color from the
                         -- source image, not the quantized. Drawback is that
                         -- this could only work in RGB color mode.
                         trgByteArr[1 + flat] = pixelPacked
                     end
+                    trgImg.bytes = tconcat(trgByteArr)
 
                     local trgPoint <const> = Point(
                         xTlSrc + xMin,
                         yTlSrc + yMin)
-                    trgImg.bytes = tconcat(trgByteArr)
-
                     local trgCel <const> = activeSprite:newCel(
                         trgLayer, frIdx, trgImg, trgPoint)
                     trgCel.opacity = celOpacity
