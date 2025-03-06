@@ -209,7 +209,8 @@ dlg:button {
 
         -- Create sprite.
         local spec <const> = AseUtilities.createSpec(size, size)
-        local sprite <const> = AseUtilities.createSprite(spec, "LCH Shades")
+        local sprite <const> = AseUtilities.createSprite(
+            spec, "LCH Shades", false)
 
         -- Calculate frame count to normalization.
         local quantization <const> = args.quantization

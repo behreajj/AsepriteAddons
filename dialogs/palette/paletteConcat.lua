@@ -138,7 +138,8 @@ dlg:button {
         local activeSprite = site.sprite
         if not activeSprite then
             local newSpec <const> = AseUtilities.createSpec()
-            activeSprite = AseUtilities.createSprite(newSpec, "Palettes")
+            activeSprite = AseUtilities.createSprite(
+                newSpec, "Palettes", false)
             AseUtilities.setPalette({ 0x00000000 }, activeSprite, 1)
         end
 

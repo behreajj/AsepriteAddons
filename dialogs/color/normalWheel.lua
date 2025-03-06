@@ -213,7 +213,8 @@ dlg:button {
         -- Create sprite.
         local spec = AseUtilities.createSpec(
             size, size, ColorMode.RGB, ColorSpace(), 0)
-        local sprite = AseUtilities.createSprite(spec, "Normal Map Wheel")
+        local sprite = AseUtilities.createSprite(
+            spec, "Normal Map Wheel", false)
         local wheelCel <const> = sprite.cels[1]
 
         -- For flipping the wheel orientation.

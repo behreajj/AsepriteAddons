@@ -427,7 +427,7 @@ dlg:button {
             local image <const> = Image(spec)
             image.bytes = table.concat(byteArr)
 
-            activeSprite = AseUtilities.createSprite(spec, "Palette")
+            activeSprite = AseUtilities.createSprite(spec, "Palette", false)
             local layer <const> = activeSprite.layers[1]
             local cel <const> = layer.cels[1]
             cel.image = image

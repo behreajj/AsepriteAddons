@@ -826,7 +826,7 @@ dlg:button {
 
         -- Create sprite.
         local manifestSprite <const> = AseUtilities.createSprite(
-            mnfstSpec, mnfstTitle)
+            mnfstSpec, mnfstTitle, false)
 
         app.transaction("Set Grid", function()
             manifestSprite.gridBounds = Rectangle(

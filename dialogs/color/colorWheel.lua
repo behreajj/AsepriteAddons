@@ -253,7 +253,8 @@ dlg:button {
 
         -- Create sprite.
         local spec <const> = AseUtilities.createSpec(size, size)
-        local sprite <const> = AseUtilities.createSprite(spec, "LCH Wheel")
+        local sprite <const> = AseUtilities.createSprite(
+            spec, "LCH Wheel", false)
 
         local reqFrames <const> = args.frames
             or defaults.frames --[[@as integer]]

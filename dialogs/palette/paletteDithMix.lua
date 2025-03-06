@@ -303,7 +303,7 @@ dlg:button {
         local spriteSpec <const> = AseUtilities.createSpec(
             spriteSize, spriteSize, ColorMode.RGB, clrPrf, 0)
         local comboSprite <const> = AseUtilities.createSprite(
-            spriteSpec, "Dither Mix")
+            spriteSpec, "Dither Mix", false)
         local firstFrame <const> = comboSprite.frames[1]
 
         app.transaction("Set Grid", function()

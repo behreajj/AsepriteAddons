@@ -383,7 +383,8 @@ dlg:button {
         -- TODO: Check if you can reuse sprite spec
         local coverSprite <const> = AseUtilities.createSprite(
             AseUtilities.createSpec(512, 512),
-            "Palette Coverage")
+            "Palette Coverage",
+            false)
 
         -- Add requested number of frames.
         local oldFrameLen <const> = #coverSprite.frames
