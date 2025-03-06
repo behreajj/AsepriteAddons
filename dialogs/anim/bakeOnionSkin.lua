@@ -188,7 +188,6 @@ dlg:button {
             return
         end
 
-        -- TODO: Support group layers.
         if srcLayer.isGroup then
             app.alert {
                 title = "Error",
@@ -342,6 +341,9 @@ dlg:button {
             while i < sampleCount do
                 local frameIdx <const> = startFrameIdx + i
                 i = i + 1
+
+                -- TODO: Support group layers. Maybe refactor the whole dialog?
+                -- Support wrapping around from last to first frame?
                 if frameIdx >= 1 and frameIdx <= maxFrameCount then
                     local currCel <const> = srcLayer:cel(frameIdx)
                     if currCel then

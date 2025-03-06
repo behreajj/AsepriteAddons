@@ -1466,9 +1466,10 @@ end
 ---The file name argument is not validated by the method.
 ---@param spec ImageSpec specification
 ---@param fileName? string file name
+---@param showLayerEdges? boolean show layer edges, or cel bounds
 ---@return Sprite
 ---@nodiscard
-function AseUtilities.createSprite(spec, fileName)
+function AseUtilities.createSprite(spec, fileName, showLayerEdges)
     -- Do not allow slices UI interface to be active.
     local appPrefs <const> = app.preferences
     local appTool <const> = app.tool
@@ -1518,6 +1519,14 @@ function AseUtilities.createSprite(spec, fileName)
                 thumbPrefs.enabled = true
                 thumbPrefs.zoom = 1
                 thumbPrefs.overlay_enabled = true
+            end
+
+            -- TODO: Supply this parameter to function calls.
+            if showLayerEdges then
+                local showPrefs <const> = docPrefs.show
+                if showPrefs then
+                    showPrefs.layer_edges = true
+                end
             end
         end
     end
