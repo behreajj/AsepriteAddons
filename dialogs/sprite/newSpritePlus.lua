@@ -27,14 +27,6 @@ if app.preferences then
     end
 end
 
--- The drawback to this is that new sprite plus now
--- requires security authorization from user.
-local clipImage <const> = app.clipboard.image
-if clipImage then
-    setWidth = clipImage.width
-    setHeight = clipImage.height
-end
-
 -- New Sprite Plus doesn't support Color Space conversion
 -- because setting color space via script interferes with
 -- Aseprite's routine to ask the user what to do when

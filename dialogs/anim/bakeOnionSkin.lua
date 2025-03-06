@@ -188,6 +188,7 @@ dlg:button {
             return
         end
 
+        -- TODO: Support group layers.
         if srcLayer.isGroup then
             app.alert {
                 title = "Error",
