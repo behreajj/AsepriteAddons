@@ -305,7 +305,7 @@ dlg:button {
 
         local trimmed <const>,
         _ <const>,
-        _ <const> = ShapeUtilities.mesh2ToImage(
+        _ <const> = ShapeUtilities.rasterizeMesh2(
             mesh, refSpec,
             useFill, fillColor,
             useStroke, strokeColor, strokeWeight,
