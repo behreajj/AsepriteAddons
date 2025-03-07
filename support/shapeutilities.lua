@@ -48,7 +48,7 @@ function ShapeUtilities.drawCurve2(
         local composite = Image(spriteSpec)
         local blendMode <const> = spriteSpec.colorMode ~= ColorMode.INDEXED
             and BlendMode.NORMAL
-            or BlendMode.SRC
+            or BlendMode.SRC_ATOP
         composite:drawImage(srcCel.image, srcCel.position,
             255, BlendMode.SRC)
         composite:drawImage(imgCurve, Point(xtlCurve, ytlCurve),
@@ -107,7 +107,7 @@ function ShapeUtilities.drawMesh2(
         local composite = Image(spriteSpec)
         local blendMode <const> = spriteSpec.colorMode ~= ColorMode.INDEXED
             and BlendMode.NORMAL
-            or BlendMode.SRC
+            or BlendMode.SRC_ATOP
         composite:drawImage(srcCel.image, srcCel.position,
             255, BlendMode.SRC)
         composite:drawImage(imgMesh, Point(xtlMesh, ytlMesh),
