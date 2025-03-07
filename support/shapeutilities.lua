@@ -30,9 +30,6 @@ function ShapeUtilities.drawCurve2(
     useStroke, strokeClr, strokeWeight,
     frame, layer,
     useAntiAlias, useTrim)
-
-    -- TODO: Also accept the transform matrix.
-
     if layer.isReference then return end
     if layer.isGroup then return end
     if layer.isTilemap then return end
@@ -144,9 +141,6 @@ function ShapeUtilities.rasterizeCurve2(
     useFill, fillClr,
     useStroke, strokeClr, strokeWeight,
     useAntiAlias, useTrim)
-
-    -- TODO: Also accept the transform matrix.
-
     local trgImg = Image(refSpec)
     local context <const> = trgImg.context
     if not context then return trgImg, 0, 0 end
@@ -246,7 +240,9 @@ function ShapeUtilities.rasterizeMesh2(
     useAntiAlias, useTrim)
     local trgImg = Image(refSpec)
 
-    -- TODO: Make this more efficient by accepting an array of curves.
+    -- TODO: Make more efficient by accepting an array of meshes?
+    -- Might not be as necessary, since a mesh is already an array
+    -- of faces.
 
     local context <const> = trgImg.context
     if not context then return trgImg, 0, 0 end

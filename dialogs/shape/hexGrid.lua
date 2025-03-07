@@ -211,6 +211,11 @@ dlg:button {
         layer.name = "Hex Grid"
 
         local useTrim <const> = true
+
+        -- While it would be more convenient to do this
+        -- within the draw curve method, the matrix
+        -- multiplication changes the curve in place,
+        -- which the drawing function shouldn't do.
         local lenCurves <const> = #curves
         local i = 0
         while i < lenCurves do
