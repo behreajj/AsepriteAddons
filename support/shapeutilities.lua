@@ -46,13 +46,10 @@ function ShapeUtilities.drawCurve2(
     local srcCel <const> = layer:cel(frame)
     if srcCel then
         local composite = Image(spriteSpec)
-        local blendMode <const> = spriteSpec.colorMode ~= ColorMode.INDEXED
-            and BlendMode.NORMAL
-            or BlendMode.DST_OVER
         composite:drawImage(srcCel.image, srcCel.position,
             255, BlendMode.SRC)
         composite:drawImage(imgCurve, Point(xtlCurve, ytlCurve),
-            255, blendMode)
+            255, BlendMode.NORMAL)
 
         local xtlComp, ytlComp = 0, 0
         if useTrim then
@@ -105,13 +102,10 @@ function ShapeUtilities.drawMesh2(
     local srcCel <const> = layer:cel(frame)
     if srcCel then
         local composite = Image(spriteSpec)
-        local blendMode <const> = spriteSpec.colorMode ~= ColorMode.INDEXED
-            and BlendMode.NORMAL
-            or BlendMode.DST_OVER
         composite:drawImage(srcCel.image, srcCel.position,
             255, BlendMode.SRC)
         composite:drawImage(imgMesh, Point(xtlMesh, ytlMesh),
-            255, blendMode)
+            255, BlendMode.NORMAL)
 
         local xtlComp, ytlComp = 0, 0
         if useTrim then
