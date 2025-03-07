@@ -9,86 +9,6 @@ setmetatable(ShapeUtilities, {
     end
 })
 
----Rasterizes a mesh to an image using a graphics context.
----@param mesh Mesh2 mesh
----@param refSpec ImageSpec image spec
----@param useFill boolean use fill
----@param fillClr Color fill color
----@param useStroke boolean use stroke
----@param strokeClr Color stroke color
----@param strokeWeight integer stroke weight
----@param useAntiAlias? boolean use antialias
----@param useTrim? boolean trim image
----@return Image image
----@return integer xtl
----@return integer ytl
-function ShapeUtilities.mesh2ToImage(
-    mesh, refSpec,
-    useFill, fillClr,
-    useStroke, strokeClr, strokeWeight,
-    useAntiAlias, useTrim)
-    local trgImg = Image(refSpec)
-    local context <const> = trgImg.context
-    if not context then return trgImg, 0, 0 end
-
-    local useFillVerif <const> = useFill
-        and fillClr.alpha > 0
-    local useStrokeVerif <const> = useStroke
-        and strokeWeight > 0
-        and strokeClr.alpha > 0
-    if (not useFillVerif) and (not useStrokeVerif) then
-        return trgImg, 0, 0
-    end
-
-    local faces <const> = mesh.fs
-    local coords <const> = mesh.vs
-    local lenFaces <const> = #faces
-
-    if useAntiAlias then context.antialias = true end
-    if useStrokeVerif then context.strokeWidth = strokeWeight end
-
-    local i = 0
-    while i < lenFaces do
-        i = i + 1
-        local face <const> = faces[i]
-        local lenFace <const> = #face
-
-        local vtxFirst <const> = face[1]
-        local coFirst <const> = coords[vtxFirst]
-        context:beginPath()
-        context:moveTo(coFirst.x, coFirst.y)
-
-        local j = 1
-        while j < lenFace do
-            j = j + 1
-            local vertex <const> = face[j]
-            local coord <const> = coords[vertex]
-            context:lineTo(coord.x, coord.y)
-        end
-
-        context:closePath()
-
-        if useFillVerif then
-            context.color = fillClr
-            context:fill()
-        end
-
-        if useStrokeVerif then
-            context.color = strokeClr
-            context:stroke()
-        end
-    end
-
-    local xtl, ytl = 0, 0
-    if useTrim then
-        local alphaIndex <const> = refSpec.transparentColor
-        trgImg, xtl, ytl = AseUtilities.trimImageAlpha(trgImg, 0,
-            alphaIndex, 8, 8)
-    end
-
-    return trgImg, xtl, ytl
-end
-
 ---Draws a curve with an image graphics context. Creates a new cel if one does
 ---not exist at the layer and frame. Otherwise, assigns to cel image and
 ---position. Returns early if the layer is a reference, group or tile map.
@@ -262,6 +182,131 @@ function ShapeUtilities.drawMesh2(
     else
         sprite:newCel(layer, frame, meshImage, Point(xtlMesh, ytlMesh))
     end
+end
+
+---Rasterizes a mesh to an image using a graphics context.
+---@param mesh Mesh2 mesh
+---@param refSpec ImageSpec image spec
+---@param useFill boolean use fill
+---@param fillClr Color fill color
+---@param useStroke boolean use stroke
+---@param strokeClr Color stroke color
+---@param strokeWeight integer stroke weight
+---@param useAntiAlias? boolean use antialias
+---@param useTrim? boolean trim image
+---@return Image image
+---@return integer xtl
+---@return integer ytl
+function ShapeUtilities.mesh2ToImage(
+    mesh, refSpec,
+    useFill, fillClr,
+    useStroke, strokeClr, strokeWeight,
+    useAntiAlias, useTrim)
+    local trgImg = Image(refSpec)
+    local context <const> = trgImg.context
+    if not context then return trgImg, 0, 0 end
+
+    local useFillVerif <const> = useFill
+        and fillClr.alpha > 0
+    local useStrokeVerif <const> = useStroke
+        and strokeWeight > 0
+        and strokeClr.alpha > 0
+    if (not useFillVerif) and (not useStrokeVerif) then
+        return trgImg, 0, 0
+    end
+
+    local faces <const> = mesh.fs
+    local coords <const> = mesh.vs
+    local lenFaces <const> = #faces
+
+    if useAntiAlias then context.antialias = true end
+    if useStrokeVerif then context.strokeWidth = strokeWeight end
+
+    local i = 0
+    while i < lenFaces do
+        i = i + 1
+        local face <const> = faces[i]
+        local lenFace <const> = #face
+
+        local vtxFirst <const> = face[1]
+        local coFirst <const> = coords[vtxFirst]
+        context:beginPath()
+        context:moveTo(coFirst.x, coFirst.y)
+
+        local j = 1
+        while j < lenFace do
+            j = j + 1
+            local vertex <const> = face[j]
+            local coord <const> = coords[vertex]
+            context:lineTo(coord.x, coord.y)
+        end
+
+        context:closePath()
+
+        if useFillVerif then
+            context.color = fillClr
+            context:fill()
+        end
+
+        if useStrokeVerif then
+            context.color = strokeClr
+            context:stroke()
+        end
+    end
+
+    -- Grayscale images need to be unpremultiplied...?
+    if useAntiAlias and refSpec.colorMode == ColorMode.GRAY then
+        trgImg = ShapeUtilities.unpremulGrayImage(trgImg)
+    end
+
+    local xtl, ytl = 0, 0
+    if useTrim then
+        local alphaIndex <const> = refSpec.transparentColor
+        trgImg, xtl, ytl = AseUtilities.trimImageAlpha(trgImg, 0,
+            alphaIndex, 8, 8)
+    end
+
+    return trgImg, xtl, ytl
+end
+
+---Divides all colors in a grayscale image by the alpha channel.
+---@param source Image source image
+---@return Image
+---@nodiscard
+function ShapeUtilities.unpremulGrayImage(source)
+    local srcSpec <const> = source.spec
+    local target <const> = Image(srcSpec)
+    target.bytes = ShapeUtilities.unpremulGrayPixels(
+        source.bytes, srcSpec.width, srcSpec.height)
+    return target
+end
+
+---Divides all colors in a grayscale bytes array by the alpha channel.
+---@param source string source bytes
+---@param w integer image width
+---@param h integer image height
+---@return string
+---@nodiscard
+function ShapeUtilities.unpremulGrayPixels(source, w, h)
+    ---@type string[]
+    local unpremultiplied <const> = {}
+    local strbyte <const> = string.byte
+    local strchar <const> = string.char
+    local len <const> = w * h
+
+    local i = 0
+    while i < len do
+        local i2 <const> = i * 2
+        local v8Src <const>, a8 <const> = strbyte(source, 1 + i2, 2 + i2)
+        local v8Trg <const> = a8 > 0
+            and 255 * v8Src // a8
+            or 0
+        unpremultiplied[1 + i2] = strchar(v8Trg)
+        unpremultiplied[2 + i2] = strchar(a8)
+        i = i + 1
+    end
+
+    return table.concat(unpremultiplied)
 end
 
 return ShapeUtilities
