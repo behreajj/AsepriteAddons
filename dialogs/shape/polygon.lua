@@ -319,6 +319,22 @@ dlg:button {
                     trimmed.width // 2,
                     trimmed.height // 2)
             }
+
+            local appPrefs <const> = app.preferences
+            if appPrefs then
+                local tool <const> = app.tool
+                local toolPrefs <const> = appPrefs.tool(tool)
+                if toolPrefs then
+                    local ink <const> = toolPrefs.ink --[[@as Ink|nil]]
+                    if ink then
+                        if (useAntialias and ink == Ink.COPY_COLOR)
+                            or ink == Ink.LOCK_ALPHA then
+                            toolPrefs.ink = Ink.SIMPLE
+                        end
+                    end -- End ink is copy color.
+                end     -- End tool prefs exists.
+            end         -- End preferences exists.
+
             app.refresh()
         end
     end
