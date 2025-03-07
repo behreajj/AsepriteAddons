@@ -217,13 +217,14 @@ dlg:button {
             i = i + 1
             local curve <const> = curves[i]
             Utilities.mulMat3Curve2(mat, curve)
-            ShapeUtilities.drawCurve2(
-                sprite, curve,
-                useFill, fillColor,
-                useStroke, strokeColor, strokeWeight,
-                frame, layer,
-                useAntialias, useTrim)
         end
+
+        ShapeUtilities.drawCurve2(
+            sprite, curves,
+            useFill, fillColor,
+            useStroke, strokeColor, strokeWeight,
+            frame, layer,
+            useAntialias, useTrim)
 
         app.refresh()
     end

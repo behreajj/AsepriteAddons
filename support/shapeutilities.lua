@@ -9,11 +9,12 @@ setmetatable(ShapeUtilities, {
     end
 })
 
----Draws a curve with an image graphics context. Creates a new cel if one does
----not exist at the layer and frame. Otherwise, assigns to cel image and
----position. Returns early if the layer is a reference, group or tile map.
+---Draws an array of curves with an image graphics context.
+---Creates a new cel if one does not exist at the layer and frame.
+---Otherwise, assigns to cel image and position.
+---Returns early if the layer is a reference, group or tile map.
 ---@param sprite Sprite sprite
----@param curve Curve2 curve
+---@param curves Curve2[] curve
 ---@param useFill boolean use fill
 ---@param fillClr Color fill color
 ---@param useStroke boolean use stroke
@@ -24,11 +25,14 @@ setmetatable(ShapeUtilities, {
 ---@param useAntiAlias? boolean use antialias
 ---@param useTrim? boolean trim image
 function ShapeUtilities.drawCurve2(
-    sprite, curve,
+    sprite, curves,
     useFill, fillClr,
     useStroke, strokeClr, strokeWeight,
     frame, layer,
     useAntiAlias, useTrim)
+
+    -- TODO: Also accept the transform matrix.
+
     if layer.isReference then return end
     if layer.isGroup then return end
     if layer.isTilemap then return end
@@ -38,7 +42,7 @@ function ShapeUtilities.drawCurve2(
     local imgCurve <const>,
     xtlCurve <const>,
     ytlCurve <const> = ShapeUtilities.rasterizeCurve2(
-        curve, spriteSpec,
+        curves, spriteSpec,
         useFill, fillClr,
         useStroke, strokeClr, strokeWeight,
         useAntiAlias, useTrim)
@@ -65,9 +69,10 @@ function ShapeUtilities.drawCurve2(
     end
 end
 
----Draws a mesh with an image graphics context. Creates a new cel if one does
----not exist at the layer and frame. Otherwise, assigns to cel image and
----position. Returns early if the layer is a reference, group or tile map.
+---Draws a mesh with an image graphics context.
+---Creates a new cel if one does not exist at the layer and frame.
+---Otherwise, assigns to cel image and position.
+---Returns early if the layer is a reference, group or tile map.
 ---@param sprite Sprite sprite
 ---@param mesh Mesh2 mesh
 ---@param useFill boolean use fill
@@ -121,8 +126,8 @@ function ShapeUtilities.drawMesh2(
     end
 end
 
----Rasterizes a mesh to an image using a graphics context.
----@param curve Curve2 curve
+---Rasterizes an array of curves to an image using a graphics context.
+---@param curves Curve2[] curve array
 ---@param refSpec ImageSpec image spec
 ---@param useFill boolean use fill
 ---@param fillClr Color fill color
@@ -135,10 +140,13 @@ end
 ---@return integer xtl
 ---@return integer ytl
 function ShapeUtilities.rasterizeCurve2(
-    curve, refSpec,
+    curves, refSpec,
     useFill, fillClr,
     useStroke, strokeClr, strokeWeight,
     useAntiAlias, useTrim)
+
+    -- TODO: Also accept the transform matrix.
+
     local trgImg = Image(refSpec)
     local context <const> = trgImg.context
     if not context then return trgImg, 0, 0 end
@@ -152,50 +160,56 @@ function ShapeUtilities.rasterizeCurve2(
         return trgImg, 0, 0
     end
 
-    local kns <const> = curve.knots
-    local knsLen <const> = #kns
-
-    local knFirst <const> = kns[1]
-    local coFirst <const> = knFirst.co
-    context:beginPath()
-    context:moveTo(coFirst.x, coFirst.y)
-
-    local knPrev = knFirst
-    local i = 1
-    while i < knsLen do
-        i = i + 1
-        local knCurr <const> = kns[i]
-        local fhPrev <const> = knPrev.fh
-        local rhCurr <const> = knCurr.rh
-        local coCurr <const> = knCurr.co
-        context:cubicTo(
-            fhPrev.x, fhPrev.y,
-            rhCurr.x, rhCurr.y,
-            coCurr.x, coCurr.y)
-        knPrev = knCurr
-    end
-
-    if curve.closedLoop then
-        local fhPrev <const> = knPrev.fh
-        local rhFirst <const> = knFirst.rh
-        context:cubicTo(
-            fhPrev.x, fhPrev.y,
-            rhFirst.x, rhFirst.y,
-            coFirst.x, coFirst.y)
-        context:closePath()
-    end
-
     if useAntiAlias then context.antialias = true end
     if useStrokeVerif then context.strokeWidth = strokeWeight end
 
-    if useFillVerif then
-        context.color = fillClr
-        context:fill()
-    end
+    local lenCurves <const> = #curves
+    local i = 0
+    while i < lenCurves do
+        i = i + 1
+        local curve <const> = curves[i]
+        local kns <const> = curve.knots
+        local knsLen <const> = #kns
 
-    if useStrokeVerif then
-        context.color = strokeClr
-        context:stroke()
+        local knFirst <const> = kns[1]
+        local coFirst <const> = knFirst.co
+        context:beginPath()
+        context:moveTo(coFirst.x, coFirst.y)
+
+        local knPrev = knFirst
+        local j = 1
+        while j < knsLen do
+            j = j + 1
+            local knCurr <const> = kns[j]
+            local fhPrev <const> = knPrev.fh
+            local rhCurr <const> = knCurr.rh
+            local coCurr <const> = knCurr.co
+            context:cubicTo(
+                fhPrev.x, fhPrev.y,
+                rhCurr.x, rhCurr.y,
+                coCurr.x, coCurr.y)
+            knPrev = knCurr
+        end
+
+        if curve.closedLoop then
+            local fhPrev <const> = knPrev.fh
+            local rhFirst <const> = knFirst.rh
+            context:cubicTo(
+                fhPrev.x, fhPrev.y,
+                rhFirst.x, rhFirst.y,
+                coFirst.x, coFirst.y)
+            context:closePath()
+        end
+
+        if useFillVerif then
+            context.color = fillClr
+            context:fill()
+        end
+
+        if useStrokeVerif then
+            context.color = strokeClr
+            context:stroke()
+        end
     end
 
     local xtl, ytl = 0, 0
@@ -231,6 +245,9 @@ function ShapeUtilities.rasterizeMesh2(
     useStroke, strokeClr, strokeWeight,
     useAntiAlias, useTrim)
     local trgImg = Image(refSpec)
+
+    -- TODO: Make this more efficient by accepting an array of curves.
+
     local context <const> = trgImg.context
     if not context then return trgImg, 0, 0 end
 
