@@ -238,12 +238,12 @@ function ShapeUtilities.rasterizeMesh2(
     useFill, fillClr,
     useStroke, strokeClr, strokeWeight,
     useAntiAlias, useTrim)
-    local trgImg = Image(refSpec)
 
     -- TODO: Make more efficient by accepting an array of meshes?
     -- Might not be as necessary, since a mesh is already an array
     -- of faces.
 
+    local trgImg = Image(refSpec)
     local context <const> = trgImg.context
     if not context then return trgImg, 0, 0 end
 

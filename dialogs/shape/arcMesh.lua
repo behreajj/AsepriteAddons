@@ -67,17 +67,6 @@ dlg:slider {
     min = 0,
     max = 100,
     value = defaults.margin,
-    onchange = function()
-        local args <const> = dlg.data
-        local useStroke <const> = args.useStroke --[[@as boolean]]
-        local useFill <const> = args.useFill --[[@as boolean]]
-        local margin <const> = args.margin --[[@as integer]]
-        dlg:modify { id = "useFill", visible = useStroke and margin > 0 }
-        dlg:modify {
-            id = "fillClr",
-            visible = useStroke and useFill and margin > 0
-        }
-    end
 }
 
 dlg:newrow { always = false }
