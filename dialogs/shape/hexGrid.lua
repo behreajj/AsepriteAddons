@@ -170,6 +170,15 @@ dlg:button {
             return
         end
 
+        local colorMode <const> = sprite.colorMode
+        if colorMode == ColorMode.INDEXED then
+            app.alert {
+                title = "Error",
+                text = "Indexed color mode is not supported."
+            }
+            return
+        end
+
         local args <const> = dlg.data
         local rings <const> = args.rings
             or defaults.rings --[[@as integer]]
