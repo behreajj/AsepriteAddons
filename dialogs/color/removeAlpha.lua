@@ -58,7 +58,7 @@ local function opaque(srcImg, absOpaque)
     elseif colorMode == ColorMode.GRAY then
         local i = 0
         while i < len do
-            local i2 <const> = i * 2
+            local i2 <const> = i + i
 
             local v8 = 0
             local a8 = strbyte(bytes, 2 + i2)

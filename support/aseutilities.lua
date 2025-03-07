@@ -542,7 +542,7 @@ function AseUtilities.averageColor(sprite, frame)
     elseif colorMode == ColorMode.GRAY then
         local i = 0
         while i < areaFlat do
-            local i2 <const> = i * 2
+            local i2 <const> = i + i
             local av16 <const> = strunpack("<I2", strsub(
                 flatBytes, 1 + i2, 2 + i2))
             local a8 <const> = av16 >> 0x08 & 0xff

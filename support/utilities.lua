@@ -374,7 +374,7 @@ end
 
 ---Unclamped linear interpolation from an origin angle to a destination by a
 ---factor in [0.0, 1.0]. The range defaults to 360.0 for degrees, but can be
----math.pi * 2.0 for radians. Uses the counter-clockwise angular direction.
+---tau for radians. Uses the counter-clockwise angular direction.
 ---@param origin number origin angle
 ---@param dest number destination angle
 ---@param t number factor
@@ -398,7 +398,7 @@ end
 
 ---Unclamped linear interpolation from an origin angle to a destination by a
 ---factor in [0.0, 1.0]. The range defaults to 360.0 for degrees, but can be
----math.pi * 2.0 for radians. Uses the clockwise angular direction.
+---tau for radians. Uses the clockwise angular direction.
 ---@param origin number origin angle
 ---@param dest number destination angle
 ---@param t number factor
@@ -422,7 +422,7 @@ end
 
 ---Unclamped linear interpolation from an origin angle to a destination by a
 ---factor in [0.0, 1.0]. The range defaults to 360.0 for degrees, but can be
----math.pi * 2.0 for radians. Uses the furthest angular direction.
+---tau for radians. Uses the furthest angular direction.
 ---@param origin number origin angle
 ---@param dest number destination angle
 ---@param t number factor
@@ -448,7 +448,7 @@ end
 
 ---Unclamped linear interpolation from an origin angle to a destination by a
 ---factor in [0.0, 1.0]. The range defaults to 360.0 for degrees, but can be
----math.pi * 2.0 for radians. Uses the nearest angular direction.
+---tau for radians. Uses the nearest angular direction.
 ---@param origin number origin angle
 ---@param dest number destination angle
 ---@param t number factor
