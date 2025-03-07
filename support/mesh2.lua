@@ -434,7 +434,8 @@ function Mesh2.star(sectors, skip, pick, inset)
     local vPick = 1
     if skip then vSkip = skip end
     if pick then vPick = pick end
-    if vSkip < 1 or vPick < 1 then
+    if vSkip < 1 or vPick < 1
+        or (inset and inset <= 0.0) then
         return Mesh2.polygon(sectors)
     end
 
