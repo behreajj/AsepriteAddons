@@ -2584,10 +2584,13 @@ function AseUtilities.hideSource(sprite, layer, frames, preset)
 end
 
 ---Creates a brush from an image.
----If the image is empty, then returns a circle brush of size 1.
----The image's center is based on a preset string: "TOP_LEFT", "TOP_CENTER",
----"TOP_RIGHT", "CENTER_LEFT", "CENTER", "CENTER_RIGHT",
+---
+---The image's center is assigned from a preset string: "TOP_LEFT",
+---"TOP_CENTER", "TOP_RIGHT", "CENTER_LEFT", "CENTER", "CENTER_RIGHT",
 ---"BOTTOM_LEFT", "BOTTOM_CENTER" and "BOTTOM_RIGHT".
+---
+---Accepts the image color mode as is. Quality of brush appearance will vary
+---across sprites depending on color mode compatibility.
 ---@param image Image image
 ---@param centerPreset? string center preset
 ---@param pattern? BrushPattern brush pattern
@@ -2596,15 +2599,22 @@ end
 ---@return Brush
 function AseUtilities.imageToBrush(
     image, centerPreset, pattern, xPattern, yPattern)
-    -- There are some cases where it'd be better force RGB color mode and
-    -- let the brush be reinterpreted dynamically as the active sprite color
-    -- mode changes. However, there are others, such as when the indexed
-    -- sprite transparent color is not clear black, which are less ideal.
+    -- There are cases where it'd be better force RGB color mode and let the
+    -- brush be reinterpreted dynamically as the active sprite color
+    -- mode changes. However, when the indexed sprite transparent color is
+    -- not clear black, the brush has incorrect transparency.
 
     if image:isEmpty() then
+        -- Aseprite GUI doesn't update properly, so a better solution'd be to
+        -- get the tool brush preferences from the active tool (not the fields
+        -- from app.brush). However, that's too much code to bother with.
+        -- https://github.com/aseprite/aseprite/blob/main/data/pref.xml#L467
         return Brush { angle = 0, size = 1, type = BrushType.CIRCLE }
     end
 
+    -- Setting the brush pattern seems less effective than setting
+    -- the preference. See brushFromMask or
+    -- https://github.com/aseprite/aseprite/blob/main/data/pref.xml#L283 .
     local yPtVerif <const> = yPattern or 0
     local xPtVerif <const> = xPattern or 0
     local brushPatternVerif <const> = pattern or BrushPattern.NONE
