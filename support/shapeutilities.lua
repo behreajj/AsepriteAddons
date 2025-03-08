@@ -238,7 +238,6 @@ function ShapeUtilities.rasterizeMesh2(
     useFill, fillClr,
     useStroke, strokeClr, strokeWeight,
     useAntiAlias, useTrim)
-
     -- TODO: Make more efficient by accepting an array of meshes?
     -- Might not be as necessary, since a mesh is already an array
     -- of faces.
@@ -312,31 +311,28 @@ end
 ---@return Image
 ---@nodiscard
 function ShapeUtilities.unpremulGrayImage(source)
-    local srcSpec <const> = source.spec
-    local target <const> = Image(srcSpec)
-    target.bytes = ShapeUtilities.unpremulGrayPixels(
-        source.bytes, srcSpec.width, srcSpec.height)
+    local target <const> = Image(source.spec)
+    target.bytes = ShapeUtilities.unpremulGrayPixels(source.bytes)
     return target
 end
 
 ---Divides all colors in a grayscale bytes array by the alpha channel.
 ---@param source string source bytes
----@param w integer image width
----@param h integer image height
 ---@return string
 ---@nodiscard
-function ShapeUtilities.unpremulGrayPixels(source, w, h)
+function ShapeUtilities.unpremulGrayPixels(source)
     ---@type string[]
     local unpremultiplied <const> = {}
     local strbyte <const> = string.byte
     local strchar <const> = string.char
-    local len <const> = w * h
+    local len <const> = #source // 2
 
     local i = 0
     while i < len do
         local i2 <const> = i + i
         local v8 <const>, a8 <const> = strbyte(source, 1 + i2, 2 + i2)
-        unpremultiplied[1 + i2] = strchar(a8 > 0 and 255 * v8 // a8 or 0)
+        local upv8 <const> = a8 > 0 and 255 * v8 // a8 or 0
+        unpremultiplied[1 + i2] = strchar(upv8 < 255 and upv8 or 255)
         unpremultiplied[2 + i2] = strchar(a8)
         i = i + 1
     end
