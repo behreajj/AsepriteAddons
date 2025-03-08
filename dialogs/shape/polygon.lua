@@ -222,8 +222,7 @@ dlg:button {
         if query then a = query end
         local r <const> = Mat3.fromRotZ(a)
 
-        local sclVerif = scale
-        if sclVerif < 2.0 then sclVerif = 2.0 end
+        local sclVerif <const> = math.max(2.0, scale)
         local s <const> = Mat3.fromScale(sclVerif, -sclVerif)
 
         local mat <const> = Mat3.mul(Mat3.mul(t, s), r)
@@ -267,8 +266,7 @@ dlg:button {
         local useAntialias <const> = args.useAntialias --[[@as boolean]]
 
         local r <const> = Mat3.fromRotZ(degrees * 0.017453292519943)
-        local sclVerif = scale
-        if sclVerif < 2.0 then sclVerif = 2.0 end
+        local sclVerif <const> = math.max(2.0, scale)
         local s <const> = Mat3.fromScale(sclVerif, -sclVerif)
 
         -- The brush image size must account for the stroke, and to center

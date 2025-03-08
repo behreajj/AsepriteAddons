@@ -2311,7 +2311,6 @@ function AseUtilities.getMouse()
     if not editor then return -1, -1 end
 
     local sprite <const> = editor.sprite
-    local mouse <const> = editor.spritePos
 
     local tiledMode = 0
     local appPrefs <const> = app.preferences
@@ -2328,6 +2327,7 @@ function AseUtilities.getMouse()
         end
     end
 
+    local mouse <const> = editor.spritePos
     local xMouse = mouse.x
     local yMouse = mouse.y
     if tiledMode == 3 then
