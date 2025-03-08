@@ -8,7 +8,7 @@ local sel <const>, isValid <const> = AseUtilities.getSelection(sprite)
 if not isValid then return end
 
 local frame <const> = site.frame or sprite.frames[1]
-local image <const>, xSel <const>, ySel <const> = AseUtilities.imageFromSel(
+local image <const>, xSel <const>, ySel <const> = AseUtilities.selToImage(
     sel, sprite, frame.frameNumber)
 
 local appPrefs <const> = app.preferences

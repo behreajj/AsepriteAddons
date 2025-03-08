@@ -488,7 +488,7 @@ function AseUtilities.averageColor(sprite, frame)
 
     local flat = nil
     if isValid then
-        flat, _, _ = AseUtilities.imageFromSel(
+        flat, _, _ = AseUtilities.selToImage(
             sel, sprite, frame)
     else
         local x <const>, y <const> = AseUtilities.getMouse()
@@ -615,7 +615,7 @@ function AseUtilities.averageNormal(sprite, frame)
 
     local flat = nil
     if isValid then
-        flat, _, _ = AseUtilities.imageFromSel(
+        flat, _, _ = AseUtilities.selToImage(
             sel, sprite, frame)
     else
         local x <const>, y <const> = AseUtilities.getMouse()
@@ -1652,7 +1652,7 @@ function AseUtilities.filterCels(
         local trgCels <const> = {}
         local lenTrgCels = 0
         local sel <const>, _ <const> = AseUtilities.getSelection(sprite)
-        local imageFromSel <const> = AseUtilities.imageFromSel
+        local imageFromSel <const> = AseUtilities.selToImage
 
         app.transaction("Selection Layer", function()
             local srcLayer <const> = sprite:newLayer()
@@ -2583,81 +2583,6 @@ function AseUtilities.hideSource(sprite, layer, frames, preset)
     return false
 end
 
----Creates an image from the flattened sprite that is contained by the
----selection mask.
----@param sel Selection selection mask
----@param sprite Sprite sprite
----@param frame Frame|integer frame index
----@return Image
----@return integer xtl
----@return integer ytl
-function AseUtilities.imageFromSel(sel, sprite, frame)
-    local selBounds <const> = sel.bounds
-    local xSel <const> = selBounds.x
-    local ySel <const> = selBounds.y
-    local wSel <const> = math.max(1, math.abs(selBounds.width))
-    local hSel <const> = math.max(1, math.abs(selBounds.height))
-
-    local spriteSpec <const> = sprite.spec
-    local colorMode <const> = spriteSpec.colorMode
-    local alphaIndex <const> = spriteSpec.transparentColor
-
-    local imageSpec <const> = ImageSpec {
-        width = wSel,
-        height = hSel,
-        colorMode = colorMode,
-        transparentColor = alphaIndex
-    }
-    imageSpec.colorSpace = spriteSpec.colorSpace
-    local image <const> = Image(imageSpec)
-    image:drawSprite(sprite, frame, Point(-xSel, -ySel))
-
-    local validAlpha <const> = colorMode ~= ColorMode.INDEXED
-        or (alphaIndex >= 0 and alphaIndex < 256)
-    if validAlpha then
-        local areaSel <const> = wSel * hSel
-        local srcBytes <const> = image.bytes
-        ---@type string[]
-        local trgBytesArr <const> = {}
-
-        if colorMode == ColorMode.INDEXED then
-            local strbyte <const> = string.byte
-            local strchar <const> = string.char
-            local i = 0
-            while i < areaSel do
-                local c8 = alphaIndex
-                if sel:contains(xSel + i % wSel, ySel + i // wSel) then
-                    -- As a precaution, you may want to also check that the
-                    -- color in the palette at an index does not have 0 alpha.
-                    c8 = strbyte(srcBytes, 1 + i)
-                end
-
-                i = i + 1
-                trgBytesArr[i] = strchar(c8)
-            end
-        else
-            local bpp <const> = image.bytesPerPixel
-            local alphaPacked <const> = string.pack("<I" .. bpp, 0)
-            local strsub <const> = string.sub
-
-            local i = 0
-            while i < areaSel do
-                local cStr = alphaPacked
-                if sel:contains(xSel + i % wSel, ySel + i // wSel) then
-                    local iBpp <const> = i * bpp
-                    cStr = strsub(srcBytes, 1 + iBpp, bpp + iBpp)
-                end
-                i = i + 1
-                trgBytesArr[i] = cStr
-            end
-        end
-
-        image.bytes = table.concat(trgBytesArr)
-    end
-
-    return image, xSel, ySel
-end
-
 ---Adds padding around the edges of an image. Does not check if image is a tile
 ---map. If the padding is less than one, returns the source image.
 ---@param image Image source image
@@ -3052,144 +2977,79 @@ function AseUtilities.rotateImageZInternal(source, cosa, sina)
     return target
 end
 
----Returns a copy of the source image that has been skewed on the x axis by an
----angle in degrees. Uses nearest neighbor sampling.
----If the angle is 0 degrees, then returns the source image by reference.
----If the angle is approximately 90 degrees, then returns a blank image.
----@param source Image source image
----@param angle number angle in degrees
+---Creates an image from the flattened sprite that is contained by the
+---selection mask.
+---@param sel Selection selection mask
+---@param sprite Sprite sprite
+---@param frame Frame|integer frame index
 ---@return Image
----@nodiscard
-function AseUtilities.skewImageX(source, angle)
-    -- This doesn't have an internal version because it's not worth making
-    -- a separate method for skewing by integer rise and run.
-    local srcSpec <const> = source.spec
-    local srcAlphaIndex <const> = srcSpec.transparentColor
+---@return integer xtl
+---@return integer ytl
+function AseUtilities.selToImage(sel, sprite, frame)
+    local selBounds <const> = sel.bounds
+    local xSel <const> = selBounds.x
+    local ySel <const> = selBounds.y
+    local wSel <const> = math.max(1, math.abs(selBounds.width))
+    local hSel <const> = math.max(1, math.abs(selBounds.height))
 
-    local srcColorMode <const> = srcSpec.colorMode
-    if srcColorMode == ColorMode.INDEXED
-        and (srcAlphaIndex < 0 or srcAlphaIndex > 255) then
-        return source
-    end
+    local spriteSpec <const> = sprite.spec
+    local colorMode <const> = spriteSpec.colorMode
+    local alphaIndex <const> = spriteSpec.transparentColor
 
-    local srcBytes <const> = source.bytes
-    local srcBpp <const> = source.bytesPerPixel
-    local wSrc <const> = srcSpec.width
-    local hSrc <const> = srcSpec.height
-
-    local trgBytes = ""
-    local wTrg = 0
-    local hTrg = 0
-
-    local deg <const> = Utilities.round(angle) % 180
-    if deg == 0 then
-        return source
-    elseif deg >= 26 and deg <= 27 then
-        trgBytes, wTrg, hTrg = Utilities.skewPixelsXInt(srcBytes, wSrc, hSrc,
-            1, 2, srcBpp, srcAlphaIndex)
-    elseif deg == 45 then
-        trgBytes, wTrg, hTrg = Utilities.skewPixelsXInt(srcBytes, wSrc, hSrc,
-            1, 1, srcBpp, srcAlphaIndex)
-    elseif deg >= 63 and deg <= 64 then
-        trgBytes, wTrg, hTrg = Utilities.skewPixelsXInt(srcBytes, wSrc, hSrc,
-            2, 1, srcBpp, srcAlphaIndex)
-    elseif deg >= 88 and deg <= 92 then
-        return Image(srcSpec)
-    elseif deg >= 116 and deg <= 117 then
-        trgBytes, wTrg, hTrg = Utilities.skewPixelsXInt(srcBytes, wSrc, hSrc,
-            -2, 1, srcBpp, srcAlphaIndex)
-    elseif deg == 135 then
-        trgBytes, wTrg, hTrg = Utilities.skewPixelsXInt(srcBytes, wSrc, hSrc,
-            -1, 1, srcBpp, srcAlphaIndex)
-    elseif deg >= 153 and deg <= 154 then
-        trgBytes, wTrg, hTrg = Utilities.skewPixelsXInt(srcBytes, wSrc, hSrc,
-            -1, 2, srcBpp, srcAlphaIndex)
-    else
-        local radians <const> = angle * 0.017453292519943
-        trgBytes, wTrg, hTrg = Utilities.skewPixelsX(srcBytes, wSrc, hSrc,
-            math.tan(radians), srcBpp, srcAlphaIndex)
-    end
-
-    local trgSpec <const> = ImageSpec {
-        width = wTrg,
-        height = hTrg,
-        colorMode = srcColorMode,
-        transparentColor = srcAlphaIndex
+    local imageSpec <const> = ImageSpec {
+        width = wSel,
+        height = hSel,
+        colorMode = colorMode,
+        transparentColor = alphaIndex
     }
-    trgSpec.colorSpace = srcSpec.colorSpace
-    local target <const> = Image(trgSpec)
-    target.bytes = trgBytes
-    return target
-end
+    imageSpec.colorSpace = spriteSpec.colorSpace
+    local image <const> = Image(imageSpec)
+    image:drawSprite(sprite, frame, Point(-xSel, -ySel))
 
----Returns a copy of the source image that has been skewed on the y axis by an
----angle in degrees. Uses nearest neighbor sampling.
----If the angle is 0 degrees, then returns the source image by reference.
----If the angle is approximately 90 degrees, then returns a blank image.
----@param source Image source image
----@param angle number angle in degrees
----@return Image
----@nodiscard
-function AseUtilities.skewImageY(source, angle)
-    -- This doesn't have an internal version because it's not worth making
-    -- a separate method for skewing by integer rise and run.
-    local srcSpec <const> = source.spec
-    local srcAlphaIndex <const> = srcSpec.transparentColor
+    local validAlpha <const> = colorMode ~= ColorMode.INDEXED
+        or (alphaIndex >= 0 and alphaIndex < 256)
+    if validAlpha then
+        local areaSel <const> = wSel * hSel
+        local srcBytes <const> = image.bytes
+        ---@type string[]
+        local trgBytesArr <const> = {}
 
-    local srcColorMode <const> = srcSpec.colorMode
-    if srcColorMode == ColorMode.INDEXED
-        and (srcAlphaIndex < 0 or srcAlphaIndex > 255) then
-        return source
+        if colorMode == ColorMode.INDEXED then
+            local strbyte <const> = string.byte
+            local strchar <const> = string.char
+            local i = 0
+            while i < areaSel do
+                local c8 = alphaIndex
+                if sel:contains(xSel + i % wSel, ySel + i // wSel) then
+                    -- As a precaution, you may want to also check that the
+                    -- color in the palette at an index does not have 0 alpha.
+                    c8 = strbyte(srcBytes, 1 + i)
+                end
+
+                i = i + 1
+                trgBytesArr[i] = strchar(c8)
+            end
+        else
+            local bpp <const> = image.bytesPerPixel
+            local alphaPacked <const> = string.pack("<I" .. bpp, 0)
+            local strsub <const> = string.sub
+
+            local i = 0
+            while i < areaSel do
+                local cStr = alphaPacked
+                if sel:contains(xSel + i % wSel, ySel + i // wSel) then
+                    local iBpp <const> = i * bpp
+                    cStr = strsub(srcBytes, 1 + iBpp, bpp + iBpp)
+                end
+                i = i + 1
+                trgBytesArr[i] = cStr
+            end
+        end
+
+        image.bytes = table.concat(trgBytesArr)
     end
 
-    local srcBytes <const> = source.bytes
-    local srcBpp <const> = source.bytesPerPixel
-    local wSrc <const> = srcSpec.width
-    local hSrc <const> = srcSpec.height
-
-    local trgBytes = ""
-    local wTrg = 0
-    local hTrg = 0
-
-    local deg <const> = Utilities.round(angle) % 180
-    if deg == 0 then
-        return source
-    elseif deg >= 26 and deg <= 27 then
-        trgBytes, wTrg, hTrg = Utilities.skewPixelsYInt(srcBytes, wSrc, hSrc,
-            1, 2, srcBpp, srcAlphaIndex)
-    elseif deg == 45 then
-        trgBytes, wTrg, hTrg = Utilities.skewPixelsYInt(srcBytes, wSrc, hSrc,
-            1, 1, srcBpp, srcAlphaIndex)
-    elseif deg >= 63 and deg <= 64 then
-        trgBytes, wTrg, hTrg = Utilities.skewPixelsYInt(srcBytes, wSrc, hSrc,
-            2, 1, srcBpp, srcAlphaIndex)
-    elseif deg >= 88 and deg <= 92 then
-        return Image(srcSpec)
-    elseif deg >= 116 and deg <= 117 then
-        trgBytes, wTrg, hTrg = Utilities.skewPixelsYInt(srcBytes, wSrc, hSrc,
-            -2, 1, srcBpp, srcAlphaIndex)
-    elseif deg == 135 then
-        trgBytes, wTrg, hTrg = Utilities.skewPixelsYInt(srcBytes, wSrc, hSrc,
-            -1, 1, srcBpp, srcAlphaIndex)
-    elseif deg >= 153 and deg <= 154 then
-        trgBytes, wTrg, hTrg = Utilities.skewPixelsYInt(srcBytes, wSrc, hSrc,
-            -1, 2, srcBpp, srcAlphaIndex)
-    else
-        local radians <const> = angle * 0.017453292519943
-        trgBytes, wTrg, hTrg = Utilities.skewPixelsY(srcBytes, wSrc, hSrc,
-            math.tan(radians), srcBpp, srcAlphaIndex)
-    end
-
-    local trgSpec <const> = ImageSpec {
-        width = wTrg,
-        height = hTrg,
-        colorMode = srcColorMode,
-        transparentColor = srcAlphaIndex
-    }
-    trgSpec.colorSpace = srcSpec.colorSpace
-    local target <const> = Image(trgSpec)
-    target.bytes = trgBytes
-    return target
+    return image, xSel, ySel
 end
 
 ---Selects non-transparent pixels of a cel's image. Intersects the selection
@@ -3338,6 +3198,146 @@ end
 function AseUtilities.setBytes(image, bytes)
     image.bytes = Utilities.bytesArrToString(bytes)
     return image
+end
+
+---Returns a copy of the source image that has been skewed on the x axis by an
+---angle in degrees. Uses nearest neighbor sampling.
+---If the angle is 0 degrees, then returns the source image by reference.
+---If the angle is approximately 90 degrees, then returns a blank image.
+---@param source Image source image
+---@param angle number angle in degrees
+---@return Image
+---@nodiscard
+function AseUtilities.skewImageX(source, angle)
+    -- This doesn't have an internal version because it's not worth making
+    -- a separate method for skewing by integer rise and run.
+    local srcSpec <const> = source.spec
+    local srcAlphaIndex <const> = srcSpec.transparentColor
+
+    local srcColorMode <const> = srcSpec.colorMode
+    if srcColorMode == ColorMode.INDEXED
+        and (srcAlphaIndex < 0 or srcAlphaIndex > 255) then
+        return source
+    end
+
+    local srcBytes <const> = source.bytes
+    local srcBpp <const> = source.bytesPerPixel
+    local wSrc <const> = srcSpec.width
+    local hSrc <const> = srcSpec.height
+
+    local trgBytes = ""
+    local wTrg = 0
+    local hTrg = 0
+
+    local deg <const> = Utilities.round(angle) % 180
+    if deg == 0 then
+        return source
+    elseif deg >= 26 and deg <= 27 then
+        trgBytes, wTrg, hTrg = Utilities.skewPixelsXInt(srcBytes, wSrc, hSrc,
+            1, 2, srcBpp, srcAlphaIndex)
+    elseif deg == 45 then
+        trgBytes, wTrg, hTrg = Utilities.skewPixelsXInt(srcBytes, wSrc, hSrc,
+            1, 1, srcBpp, srcAlphaIndex)
+    elseif deg >= 63 and deg <= 64 then
+        trgBytes, wTrg, hTrg = Utilities.skewPixelsXInt(srcBytes, wSrc, hSrc,
+            2, 1, srcBpp, srcAlphaIndex)
+    elseif deg >= 88 and deg <= 92 then
+        return Image(srcSpec)
+    elseif deg >= 116 and deg <= 117 then
+        trgBytes, wTrg, hTrg = Utilities.skewPixelsXInt(srcBytes, wSrc, hSrc,
+            -2, 1, srcBpp, srcAlphaIndex)
+    elseif deg == 135 then
+        trgBytes, wTrg, hTrg = Utilities.skewPixelsXInt(srcBytes, wSrc, hSrc,
+            -1, 1, srcBpp, srcAlphaIndex)
+    elseif deg >= 153 and deg <= 154 then
+        trgBytes, wTrg, hTrg = Utilities.skewPixelsXInt(srcBytes, wSrc, hSrc,
+            -1, 2, srcBpp, srcAlphaIndex)
+    else
+        local radians <const> = angle * 0.017453292519943
+        trgBytes, wTrg, hTrg = Utilities.skewPixelsX(srcBytes, wSrc, hSrc,
+            math.tan(radians), srcBpp, srcAlphaIndex)
+    end
+
+    local trgSpec <const> = ImageSpec {
+        width = wTrg,
+        height = hTrg,
+        colorMode = srcColorMode,
+        transparentColor = srcAlphaIndex
+    }
+    trgSpec.colorSpace = srcSpec.colorSpace
+    local target <const> = Image(trgSpec)
+    target.bytes = trgBytes
+    return target
+end
+
+---Returns a copy of the source image that has been skewed on the y axis by an
+---angle in degrees. Uses nearest neighbor sampling.
+---If the angle is 0 degrees, then returns the source image by reference.
+---If the angle is approximately 90 degrees, then returns a blank image.
+---@param source Image source image
+---@param angle number angle in degrees
+---@return Image
+---@nodiscard
+function AseUtilities.skewImageY(source, angle)
+    -- This doesn't have an internal version because it's not worth making
+    -- a separate method for skewing by integer rise and run.
+    local srcSpec <const> = source.spec
+    local srcAlphaIndex <const> = srcSpec.transparentColor
+
+    local srcColorMode <const> = srcSpec.colorMode
+    if srcColorMode == ColorMode.INDEXED
+        and (srcAlphaIndex < 0 or srcAlphaIndex > 255) then
+        return source
+    end
+
+    local srcBytes <const> = source.bytes
+    local srcBpp <const> = source.bytesPerPixel
+    local wSrc <const> = srcSpec.width
+    local hSrc <const> = srcSpec.height
+
+    local trgBytes = ""
+    local wTrg = 0
+    local hTrg = 0
+
+    local deg <const> = Utilities.round(angle) % 180
+    if deg == 0 then
+        return source
+    elseif deg >= 26 and deg <= 27 then
+        trgBytes, wTrg, hTrg = Utilities.skewPixelsYInt(srcBytes, wSrc, hSrc,
+            1, 2, srcBpp, srcAlphaIndex)
+    elseif deg == 45 then
+        trgBytes, wTrg, hTrg = Utilities.skewPixelsYInt(srcBytes, wSrc, hSrc,
+            1, 1, srcBpp, srcAlphaIndex)
+    elseif deg >= 63 and deg <= 64 then
+        trgBytes, wTrg, hTrg = Utilities.skewPixelsYInt(srcBytes, wSrc, hSrc,
+            2, 1, srcBpp, srcAlphaIndex)
+    elseif deg >= 88 and deg <= 92 then
+        return Image(srcSpec)
+    elseif deg >= 116 and deg <= 117 then
+        trgBytes, wTrg, hTrg = Utilities.skewPixelsYInt(srcBytes, wSrc, hSrc,
+            -2, 1, srcBpp, srcAlphaIndex)
+    elseif deg == 135 then
+        trgBytes, wTrg, hTrg = Utilities.skewPixelsYInt(srcBytes, wSrc, hSrc,
+            -1, 1, srcBpp, srcAlphaIndex)
+    elseif deg >= 153 and deg <= 154 then
+        trgBytes, wTrg, hTrg = Utilities.skewPixelsYInt(srcBytes, wSrc, hSrc,
+            -1, 2, srcBpp, srcAlphaIndex)
+    else
+        local radians <const> = angle * 0.017453292519943
+        trgBytes, wTrg, hTrg = Utilities.skewPixelsY(srcBytes, wSrc, hSrc,
+            math.tan(radians), srcBpp, srcAlphaIndex)
+    end
+
+    local trgSpec <const> = ImageSpec {
+        width = wTrg,
+        height = hTrg,
+        colorMode = srcColorMode,
+        transparentColor = srcAlphaIndex
+    }
+    trgSpec.colorSpace = srcSpec.colorSpace
+    local target <const> = Image(trgSpec)
+    target.bytes = trgBytes
+    return target
 end
 
 ---Converts an image from a tile set layer to a regular image. If the Tileset

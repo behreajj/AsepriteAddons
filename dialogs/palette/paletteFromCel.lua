@@ -385,7 +385,7 @@ dlg:button {
                 }
                 return
             end
-            srcImg, xtl, ytl = AseUtilities.imageFromSel(
+            srcImg, xtl, ytl = AseUtilities.selToImage(
                 mask, activeSprite, srcFrame.frameNumber)
         else
             -- Default to active layer.
