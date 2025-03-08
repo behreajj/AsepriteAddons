@@ -295,14 +295,8 @@ dlg:button {
             colorSpace = activeSpec.colorSpace
         end
 
-        local refSpec <const> = ImageSpec {
-            width = wImage,
-            height = hImage,
-            transparentColor = alphaIndex,
-            colorMode = colorMode
-        }
-        refSpec.colorSpace = colorSpace
-
+        local refSpec <const> = AseUtilities.createSpec(
+            wImage, hImage, colorMode, colorSpace, alphaIndex)
         local trimmed <const>,
         _ <const>,
         _ <const> = ShapeUtilities.rasterizeMesh2(
@@ -311,16 +305,8 @@ dlg:button {
             useStroke, strokeColor, strokeWeight,
             useAntialias, true)
 
-        if not trimmed:isEmpty() then
-            app.brush = Brush {
-                type = BrushType.IMAGE,
-                image = trimmed,
-                center = Point(
-                    trimmed.width // 2,
-                    trimmed.height // 2)
-            }
-            app.refresh()
-        end
+        app.brush = AseUtilities.imageToBrush(trimmed)
+        app.refresh()
     end
 }
 

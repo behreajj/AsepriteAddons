@@ -38,39 +38,26 @@ if site.layer and site.layer.isTilemap then
     end
 end
 
-local wImage <const> = image.width
-local hImage <const> = image.height
-local center = Point(wImage // 2, hImage // 2)
+local centerPreset = "CENTER"
 if useSnap then
-    center = Point(0, 0)
+    centerPreset = "TOP_LEFT"
 else
     if appPrefs then
         local maskPrefs <const> = appPrefs.selection
         if maskPrefs then
             -- https://github.com/aseprite/aseprite/blob/main/data/pref.xml#L81
             local maskPivot <const> = maskPrefs.pivot_position --[[@as integer]]
-            if maskPivot == 0 then
-                center = Point(0, 0)
-            elseif maskPivot == 1 then
-                center = Point(wImage // 2, 0)
-            elseif maskPivot == 2 then
-                center = Point(wImage - 1, 0)
-            elseif maskPivot == 3 then
-                center = Point(0, hImage // 2)
-            elseif maskPivot == 4 then
-                center = Point(wImage // 2, hImage // 2)
-            elseif maskPivot == 5 then
-                center = Point(wImage - 1, hImage // 2)
-            elseif maskPivot == 6 then
-                center = Point(0, hImage - 1)
-            elseif maskPivot == 7 then
-                center = Point(wImage // 2, hImage - 1)
-            elseif maskPivot == 8 then
-                center = Point(wImage - 1, hImage - 1)
-            end
-        end
-    end
-end
+            if maskPivot then
+                local centerPresets <const> = {
+                    "TOP_LEFT", "TOP_CENTER", "TOP_RIGHT",
+                    "CENTER_LEFT", "CENTER", "CENTER_RIGHT",
+                    "BOTTOM_LEFT", "BOTTOM_CENTER", "BOTTOM_RIGHT"
+                }
+                centerPreset = centerPresets[1 + maskPivot % #centerPresets]
+            end -- Mask pivot exists.
+        end     -- Mask preferences exists.
+    end         -- App preferencs exists.
+end             -- Use snap check.
 
 app.transaction("Brush From Mask", function()
     if appPrefs then
@@ -81,13 +68,8 @@ app.transaction("Brush From Mask", function()
     end
 
     sprite.selection:deselect()
-    app.brush = Brush {
-        type = BrushType.IMAGE,
-        image = image,
-        center = center,
-        pattern = brushPattern,
-        patternOrigin = Point(xSel, ySel),
-    }
+    app.brush = AseUtilities.imageToBrush(
+        image, centerPreset, brushPattern, xSel, ySel)
     app.tool = "pencil"
 end)
 

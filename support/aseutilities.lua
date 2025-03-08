@@ -2583,6 +2583,59 @@ function AseUtilities.hideSource(sprite, layer, frames, preset)
     return false
 end
 
+---Creates a brush from an image.
+---If the image is empty, then returns a circle brush of size 1.
+---The image's center is based on a preset string: "TOP_LEFT", "TOP_CENTER",
+---"TOP_RIGHT", "CENTER_LEFT", "CENTER", "CENTER_RIGHT",
+---"BOTTOM_LEFT", "BOTTOM_CENTER" and "BOTTOM_RIGHT".
+---@param image Image image
+---@param centerPreset? string center preset
+---@param pattern? BrushPattern brush pattern
+---@param xPattern? integer pattern origin x
+---@param yPattern? integer pattern origin y
+---@return Brush
+function AseUtilities.imageToBrush(
+    image, centerPreset, pattern, xPattern, yPattern)
+    if image:isEmpty() then
+        return Brush { angle = 0, size = 1, type = BrushType.CIRCLE }
+    end
+
+    local yPtVerif <const> = yPattern or 0
+    local xPtVerif <const> = xPattern or 0
+    local brushPatternVerif <const> = pattern or BrushPattern.NONE
+
+    local wImage <const> = image.width
+    local hImage <const> = image.height
+    local xCenter, yCenter = wImage // 2, hImage // 2
+    if centerPreset == "TOP_LEFT" then
+        xCenter, yCenter = 0, 0
+    elseif centerPreset == "TOP_CENTER" then
+        xCenter, yCenter = wImage // 2, 0
+    elseif centerPreset == "TOP_RIGHT" then
+        xCenter, yCenter = wImage - 1, 0
+    elseif centerPreset == "CENTER_LEFT" then
+        xCenter, yCenter = 0, hImage // 2
+    elseif centerPreset == "CENTER" then
+        xCenter, yCenter = wImage // 2, hImage // 2
+    elseif centerPreset == "CENTER_RIGHT" then
+        xCenter, yCenter = wImage - 1, hImage // 2
+    elseif centerPreset == "BOTTOM_LEFT" then
+        xCenter, yCenter = 0, hImage - 1
+    elseif centerPreset == "BOTTOM_CENTER" then
+        xCenter, yCenter = wImage // 2, hImage - 1
+    elseif centerPreset == "BOTTOM_RIGHT" then
+        xCenter, yCenter = wImage - 1, hImage - 1
+    end
+
+    return Brush {
+        type = BrushType.IMAGE,
+        image = image,
+        center = Point(xCenter, yCenter),
+        pattern = brushPatternVerif,
+        patternOrigin = Point(xPtVerif, yPtVerif)
+    }
+end
+
 ---Adds padding around the edges of an image. Does not check if image is a tile
 ---map. If the padding is less than one, returns the source image.
 ---@param image Image source image
@@ -2977,81 +3030,6 @@ function AseUtilities.rotateImageZInternal(source, cosa, sina)
     return target
 end
 
----Creates an image from the flattened sprite that is contained by the
----selection mask.
----@param sel Selection selection mask
----@param sprite Sprite sprite
----@param frame Frame|integer frame index
----@return Image
----@return integer xtl
----@return integer ytl
-function AseUtilities.selToImage(sel, sprite, frame)
-    local selBounds <const> = sel.bounds
-    local xSel <const> = selBounds.x
-    local ySel <const> = selBounds.y
-    local wSel <const> = math.max(1, math.abs(selBounds.width))
-    local hSel <const> = math.max(1, math.abs(selBounds.height))
-
-    local spriteSpec <const> = sprite.spec
-    local colorMode <const> = spriteSpec.colorMode
-    local alphaIndex <const> = spriteSpec.transparentColor
-
-    local imageSpec <const> = ImageSpec {
-        width = wSel,
-        height = hSel,
-        colorMode = colorMode,
-        transparentColor = alphaIndex
-    }
-    imageSpec.colorSpace = spriteSpec.colorSpace
-    local image <const> = Image(imageSpec)
-    image:drawSprite(sprite, frame, Point(-xSel, -ySel))
-
-    local validAlpha <const> = colorMode ~= ColorMode.INDEXED
-        or (alphaIndex >= 0 and alphaIndex < 256)
-    if validAlpha then
-        local areaSel <const> = wSel * hSel
-        local srcBytes <const> = image.bytes
-        ---@type string[]
-        local trgBytesArr <const> = {}
-
-        if colorMode == ColorMode.INDEXED then
-            local strbyte <const> = string.byte
-            local strchar <const> = string.char
-            local i = 0
-            while i < areaSel do
-                local c8 = alphaIndex
-                if sel:contains(xSel + i % wSel, ySel + i // wSel) then
-                    -- As a precaution, you may want to also check that the
-                    -- color in the palette at an index does not have 0 alpha.
-                    c8 = strbyte(srcBytes, 1 + i)
-                end
-
-                i = i + 1
-                trgBytesArr[i] = strchar(c8)
-            end
-        else
-            local bpp <const> = image.bytesPerPixel
-            local alphaPacked <const> = string.pack("<I" .. bpp, 0)
-            local strsub <const> = string.sub
-
-            local i = 0
-            while i < areaSel do
-                local cStr = alphaPacked
-                if sel:contains(xSel + i % wSel, ySel + i // wSel) then
-                    local iBpp <const> = i * bpp
-                    cStr = strsub(srcBytes, 1 + iBpp, bpp + iBpp)
-                end
-                i = i + 1
-                trgBytesArr[i] = cStr
-            end
-        end
-
-        image.bytes = table.concat(trgBytesArr)
-    end
-
-    return image, xSel, ySel
-end
-
 ---Selects non-transparent pixels of a cel's image. Intersects the selection
 ---with the sprite bounds, if provided, for cases where cel may be partially
 ---outside the canvas edges.
@@ -3141,6 +3119,81 @@ function AseUtilities.selectImage(image, xtl, ytl, tileSet, spriteBounds)
     end
 
     return mask
+end
+
+---Creates an image from the flattened sprite that is contained by the
+---selection mask.
+---@param sel Selection selection mask
+---@param sprite Sprite sprite
+---@param frame Frame|integer frame index
+---@return Image
+---@return integer xtl
+---@return integer ytl
+function AseUtilities.selToImage(sel, sprite, frame)
+    local selBounds <const> = sel.bounds
+    local xSel <const> = selBounds.x
+    local ySel <const> = selBounds.y
+    local wSel <const> = math.max(1, math.abs(selBounds.width))
+    local hSel <const> = math.max(1, math.abs(selBounds.height))
+
+    local spriteSpec <const> = sprite.spec
+    local colorMode <const> = spriteSpec.colorMode
+    local alphaIndex <const> = spriteSpec.transparentColor
+
+    local imageSpec <const> = ImageSpec {
+        width = wSel,
+        height = hSel,
+        colorMode = colorMode,
+        transparentColor = alphaIndex
+    }
+    imageSpec.colorSpace = spriteSpec.colorSpace
+    local image <const> = Image(imageSpec)
+    image:drawSprite(sprite, frame, Point(-xSel, -ySel))
+
+    local validAlpha <const> = colorMode ~= ColorMode.INDEXED
+        or (alphaIndex >= 0 and alphaIndex < 256)
+    if validAlpha then
+        local areaSel <const> = wSel * hSel
+        local srcBytes <const> = image.bytes
+        ---@type string[]
+        local trgBytesArr <const> = {}
+
+        if colorMode == ColorMode.INDEXED then
+            local strbyte <const> = string.byte
+            local strchar <const> = string.char
+            local i = 0
+            while i < areaSel do
+                local c8 = alphaIndex
+                if sel:contains(xSel + i % wSel, ySel + i // wSel) then
+                    -- As a precaution, you may want to also check that the
+                    -- color in the palette at an index does not have 0 alpha.
+                    c8 = strbyte(srcBytes, 1 + i)
+                end
+
+                i = i + 1
+                trgBytesArr[i] = strchar(c8)
+            end
+        else
+            local bpp <const> = image.bytesPerPixel
+            local alphaPacked <const> = string.pack("<I" .. bpp, 0)
+            local strsub <const> = string.sub
+
+            local i = 0
+            while i < areaSel do
+                local cStr = alphaPacked
+                if sel:contains(xSel + i % wSel, ySel + i // wSel) then
+                    local iBpp <const> = i * bpp
+                    cStr = strsub(srcBytes, 1 + iBpp, bpp + iBpp)
+                end
+                i = i + 1
+                trgBytesArr[i] = cStr
+            end
+        end
+
+        image.bytes = table.concat(trgBytesArr)
+    end
+
+    return image, xSel, ySel
 end
 
 ---Sets a palette in a sprite at a given index to a table of colors represented
