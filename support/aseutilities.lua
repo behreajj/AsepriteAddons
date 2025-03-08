@@ -2596,6 +2596,11 @@ end
 ---@return Brush
 function AseUtilities.imageToBrush(
     image, centerPreset, pattern, xPattern, yPattern)
+    -- There are some cases where it'd be better force RGB color mode and
+    -- let the brush be reinterpreted dynamically as the active sprite color
+    -- mode changes. However, there are others, such as when the indexed
+    -- sprite transparent color is not clear black, which are less ideal.
+
     if image:isEmpty() then
         return Brush { angle = 0, size = 1, type = BrushType.CIRCLE }
     end
