@@ -384,8 +384,8 @@ dlg:canvas {
         -- Create display string.
         local strDisplay <const> = string.format(
             "A:%03d I:%03d",
-            Utilities.round(math.deg(azimuth)),
-            Utilities.round(math.deg(inclination)))
+            Utilities.round(57.295779513082 * azimuth),
+            Utilities.round(57.295779513082 * inclination))
         local strMeasure <const> = ctx:measureText(strDisplay)
 
         -- Find average brightness, flip text color if too bright.
