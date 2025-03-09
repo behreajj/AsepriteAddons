@@ -91,6 +91,8 @@ local function loadSprite(filePath, showLayerEdges)
                         end     -- Show layer edges.
                     end         -- Not an aseprite file.
 
+                    -- This doesn't seem to effect Image:saveAs or new files.
+                    -- If it did, you'd have to generalize the method.
                     local exportPrefs <const> = docPrefs.save_copy
                     if exportPrefs then
                         exportPrefs.for_twitter = false
