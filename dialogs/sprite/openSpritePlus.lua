@@ -26,13 +26,13 @@ local defaults <const> = {
 local function loadSprite(filePath, showLayerEdges)
     -- Palette file formats cannot be loaded as sprites.
     local fileExt <const> = app.fs.fileExtension(filePath)
-    local fileExtLower <const> = string.lower(fileExt)
+    local lcFileExt <const> = string.lower(fileExt)
     local sprite = nil
-    if fileExtLower == "gpl"
-        or fileExtLower == "pal"
-        or fileExtLower == "act"
-        or fileExtLower == "col"
-        or fileExtLower == "hex" then
+    if lcFileExt == "gpl"
+        or lcFileExt == "pal"
+        or lcFileExt == "act"
+        or lcFileExt == "col"
+        or lcFileExt == "hex" then
         local spriteHexes <const>, _ <const> = AseUtilities.asePaletteLoad(
             "FILE", filePath, 0, 512, true)
         local lenColors <const> = #spriteHexes
@@ -65,35 +65,40 @@ local function loadSprite(filePath, showLayerEdges)
         end)
     else
         sprite = Sprite { fromFile = filePath }
-        if sprite ~= nil
-            and fileExtLower ~= "ase"
-            and fileExtLower ~= "aseprite" then
+        if sprite ~= nil then
             local appPrefs <const> = app.preferences
             if appPrefs then
                 local docPrefs <const> = appPrefs.document(sprite)
                 if docPrefs then
-                    local onionSkinPrefs <const> = docPrefs.onionskin
-                    if onionSkinPrefs then
-                        onionSkinPrefs.loop_tag = false
-                    end -- Onion skin preferences exists.
+                    if lcFileExt ~= "ase" and lcFileExt ~= "aseprite" then
+                        local onionSkinPrefs <const> = docPrefs.onionskin
+                        if onionSkinPrefs then
+                            onionSkinPrefs.loop_tag = false
+                        end -- Onion skin preferences exists.
 
-                    local thumbPrefs <const> = docPrefs.thumbnails
-                    if thumbPrefs then
-                        thumbPrefs.enabled = true
-                        thumbPrefs.zoom = 1
-                        thumbPrefs.overlay_enabled = true
-                    end -- Thumb preferences exists.
+                        local thumbPrefs <const> = docPrefs.thumbnails
+                        if thumbPrefs then
+                            thumbPrefs.enabled = true
+                            thumbPrefs.zoom = 1
+                            thumbPrefs.overlay_enabled = true
+                        end -- Thumb preferences exists.
 
-                    if showLayerEdges then
-                        local showPrefs <const> = docPrefs.show
-                        if showPrefs then
-                            showPrefs.layer_edges = true
-                        end -- Show preferences exists.
-                    end     -- Show layer edges.
-                end         -- Doc preferences exists.
-            end             -- App preferences exists.
-        end                 -- File ext is neither ase nor aseprite.
-    end                     -- File ext match block.
+                        if showLayerEdges then
+                            local showPrefs <const> = docPrefs.show
+                            if showPrefs then
+                                showPrefs.layer_edges = true
+                            end -- Show preferences exists.
+                        end     -- Show layer edges.
+                    end         -- Not an aseprite file.
+
+                    local exportPrefs <const> = docPrefs.save_copy
+                    if exportPrefs then
+                        exportPrefs.for_twitter = false
+                    end -- Export prefs exists.
+                end     -- Doc preferences exists.
+            end         -- App preferences exists.
+        end             -- Sprite exists.
+    end                 -- File ext match block.
 
     return sprite
 end
