@@ -6,6 +6,9 @@ if not sprite then return end
 
 local sel <const>, isValid <const> = AseUtilities.getSelection(sprite)
 if not isValid then
+    -- Instead of returning when selection is not valid,
+    -- try to correct issues with built-in square brush.
+
     local brush <const> = app.brush
 
     local brushType <const> = brush.type
@@ -180,6 +183,10 @@ app.transaction("Brush From Mask", function()
     sprite.selection:deselect()
     app.brush = AseUtilities.imageToBrush(
         image, centerPreset, brushPattern, xPattern, yPattern)
+
+    -- Setting to pencil may be disruptive if the user is using, e.g., the
+    -- eraser, but given the variety of brush previews, and the issues with
+    -- those previews, this seems like the best choice.
     app.tool = "pencil"
 end)
 
