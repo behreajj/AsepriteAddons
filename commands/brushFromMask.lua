@@ -156,7 +156,7 @@ if activeLayer and activeLayer.isTilemap then
     end
 end
 
-if not useTopleft and appPrefs then
+if (not useTopleft) and appPrefs then
     -- https://github.com/aseprite/aseprite/blob/main/data/pref.xml#L81
     local maskPrefs <const> = appPrefs.selection
     if maskPrefs then
