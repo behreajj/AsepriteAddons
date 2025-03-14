@@ -2587,7 +2587,8 @@ end
 ---
 ---The image's center is assigned from a preset string: "TOP_LEFT",
 ---"TOP_CENTER", "TOP_RIGHT", "CENTER_LEFT", "CENTER", "CENTER_RIGHT",
----"BOTTOM_LEFT", "BOTTOM_CENTER" and "BOTTOM_RIGHT".
+---"BOTTOM_LEFT", "BOTTOM_CENTER" and "BOTTOM_RIGHT". The image's center
+---is the assumed default.
 ---
 ---Accepts the image color mode as is. Quality of brush appearance will vary
 ---across sprites depending on color mode compatibility.

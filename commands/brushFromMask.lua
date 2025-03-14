@@ -5,7 +5,103 @@ local sprite <const> = site.sprite
 if not sprite then return end
 
 local sel <const>, isValid <const> = AseUtilities.getSelection(sprite)
-if not isValid then return end
+if not isValid then
+    local brush <const> = app.brush
+
+    local brushType <const> = brush.type
+    local brushSize <const> = brush.size
+    local brushDegrees <const> = brush.angle
+
+    if brushSize <= 1 then return end
+    if brushType == BrushType.IMAGE
+        or brushType == BrushType.CIRCLE then
+        return
+    end
+
+    local fillColor <const> = AseUtilities.aseColorCopy(app.fgColor, "")
+    if fillColor.alpha <= 0 then return end
+
+    local query <const> = AseUtilities.DIMETRIC_ANGLES[brushDegrees]
+    local brushRadians <const> = query
+        or (0.017453292519943 * brushDegrees)
+
+    local cosa <const> = math.cos(brushRadians)
+    local sina <const> = math.sin(brushRadians)
+    local rotPeriodDegrees <const> = brushType == BrushType.SQUARE
+        and 90 or (brushType == BrushType.LINE and 180 or 0)
+    local rotNeeded <const> = brushDegrees % rotPeriodDegrees ~= 0
+
+    -- Calculate needed size of image to rotate image.
+    local wTrgi = brushSize
+    local hTrgi = brushSize
+    if rotNeeded then
+        local absCosa <const> = math.abs(cosa)
+        local absSina <const> = math.abs(sina)
+        wTrgi = math.ceil(brushSize * absSina + brushSize * absCosa)
+        hTrgi = math.ceil(brushSize * absCosa + brushSize * absSina)
+    end
+
+    local spriteSpec <const> = sprite.spec
+    local image <const> = Image(AseUtilities.createSpec(
+        wTrgi, hTrgi,
+        spriteSpec.colorMode,
+        spriteSpec.colorSpace,
+        spriteSpec.transparentColor))
+
+    local context <const> = image.context
+    if not context then return end
+    context.antialias = false
+    context.color = fillColor
+
+    -- Assume no antialiasing, so floor center.
+    local xCenterf = wTrgi * 0.5
+    local yCenterf = hTrgi * 0.5
+    local xCenteri <const> = math.floor(xCenterf)
+    local yCenteri <const> = math.floor(yCenterf)
+    local sizeHalfReal <const> = brushSize * 0.5
+
+    if brushType == BrushType.SQUARE then
+        if rotNeeded then
+            local cosaSzHf <const> = cosa * sizeHalfReal
+            local sinaSzHf <const> = sina * sizeHalfReal
+
+            context:beginPath()
+            context:moveTo(
+                math.floor(xCenteri - cosaSzHf + sinaSzHf),
+                math.floor(yCenteri + cosaSzHf + sinaSzHf))
+            context:lineTo(
+                math.floor(xCenteri + cosaSzHf + sinaSzHf),
+                math.floor(yCenteri + cosaSzHf - sinaSzHf))
+            context:lineTo(
+                math.floor(xCenteri + cosaSzHf - sinaSzHf),
+                math.floor(yCenteri - cosaSzHf - sinaSzHf))
+            context:lineTo(
+                math.floor(xCenteri - cosaSzHf - sinaSzHf),
+                math.floor(yCenteri - cosaSzHf + sinaSzHf))
+            context:closePath()
+            context:fill()
+        else
+            image:clear(fillColor)
+        end
+    elseif brushType == BrushType.LINE then
+        local cosaSzHf <const> = cosa * sizeHalfReal
+        local sinaSzHf <const> = sina * sizeHalfReal
+
+        context:beginPath()
+        context:moveTo(
+            xCenteri - cosaSzHf,
+            yCenteri + sinaSzHf)
+        context:lineTo(
+            xCenteri + cosaSzHf,
+            yCenteri - sinaSzHf)
+        context:stroke()
+    end
+
+    app.brush = AseUtilities.imageToBrush(image)
+    app.tool = "pencil"
+    app.refresh()
+    return
+end
 
 local frame <const> = site.frame or sprite.frames[1]
 local image <const>, xSel <const>, ySel <const> = AseUtilities.selToImage(
@@ -69,9 +165,9 @@ elseif appPrefs then
                 "BOTTOM_LEFT", "BOTTOM_CENTER", "BOTTOM_RIGHT"
             }
             centerPreset = centerPresets[1 + maskPivot % #centerPresets]
-        end     -- Mask pivot exists.
-    end         -- Mask preferences exists.
-end             -- Use grid snap check.
+        end -- Mask pivot exists.
+    end     -- Mask preferences exists.
+end         -- Use grid snap check.
 
 app.transaction("Brush From Mask", function()
     if appPrefs then
