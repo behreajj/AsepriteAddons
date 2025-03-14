@@ -471,28 +471,27 @@ dlg:button {
 
                 local wPlot <const> = (xMax - xMin) + stroke2 - 1
                 local hPlot <const> = (yMax - yMin) + stroke2 - 1
-                local plotSpec <const> = AseUtilities.createSpec(
-                    wPlot, hPlot,
-                    spec.colorMode,
-                    spec.colorSpace,
-                    spec.transparentColor)
 
-                local plotImage <const> = Image(plotSpec)
+                local plotImage <const> = Image(
+                    AseUtilities.createSpec(
+                        wPlot, hPlot,
+                        spec.colorMode,
+                        spec.colorSpace,
+                        spec.transparentColor))
+
                 local plotCtx <const> = plotImage.context
                 if not plotCtx then return end
-
                 plotCtx.antialias = false
                 plotCtx.blendMode = BlendMode.NORMAL
-
                 local drawEllipse <const> = ShapeUtilities.drawEllipse
                 local hexToColor <const> = AseUtilities.hexToAseColor
 
-                local j = 0
-                while j < lenHexesPlot do
-                    j = j + 1
-                    local hexPlot <const> = hexesPlot[j]
-                    local xc <const> = xs[j] - xOff
-                    local yc <const> = ys[j] - yOff
+                local k = 0
+                while k < lenHexesPlot do
+                    k = k + 1
+                    local hexPlot <const> = hexesPlot[k]
+                    local xc <const> = xs[k] - xOff
+                    local yc <const> = ys[k] - yOff
                     drawEllipse(plotCtx,
                         xc, yc, strokeSize, strokeSize,
                         true, hexToColor(hexPlot),
@@ -502,10 +501,9 @@ dlg:button {
 
                 local plotPalLayer <const> = sprite:newLayer()
                 plotPalLayer.name = "Palette"
-                local plotPos <const> = Point(xOff, yOff)
                 sprite:newCel(
                     plotPalLayer, sprite.frames[1],
-                    plotImage, plotPos)
+                    plotImage, Point(xOff, yOff))
 
                 -- This needs to be done at the very end because
                 -- prependMask modifies hexesProfile.
