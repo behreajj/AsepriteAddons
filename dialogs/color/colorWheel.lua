@@ -183,9 +183,6 @@ dlg:button {
         local rgbIsInGamut <const> = Clr.rgbIsInGamut
         local sRgbaToLab <const> = Clr.sRgbToSrLab2
 
-        local drawCircleFill <const> = AseUtilities.drawCircleFill
-        local setBytes <const> = AseUtilities.setBytes
-
         -- Unpack arguments.
         local args <const> = dlg.data
         local size <const> = args.size
