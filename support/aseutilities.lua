@@ -1551,6 +1551,8 @@ end
 function AseUtilities.drawCircleFill(
     pixels, wImage, xc, yc, r,
     rFill, gFill, bFill, aFill)
+    -- TODO: Replace this with a ShapeUtilities method that uses the canvas?
+
     local blend <const> = AseUtilities.blendRgba
     local rsq <const> = r * r
     local r2 <const> = r + r

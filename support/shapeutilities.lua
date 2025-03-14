@@ -66,6 +66,63 @@ function ShapeUtilities.drawCurve2(
     end
 end
 
+---Draws an ellipse with an image graphics context.
+---@param context GraphicsContext canvas
+---@param xc number center x
+---@param yc number center y
+---@param w number width
+---@param h number height
+---@param useFill boolean use fill
+---@param fillClr Color fill color
+---@param useStroke boolean use stroke
+---@param strokeClr Color stroke color
+---@param strokeWeight integer stroke weight
+---@param useAntiAlias? boolean use antialias
+function CanvasUtilities.drawEllipse(
+    context,
+    xc, yc, w, h,
+    useFill, fillClr,
+    useStroke, strokeClr, strokeWeight,
+    useAntiAlias)
+    local useFillVerif <const> = useFill
+        and fillClr.alpha > 0
+    local useStrokeVerif <const> = useStroke
+        and strokeWeight > 0
+        and strokeClr.alpha > 0
+    if (not useFillVerif) and (not useStrokeVerif) then
+        return
+    end
+
+    local k <const> = 0.5522847498307936
+
+    local extapw <const> = w
+    local extcpw <const> = k * extapw
+    local extaph <const> = h
+    local extcph <const> = k * extaph
+
+    local right <const> = xc + extapw
+    local left <const> = xc - extapw
+    local top <const> = yc + extaph
+    local bottom <const> = yc - extaph
+
+    if useAntiAlias then context.antialias = true end
+    context:beginPath()
+    context:moveTo(right, yc)
+    context:cubicTo(right, yc + extcph, xc + extcpw, top, xc, top)
+    context:cubicTo(xc - extcpw, top, left, yc + extcph, left, yc)
+    context:cubicTo(left, yc - extcph, xc - extcpw, bottom, xc, bottom)
+    context:cubicTo(xc + extcpw, bottom, right, yc - extcph, right, yc)
+    context:closePath()
+    if useFillVerif then
+        context.color = fillClr
+        context:fill()
+    end
+    if useStrokeVerif then
+        context.color = strokeClr
+        context:stroke()
+    end
+end
+
 ---Draws a mesh with an image graphics context.
 ---Creates a new cel if one does not exist at the layer and frame.
 ---Otherwise, assigns to cel image and position.
