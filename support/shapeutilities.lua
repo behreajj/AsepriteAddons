@@ -78,7 +78,7 @@ end
 ---@param strokeClr Color stroke color
 ---@param strokeWeight integer stroke weight
 ---@param useAntiAlias? boolean use antialias
-function CanvasUtilities.drawEllipse(
+function ShapeUtilities.drawEllipse(
     context,
     xc, yc, w, h,
     useFill, fillClr,

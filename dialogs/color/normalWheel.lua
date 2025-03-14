@@ -1,4 +1,4 @@
-dofile("../../support/aseutilities.lua")
+dofile("../../support/shapeutilities.lua")
 
 local palTypes <const> = { "ACTIVE", "DEFAULT", "FILE" }
 
@@ -19,7 +19,8 @@ local defaults <const> = {
     maxSize = 2048,
     maxSectors = 32,
     maxRings = 16,
-    pullFocus = true
+    strokeColor = 0xffffffff,
+    strokeWeight = 2,
 }
 
 local normalsPal <const> = {
@@ -162,7 +163,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "ok",
     text = "&OK",
-    focus = defaults.pullFocus,
+    focus = true,
     onclick = function()
         -- Cache methods.
         local abs <const> = math.abs
@@ -461,7 +462,9 @@ dlg:button {
             end
 
             if xMax > xMin and yMax > yMin then
-                local drawCircleFill <const> = AseUtilities.drawCircleFill
+                local strokeWeight = defaults.strokeWeight
+                local strokeColor <const> = AseUtilities.hexToAseColor(
+                    defaults.strokeColor)
                 local stroke2 <const> = strokeSize + strokeSize
                 local xOff <const> = 1 + xMin - strokeSize
                 local yOff <const> = 1 + yMin - strokeSize
@@ -475,37 +478,31 @@ dlg:button {
                     spec.transparentColor)
 
                 local plotImage <const> = Image(plotSpec)
-                local plotPos <const> = Point(xOff, yOff)
+                local plotCtx <const> = plotImage.context
+                if not plotCtx then return end
 
-                ---@type integer[]
-                local plotPixels <const> = {}
-                local lenPixels <const> = wPlot * hPlot * 4
+                plotCtx.antialias = false
+                plotCtx.blendMode = BlendMode.NORMAL
+
+                local drawEllipse <const> = ShapeUtilities.drawEllipse
+                local hexToColor <const> = AseUtilities.hexToAseColor
+
                 local j = 0
-                while j < lenPixels do
-                    j = j + 1
-                    plotPixels[j] = 0
-                end
-
-                j = 0
                 while j < lenHexesPlot do
                     j = j + 1
                     local hexPlot <const> = hexesPlot[j]
-                    if (hexPlot & 0xff000000) ~= 0 then
-                        local xi <const> = xs[j] - xOff
-                        local yi <const> = ys[j] - yOff
-                        drawCircleFill(plotPixels, wPlot, xi, yi, strokeSize,
-                            255, 255, 255, 255)
-                        drawCircleFill(plotPixels, wPlot, xi, yi, fillSize,
-                            hexPlot & 0xff,
-                            (hexPlot >> 0x08) & 0xff,
-                            (hexPlot >> 0x10) & 0xff,
-                            255)
-                    end
+                    local xc <const> = xs[j] - xOff
+                    local yc <const> = ys[j] - yOff
+                    drawEllipse(plotCtx,
+                        xc, yc, strokeSize, strokeSize,
+                        true, hexToColor(hexPlot),
+                        true, strokeColor, strokeWeight,
+                        false)
                 end
 
-                AseUtilities.setBytes(plotImage, plotPixels)
                 local plotPalLayer <const> = sprite:newLayer()
                 plotPalLayer.name = "Palette"
+                local plotPos <const> = Point(xOff, yOff)
                 sprite:newCel(
                     plotPalLayer, sprite.frames[1],
                     plotImage, plotPos)
