@@ -4,6 +4,33 @@ local site <const> = app.site
 local sprite <const> = site.sprite
 if not sprite then return end
 
+local appPrefs <const> = app.preferences
+local useGridSnap = false
+local cursorSnap = false
+if appPrefs then
+    local cursorPrefs <const> = appPrefs.cursor
+    if cursorPrefs then
+        local snapToGrid <const> = cursorPrefs.snap_to_grid
+        if snapToGrid then
+            cursorSnap = true
+        end
+    end
+
+    local docPrefs <const> = appPrefs.document(sprite)
+    if docPrefs then
+        local gridPrefs <const> = docPrefs.grid
+        if gridPrefs then
+            local snapPref <const> = gridPrefs.snap --[[@as boolean]]
+            if snapPref then
+                useGridSnap = snapPref
+            end -- End snap prefs exists.
+        end     -- End grid prefs exists.
+    end         -- End doc prefs exists.
+end             -- End preferences exists.
+
+local useTopleft <const> = (not cursorSnap) and useGridSnap
+local centerPreset = useTopleft and "TOP_LEFT" or "CENTER"
+
 local sel <const>, isValid <const> = AseUtilities.getSelection(sprite)
 if not isValid then
     -- Instead of returning when selection is not valid,
@@ -100,7 +127,7 @@ if not isValid then
         context:stroke()
     end
 
-    app.brush = AseUtilities.imageToBrush(image)
+    app.brush = AseUtilities.imageToBrush(image, centerPreset)
     app.tool = "pencil"
     app.refresh()
     return
@@ -109,30 +136,6 @@ end
 local frame <const> = site.frame or sprite.frames[1]
 local image <const>, xSel <const>, ySel <const> = AseUtilities.selToImage(
     sel, sprite, frame.frameNumber)
-
-local appPrefs <const> = app.preferences
-local useGridSnap = false
-local cursorSnap = false
-if appPrefs then
-    local cursorPrefs <const> = appPrefs.cursor
-    if cursorPrefs then
-        local snapToGrid <const> = cursorPrefs.snap_to_grid
-        if snapToGrid then
-            cursorSnap = true
-        end
-    end
-
-    local docPrefs <const> = appPrefs.document(sprite)
-    if docPrefs then
-        local gridPrefs <const> = docPrefs.grid
-        if gridPrefs then
-            local snapPref <const> = gridPrefs.snap --[[@as boolean]]
-            if snapPref then
-                useGridSnap = snapPref
-            end -- End snap prefs exists.
-        end     -- End grid prefs exists.
-    end         -- End doc prefs exists.
-end             -- End preferences exists.
 
 -- Ideally, this would also turn off strict tile alignment mode,
 -- but unsure how to do this, as there's only the command to toggle,
@@ -153,10 +156,7 @@ if activeLayer and activeLayer.isTilemap then
     end
 end
 
-local centerPreset = "CENTER"
-if (not cursorSnap) and useGridSnap then
-    centerPreset = "TOP_LEFT"
-elseif appPrefs then
+if not useTopleft and appPrefs then
     -- https://github.com/aseprite/aseprite/blob/main/data/pref.xml#L81
     local maskPrefs <const> = appPrefs.selection
     if maskPrefs then
