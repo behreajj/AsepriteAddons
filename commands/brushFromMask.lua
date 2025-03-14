@@ -59,8 +59,8 @@ if not isValid then
     -- Assume no antialiasing, so floor center.
     local xCenterf = wTrgi * 0.5
     local yCenterf = hTrgi * 0.5
-    local xCenteri <const> = math.floor(xCenterf)
-    local yCenteri <const> = math.floor(yCenterf)
+    local xCenteri <const> = math.floor(xCenterf + 0.5)
+    local yCenteri <const> = math.floor(yCenterf + 0.5)
     local sizeHalfReal <const> = brushSize * 0.5
 
     if brushType == BrushType.SQUARE then
