@@ -306,7 +306,7 @@ if lenFrObjs > 1 then
     end
 
     local durStr <const> = string.format(
-        "%d ms (%.1f avg fps)",
+        "%d ms (%.2f avg fps)",
         math.floor(durSum * 1000.0 + 0.5),
         lenFrObjs > 0 and fpsSum / lenFrObjs or 0)
 
