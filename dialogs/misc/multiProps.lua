@@ -62,7 +62,8 @@ local isTilemap <const> = layer.isTilemap
 local hasBlend <const> = (not isBkg) and (useNewBlend or (not isGroup))
 
 local frame <const> = site.frame or sprite.frames[1]
-local frFmtStr <const> = "Frame %d (%.2f fps)"
+-- local frFmtStr <const> = "Frame %d (%.2f fps)"
+local frFmtStr <const> = "Frame %d"
 local frIdx <const> = frame.frameNumber
 local frIdxUi <const> = frameUiOffset + frIdx
 local dur <const> = frame.duration
@@ -74,7 +75,8 @@ local dlg <const> = Dialog { title = "Properties" }
 
 dlg:separator {
     id = "frameSep",
-    text = string.format(frFmtStr, frIdxUi, dur > 0.0 and 1.0 / dur or 0.0),
+    -- text = string.format(frFmtStr, frIdxUi, dur > 0.0 and 1.0 / dur or 0.0),
+    text = string.format(frFmtStr, frIdxUi),
     focus = false
 }
 
@@ -89,12 +91,16 @@ dlg:number {
         local msDur <const> = args.frameDuration --[[@as integer]]
         local sDur <const> = math.min(math.max(math.abs(
             msDur) * 0.001, 0.001), 65.535)
-        local fpsApprox <const> = 1.0 / sDur
+
+        -- The problem with modifying this is when the dialog is too
+        -- big to fit within the app window and has a scrollbar. Modifying
+        -- the widget collapses the dialog's size.
+        -- local fpsApprox <const> = 1.0 / sDur
+        -- dlg:modify {
+        --     id = "frameSep",
+        --     text = string.format(frFmtStr, frIdxUi, fpsApprox) }
 
         frame.duration = sDur
-        dlg:modify {
-            id = "frameSep",
-            text = string.format(frFmtStr, frIdxUi, fpsApprox) }
         app.refresh()
     end
 }
