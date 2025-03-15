@@ -118,12 +118,8 @@ if not isValid then
         local sinaSzHf <const> = sina * sizeHalfReal
 
         context:beginPath()
-        context:moveTo(
-            xCenteri - cosaSzHf,
-            yCenteri + sinaSzHf)
-        context:lineTo(
-            xCenteri + cosaSzHf,
-            yCenteri - sinaSzHf)
+        context:moveTo(xCenteri - cosaSzHf, yCenteri + sinaSzHf)
+        context:lineTo(xCenteri + cosaSzHf, yCenteri - sinaSzHf)
         context:stroke()
     end
 
