@@ -1,4 +1,4 @@
-dofile("../../support/aseutilities.lua")
+dofile("../../support/shapeutilities.lua")
 dofile("../../support/octree.lua")
 
 local palTypes <const> = { "ACTIVE", "FILE" }
