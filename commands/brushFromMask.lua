@@ -48,15 +48,8 @@ if not isValid then
         return
     end
 
-    local useStroke = false
-    local fillColor = AseUtilities.aseColorCopy(app.fgColor, "")
-    if fillColor.alpha <= 0 then
-        app.command.SwitchColors()
-        fillColor = AseUtilities.aseColorCopy(app.fgColor, "")
-        app.command.SwitchColors()
-        if fillColor.alpha <= 0 then return end
-        useStroke = true
-    end
+    local fillColor <const> = AseUtilities.aseColorCopy(app.fgColor, "")
+    if fillColor.alpha <= 0 then return end
 
     local query <const> = AseUtilities.DIMETRIC_ANGLES[brushDegrees]
     local brushRadians <const> = query
@@ -116,7 +109,7 @@ if not isValid then
                 math.floor(xCenteri - cosaSzHf - sinaSzHf),
                 math.floor(yCenteri - cosaSzHf + sinaSzHf))
             context:closePath()
-            if useStroke then context:stroke() else context:fill() end
+            context:fill()
         else
             image:clear(fillColor)
         end
