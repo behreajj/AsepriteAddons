@@ -41,7 +41,6 @@ if app.theme then
 end
 
 local defaults <const> = {
-    -- TODO: When mode is set, show approx. FPS?
     mode = "SET",
     alpSampleCount = 96,
 
@@ -104,6 +103,7 @@ dlg:combobox {
         local target <const> = args.target --[[@as string]]
         local isManual <const> = target == "MANUAL"
         local isMix <const> = mode == "MIX"
+        local isSet <const> = mode == "SET"
         local notRemap <const> = mode ~= "REMAP"
         local isOp <const> = not isMix
 
@@ -119,6 +119,7 @@ dlg:combobox {
         dlg:modify { id = "getDest", visible = isMix }
 
         dlg:modify { id = "opNum", visible = isOp }
+        dlg:modify { id = "fpsLabel", visible = isSet }
         dlg:modify { id = "target", visible = isOp and notRemap }
         dlg:modify { id = "rangeStr", visible = isOp and notRemap and isManual }
         dlg:modify { id = "strExample", visible = false }
@@ -257,7 +258,28 @@ dlg:number {
             and 1 or 100)),
     decimals = 0,
     focus = defaults.mode ~= "MIX",
-    visible = defaults.mode ~= "MIX"
+    visible = defaults.mode ~= "MIX",
+    onchange = function()
+        local args <const> = dlg.data
+        local mode <const> = args.mode --[[@as string]]
+        if mode == "SET" then
+            local opNum <const> = args.opNum --[[@as number]]
+            local onVerif <const> = math.min(math.max(math.abs(
+                opNum) * 0.001, 0.001), 65.535)
+            local fps <const> = 1.0 / onVerif
+            dlg:modify {
+                id = "fpsLabel",
+                text = string.format("%.2f", fps)
+            }
+        end
+    end
+}
+
+dlg:label {
+    id = "fpsLabel",
+    label = "FPS:",
+    text = "10.00",
+    visible = defaults.mode == "SET"
 }
 
 dlg:newrow { always = false }
