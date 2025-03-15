@@ -94,7 +94,7 @@ dlg:number {
         frame.duration = sDur
         dlg:modify {
             id = "frameSep",
-            text = string.format("Frame %d (%.2f FPS)", frIdxUi, fpsApprox) }
+            text = string.format(frFmtStr, frIdxUi, fpsApprox) }
         app.refresh()
     end
 }
