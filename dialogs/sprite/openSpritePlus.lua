@@ -113,7 +113,32 @@ dlg:file {
     filetypes = AseUtilities.FILE_FORMATS_OPEN,
     filename = app.fs.joinPath(app.fs.userDocsPath, "*.*"),
     open = true,
-    focus = true
+    focus = true,
+    visible = defaults.asSeq == false
+}
+
+dlg:newrow { always = false }
+
+dlg:file {
+    id = "fromFile",
+    label = "From:",
+    filetypes = AseUtilities.FILE_FORMATS_OPEN,
+    filename = app.fs.joinPath(app.fs.userDocsPath, "*.*"),
+    open = true,
+    focus = false,
+    visible = defaults.asSeq == true
+}
+
+dlg:newrow { always = false }
+
+dlg:file {
+    id = "toFile",
+    label = "To:",
+    filetypes = AseUtilities.FILE_FORMATS_OPEN,
+    filename = app.fs.joinPath(app.fs.userDocsPath, "*.*"),
+    open = true,
+    focus = false,
+    visible = defaults.asSeq == true
 }
 
 dlg:newrow { always = false }
@@ -122,7 +147,14 @@ dlg:check {
     id = "asSeq",
     label = "Folder:",
     text = "Se&quence",
-    selected = defaults.asSeq
+    selected = defaults.asSeq,
+    onclick = function()
+        local args <const> = dlg.data
+        local state <const> = args.asSeq --[[@as boolean]]
+        dlg:modify { id = "fromFile", visible = state }
+        dlg:modify { id = "toFile", visible = state }
+        dlg:modify { id = "spriteFile", visible = not state }
+    end
 }
 
 dlg:newrow { always = false }
@@ -316,21 +348,54 @@ dlg:button {
             local strbyte <const> = string.byte
             local strchar <const> = string.char
 
-            local folder <const> = fileSys.filePath(spriteFile)
-            local relFilePaths <const> = fileSys.listFiles(folder)
+            -- See https://steamcommunity.com/app/431730/discussions/2/501693855099265776/
+            local frFile <const> = args.fromFile --[[@as string]]
+            local toFile <const> = args.toFile --[[@as string]]
+
+            local frFolder <const> = fileSys.filePath(frFile)
+            local toFolder <const> = fileSys.filePath(toFile)
+            if frFolder ~= toFolder then
+                app.alert {
+                    title = "Error",
+                    text = "File paths aren't from the same folder."
+                }
+                return
+            end
+
+            local relFilePaths <const> = fileSys.listFiles(frFolder)
             local lenRelFilePaths <const> = #relFilePaths
             local supportedExts <const> = AseUtilities.FILE_FORMATS_OPEN
             local lenSupportedExts <const> = #supportedExts
+
+            local frIdx = 1
+            local toIdx = lenRelFilePaths
+            local found = 0
+            local h = 0
+            while h < lenRelFilePaths and found < 2 do
+                h = h + 1
+                local relFilePath <const> = relFilePaths[h]
+                local absFilePath <const> = fileSys.joinPath(frFolder, relFilePath)
+                if absFilePath == frFile then
+                    frIdx = h
+                    found = found + 1
+                end
+                if absFilePath == toFile then
+                    toIdx = h
+                    found = found + 1
+                end
+            end
 
             ---@type Image[]
             local images <const> = {}
             local lenImages = 0
             local wMax = -2147483648
             local hMax = -2147483648
-            local preferredIdx = 0
 
-            local i = 0
-            while i < lenRelFilePaths do
+            local frIdxVrf = math.min(frIdx, toIdx)
+            local toIdxVrf = math.max(frIdx, toIdx)
+
+            local i = frIdxVrf - 1
+            while i < toIdxVrf do
                 i = i + 1
                 local relFilePath <const> = relFilePaths[i]
                 local fileExt <const> = fileSys.fileExtension(relFilePath)
@@ -346,7 +411,7 @@ dlg:button {
 
                 if isSupported then
                     local absFilePath <const> = fileSys.joinPath(
-                        folder, relFilePath)
+                        frFolder, relFilePath)
                     local srcImg <const> = Image { fromFile = absFilePath }
                     if srcImg then
                         local srcImgSpec <const> = srcImg.spec
@@ -357,7 +422,7 @@ dlg:button {
                         if wSrcImg > wMax then wMax = wSrcImg end
                         if hSrcImg > hMax then hMax = hSrcImg end
 
-                        local trgImage = srcImg
+                        local trgImg = srcImg
                         if cmSrcImg ~= ColorMode.RGB then
                             ---@type string[]
                             local trgByteArr <const> = {}
@@ -398,12 +463,12 @@ dlg:button {
                                         if i8 ~= alphaIndex
                                             and i8 >= 0
                                             and i8 < lenPalette then
-                                            local aseColor <const> = palette:getColor(i8)
-                                            t8 = aseColor.alpha
+                                            local ase <const> = palette:getColor(i8)
+                                            t8 = ase.alpha
                                             if t8 > 0 then
-                                                r8 = aseColor.red
-                                                g8 = aseColor.green
-                                                b8 = aseColor.blue
+                                                r8 = ase.red
+                                                g8 = ase.green
+                                                b8 = ase.blue
                                             end
                                         end
 
@@ -418,20 +483,16 @@ dlg:button {
                                 end     -- End palette exists.
                             end         -- End color mode block.
 
-                            trgImage = Image(ImageSpec {
+                            trgImg = Image(ImageSpec {
                                 width = wSrcImg,
                                 height = hSrcImg,
                                 colorMode = ColorMode.RGB
                             })
-                            trgImage.bytes = tconcat(trgByteArr)
+                            trgImg.bytes = tconcat(trgByteArr)
                         end -- End image is not RGB.
 
                         lenImages = lenImages + 1
-                        images[lenImages] = trgImage
-
-                        if absFilePath == spriteFile then
-                            preferredIdx = lenImages - 1
-                        end
+                        images[lenImages] = trgImg
                     end -- End image exists.
                 end     -- End extension is supported.
             end         -- End relative paths loop.
@@ -442,6 +503,10 @@ dlg:button {
                 openSprite = AseUtilities.createSprite(
                     AseUtilities.createSpec(wMax, hMax),
                     "Sequence", showLayerEdges)
+
+                if frIdx > toIdx then
+                    Utilities.reverseTable(images)
+                end
 
                 app.transaction("Open Sequence", function()
                     -- While you could open the primary file as a palette,
@@ -458,12 +523,11 @@ dlg:button {
                     local firstLayer <const> = openSprite.layers[1]
                     local k = 0
                     while k < lenImages do
-                        local m <const> = (preferredIdx + k) % lenImages
-                        local image <const> = images[1 + m]
+                        k = k + 1
+                        local image <const> = images[k]
                         local x <const> = (wMax - image.width) // 2
                         local y <const> = (hMax - image.height) // 2
-                        openSprite:newCel(firstLayer, 1 + k, image, Point(x, y))
-                        k = k + 1
+                        openSprite:newCel(firstLayer, k, image, Point(x, y))
                     end -- End frame, cel creation loop.
                 end)    -- End transaction.
             end         -- End valid images exist.
