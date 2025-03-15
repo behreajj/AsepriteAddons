@@ -135,7 +135,7 @@ end
 if #csName > 0 then
     dlg:label {
         id = "clrSpaceLabel",
-        label = "Color Space:",
+        label = "Profile:",
         text = csName
     }
 
@@ -344,7 +344,7 @@ dlg:newrow { always = false }
 
 dlg:slider {
     id = "aPxRatio",
-    label = "Pixel Aspect:",
+    label = "Pixel:",
     min = defaults.minPxRatio,
     max = defaults.maxPxRatio,
     value = pixelWidth,
