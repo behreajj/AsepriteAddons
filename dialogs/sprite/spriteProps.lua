@@ -298,8 +298,7 @@ if lenFrObjs > 1 then
     local i = 0
     while i < lenFrObjs do
         i = i + 1
-        local dur <const> = frObjs[i].duration
-        durSum = durSum + dur
+        durSum = durSum + frObjs[i].duration
     end
 
     local durStr <const> = string.format(
