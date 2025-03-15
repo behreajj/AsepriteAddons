@@ -295,20 +295,17 @@ if lenFrObjs > 1 then
     dlg:newrow { always = false }
 
     local durSum = 0
-    local fpsSum = 0
     local i = 0
     while i < lenFrObjs do
         i = i + 1
         local dur <const> = frObjs[i].duration
-        local fps <const> = dur > 0.0 and 1.0 / dur or 0.0
         durSum = durSum + dur
-        fpsSum = fpsSum + fps
     end
 
     local durStr <const> = string.format(
         "%d ms (%.2f avg fps)",
         math.floor(durSum * 1000.0 + 0.5),
-        lenFrObjs > 0 and fpsSum / lenFrObjs or 0)
+        durSum > 0.0 and lenFrObjs / durSum or 0)
 
     dlg:label {
         id = "durationLabel",
