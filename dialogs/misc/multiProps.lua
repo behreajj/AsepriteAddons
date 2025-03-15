@@ -62,7 +62,7 @@ local isTilemap <const> = layer.isTilemap
 local hasBlend <const> = (not isBkg) and (useNewBlend or (not isGroup))
 
 local frame <const> = site.frame or sprite.frames[1]
-local frFmtStr <const> = "Frame %d (%.2f FPS)"
+local frFmtStr <const> = "Frame %d (%.2f fps)"
 local frIdx <const> = frame.frameNumber
 local frIdxUi <const> = frameUiOffset + frIdx
 local dur <const> = frame.duration

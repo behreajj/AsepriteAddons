@@ -41,6 +41,7 @@ if app.theme then
 end
 
 local defaults <const> = {
+    -- TODO: When mode is set, show approx. FPS?
     mode = "SET",
     alpSampleCount = 96,
 
