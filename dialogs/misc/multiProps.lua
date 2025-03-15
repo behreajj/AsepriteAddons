@@ -199,7 +199,7 @@ if isTilemap then
 
         dlg:separator {
             id = "tileSep",
-            text = string.format("Tileset %d x %d (#%d Tiles)",
+            text = string.format("Tileset %d x %d (%d Tiles)",
                 gridSize.width, gridSize.height, #tileSet)
         }
 
