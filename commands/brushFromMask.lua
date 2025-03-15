@@ -58,7 +58,7 @@ if not isValid then
     local cosa <const> = math.cos(brushRadians)
     local sina <const> = math.sin(brushRadians)
     local rotPeriodDegrees <const> = brushType == BrushType.SQUARE
-        and 90 or (brushType == BrushType.LINE and 180 or 0)
+        and 90 or (brushType == BrushType.LINE and 180 or 1)
     local rotNeeded <const> = brushDegrees % rotPeriodDegrees ~= 0
 
     -- Calculate needed size of image to rotate image.
