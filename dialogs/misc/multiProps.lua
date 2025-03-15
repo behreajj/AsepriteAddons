@@ -62,6 +62,11 @@ local isTilemap <const> = layer.isTilemap
 local hasBlend <const> = (not isBkg) and (useNewBlend or (not isGroup))
 
 local frame <const> = site.frame or sprite.frames[1]
+local frFmtStr <const> = "Frame %d (%.2f FPS)"
+local frIdx <const> = frame.frameNumber
+local frIdxUi <const> = frameUiOffset + frIdx
+local dur <const> = frame.duration
+
 local cel <const> = layer:cel(frame)
 local tag <const> = app.tag
 
@@ -69,21 +74,27 @@ local dlg <const> = Dialog { title = "Properties" }
 
 dlg:separator {
     id = "frameSep",
-    text = string.format("Frame %d", frameUiOffset + frame.frameNumber),
+    text = string.format(frFmtStr, frIdxUi, dur > 0.0 and 1.0 / dur or 0.0),
     focus = false
 }
 
 dlg:number {
     id = "frameDuration",
     label = "Duration:",
-    text = string.format("%d", math.floor(1000.0 * frame.duration + 0.5)),
+    text = string.format("%d", math.floor(1000.0 * dur + 0.5)),
     decimals = 0,
     focus = false,
     onchange = function()
         local args <const> = dlg.data
         local msDur <const> = args.frameDuration --[[@as integer]]
-        frame.duration = math.min(math.max(math.abs(
+        local sDur <const> = math.min(math.max(math.abs(
             msDur) * 0.001, 0.001), 65.535)
+        local fpsApprox <const> = 1.0 / sDur
+
+        frame.duration = sDur
+        dlg:modify {
+            id = "frameSep",
+            text = string.format("Frame %d (%.2f FPS)", frIdxUi, fpsApprox) }
         app.refresh()
     end
 }
@@ -188,7 +199,7 @@ if isTilemap then
 
         dlg:separator {
             id = "tileSep",
-            text = string.format("Tileset %d x %d (#%d)",
+            text = string.format("Tileset %d x %d (#%d Tiles)",
                 gridSize.width, gridSize.height, #tileSet)
         }
 
