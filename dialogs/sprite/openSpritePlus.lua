@@ -9,6 +9,7 @@ local paletteTypes <const> = {
 
 local defaults <const> = {
     asSeq = false,
+    fps = 12,
     removeBkg = true,
     trimCels = true,
     palType = "EMBEDDED",
@@ -143,6 +144,17 @@ dlg:file {
 
 dlg:newrow { always = false }
 
+dlg:slider {
+    id = "fps",
+    label = "FPS:",
+    min = 1,
+    max = 50,
+    value = defaults.fps,
+    visible = defaults.asSeq == true
+}
+
+dlg:newrow { always = false }
+
 dlg:check {
     id = "asSeq",
     label = "Folder:",
@@ -153,6 +165,7 @@ dlg:check {
         local state <const> = args.asSeq --[[@as boolean]]
         dlg:modify { id = "fromFile", visible = state }
         dlg:modify { id = "toFile", visible = state }
+        dlg:modify { id = "fps", visible = state }
         dlg:modify { id = "spriteFile", visible = not state }
     end
 }
@@ -451,16 +464,21 @@ dlg:button {
                                 end -- End pixels loop.
                             elseif cmSrcImg == ColorMode.INDEXED then
                                 local palette <const> = Palette { fromFile = absFilePath }
+
                                 if palette then
                                     local lenPalette <const> = #palette
                                     local alphaIndex <const> = srcImgSpec.transparentColor
+                                    local keepBkg <const> = (alphaIndex >= 0 and
+                                            alphaIndex < lenPalette)
+                                        and palette:getColor(alphaIndex).alpha >= 255
+                                        or false
 
                                     local k = 0
                                     while k < areaSrcImg do
                                         local i8 <const> = strbyte(srcBytes, 1 + k)
 
                                         local r8, g8, b8, t8 = 0, 0, 0, 0
-                                        if i8 ~= alphaIndex
+                                        if (keepBkg or i8 ~= alphaIndex)
                                             and i8 >= 0
                                             and i8 < lenPalette then
                                             local ase <const> = palette:getColor(i8)
@@ -514,10 +532,16 @@ dlg:button {
                     AseUtilities.setPalette(
                         AseUtilities.DEFAULT_PAL_ARR, openSprite)
 
+                    -- Set the frame duration.
+                    local fps <const> = args.fps
+                        or defaults.fps --[[@as integer]]
+                    local duration <const> = 1.0 / math.max(1, fps)
+                    openSprite.frames[1].duration = duration
                     local j = 1
                     while j < lenImages do
                         j = j + 1
-                        openSprite:newEmptyFrame()
+                        local frObj <const> = openSprite:newEmptyFrame(j)
+                        frObj.duration = duration
                     end
 
                     local firstLayer <const> = openSprite.layers[1]
