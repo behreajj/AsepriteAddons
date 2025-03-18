@@ -445,26 +445,20 @@ dlg:button {
                             if cmSrcImg == ColorMode.GRAY then
                                 local k = 0
                                 while k < areaSrcImg do
-                                    local k2 <const> = k * 2
-                                    local v8 <const>, t8 <const> = strbyte(
+                                    local k2 <const> = k + k
+                                    local v8, t8 <const> = strbyte(
                                         srcBytes, 1 + k2, 2 + k2)
-
-                                    local r8, g8, b8 = 0, 0, 0
-                                    if t8 > 0 then
-                                        r8, g8, b8 = v8, v8, v8
-                                    end
-
+                                    if t8 <= 0 then v8 = 0 end
+                                    local v8Char <const> = strchar(v8)
                                     local k4 <const> = k * 4
-                                    trgByteArr[1 + k4] = strchar(r8)
-                                    trgByteArr[2 + k4] = strchar(g8)
-                                    trgByteArr[3 + k4] = strchar(b8)
+                                    trgByteArr[1 + k4] = v8Char
+                                    trgByteArr[2 + k4] = v8Char
+                                    trgByteArr[3 + k4] = v8Char
                                     trgByteArr[4 + k4] = strchar(t8)
-
                                     k = k + 1
                                 end -- End pixels loop.
                             elseif cmSrcImg == ColorMode.INDEXED then
                                 local palette <const> = Palette { fromFile = absFilePath }
-
                                 if palette then
                                     local lenPalette <const> = #palette
                                     local alphaIndex <const> = srcImgSpec.transparentColor
@@ -550,6 +544,8 @@ dlg:button {
                         k = k + 1
                         local image <const> = images[k]
                         local x <const> = (wMax - image.width) // 2
+                        -- For baseline alignment:
+                        -- local y <const> = hMax - image.height
                         local y <const> = (hMax - image.height) // 2
                         openSprite:newCel(firstLayer, k, image, Point(x, y))
                     end -- End frame, cel creation loop.
