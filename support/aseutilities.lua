@@ -2561,11 +2561,33 @@ function AseUtilities.imageToBrush(
     -- not clear black, the brush has incorrect transparency.
 
     if image:isEmpty() then
-        -- Aseprite GUI doesn't update properly, so a better solution'd be to
-        -- get the tool brush preferences from the active tool (not the fields
-        -- from app.brush). However, that's too much code to bother with.
+        -- Brush GUI does not properly update on assignment, so in case a blank
+        -- image is passed (due to an empty selection in brushFromMask), this
+        -- should return brush similar the active brush. Better to get from
+        -- preferences than from app.brush fields.
+
+        local angle = 0
+        local size = 1
+        local type = BrushType.CIRCLE
+
         -- https://github.com/aseprite/aseprite/blob/main/data/pref.xml#L467
-        return Brush { angle = 0, size = 1, type = BrushType.CIRCLE }
+        local appPrefs <const> = app.preferences
+        if appPrefs then
+            local tool <const> = app.tool
+            local toolPrefs <const> = appPrefs.tool(tool)
+            if toolPrefs then
+                local brushPrefs <const> = toolPrefs.brush
+                if brushPrefs then
+                    angle = brushPrefs.angle or 0
+                    size = brushPrefs.size or 1
+                    if brushPrefs.type ~= BrushType.IMAGE then
+                        type = brushPrefs.type or BrushType.CIRCLE
+                    end
+                end
+            end
+        end
+
+        return Brush { angle = angle, size = size, type = type }
     end
 
     -- Setting the brush pattern seems less effective than setting
