@@ -2563,7 +2563,7 @@ function AseUtilities.imageToBrush(
     if image:isEmpty() then
         -- Brush GUI does not properly update on assignment, so in case a blank
         -- image is passed (due to an empty selection in brushFromMask), this
-        -- should return brush similar the active brush. Better to get from
+        -- should return similar as the active brush. Better to get from
         -- preferences than from app.brush fields.
 
         local angle = 0
@@ -2582,10 +2582,10 @@ function AseUtilities.imageToBrush(
                     size = brushPrefs.size or 1
                     if brushPrefs.type ~= BrushType.IMAGE then
                         type = brushPrefs.type or BrushType.CIRCLE
-                    end
-                end
-            end
-        end
+                    end -- Brush type is not image.
+                end     -- Brush prefs exists.
+            end         -- Tool prefs exists.
+        end             -- App prefs exists.
 
         return Brush { angle = angle, size = size, type = type }
     end
