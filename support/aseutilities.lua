@@ -109,10 +109,10 @@ AseUtilities.GRAY_COUNT = 32
 AseUtilities.LAYER_COUNT_LIMIT = 96
 
 ---Camera projections.
-AseUtilities.PROJECTIONS = {
-    "ORTHO",
-    "PERSPECTIVE"
-}
+AseUtilities.PROJECTIONS = { "ORTHO", "PERSPECTIVE" }
+
+---Maximum scalar an image can be scaled up on export.
+AseUtilities.UPSCALE_LIMIT = 16
 
 ---Houses utility methods for scripting Aseprite add-ons.
 ---@return table

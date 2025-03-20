@@ -124,6 +124,12 @@ if not isValid then
     end
 
     app.brush = AseUtilities.imageToBrush(image, centerPreset)
+
+    -- TODO: The pencil tool opacity is active for custom brushes,
+    -- regardless of the ink. For built-in brushes, this opacity is ignored
+    -- unless the ink type is one that supports opacity. See
+    -- app.preferences.tool(app.tool).opacity . Make an AseUtilities setBrush
+    -- method to standardize this case, the one below and the one in polygon?
     app.tool = "pencil"
     app.refresh()
     return
