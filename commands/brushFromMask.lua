@@ -139,16 +139,12 @@ local frame <const> = site.frame or sprite.frames[1]
 local image <const>, xSel <const>, ySel <const> = AseUtilities.selToImage(
     sel, sprite, frame.frameNumber)
 
--- Ideally, this would also turn off strict tile alignment mode,
--- but unsure how to do this, as there's only the command to toggle,
--- not a preference for the document's current state.
-local brushPattern = BrushPattern.NONE
-
 -- You could change these to tile map top left corner, but the problem is
 -- when the selection size doesn't match up to tile dimensions.
 local xPattern = xSel
 local yPattern = ySel
 
+local brushPattern = BrushPattern.NONE
 local activeLayer <const> = site.layer
 if activeLayer and activeLayer.isTilemap then
     if useGridSnap then
@@ -183,6 +179,11 @@ app.transaction("Brush From Mask", function()
     end
 
     sprite.selection:deselect()
+
+    -- Ideally, this would also turn off strict tile alignment mode,
+    -- but unsure how to do this, as there's only the command to toggle,
+    -- not a preference for the document's current state. app.site.tilemapMode
+    -- is a getter only, not a setter.
     app.brush = AseUtilities.imageToBrush(
         image, centerPreset, brushPattern, xPattern, yPattern)
 
