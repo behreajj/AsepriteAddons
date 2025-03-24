@@ -2590,9 +2590,6 @@ function AseUtilities.imageToBrush(
         return Brush { angle = angle, size = size, type = type }
     end
 
-    -- Setting the brush pattern seems less effective than setting
-    -- the preference. See brushFromMask or
-    -- https://github.com/aseprite/aseprite/blob/main/data/pref.xml#L283 .
     local yPtVerif <const> = yPattern or 0
     local xPtVerif <const> = xPattern or 0
     local brushPatternVerif <const> = pattern or BrushPattern.NONE
