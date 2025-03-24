@@ -303,7 +303,7 @@ dlg:button {
             useStroke, strokeColor, strokeWeight,
             useAntialias, true)
 
-        app.brush = AseUtilities.imageToBrush(trimmed)
+        AseUtilities.setBrush(AseUtilities.imageToBrush(trimmed))
         app.refresh()
     end
 }

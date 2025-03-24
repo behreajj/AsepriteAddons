@@ -123,14 +123,8 @@ if not isValid then
         context:stroke()
     end
 
-    app.brush = AseUtilities.imageToBrush(image, centerPreset)
+    AseUtilities.setBrush(AseUtilities.imageToBrush(image, centerPreset))
 
-    -- TODO: The pencil tool opacity is active for custom brushes,
-    -- regardless of the ink. For built-in brushes, this opacity is ignored
-    -- unless the ink type is one that supports opacity. See
-    -- app.preferences.tool(app.tool).opacity . Make an AseUtilities setBrush
-    -- method to standardize this case, the one below and the one in polygon?
-    app.tool = "pencil"
     app.refresh()
     return
 end
@@ -171,26 +165,9 @@ if (not useTopleft) and appPrefs then
 end         -- Use grid snap check.
 
 app.transaction("Brush From Mask", function()
-    if appPrefs then
-        local brushPrefs <const> = appPrefs.brush
-        if brushPrefs then
-            brushPrefs.pattern = brushPattern
-        end
-    end
-
     sprite.selection:deselect()
-
-    -- Ideally, this would also turn off strict tile alignment mode,
-    -- but unsure how to do this, as there's only the command to toggle,
-    -- not a preference for the document's current state. app.site.tilemapMode
-    -- is a getter only, not a setter.
-    app.brush = AseUtilities.imageToBrush(
-        image, centerPreset, brushPattern, xPattern, yPattern)
-
-    -- Setting to pencil may be disruptive if the user is using, e.g., the
-    -- eraser, but given the variety of brush previews, and the issues with
-    -- those previews, this seems like the best choice.
-    app.tool = "pencil"
+    AseUtilities.setBrush(AseUtilities.imageToBrush(
+        image, centerPreset, brushPattern, xPattern, yPattern))
 end)
 
 app.refresh()

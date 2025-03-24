@@ -3235,11 +3235,50 @@ function AseUtilities.setPalette(arr, sprite, paletteIndex, keepMaxLen)
     end
 end
 
+---Sets the active brush to a brush object. Sets the active tool to pencil.
+---If the tile map mode is tiles, then calls the toggle command. Resets the
+---tool's opacity depending on its ink type.
+---@param brush Brush brush
+function AseUtilities.setBrush(brush)
+    if app.site.tilemapMode == TilemapMode.TILES then
+        app.command.ToggleTilesMode()
+    end
+
+    local appPrefs <const> = app.preferences
+    if appPrefs then
+        -- Setting the preference for the active brush is more important than
+        -- setting a brush object's pattern property.
+        local brushPrefs <const> = appPrefs.brush
+        if brushPrefs then
+            brushPrefs.pattern = brush.pattern
+        end -- End brush prefs exists.
+
+        -- The pencil tool opacity is active for custom brushes, regardless
+        -- of the ink. For built-in brushes, this opacity is ignored unless
+        -- the ink type is one that supports opacity.
+        local toolOpacity = 255
+        local oldTool <const> = app.tool
+        local toolPrefs <const> = appPrefs.tool(oldTool)
+        local inkPrefs <const> = toolPrefs.ink --[[@as Ink]]
+        local opacityPrefs <const> = toolPrefs.opacity --[[@as integer]]
+        if opacityPrefs and opacityPrefs > 0
+            and (inkPrefs == Ink.ALPHA_COMPOSITING
+                or inkPrefs == Ink.LOCK_ALPHA) then
+            toolOpacity = opacityPrefs
+        end
+
+        appPrefs.tool("pencil").opacity = toolOpacity
+    end -- End app prefs exists.
+
+    app.tool = "pencil"
+    app.brush = brush
+end
+
 ---Sets an image to an array of bytes. No validation is performed on the array
 ---elements or length. The length should be width times height times bytes per
 ---pixel.
----@param image Image
----@param bytes integer[]
+---@param image Image image
+---@param bytes integer[] bytes array
 ---@return Image
 function AseUtilities.setBytes(image, bytes)
     image.bytes = Utilities.bytesArrToString(bytes)
