@@ -48,6 +48,9 @@ if not isValid then
         return
     end
 
+    -- Indexed color mode brushes seem to have a bug where the fill color
+    -- is calculated relative to the alpha index, so 1 becomes 24
+    -- if the alpha index is 23.
     local fillColor <const> = AseUtilities.aseColorCopy(app.fgColor, "")
     if fillColor.alpha <= 0 then return end
 
