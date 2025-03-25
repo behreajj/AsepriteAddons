@@ -86,11 +86,8 @@ if not isValid then
     context.antialias = false
     context.color = fillColor
 
-    -- Assume no antialiasing, so floor center.
-    local xCenterf = wTrgi * 0.5
-    local yCenterf = hTrgi * 0.5
-    local xCenteri <const> = math.floor(xCenterf + 0.5)
-    local yCenteri <const> = math.floor(yCenterf + 0.5)
+    local xCenteri <const> = math.floor(wTrgi * 0.5 + 0.5)
+    local yCenteri <const> = math.floor(hTrgi * 0.5 + 0.5)
     local sizeHalfReal <const> = brushSize * 0.5
 
     if brushType == BrushType.SQUARE then
