@@ -3143,41 +3143,23 @@ function AseUtilities.selToImage(sel, sprite, frame)
     local validAlpha <const> = colorMode ~= ColorMode.INDEXED
         or (alphaIndex >= 0 and alphaIndex < 256)
     if validAlpha then
-        local areaSel <const> = wSel * hSel
-        local srcBytes <const> = image.bytes
         ---@type string[]
         local trgBytesArr <const> = {}
+        local srcBytes <const> = image.bytes
+        local bpp <const> = image.bytesPerPixel
+        local alphaPacked <const> = string.pack("<I" .. bpp, alphaIndex)
+        local strsub <const> = string.sub
 
-        if colorMode == ColorMode.INDEXED then
-            local strbyte <const> = string.byte
-            local strchar <const> = string.char
-            local i = 0
-            while i < areaSel do
-                local c8 = alphaIndex
-                if sel:contains(xSel + i % wSel, ySel + i // wSel) then
-                    -- As a precaution, you may want to also check that the
-                    -- color in the palette at an index does not have 0 alpha.
-                    c8 = strbyte(srcBytes, 1 + i)
-                end
-
-                i = i + 1
-                trgBytesArr[i] = strchar(c8)
+        local areaSel <const> = wSel * hSel
+        local i = 0
+        while i < areaSel do
+            local cStr = alphaPacked
+            if sel:contains(xSel + i % wSel, ySel + i // wSel) then
+                local iBpp <const> = i * bpp
+                cStr = strsub(srcBytes, 1 + iBpp, bpp + iBpp)
             end
-        else
-            local bpp <const> = image.bytesPerPixel
-            local alphaPacked <const> = string.pack("<I" .. bpp, 0)
-            local strsub <const> = string.sub
-
-            local i = 0
-            while i < areaSel do
-                local cStr = alphaPacked
-                if sel:contains(xSel + i % wSel, ySel + i // wSel) then
-                    local iBpp <const> = i * bpp
-                    cStr = strsub(srcBytes, 1 + iBpp, bpp + iBpp)
-                end
-                i = i + 1
-                trgBytesArr[i] = cStr
-            end
+            i = i + 1
+            trgBytesArr[i] = cStr
         end
 
         image.bytes = table.concat(trgBytesArr)
