@@ -3137,7 +3137,7 @@ end
 
 ---Sets the active brush to a brush object. Sets the active tool to pencil.
 ---If the tile map mode is tiles, then calls the toggle command. Resets the
----tool's opacity depending on its ink type.
+---pencil's opacity depending on ink type.
 ---@param brush Brush brush
 function AseUtilities.setBrush(brush)
     if app.site.tilemapMode == TilemapMode.TILES then
@@ -3151,7 +3151,7 @@ function AseUtilities.setBrush(brush)
         local brushPrefs <const> = appPrefs.brush
         if brushPrefs then
             brushPrefs.pattern = brush.pattern
-        end -- End brush prefs exists.
+        end
 
         -- The pencil tool opacity is active for custom brushes, regardless
         -- of the ink. For built-in brushes, this opacity is ignored unless

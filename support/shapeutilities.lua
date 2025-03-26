@@ -93,25 +93,21 @@ function ShapeUtilities.drawEllipse(
         return
     end
 
-    local k <const> = 0.5522847498307936
+    local kw <const> = 0.5522847498307936 * w
+    local kh <const> = 0.5522847498307936 * h
 
-    local extapw <const> = w
-    local extcpw <const> = k * extapw
-    local extaph <const> = h
-    local extcph <const> = k * extaph
-
-    local right <const> = xc + extapw
-    local left <const> = xc - extapw
-    local top <const> = yc + extaph
-    local bottom <const> = yc - extaph
+    local right <const> = xc + w
+    local left <const> = xc - w
+    local top <const> = yc + h
+    local bottom <const> = yc - h
 
     if useAntiAlias then context.antialias = true end
     context:beginPath()
     context:moveTo(right, yc)
-    context:cubicTo(right, yc + extcph, xc + extcpw, top, xc, top)
-    context:cubicTo(xc - extcpw, top, left, yc + extcph, left, yc)
-    context:cubicTo(left, yc - extcph, xc - extcpw, bottom, xc, bottom)
-    context:cubicTo(xc + extcpw, bottom, right, yc - extcph, right, yc)
+    context:cubicTo(right, yc + kh, xc + kw, top, xc, top)
+    context:cubicTo(xc - kw, top, left, yc + kh, left, yc)
+    context:cubicTo(left, yc - kh, xc - kw, bottom, xc, bottom)
+    context:cubicTo(xc + kw, bottom, right, yc - kh, right, yc)
     context:closePath()
     if useFillVerif then
         context.color = fillClr
