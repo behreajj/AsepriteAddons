@@ -118,13 +118,27 @@ if lenFiltered > 1 then
     end)
 
     app.transaction("Copy Range Layers", function()
+        local parentInit <const> = filtered[1].parent
+        local idInit <const> = parentInit.id
+        local sameParent = true
+
         local i = 0
         while i < lenFiltered do
             i = i + 1
-            -- TODO: Use has same parent test to decide whether
-            -- to parent to sprite or not? See similar idea in
-            -- groupLayers?
-            copyLayer(filtered[i], activeSprite, colorMode)
+            local srcLyr <const> = filtered[i]
+            local parentCand <const> = srcLyr.parent
+            local idCand <const> = parentCand.id
+            sameParent = sameParent and idCand == idInit
+        end
+
+        local copyParent <const> = sameParent
+            and parentInit
+            or activeSprite
+
+        local j = 0
+        while j < lenFiltered do
+            j = j + 1
+            copyLayer(filtered[j], copyParent, colorMode)
         end
     end)
 
