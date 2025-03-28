@@ -125,10 +125,9 @@ if lenFiltered > 1 then
         local i = 0
         while i < lenFiltered do
             i = i + 1
-            local srcLyr <const> = filtered[i]
-            local parentCand <const> = srcLyr.parent
-            local idCand <const> = parentCand.id
-            sameParent = sameParent and idCand == idInit
+            -- Do you have to worry about sprite ID overlapping with layer IDs
+            -- as a unique identifier, e.g., sprite id = 1, layer id = 1?
+            sameParent = sameParent and filtered[i].parent.id == idInit
         end
 
         local copyParent <const> = sameParent

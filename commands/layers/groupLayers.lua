@@ -24,9 +24,7 @@ if range.sprite == activeSprite and (not range.isEmpty) then
 
         -- Do you have to worry about sprite ID overlapping with layer IDs
         -- as a unique identifier, e.g., sprite id = 1, layer id = 1?
-        local parentCand <const> = rangeLayer.parent
-        local idCand <const> = parentCand.id
-        sameParent = sameParent and idCand == idInit
+        sameParent = sameParent and rangeLayer.parent.id == idInit
 
         if not rangeLayer.isBackground then
             layers[#layers + 1] = rangeLayer
