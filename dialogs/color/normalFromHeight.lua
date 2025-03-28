@@ -279,8 +279,7 @@ dlg:button {
                         local k = 0
                         while k < lenLum do
                             k = k + 1
-                            local lum <const> = lumTable[k]
-                            lumTable[k] = (lum - lMin) * invRangeLum
+                            lumTable[k] = (lumTable[k] - lMin) * invRangeLum
                         end
                     end
                 end
@@ -295,8 +294,7 @@ dlg:button {
                         local alpha <const> = alphaTable[m]
                         local abgr32 = 0
                         if alpha > 0 then
-                            local lum <const> = lumTable[m]
-                            local v8 <const> = floor(lum * 255.0 + 0.5)
+                            local v8 <const> = floor(lumTable[m] * 255.0 + 0.5)
                             abgr32 = alpha << 0x18 | v8 << 0x10 | v8 << 0x08 | v8
                         end
                         grayByteStrArr[m] = strpack("<I4", abgr32)

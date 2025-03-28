@@ -62,14 +62,9 @@ end
 
 ---@param x number
 ---@return number
-local function lowThirdResponse(x)
-    return fullResponse(1.0 - (x + x))
-end
-
----@param x number
----@return number
-local function midResponse(x)
-    return 1.0 - fullResponse(math.abs(x + x - 1.0))
+local function highHalfResponse(x)
+    return fullResponse(1.3333333333333 * x
+        - 0.33333333333333)
 end
 
 ---@param x number
@@ -86,9 +81,14 @@ end
 
 ---@param x number
 ---@return number
-local function highHalfResponse(x)
-    return fullResponse(1.3333333333333 * x
-        - 0.33333333333333)
+local function lowThirdResponse(x)
+    return fullResponse(1.0 - (x + x))
+end
+
+---@param x number
+---@return number
+local function midResponse(x)
+    return 1.0 - fullResponse(math.abs(x + x - 1.0))
 end
 
 ---@param x number
