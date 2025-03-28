@@ -522,7 +522,6 @@ dlg:button {
             end
         end
 
-        -- TODO: Replace these usages with app.fs.joinPath
         local pathSep = app.fs.pathSeparator
         pathSep = string.gsub(pathSep, "\\", "\\\\")
 
@@ -701,6 +700,7 @@ dlg:button {
             -- The first tile in a tile set is empty.
             -- Include this empty tile, and all others, to
             -- maintain indexing with tile maps.
+            local lenTileData = 0
             local k = 0
             while k < lenTileSet do
                 local tile <const> = tileSet:tile(k)
@@ -729,8 +729,8 @@ dlg:button {
                         tileChance = props["probability"] --[[@as number]]
                     end
 
-                    -- TODO: Track lenTileData manually?
-                    tileData[#tileData + 1] = {
+                    lenTileData = lenTileData + 1
+                    tileData[lenTileData] = {
                         id = id,
                         probability = tileChance,
                         properties = props

@@ -9,7 +9,7 @@ local frameTargetOptions <const> = {
 }
 
 local defaults <const> = {
-    -- TODO: Option to include metadata?
+    -- Include metadata?
     -- https://community.aseprite.org/t/general-exif-or-other-metadata-support/23830
     -- https://svgwg.org/svg2-draft/struct.html#MetadataElement
     flattenImage = true,
