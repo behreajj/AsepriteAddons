@@ -1,6 +1,5 @@
 dofile("../../support/aseutilities.lua")
 
--- TODO: Support the same operation on tile sets?
 local site <const> = app.site
 local sprite <const> = site.sprite
 if not sprite then return end

@@ -4,7 +4,8 @@ local targets <const> = { "CURSOR", "FORE_TILE", "BACK_TILE", "TILES", "TILE_MAP
 local selModes <const> = { "REPLACE", "ADD", "SUBTRACT", "INTERSECT" }
 
 local defaults <const> = {
-    -- app.range.tiles now works as a getter.
+    -- TODO: Option to cycle tiles left and right similar to command for
+    -- palette swatches?
 
     -- Built-in Image:flip method has not been adopted here due to issues with
     -- undo history.

@@ -5,7 +5,6 @@ local channels <const> = { "LIGHT", "A", "B", "CHROMA", "HUE", "DIST" }
 local delOptions <const> = { "DELETE_CELS", "DELETE_LAYER", "HIDE", "NONE" }
 
 local defaults <const> = {
-    -- TODO: Option to group separated layer with an underlying black layer?
     target = "ACTIVE",
     delSrc = "NONE",
     channel = "LIGHT",

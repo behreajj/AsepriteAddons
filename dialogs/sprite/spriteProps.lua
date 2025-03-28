@@ -473,12 +473,6 @@ dlg:button {
             end
 
             app.refresh()
-
-            if aPxRatio ~= pixelWidth or bPxRatio ~= pixelHeight then
-                -- TODO: Scroll with app.editor fields instead?
-                app.command.ScrollCenter()
-            end
-
             dlg:close()
         else
             app.alert {

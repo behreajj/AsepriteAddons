@@ -4,7 +4,6 @@ local frameTargets <const> = { "ACTIVE", "ALL", "TAG" }
 local fillOpts <const> = { "CROSS_FADE", "EMPTY", "SUSTAIN" }
 
 local defaults <const> = {
-    -- TODO: Retain range of layer and frame type.
     frameTarget = "ALL",
     isLoop = false,
     fillOpt = "SUSTAIN",

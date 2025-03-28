@@ -285,7 +285,7 @@ dlg:button {
                         local yTrg <const> = (coord // wSrcImg) - yMin
                         local flat <const> = yTrg * wTrg + xTrg
 
-                        -- TODO: Ideally, for large images, there'd be an option
+                        -- Ideally, for large images, there'd be an option
                         -- to quantize the color that collected coordinates,
                         -- then here you would use the actual color from the
                         -- source image, not the quantized. Drawback is that
