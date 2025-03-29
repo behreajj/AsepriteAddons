@@ -171,6 +171,11 @@ local function getProperties(target)
         or target == "TILES"
         or target == "FORE_TILE"
         or target == "BACK_TILE" then
+        local activeSprite <const> = app.sprite
+        if not activeSprite then
+            return nil, false, "There is no active sprite."
+        end
+
         local activeLayer <const> = app.layer
         if not activeLayer then
             return nil, false, "There is no active layer."
@@ -193,21 +198,55 @@ local function getProperties(target)
             return { tileSet.properties }, true, ""
         end
 
-        -- TODO: Tiles as a getter now works.
         local lenTileSet <const> = #tileSet
         if target == "TILES" then
+            -- In older versions, the app.range.tiles getter didn't work.
+            -- That is why this defaults to getting all tiles from a
+            -- tile set if the range is empty.
+
+            ---@type integer[]
+            local chosenTileIdcs <const> = {}
+            local lenChosenTileIdcs = 0
+
+            local range <const> = app.range
+            if range.sprite == activeSprite then
+                local rangeTileIdcs <const> = range.tiles
+                local lenRangeTileIdcs <const> = #rangeTileIdcs
+                local i = 0
+                while i < lenRangeTileIdcs do
+                    i = i + 1
+                    local rangeTileIdx <const> = rangeTileIdcs[i]
+                    if rangeTileIdx > 0
+                        and rangeTileIdx < lenTileSet then
+                        lenChosenTileIdcs = lenChosenTileIdcs + 1
+                        chosenTileIdcs[lenChosenTileIdcs] = rangeTileIdx
+                    end
+                end
+            end
+
+            if lenChosenTileIdcs <= 0 then
+                local i = 1
+                while i < lenTileSet do
+                    lenChosenTileIdcs = lenChosenTileIdcs + 1
+                    chosenTileIdcs[lenChosenTileIdcs] = i
+                    i = i + 1
+                end
+            end
+
             ---@type table<string, any>[]
             local properties <const> = {}
             local lenProperties = 0
-            local i = 1
-            while i < lenTileSet do
-                local tile <const> = tileSet:tile(i)
+
+            local j = 0
+            while j < lenChosenTileIdcs do
+                j = j + 1
+                local tile <const> = tileSet:tile(chosenTileIdcs[j])
                 if tile then
                     lenProperties = lenProperties + 1
                     properties[lenProperties] = tile.properties
                 end
-                i = i + 1
             end
+
             return properties, true, ""
         end
 
