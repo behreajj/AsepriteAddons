@@ -11,13 +11,13 @@ local targets <const> = {
 
 local defaults <const> = {
     -- TODO: Option to cycle tiles left and right similar to command for
-    -- palette swatches? Maybe hide or remove the Create tile map button to
-    -- make room for this, as it's not as good as the built-in method anyway.
-
-    -- TODO: Add buttons for app.command.SelectPaletteColors in this dialog.
+    -- palette swatches?
 
     -- Built-in Image:flip method has not been adopted here due to issues with
     -- undo history.
+
+    -- Last commit to have create tile map button:
+    -- 37fd92fe052e425373710fbe73ce4809611bf314 .
 
     -- Tried shifting tile at the mouse cursor with IJKL keys in commit
     -- 3506d221cb6574dadb80c3a568517aa722552f9b .
@@ -1033,6 +1033,7 @@ dlg:separator { id = "sortSep" }
 
 dlg:button {
     id = "mapButton",
+    label = "Tile Set:",
     text = "&MAP",
     focus = false,
     onclick = function()
@@ -1301,6 +1302,29 @@ dlg:button {
         end
 
         app.refresh()
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:button {
+    id = "usedRangeButton",
+    label = "Range:",
+    text = "USED",
+    focus = false,
+    visible = true,
+    onclick = function()
+        app.command.SelectPaletteColors {  modifier = "used_tiles" }
+    end
+}
+
+dlg:button {
+    id = "unusedRangeButton",
+    text = "UNUSED",
+    focus = false,
+    visible = true,
+    onclick = function()
+        app.command.SelectPaletteColors {  modifier = "unused_tiles" }
     end
 }
 
