@@ -13,6 +13,10 @@ local defaults <const> = {
     -- Built-in Image:flip method has not been adopted here due to issues with
     -- undo history.
 
+    -- Cycle tiles commit:
+    -- Would require updating tile maps in a similar way as sort.
+    -- 020929d07fdec98fd5f1db109ef0e10c0f8c176b .
+
     -- Last commit to have create tile map button:
     -- 37fd92fe052e425373710fbe73ce4809611bf314 .
 
@@ -30,56 +34,6 @@ local defaults <const> = {
     strExample = "4,6:9,13",
     inPlace = true
 }
-
----@param step integer
-local function cycleTile(step)
-    local site <const> = app.site
-    local activeSprite <const> = site.sprite
-    if not activeSprite then return end
-
-    local activeLayer <const> = site.layer
-    if not activeLayer then return end
-    if not activeLayer.isTilemap then return end
-
-    local tileSet <const> = activeLayer.tileset
-    if not tileSet then return end
-    local lenTileSet <const> = #tileSet
-
-    local fgTile <const> = app.fgTile
-    local fgFlips <const> = app.pixelColor.tileF(fgTile)
-
-    local origIdx <const> = app.pixelColor.tileI(fgTile)
-    local destIdx <const> = (origIdx + step) % lenTileSet
-    if origIdx == 0 or destIdx == 0 then return end
-
-    local origTile <const> = tileSet:tile(origIdx)
-    local destTile <const> = tileSet:tile(destIdx)
-    if origTile == nil or destTile == nil then return end
-
-    local origImg <const> = Image(origTile.image)
-    local origData <const> = origTile.data
-    local origColor <const> = AseUtilities.aseColorCopy(
-        origTile.color, "")
-
-    local destImg <const> = Image(destTile.image)
-    local destData <const> = destTile.data
-    local destColor <const> = AseUtilities.aseColorCopy(
-        destTile.color, "")
-
-    app.transaction("Cycle Tile", function()
-        origTile.image = destImg
-        origTile.data = destData
-        origTile.color = destColor
-
-        destTile.image = origImg
-        destTile.data = origData
-        destTile.color = origColor
-
-        app.fgTile = app.pixelColor.tile(destIdx, fgFlips)
-    end)
-
-    app.refresh()
-end
 
 ---Gets tiles from a tile map that are entirely contained by a selection.
 ---Returns a dictionary where the tile map index serves as the key and the Tile
@@ -1352,21 +1306,6 @@ dlg:button {
     end
 }
 
-dlg:newrow { always = false }
-
-dlg:button {
-    id = "usedRangeButton",
-    label = "Range:",
-    text = "USED",
-    focus = false,
-    visible = false,
-    onclick = function()
-        app.command.SelectPaletteColors {
-            modifier = "used_tiles"
-        }
-    end
-}
-
 dlg:button {
     id = "unusedRangeButton",
     text = "UNUSED",
@@ -1376,27 +1315,6 @@ dlg:button {
         app.command.SelectPaletteColors {
             modifier = "unused_tiles"
         }
-    end
-}
-
-dlg:button {
-    id = "cycleTileLeft",
-    label = "Cycle:",
-    text = "&<",
-    focus = false,
-    visible = true,
-    onclick = function()
-        cycleTile(-1)
-    end
-}
-
-dlg:button {
-    id = "cycleTileRight",
-    text = "&>",
-    focus = false,
-    visible = true,
-    onclick = function()
-        cycleTile(1)
     end
 }
 
