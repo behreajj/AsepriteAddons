@@ -629,9 +629,6 @@ local function alignCels(dialog, preset)
             end
         end
 
-        -- TODO: If there is only one cel, then distribute horizontally should
-        -- change to align x center, and distribute vertically should change to
-        -- align y center. Maybe create a presetVerif.
         if useAbsRef or lenCels < 2 then
             xMinEdge = xMinRef
             xMaxEdge = xMaxRef
