@@ -655,7 +655,7 @@ end
 ---Converts a color from standard RGB to SR Lab 2.
 ---Clamps the input color to [0.0, 1.0].
 ---The return table uses the keys l, a, b and alpha.
----The green to red axis is a.
+---The green to magenta axis is a.
 ---The blue to yellow axis is b.
 ---@param c Clr linear color
 ---@return { l: number, a: number, b: number, alpha: number }
@@ -666,7 +666,7 @@ end
 
 ---Converts a color from standard RGB to SR Lab 2.
 ---The return table uses the keys l, a, b and alpha.
----The green to red axis is a.
+---The green to magenta axis is a.
 ---The blue to yellow axis is b.
 ---@param c Clr color
 ---@return { l: number, a: number, b: number, alpha: number }
@@ -692,7 +692,7 @@ end
 ---but for sRGB [-111.0, 111.0] suffice. For light, the expected range is
 ---[0.0, 100.0]. The alpha channel is unaffected by the transform.
 ---@param l number lightness
----@param a number a, green to red
+---@param a number a, green to magenta
 ---@param b number b, blue to yellow
 ---@param alpha number opacity
 ---@return Clr
@@ -736,7 +736,7 @@ end
 
 ---Converts a color from SR Lab 2 to standard RGB.
 ---@param l number lightness
----@param a number a, green to red
+---@param a number a, green to magenta
 ---@param b number b, blue to yellow
 ---@param alpha number opacity
 ---@return Clr
@@ -749,7 +749,7 @@ end
 ---Returns a table with the keys l, c, h, a.
 ---Neither alpha nor lightness are affected by the transformation.
 ---@param l number lightness
----@param a number a, green to red
+---@param a number a, green to magenta
 ---@param b number b, blue to yellow
 ---@param alpha number opacity
 ---@param tol? number gray tolerance
@@ -784,7 +784,7 @@ end
 ---Chroma is expected to be in [0.0, 120.0].
 ---Hue is expected to be in [0.0, 1.0].
 ---@param l number lightness
----@param c number chromaticity
+---@param c number chroma
 ---@param h number hue
 ---@param a number opacity
 ---@param tol? number gray tolerance
@@ -800,7 +800,7 @@ end
 ---Chroma is expected to be in [0.0, 120.0].
 ---Hue is expected to be in [0.0, 1.0].
 ---@param l number lightness
----@param c number chromaticity
+---@param c number chroma
 ---@param h number hue
 ---@param a number opacity
 ---@param tol? number gray tolerance
@@ -827,7 +827,7 @@ end
 ---Converts a color from SR LCH to SR Lab 2. Does not validate arguments for
 ---defaults or out of bounds.
 ---@param l number lightness
----@param c number chromaticity
+---@param c number chroma
 ---@param h number hue
 ---@param a number opacity
 ---@return { l: number, a: number, b: number, alpha: number }
