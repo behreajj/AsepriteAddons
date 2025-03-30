@@ -99,9 +99,7 @@ function Octree.centersMean(o, arr)
         local leafPoints <const> = o.points
         local lenLeafPoints <const> = #leafPoints
         if lenLeafPoints > 1 then
-            local xSum = 0.0
-            local ySum = 0.0
-            local zSum = 0.0
+            local xSum, ySum, zSum = 0.0, 0.0, 0.0
 
             local j = 0
             while j < lenLeafPoints do
@@ -461,8 +459,7 @@ function Octree.toJson(o)
         local j = 0
         while j < lenChildren do
             j = j + 1
-            local child <const> = children[j]
-            childStrs[j] = Octree.toJson(child)
+            childStrs[j] = Octree.toJson(children[j])
         end
 
         leafStr = string.format(
