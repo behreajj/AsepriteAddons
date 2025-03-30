@@ -197,23 +197,12 @@ end
 ---@return Vec2
 ---@nodiscard
 function Vec2.copySign(a, b)
-    local cx, cy = 0.0, 0.0
-
     local axAbs <const> = math.abs(a.x)
-    if b.x < -0.0 then
-        cx = -axAbs
-    elseif b.x > 0.0 then
-        cx = axAbs
-    end
-
     local ayAbs <const> = math.abs(a.y)
-    if b.y < -0.0 then
-        cy = -ayAbs
-    elseif b.y > 0.0 then
-        cy = ayAbs
-    end
 
-    return Vec2.new(cx, cy)
+    return Vec2.new(
+        b.x < -0.0 and -axAbs or b.x > 0.0 and axAbs or 0.0,
+        b.y < -0.0 and -ayAbs or b.y > 0.0 and ayAbs or 0.0)
 end
 
 ---Returns the z component of the cross product between two vectors. The x and

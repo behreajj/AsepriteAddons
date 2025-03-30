@@ -265,30 +265,14 @@ end
 ---@return Vec3
 ---@nodiscard
 function Vec3.copySign(a, b)
-    local cx, cy, cz = 0.0, 0.0, 0.0
-
     local axAbs <const> = math.abs(a.x)
-    if b.x < -0.0 then
-        cx = -axAbs
-    elseif b.x > 0.0 then
-        cx = axAbs
-    end
-
     local ayAbs <const> = math.abs(a.y)
-    if b.y < -0.0 then
-        cy = -ayAbs
-    elseif b.y > 0.0 then
-        cy = ayAbs
-    end
-
     local azAbs <const> = math.abs(a.z)
-    if b.z < -0.0 then
-        cz = -azAbs
-    elseif b.z > 0.0 then
-        cz = azAbs
-    end
 
-    return Vec3.new(cx, cy, cz)
+    return Vec3.new(
+        b.x < -0.0 and -axAbs or b.x > 0.0 and axAbs or 0.0,
+        b.y < -0.0 and -ayAbs or b.y > 0.0 and ayAbs or 0.0,
+        b.z < -0.0 and -azAbs or b.z > 0.0 and azAbs or 0.0)
 end
 
 ---Finds the cross product of two vectors.
