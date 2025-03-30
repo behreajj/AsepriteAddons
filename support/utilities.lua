@@ -1114,7 +1114,7 @@ end
 
 ---Skews an image's bytes by a tangent on the x axis.
 ---The angle is given as a pre calculated tangent.
----Returns the byte string, the width and height of the rotated image.
+---Returns the byte string, the width and height of the skewed image.
 ---@param source string source bytes
 ---@param wSrc integer source image width
 ---@param hSrc integer source image height
@@ -1160,7 +1160,7 @@ end
 ---Skews an image's bytes horizontally by an integer rise. The run specifies
 ---the number of pixels to skip on the y axis for each rise. Assumes both rise
 ---and run are non zero.
----Returns the byte string, the width and height of the rotated image.
+---Returns the byte string, the width and height of the skewed image.
 ---@param source string source bytes
 ---@param wSrc integer source image width
 ---@param hSrc integer source image height
@@ -1204,7 +1204,7 @@ end
 
 ---Skews an image's bytes by a tangent on the y axis.
 ---The angle is given as a pre calculated tangent.
----Returns the byte string, the width and height of the rotated image.
+---Returns the byte string, the width and height of the skewed image.
 ---@param source string source bytes
 ---@param wSrc integer source image width
 ---@param hSrc integer source image height
@@ -1250,7 +1250,7 @@ end
 ---Skews an image's bytes vertically by an integer rise. The run specifies
 ---the number of pixels to skip on the x axis for each rise. Assumes both rise
 ---and run are non zero.
----Returns the byte string, the width and height of the rotated image.
+---Returns the byte string, the width and height of the skewed image.
 ---@param source string source bytes
 ---@param wSrc integer source image width
 ---@param hSrc integer source image height
