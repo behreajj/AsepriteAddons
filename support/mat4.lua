@@ -159,11 +159,9 @@ function Mat4.camera(
     local yfv <const> = yFocus or 0.0
     local zfv <const> = zFocus or 0.0
 
-    -- Find k by subtracting
-    -- location from focus.
-    local kx = xLoc - xfv
-    local ky = yLoc - yfv
-    local kz = zLoc - zfv
+    -- Find k as difference in
+    -- location and focus.
+    local kx, ky, kz = xLoc - xfv, yLoc - yfv, zLoc - zfv
 
     -- Normalize k.
     local kmSq <const> = kx * kx + ky * ky + kz * kz
@@ -181,13 +179,8 @@ function Mat4.camera(
         return Mat4.fromTranslation(xLoc, yLoc, zLoc)
     end
 
-    local ix = 1.0
-    local iy = 0.0
-    local iz = 0.0
-
-    local jx = 0.0
-    local jy = 1.0
-    local jz = 0.0
+    local ix, iy, iz = 1.0, 0.0, 0.0
+    local jx, jy, jz = 0.0, 1.0, 0.0
 
     if hval == "LEFT" then
         -- Cross k with ref to get i.
@@ -368,29 +361,29 @@ end
 ---@nodiscard
 function Mat4.determinant(m)
     return m.m00 * (m.m11 * m.m22 * m.m33 +
-        m.m12 * m.m23 * m.m31 +
-        m.m13 * m.m21 * m.m32 -
-        m.m13 * m.m22 * m.m31 -
-        m.m11 * m.m23 * m.m32 -
-        m.m12 * m.m21 * m.m33) -
+            m.m12 * m.m23 * m.m31 +
+            m.m13 * m.m21 * m.m32 -
+            m.m13 * m.m22 * m.m31 -
+            m.m11 * m.m23 * m.m32 -
+            m.m12 * m.m21 * m.m33) -
         m.m01 * (m.m10 * m.m22 * m.m33 +
-        m.m12 * m.m23 * m.m30 +
-        m.m13 * m.m20 * m.m32 -
-        m.m13 * m.m22 * m.m30 -
-        m.m10 * m.m23 * m.m32 -
-        m.m12 * m.m20 * m.m33) +
+            m.m12 * m.m23 * m.m30 +
+            m.m13 * m.m20 * m.m32 -
+            m.m13 * m.m22 * m.m30 -
+            m.m10 * m.m23 * m.m32 -
+            m.m12 * m.m20 * m.m33) +
         m.m02 * (m.m10 * m.m21 * m.m33 +
-        m.m11 * m.m23 * m.m30 +
-        m.m13 * m.m20 * m.m31 -
-        m.m13 * m.m21 * m.m30 -
-        m.m10 * m.m23 * m.m31 -
-        m.m11 * m.m20 * m.m33) -
+            m.m11 * m.m23 * m.m30 +
+            m.m13 * m.m20 * m.m31 -
+            m.m13 * m.m21 * m.m30 -
+            m.m10 * m.m23 * m.m31 -
+            m.m11 * m.m20 * m.m33) -
         m.m03 * (m.m10 * m.m21 * m.m32 +
-        m.m11 * m.m22 * m.m30 +
-        m.m12 * m.m20 * m.m31 -
-        m.m12 * m.m21 * m.m30 -
-        m.m10 * m.m22 * m.m31 -
-        m.m11 * m.m20 * m.m32)
+            m.m11 * m.m22 * m.m30 +
+            m.m12 * m.m20 * m.m31 -
+            m.m12 * m.m21 * m.m30 -
+            m.m10 * m.m22 * m.m31 -
+            m.m11 * m.m20 * m.m32)
 end
 
 ---Constructs a rotation matrix from an angle in radians around an arbitrary

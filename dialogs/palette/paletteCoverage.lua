@@ -33,7 +33,7 @@ local defaults <const> = {
     maxSwatchSize = 10,
     swatchAlpha = 217,
     bkgColor = 0xff101010,
-    frames = 16,
+    frames = 32,
     fps = 24,
     pullFocus = false
 }
