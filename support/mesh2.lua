@@ -363,7 +363,7 @@ function Mesh2.gridCartesian(cols, rows)
         fs[k] = { c00, c10, c11, c01 }
     end
 
-    return Mesh2.new(fs, vs, "Grid.Cartesian")
+    return Mesh2.new(fs, vs, "Grid Cartesian")
 end
 
 ---Creates a grid of rhombi.
