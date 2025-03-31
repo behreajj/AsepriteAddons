@@ -26,11 +26,12 @@ local defaults <const> = {
     -- TODO: Make backgrounds for colors with alpha consistent
     -- with gradient utilities UI.
 
-    -- This does not support scroll wheel because the directionality is
-    -- reversed and because there is too much debugging needed to stop mouse
-    -- down from interfering with scroll wheel, particularly in normal wheel
-    -- picker I.e., scroll wheel should only work when mouse button is up.
-    -- That means separate functions would need to be made for scroll.
+    -- This does not support scroll wheel because the directionality
+    -- is reversed and because there is too much debugging needed
+    -- to stop mouse down from interfering with scroll wheel,
+    -- particularly in normal wheel picker I.e., scroll wheel should
+    -- only work when mouse button is up. That means separate
+    -- functions would need to be made for scroll.
     lchTosRgb = Clr.srLchTosRgb,
     sRgbToLch = Clr.sRgbToSrLch,
     sRgbToLab = Clr.sRgbToSrLab2,
@@ -424,6 +425,7 @@ dlg:canvas {
 
         local xToLight <const> = barWidth > 1 and 100.0 / (barWidth - 1.0) or 0.0
         local img <const> = Image(barWidth, 1, ColorMode.RGB)
+        -- TODO: Update to remove pixel iterator.
         local pxItr <const> = img:pixels()
         for pixel in pxItr do
             local xLight <const> = pixel.x * xToLight
@@ -490,6 +492,7 @@ dlg:canvas {
 
         local xToChroma <const> = barWidth > 1 and maxChroma / (barWidth - 1.0) or 0.0
         local img <const> = Image(barWidth, 1, ColorMode.RGB)
+        -- TODO: Update to remove pixel iterator.
         local pxItr <const> = img:pixels()
         for pixel in pxItr do
             local xChroma <const> = pixel.x * xToChroma
@@ -555,6 +558,7 @@ dlg:canvas {
 
         local xToHue <const> = barWidth > 1 and 1.0 / (barWidth - 1.0) or 0.0
         local img <const> = Image(barWidth, 1, ColorMode.RGB)
+        -- TODO: Update to remove pixel iterator.
         local pxItr <const> = img:pixels()
         for pixel in pxItr do
             local xHue <const> = pixel.x * xToHue

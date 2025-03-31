@@ -283,18 +283,18 @@ dlg:canvas {
 
         local lAdj <const> = active.lAdj
         local l01 <const> = lAdj * 0.005 + 0.5
-        local black <const> = Color { r = 0, g = 0, b = 0, a = 255 }
-        local white <const> = Color { r = 255, g = 255, b = 255, a = 255 }
-        local fill = lAdj < 0.0 and white or black
+        local bk <const> = Color { r = 0, g = 0, b = 0, a = 255 }
+        local wt <const> = Color { r = 255, g = 255, b = 255, a = 255 }
+        local fill = lAdj < 0.0 and wt or bk
         CanvasUtilities.drawSliderReticle(
             ctx, l01, barWidth, barHeight,
             fill, reticleSize)
 
         local strDisplay <const> = string.format(
             "%+04d", Utilities.round(active.lAdj))
-        ctx.color = black
+        ctx.color = bk
         ctx:fillText(strDisplay, 2, 2)
-        ctx.color = white
+        ctx.color = wt
         ctx:fillText(strDisplay, 1, 1)
     end,
     onmousedown = setLightMouseListen,
@@ -337,16 +337,16 @@ dlg:canvas {
             Rectangle(0, 0, barWidth, barHeight))
 
         local c01 <const> = (active.cAdj - clb) / (cub - clb)
-        local white <const> = Color { r = 255, g = 255, b = 255, a = 255 }
+        local wt <const> = Color { r = 255, g = 255, b = 255, a = 255 }
         CanvasUtilities.drawSliderReticle(
             ctx, c01, barWidth, barHeight,
-            white, reticleSize)
+            wt, reticleSize)
 
         local strDisplay <const> = string.format(
             "%+04d", Utilities.round(active.cAdj))
         ctx.color = Color { r = 0, g = 0, b = 0, a = 255 }
         ctx:fillText(strDisplay, 2, 2)
-        ctx.color = white
+        ctx.color = wt
         ctx:fillText(strDisplay, 1, 1)
     end,
     onmousedown = setChromaMouseListen,
@@ -400,16 +400,16 @@ dlg:canvas {
         ctx:drawImage(img,
             Rectangle(0, 0, barWidth, 2),
             Rectangle(0, 0, barWidth, barHeight))
-        local white <const> = Color { r = 255, g = 255, b = 255, a = 255 }
+        local wt <const> = Color { r = 255, g = 255, b = 255, a = 255 }
         CanvasUtilities.drawSliderReticle(
             ctx, active.hAdj, barWidth, barHeight,
-            white, reticleSize)
+            wt, reticleSize)
 
         local strDisplay <const> = string.format("%+04d",
             Utilities.round(hAdj * 360.0))
         ctx.color = Color { r = 0, g = 0, b = 0, a = 255 }
         ctx:fillText(strDisplay, 2, 2)
-        ctx.color = white
+        ctx.color = wt
         ctx:fillText(strDisplay, 1, 1)
     end,
     onmousedown = setHueMouseListen,
@@ -451,20 +451,19 @@ dlg:canvas {
         end
 
         local a01 <const> = (active.aAdj - alb) / (aub - alb)
-        local black <const> = Color { r = 0, g = 0, b = 0, a = 255 }
-        local white <const> = Color { r = 255, g = 255, b = 255, a = 255 }
+        local wt <const> = Color { r = 255, g = 255, b = 255, a = 255 }
         ctx:drawImage(img,
             Rectangle(0, 0, barWidth, 1),
             Rectangle(0, 0, barWidth, barHeight))
         CanvasUtilities.drawSliderReticle(
             ctx, a01, barWidth, barHeight,
-            white, reticleSize)
+            wt, reticleSize)
 
         local strDisplay <const> = string.format(
             "%+04d", Utilities.round(active.aAdj))
-        ctx.color = black
+        ctx.color = Color { r = 0, g = 0, b = 0, a = 255 }
         ctx:fillText(strDisplay, 2, 2)
-        ctx.color = white
+        ctx.color = wt
         ctx:fillText(strDisplay, 1, 1)
     end,
     onmousedown = setAMouseListen,
@@ -506,20 +505,19 @@ dlg:canvas {
         end
 
         local b01 <const> = (active.bAdj - blb) / (bub - blb)
-        local black <const> = Color { r = 0, g = 0, b = 0, a = 255 }
-        local white <const> = Color { r = 255, g = 255, b = 255, a = 255 }
+        local wt <const> = Color { r = 255, g = 255, b = 255, a = 255 }
         ctx:drawImage(img,
             Rectangle(0, 0, barWidth, 1),
             Rectangle(0, 0, barWidth, barHeight))
         CanvasUtilities.drawSliderReticle(
             ctx, b01, barWidth, barHeight,
-            white, reticleSize)
+            wt, reticleSize)
 
         local strDisplay <const> = string.format(
             "%+04d", Utilities.round(active.bAdj))
-        ctx.color = black
+        ctx.color = Color { r = 0, g = 0, b = 0, a = 255 }
         ctx:fillText(strDisplay, 2, 2)
-        ctx.color = white
+        ctx.color = wt
         ctx:fillText(strDisplay, 1, 1)
     end,
     onmousedown = setBMouseListen,
@@ -922,9 +920,9 @@ dlg:button {
             while k < lenTrg do
                 local k4 <const> = k * 4
                 local srcStr <const> = strsub(srcBytes, 1 + k4, 4 + k4)
-                local srcHex <const> = strunpack("I4", srcStr)
+                local srcHex <const> = strunpack("<I4", srcStr)
                 local trgHex <const> = srcToTrgHexDict[srcHex]
-                local trgStr <const> = strpack("I4", trgHex)
+                local trgStr <const> = strpack("<I4", trgHex)
                 k = k + 1
                 trgByteArr[k] = trgStr
             end

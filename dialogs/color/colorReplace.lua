@@ -521,11 +521,11 @@ dlg:button {
 
                             j = j + 1
                             if tIgnoreVerif then
-                                trgByteStrs[j] = strpack("I4",
+                                trgByteStrs[j] = strpack("<I4",
                                     (srcHexInt & 0xff000000)
                                     | (trgHexInt & 0x00ffffff))
                             else
-                                trgByteStrs[j] = strpack("I4", trgHexInt)
+                                trgByteStrs[j] = strpack("<I4", trgHexInt)
                             end
                         end
 
