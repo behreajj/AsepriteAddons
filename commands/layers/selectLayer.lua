@@ -205,11 +205,11 @@ local keepSelection = false
 local selectOnClick = false
 local appPrefs <const> = app.preferences
 if appPrefs then
-    local timelinePrefs <const> = appPrefs.timeline
-    if timelinePrefs then
-        local keepSelPref <const> = timelinePrefs.keep_selection --[[@as boolean]]
+    local tlPrefs <const> = appPrefs.timeline
+    if tlPrefs then
+        local keepSelPref <const> = tlPrefs.keep_selection --[[@as boolean]]
         if keepSelPref then keepSelection = true end
-        local selOnClkPref <const> = timelinePrefs.select_on_click --[[@as boolean]]
+        local selOnClkPref <const> = tlPrefs.select_on_click --[[@as boolean]]
         if selOnClkPref then selectOnClick = true end
     end
 end
@@ -221,10 +221,8 @@ local chosenLayer = nil
 local h = lenTopLayers + 1
 while h > 1 and chosenLayer == nil do
     h = h - 1
-    local topLayer <const> = topLayers[h]
-
     local a01 <const>, candidate <const> = evalLayer(
-        topLayer, frObj, 1.0,
+        topLayers[h], frObj, 1.0,
         xMouse, yMouse, colorMode, alphaIndex, palette)
 
     -- print(string.format(
