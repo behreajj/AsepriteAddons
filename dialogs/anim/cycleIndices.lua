@@ -305,8 +305,8 @@ dlg:button {
                         local j = 0
                         while j < lenSrc do
                             local j4 <const> = j * 4
-                            local str <const> = strsub(srcBytes, 1 + j4, 4 + j4)
-                            local srcMapIf <const> = strunpack("I4", str)
+                            local srcMapIf <const> = strunpack("<I4",
+                                strsub(srcBytes, 1 + j4, 4 + j4))
                             local srcIdx <const> = pxTilei(srcMapIf)
                             local srcFlags <const> = pxTilef(srcMapIf)
 
@@ -331,7 +331,7 @@ dlg:button {
 
                             j = j + 1
                             local trgMapIf <const> = pxTile(trgIdx, srcFlags)
-                            trgStrsArr[j] = strpack("I4", trgMapIf)
+                            trgStrsArr[j] = strpack("<I4", trgMapIf)
                         end
                     else
                         local j = 0

@@ -340,7 +340,7 @@ dlg:button {
             end
         end
 
-        -- Because linked cels can extended beyond the tag
+        -- Because linked cels can extend beyond the tag
         -- that contains their frames, and because an empty
         -- cel cannot be colored, propagating tag colors to
         -- cels is not viable.
