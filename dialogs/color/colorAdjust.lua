@@ -28,8 +28,6 @@ local defaults <const> = {
     -- by colorReplace (the relevant difference being that replace edits
     -- a layer as is.)
 
-    -- TODO: Remove alpha channel adjust. Handle that in remove alpha dialog.
-
     -- TODO: Separate normalize and contrast into its own method.
 
     target = "ACTIVE",
@@ -63,7 +61,6 @@ local active <const> = {
     hAdj = 0.5,
     aAdj = 0.0,
     bAdj = 0.0,
-    alphaAdj = 0.0,
     lBarWidth = defaults.barWidth,
     cBarWidth = defaults.barWidth,
     hBarWidth = defaults.barWidth,
@@ -73,30 +70,6 @@ local active <const> = {
 }
 
 local dlg <const> = Dialog { title = "Adjust Color" }
-
----@param event MouseEvent
-local function setAlphaMouseListen(event)
-    if event.button ~= MouseButton.NONE then
-        local bw <const> = active.tBarWidth
-        local mx01 <const> = bw > 1 and (event.x / (bw - 1.0)) or 0.0
-        local mxalpha <const> = mx01 + mx01 - 1.0
-        if event.ctrlKey then
-            active.alphaAdj = 0.0
-        elseif event.shiftKey then
-            local incr = 0.003921568627451
-            if math.abs(mxalpha - active.alphaAdj) > incr then
-                if event.altKey then incr = incr * defaults.tIncrScale end
-                if mxalpha < active.alphaAdj then incr = -incr end
-                active.alphaAdj = math.min(math.max(
-                    active.alphaAdj + incr, -1.0), 1.0)
-            end
-        else
-            active.alphaAdj = math.min(math.max(
-                mxalpha, -1.0), 1.0)
-        end
-        dlg:repaint()
-    end
-end
 
 ---@param event MouseEvent
 local function setLightMouseListen(event)
@@ -297,6 +270,7 @@ dlg:canvas {
 
         local xToLight <const> = barWidth > 1 and 100.0 / (barWidth - 1.0) or 0.0
         local img <const> = Image(barWidth, 1, ColorMode.RGB)
+        -- TODO: Update to remove pixel iterator.
         local pxItr <const> = img:pixels()
         for pixel in pxItr do
             local xLight <const> = pixel.x * xToLight
@@ -309,12 +283,9 @@ dlg:canvas {
 
         local lAdj <const> = active.lAdj
         local l01 <const> = lAdj * 0.005 + 0.5
-        local black <const> = Color { r = 0, g = 0, b = 0 }
-        local white <const> = Color { r = 255, g = 255, b = 255 }
-        local fill = black
-        if lAdj < 0.0 then
-            fill = white
-        end
+        local black <const> = Color { r = 0, g = 0, b = 0, a = 255 }
+        local white <const> = Color { r = 255, g = 255, b = 255, a = 255 }
+        local fill = lAdj < 0.0 and white or black
         CanvasUtilities.drawSliderReticle(
             ctx, l01, barWidth, barHeight,
             fill, reticleSize)
@@ -355,25 +326,25 @@ dlg:canvas {
 
         local xToChroma <const> = barWidth > 1 and cub / (barWidth - 1.0) or 0.0
         local img <const> = Image(barWidth, 1, ColorMode.RGB)
+        -- TODO: Update to remove pixel iterator.
         local pxItr <const> = img:pixels()
         for pixel in pxItr do
             local c <const> = pixel.x * xToChroma
             pixel(toHex(lchTosRgb(50.0, c, h, 1.0)))
         end
-
-        local c01 <const> = (active.cAdj - clb) / (cub - clb)
-        local black <const> = Color { r = 0, g = 0, b = 0 }
-        local white <const> = Color { r = 255, g = 255, b = 255 }
         ctx:drawImage(img,
             Rectangle(0, 0, barWidth, 1),
             Rectangle(0, 0, barWidth, barHeight))
+
+        local c01 <const> = (active.cAdj - clb) / (cub - clb)
+        local white <const> = Color { r = 255, g = 255, b = 255, a = 255 }
         CanvasUtilities.drawSliderReticle(
             ctx, c01, barWidth, barHeight,
             white, reticleSize)
 
         local strDisplay <const> = string.format(
             "%+04d", Utilities.round(active.cAdj))
-        ctx.color = black
+        ctx.color = Color { r = 0, g = 0, b = 0, a = 255 }
         ctx:fillText(strDisplay, 2, 2)
         ctx.color = white
         ctx:fillText(strDisplay, 1, 1)
@@ -397,6 +368,7 @@ dlg:canvas {
         local c <const> = 50.0
         local lchTosRgb <const> = Clr.srLchTosRgb
         local toHex <const> = Clr.toHex
+        local strpack <const> = string.pack
 
         local ctx <const> = event.context
         local barWidth <const> = ctx.width
@@ -405,26 +377,37 @@ dlg:canvas {
 
         local xToHue <const> = barWidth > 1 and 1.0 / (barWidth - 1.0) or 0.0
         local hAdj <const> = active.hAdj - 0.5
-        local img <const> = Image(barWidth, 2, ColorMode.RGB)
-        local pxItr <const> = img:pixels()
-        for pixel in pxItr do
-            local xHue = pixel.x * xToHue + 0.5
-            if pixel.y > 0 then xHue = xHue + hAdj end
-            pixel(toHex(lchTosRgb(50.0, c, xHue, 1.0)))
+
+        ---@type string[]
+        local bytes <const> = {}
+        local i = 0
+        while i < barWidth do
+            local xHue <const> = i * xToHue + 0.5
+            local clr0 <const> = lchTosRgb(50.0, c, xHue, 1.0)
+            local hex0 <const> = toHex(clr0)
+            bytes[1 + i] = strpack("<I4", hex0)
+
+            local clr1 <const> = lchTosRgb(50.0, c, xHue + hAdj, 1.0)
+            local hex1 <const> = toHex(clr1)
+            bytes[barWidth + 1 + i] = strpack("<I4", hex1)
+
+            i = i + 1
         end
 
-        local black <const> = Color { r = 0, g = 0, b = 0 }
-        local white <const> = Color { r = 255, g = 255, b = 255 }
+        local img <const> = Image(barWidth, 2, ColorMode.RGB)
+        img.bytes = table.concat(bytes)
+
         ctx:drawImage(img,
             Rectangle(0, 0, barWidth, 2),
             Rectangle(0, 0, barWidth, barHeight))
+        local white <const> = Color { r = 255, g = 255, b = 255, a = 255 }
         CanvasUtilities.drawSliderReticle(
             ctx, active.hAdj, barWidth, barHeight,
             white, reticleSize)
 
         local strDisplay <const> = string.format("%+04d",
             Utilities.round(hAdj * 360.0))
-        ctx.color = black
+        ctx.color = Color { r = 0, g = 0, b = 0, a = 255 }
         ctx:fillText(strDisplay, 2, 2)
         ctx.color = white
         ctx:fillText(strDisplay, 1, 1)
@@ -459,6 +442,7 @@ dlg:canvas {
 
         local xToFac <const> = barWidth > 1 and 1.0 / (barWidth - 1.0) or 0.0
         local img <const> = Image(barWidth, 1, ColorMode.RGB)
+        -- TODO: Update to remove pixel iterator.
         local pxItr <const> = img:pixels()
         for pixel in pxItr do
             local xFac <const> = pixel.x * xToFac
@@ -467,8 +451,8 @@ dlg:canvas {
         end
 
         local a01 <const> = (active.aAdj - alb) / (aub - alb)
-        local black <const> = Color { r = 0, g = 0, b = 0 }
-        local white <const> = Color { r = 255, g = 255, b = 255 }
+        local black <const> = Color { r = 0, g = 0, b = 0, a = 255 }
+        local white <const> = Color { r = 255, g = 255, b = 255, a = 255 }
         ctx:drawImage(img,
             Rectangle(0, 0, barWidth, 1),
             Rectangle(0, 0, barWidth, barHeight))
@@ -513,6 +497,7 @@ dlg:canvas {
 
         local xToFac <const> = barWidth > 1 and 1.0 / (barWidth - 1.0) or 0.0
         local img <const> = Image(barWidth, 1, ColorMode.RGB)
+        -- TODO: Update to remove pixel iterator.
         local pxItr <const> = img:pixels()
         for pixel in pxItr do
             local xFac <const> = pixel.x * xToFac
@@ -521,8 +506,8 @@ dlg:canvas {
         end
 
         local b01 <const> = (active.bAdj - blb) / (bub - blb)
-        local black <const> = Color { r = 0, g = 0, b = 0 }
-        local white <const> = Color { r = 255, g = 255, b = 255 }
+        local black <const> = Color { r = 0, g = 0, b = 0, a = 255 }
+        local white <const> = Color { r = 255, g = 255, b = 255, a = 255 }
         ctx:drawImage(img,
             Rectangle(0, 0, barWidth, 1),
             Rectangle(0, 0, barWidth, barHeight))
@@ -539,90 +524,6 @@ dlg:canvas {
     end,
     onmousedown = setBMouseListen,
     onmousemove = setBMouseListen
-}
-
-dlg:newrow { always = false }
-
-dlg:canvas {
-    id = "alphaAdjCanvas",
-    label = "Alpha:",
-    width = defaults.barWidth,
-    height = defaults.barHeight,
-    vexpand = false,
-    onpaint = function(event)
-        local reticleSize <const> = defaults.reticleSize
-
-        local bkgColor <const> = app.theme.color.window_face
-        local bBkg <const> = bkgColor.blue / 255.0
-        local gBkg <const> = bkgColor.green / 255.0
-        local rBkg <const> = bkgColor.red / 255.0
-
-        local bTrg = 0.0
-        local gTrg = 0.0
-        local rTrg = 0.0
-        local white <const> = Color { r = 255, g = 255, b = 255 }
-        local black <const> = Color { r = 0, g = 0, b = 0 }
-        local textFill = black
-        local textShadow = white
-        local reticleBright = white
-        local reticleShade = black
-
-        local lAvg <const> = (rBkg + gBkg + bBkg) / 3.0
-        if lAvg <= 0.5 then
-            bTrg = 1.0
-            gTrg = 1.0
-            rTrg = 1.0
-            textFill = white
-            textShadow = black
-            reticleBright = black
-            reticleShade = white
-        end
-
-        local ctx <const> = event.context
-        local barWidth <const> = ctx.width
-        local barHeight <const> = ctx.height
-        active.tBarWidth = barWidth
-
-        local floor <const> = math.floor
-        local xToFac <const> = barWidth > 1 and 1.0 / (barWidth - 1.0) or 0.0
-        local img <const> = Image(barWidth, 1, ColorMode.RGB)
-        local pxItr <const> = img:pixels()
-        for pixel in pxItr do
-            local t <const> = pixel.x * xToFac
-            local u <const> = 1.0 - t
-
-            local b <const> = floor((u * bBkg + t * bTrg) * 255 + 0.5)
-            local g <const> = floor((u * gBkg + t * gTrg) * 255 + 0.5)
-            local r <const> = floor((u * rBkg + t * rTrg) * 255 + 0.5)
-
-            pixel(0xff000000 | b << 0x10 | g << 0x08 | r)
-        end
-
-        ctx:drawImage(img,
-            Rectangle(0, 0, barWidth, 1),
-            Rectangle(0, 0, barWidth, barHeight))
-
-        local reticleClr = white
-        local a01 <const> = active.alphaAdj * 0.5 + 0.5
-        if a01 < 0.5 then
-            reticleClr = reticleShade
-        else
-            reticleClr = reticleBright
-        end
-
-        CanvasUtilities.drawSliderReticle(
-            ctx, a01, barWidth, barHeight,
-            reticleClr, reticleSize)
-
-        local strDisplay <const> = string.format(
-            "%+04d", Utilities.round(active.alphaAdj * 255))
-        ctx.color = textShadow
-        ctx:fillText(strDisplay, 2, 2)
-        ctx.color = textFill
-        ctx:fillText(strDisplay, 1, 1)
-    end,
-    onmousedown = setAlphaMouseListen,
-    onmousemove = setAlphaMouseListen
 }
 
 dlg:newrow { always = false }
@@ -773,6 +674,7 @@ dlg:button {
             or defaults.contrast --[[@as integer]]
         local normalize <const> = args.normalize
             or defaults.normalize --[[@as integer]]
+
         local lInvert <const> = args.lInvert --[[@as boolean]]
         local aInvert <const> = args.aInvert --[[@as boolean]]
         local bInvert <const> = args.bInvert --[[@as boolean]]
@@ -783,7 +685,6 @@ dlg:button {
         local hAdj <const> = active.hAdj - 0.5
         local aAdj <const> = active.aAdj
         local bAdj <const> = active.bAdj
-        local alphaAdj = active.alphaAdj
 
         -- Cache booleans for whether or not adjustments
         -- will be made in loop.
@@ -792,23 +693,19 @@ dlg:button {
         local useLabInvert <const> = bInvert or aInvert or lInvert
 
         local lAdjNonZero <const> = lAdj ~= 0.0
-        local alphaAdjNonZero <const> = alphaAdj ~= 0.0
         local useLabAdj <const> = mode == "LAB"
             and (lAdjNonZero
                 or aAdj ~= 0.0
-                or bAdj ~= 0.0
-                or alphaAdjNonZero)
+                or bAdj ~= 0.0)
         local useLchAdj <const> = mode == "LCH"
             and (lAdjNonZero
                 or cAdj ~= 0.0
-                or hAdj ~= 0.0
-                or alphaAdjNonZero)
+                or hAdj ~= 0.0)
 
         -- Alpha invert is grouped with LAB invert, so
         -- the expectation is that it occurs after
         -- adjustment. Logically, though, alpha invert
         -- comes before.
-        if alphaInvert then alphaAdj = -alphaAdj end
         local normFac <const> = normalize * 0.01
         local normGtZero <const> = normFac > 0.0
         local normLtZero <const> = normFac < 0.0
@@ -979,10 +876,6 @@ dlg:button {
             end
 
             if useLabAdj then
-                -- TODO: Now that you have a separate method dedicated to
-                -- removing alpha, wouldn't it make sense to exclude zero
-                -- alpha from the alpha adjust?
-                tTrg = tTrg + alphaAdj
                 lTrg = lTrg + lAdj
                 aTrg = aTrg + aAdj
                 bTrg = bTrg + bAdj
@@ -993,7 +886,6 @@ dlg:button {
                     lch.c + cAdj,
                     lch.h + hAdj, tTrg)
 
-                tTrg = tTrg + alphaAdj
                 lTrg = labAdj.l
                 aTrg = labAdj.a
                 bTrg = labAdj.b
