@@ -14,17 +14,18 @@ local defaults <const> = {
     removeTools = false,
     removeLayer = "ALL",
     removeCel = "ALL",
+    removePalette = "ALL",
     removeImage = "ALL",
     removeTiles = "ALL",
-    removePalette = "ALL",
+    usePremul = true,
 }
 
 ---@param srcImg Image
 ---@param absOpaque boolean
+---@param usePremul boolean
 ---@return Image
-local function opaque(srcImg, absOpaque)
-    -- TODO: Option to premultiply color channels by alpha.
-
+---@nodiscard
+local function opaque(srcImg, absOpaque, usePremul)
     local bytes <const> = srcImg.bytes
 
     local spec <const> = srcImg.spec
@@ -44,13 +45,16 @@ local function opaque(srcImg, absOpaque)
         while i < len do
             local i4 <const> = i * 4
 
-            local r8 = 0
-            local g8 = 0
-            local b8 = 0
+            local r8, g8, b8 = 0, 0, 0
             local a8 = strbyte(bytes, 4 + i4)
 
             if absOpaque or a8 > 0 then
                 r8, g8, b8 = strbyte(bytes, 1 + i4, 3 + i4)
+                if usePremul then
+                    r8 = (r8 * a8) // 255
+                    g8 = (g8 * a8) // 255
+                    b8 = (b8 * a8) // 255
+                end
                 a8 = 255
             end
 
@@ -67,6 +71,7 @@ local function opaque(srcImg, absOpaque)
 
             if absOpaque or a8 > 0 then
                 v8 = strbyte(bytes, 1 + i2)
+                if usePremul then v8 = (v8 * a8) // 255 end
                 a8 = 255
             end
 
@@ -151,10 +156,27 @@ dlg:combobox {
 dlg:newrow { always = false }
 
 dlg:combobox {
+    id = "removePalette",
+    label = "Palettes:",
+    option = defaults.removePalette,
+    options = removePalOptions
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
     id = "removeImage",
     label = "Images:",
     option = defaults.removeImage,
-    options = removeImageOptions
+    options = removeImageOptions,
+    onchange = function()
+        local args <const> = dlg.data
+        local removeImage <const> = args.removeImage --[[@as string]]
+        local removeTiles <const> = args.removeTiles --[[@as string]]
+        local notNone <const> = removeImage ~= "NONE"
+            or removeTiles ~= "NONE"
+        dlg:modify { id = "usePremul", visible = notNone }
+    end
 }
 
 dlg:newrow { always = false }
@@ -163,16 +185,25 @@ dlg:combobox {
     id = "removeTiles",
     label = "Tiles:",
     option = defaults.removeTiles,
-    options = removeTilesOptions
+    options = removeTilesOptions,
+    onchange = function()
+        local args <const> = dlg.data
+        local removeImage <const> = args.removeImage --[[@as string]]
+        local removeTiles <const> = args.removeTiles --[[@as string]]
+        local notNone <const> = removeImage ~= "NONE"
+            or removeTiles ~= "NONE"
+        dlg:modify { id = "usePremul", visible = notNone }
+    end
 }
 
 dlg:newrow { always = false }
 
-dlg:combobox {
-    id = "removePalette",
-    label = "Palettes:",
-    option = defaults.removePalette,
-    options = removePalOptions
+dlg:check {
+    id = "usePremul",
+    text = "&Premultiply",
+    selected = defaults.usePremul,
+    visible = defaults.removeImage ~= "NONE"
+        or defaults.removeTiles ~= "NONE"
 }
 
 dlg:newrow { always = false }
@@ -219,7 +250,8 @@ dlg:button {
 
         if opaqueLayer ~= "NONE" then
             -- TODO: As of 1.3.10 beta, this also has to do groups. Is it worth
-            -- making a filterGroups function?
+            -- making a filterGroups function? Is it necessary to use filter
+            -- layers here -- can you use a get layer hierarchy instead?
             local chosenLayers <const> = AseUtilities.filterLayers(
                 activeSprite, site.layer, opaqueLayer, includeLocked,
                 includeHidden, includeTiles, false)
@@ -262,16 +294,17 @@ dlg:button {
             local lenChosenCels <const> = #chosenCels
 
             if lenChosenCels > 0 then
+                local usePremul <const> = args.usePremul --[[@as boolean]]
                 app.transaction("Opaque Images", function()
                     local i = 0
                     while i < lenChosenCels do
                         i = i + 1
                         local cel <const> = chosenCels[i]
-                        cel.image = opaque(cel.image, absOpaque)
-                    end
-                end)
-            end
-        end
+                        cel.image = opaque(cel.image, absOpaque, usePremul)
+                    end -- End chosen cels loop.
+                end)    -- End transaction.
+            end         -- End chosen cels gt zero.
+        end             -- End opaque images.
 
         if opaqueTiles ~= "NONE" and notIndexed then
             local chosenTileSets = {}
@@ -289,6 +322,7 @@ dlg:button {
             local lenChosenTileSets <const> = #chosenTileSets
 
             if lenChosenTileSets > 0 then
+                local usePremul <const> = args.usePremul --[[@as boolean]]
                 app.transaction("Opaque Tiles", function()
                     local i = 0
                     while i < lenChosenTileSets do
@@ -301,14 +335,15 @@ dlg:button {
                         while j < lenTileSet do
                             local tile <const> = tileSet:tile(j)
                             if tile then
-                                tile.image = opaque(tile.image, absOpaque)
+                                tile.image = opaque(tile.image, absOpaque,
+                                    usePremul)
                             end
                             j = j + 1
-                        end
-                    end
-                end)
-            end
-        end
+                        end -- End tile loop.
+                    end     -- End tile sets loop.
+                end)        -- End transaction.
+            end             -- End chosen tile sets gt zero.
+        end                 -- End opaque tiles.
 
         if opaquePalette ~= "NONE" then
             local chosenPalettes = {}
@@ -401,9 +436,9 @@ dlg:button {
                     if experimental.nonactive_layers_opacity_preview then
                         experimental.nonactive_layers_opacity_preview = 255
                     end
-                end
-            end
-        end
+                end -- End experimental exists.
+            end     -- End app prefs exists.
+        end         -- End remove non active layers.
 
         if removeTools then
             local appPrefs <const> = app.preferences
@@ -432,10 +467,10 @@ dlg:button {
                     if toolPref and toolPref.opacity then
                         -- print(string.format("\"%s\": %d", tool, toolPref.opacity))
                         toolPref.opacity = 255
-                    end
-                end
-            end
-        end
+                    end -- End pref has opacity.
+                end     -- End tools loop.
+            end         -- End app prefs exists.
+        end             -- End remove tool opacity.
 
         app.refresh()
     end
