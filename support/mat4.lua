@@ -256,9 +256,7 @@ end
 ---@nodiscard
 function Mat4.cameraIsometric(xLoc, yLoc, zLoc, handedness)
     local hVal = "RIGHT"
-    local xVal = 0.0
-    local yVal = 0.0
-    local zVal = 0.0
+    local xVal, yVal, zVal = 0.0, 0.0, 0.0
     if handedness and handedness == "LEFT" then
         hVal = handedness
         xVal = xLoc or 1.0
@@ -302,9 +300,7 @@ end
 ---@nodiscard
 function Mat4.cameraDimetric(xLoc, yLoc, zLoc, handedness)
     local hVal = "RIGHT"
-    local xVal = 0.0
-    local yVal = 0.0
-    local zVal = 0.0
+    local xVal, yVal, zVal = 0.0, 0.0, 0.0
     if handedness and handedness == "LEFT" then
         hVal = handedness
         xVal = xLoc or 1.0
@@ -584,13 +580,9 @@ function Mat4.orthographic(left, right, bottom, top, near, far)
     local h <const> = top - bottom
     local d <const> = fVal - nVal
 
-    local wInv = 1.0
-    local hInv = 1.0
-    local dInv = 1.0
-
-    if w ~= 0.0 then wInv = 1.0 / w end
-    if h ~= 0.0 then hInv = 1.0 / h end
-    if d ~= 0.0 then dInv = 1.0 / d end
+    local wInv <const> = w ~= 0.0 and 1.0 / w or 1.0
+    local hInv <const> = h ~= 0.0 and 1.0 / h or 1.0
+    local dInv <const> = d ~= 0.0 and 1.0 / d or 1.0
 
     return Mat4.new(
         wInv + wInv, 0.0, 0.0, wInv * (left + right),
