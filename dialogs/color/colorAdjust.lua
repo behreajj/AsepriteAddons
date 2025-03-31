@@ -27,6 +27,11 @@ local defaults <const> = {
     -- TODO: Separate frame target and layer target. See convention est.
     -- by colorReplace (the relevant difference being that replace edits
     -- a layer as is.)
+
+    -- TODO: Remove alpha channel adjust. Handle that in remove alpha dialog.
+
+    -- TODO: Separate normalize and contrast into its own method.
+
     target = "ACTIVE",
     mode = "LCH",
     contrast = 0,

@@ -23,6 +23,8 @@ local defaults <const> = {
 ---@param absOpaque boolean
 ---@return Image
 local function opaque(srcImg, absOpaque)
+    -- TODO: Option to premultiply color channels by alpha.
+
     local bytes <const> = srcImg.bytes
 
     local spec <const> = srcImg.spec
