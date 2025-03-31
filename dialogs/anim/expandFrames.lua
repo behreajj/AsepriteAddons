@@ -33,14 +33,8 @@ end
 ---@param useTint boolean
 ---@param tintColor Color
 local function crossFade(
-    activeSprite,
-    leaf,
-    frIdxNewPrev,
-    frIdxNewNext,
-    frameUiOffset,
-    inbetweens,
-    useTint,
-    tintColor)
+    activeSprite, leaf, frIdxNewPrev, frIdxNewNext,
+    frameUiOffset, inbetweens, useTint, tintColor)
     local celNext <const> = leaf:cel(frIdxNewNext)
     local celPrev <const> = leaf:cel(frIdxNewPrev)
     if (not celNext) and (not celPrev) then return end
@@ -703,7 +697,8 @@ dlg:button {
                         local srcPos <const> = cel.position
                         local srcZIndex <const> = cel.zIndex
 
-                        transact(strfmt("Sustain %d on %s", frIdxOld + frameUiOffset, leafName), function()
+                        transact(strfmt("Sustain %d on %s",
+                            frIdxOld + frameUiOffset, leafName), function()
                             local j = 0
                             while j < inbetweens do
                                 j = j + 1
