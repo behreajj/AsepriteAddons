@@ -1001,11 +1001,10 @@ dlg:button {
             while i < lenFlat do
                 local x <const> = i % wSrc
                 local y <const> = i // wSrc
-                local xp, yp = eval(x, y, theta, fac)
-                xp = round(xp)
-                yp = round(yp)
+                local xp <const>, yp <const> = eval(x, y, theta, fac)
                 i = i + 1
-                byteArr[i] = getPixel(srcBytes, xp, yp, wSrc, hSrc, srcBpp, pxAlpha)
+                byteArr[i] = getPixel(srcBytes, round(xp), round(yp),
+                    wSrc, hSrc, srcBpp, pxAlpha)
             end
 
             local trgImg <const> = Image(srcSpec)
