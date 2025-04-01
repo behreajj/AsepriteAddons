@@ -20,7 +20,7 @@ local aseClearBlack <const> = Color { r = 0, g = 0, b = 0, a = 0 }
 local palettes <const> = sprite.palettes
 local lenPalettes <const> = #palettes
 
-app.transaction("Correct Zero Alpha Palette", function()
+app.transaction("Correct Alpha Palette", function()
     local f = 0
     while f < lenPalettes do
         f = f + 1
@@ -41,37 +41,26 @@ if colorMode == ColorMode.INDEXED then
     return
 end
 
+-- This has to get unique cels prior to changing cel images,
+-- otherwise images within linked cels will not be recognized.
 local leaves <const> = AseUtilities.getLayerHierarchy(sprite,
     true, true, false, false)
-local lenLeaves <const> = #leaves
 local frObjs <const> = sprite.frames
-local lenFrObjs <const> = #frObjs
-local lenComp <const> = lenLeaves * lenFrObjs
-
----@type table<integer, boolean>
-local visited <const> = {}
+local cels <const> = AseUtilities.getUniqueCelsFromLeaves(
+    leaves, frObjs)
+local lenCels <const> = #cels
 local correctZero <const> = AseUtilities.correctZeroAlpha
 
-app.transaction("Correct Zero Alpha Cels", function()
-    local h = 0
-    while h < lenComp do
-        local i <const> = h // lenLeaves
-        local j <const> = h % lenLeaves
-        local frObj <const> = frObjs[1 + i]
-        local leaf <const> = leaves[1 + j]
-
-        local cel <const> = leaf:cel(frObj)
-        if cel then
-            local srcImg <const> = cel.image
-            local idSrc <const> = srcImg.id
-            if not visited[idSrc] then
-                cel.image = correctZero(srcImg)
-                visited[idSrc] = true
-            end
+if lenCels > 0 then
+    app.transaction("Correct Alpha Cels", function()
+        local i = 0
+        while i < lenCels do
+            i = i + 1
+            local cel <const> = cels[i]
+            cel.image = correctZero(cel.image)
         end
-        h = h + 1
-    end
-end)
+    end)
+end
 
 local tileSets <const> = sprite.tilesets
 local lenTileSets <const> = #tileSets
@@ -80,19 +69,19 @@ if lenTileSets <= 0 then
     return
 end
 
-app.transaction("Correct Zero Alpha Tiles", function()
-    local k = 0
-    while k < lenTileSets do
-        k = k + 1
-        local tileSet <const> = tileSets[k]
+app.transaction("Correct Alpha Tiles", function()
+    local j = 0
+    while j < lenTileSets do
+        j = j + 1
+        local tileSet <const> = tileSets[j]
         local lenTileSet <const> = #tileSet
-        local m = 0
-        while m < lenTileSet do
-            local tile <const> = tileSet:tile(m)
+        local k = 0
+        while k < lenTileSet do
+            local tile <const> = tileSet:tile(k)
             if tile then
                 tile.image = correctZero(tile.image)
             end
-            m = m + 1
+            k = k + 1
         end
     end
 end)
