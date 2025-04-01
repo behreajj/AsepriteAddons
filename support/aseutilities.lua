@@ -1144,6 +1144,24 @@ function AseUtilities.clrToAseColor(clr)
     }
 end
 
+---Sets all colors in an image to zero if they have zero alpha.
+---If the image is an index or tile map, then returns the source
+---by value, unchanged.
+---@param source Image source image
+---@return Image
+function AseUtilities.correctZeroAlpha(source)
+    local srcSpec <const> = source.spec
+    local cmSrc <const> = srcSpec.colorMode
+    if cmSrc == ColorMode.INDEXED
+        or cmSrc == ColorMode.TILEMAP then
+        return source
+    end
+    local target <const> = Image(srcSpec)
+    target.bytes = Utilities.correctZeroAlpha(
+        source.bytes, source.bytesPerPixel)
+    return target
+end
+
 ---Creates new cels in a sprite. Prompts users to confirm if requested count
 ---exceeds a limit. The count is derived from frameCount x layerCount. Returns
 ---a one-dimensional table of cels, where layers are treated as rows, frames

@@ -73,6 +73,8 @@ false, then returns to the first frame after reaching the last.
 
 - `bakeChecker`: Creates a layer that replicates the size and color of a sprite's background checker. Ignores the checker zoom preference.
 
+- `correctAlpha`: If a sprite contains palette swatches or images with zero alpha, sets the remainder of their color channels to zero, so that the colors are recognized as 'mask' colors.
+
 - `correctPalette`: Prepends `0x00000000`, clear black, to a palette at index 0 if it doesn't already exist. Removes duplicate palette entries. Converts a sprite to and from RGB color mode and sets its `transparentColor` to `0`. This is to avoid a number of issues in indexed color mode, e.g., with the outline tool or with exporting.
 
 - `correctTags`: Removes tags with out-of-bounds frames. Tags with duplicate names have a number appended to the end of the name.

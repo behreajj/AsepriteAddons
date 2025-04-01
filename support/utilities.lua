@@ -23,8 +23,9 @@ function Utilities.new()
     return inst
 end
 
----Bisects an array of elements to find the appropriate index. Biases towards
----the right insert point. Should be used with sorted arrays.
+---Bisects an array of elements to find the appropriate index.
+---Biases towards the right insert point. Should be used with
+---sorted arrays.
 ---@generic T array type
 ---@generic U element type
 ---@param arr T[] array
@@ -48,8 +49,9 @@ function Utilities.bisectRight(arr, elm, compare)
     return 1 + low
 end
 
----Concatenates an array of bytes into a string. Performs no validation on
----array elements; they are assumed to be in [0, 255].
+---Concatenates an array of bytes into a string. Performs no
+---validation on array elements. They are assumed to be in
+---[0, 255].
 ---@param source integer[]
 ---@return string
 ---@nodiscard
@@ -97,6 +99,38 @@ function Utilities.checker(
         i = i + 1
     end
     return table.concat(checkered)
+end
+
+---Sets all colors in an image's bytes to zero if they have
+---zero alpha. Assumes that the image has been verified to
+---not be a tile map or indexed map and that alpha is the
+---most significant byte.
+---@param source string source bytes
+---@param bpp integer bits per pixel
+---@return string
+function Utilities.correctZeroAlpha(source, bpp)
+    ---@type string[]
+    local corrected <const> = {}
+    local fmtStr <const> = "<I" .. bpp
+    local tMask <const> = 0xff << (8 * (bpp - 1))
+    local len <const> = #source // bpp
+
+    local strpack <const> = string.pack
+    local strsub <const> = string.sub
+    local strunpack <const> = string.unpack
+
+    local i = 0
+    while i < len do
+        local ibpp = i * bpp
+        local srcPixel <const> = strunpack(fmtStr, strsub(
+            source, 1 + ibpp, bpp + ibpp))
+        local trgPixel <const> = (srcPixel & tMask ~= 0)
+            and srcPixel or 0
+        i = i + 1
+        corrected[i] = strpack(fmtStr, trgPixel)
+    end
+
+    return table.concat(corrected)
 end
 
 ---Converts a dictionary to a sorted set. If a comparator is not provided,
