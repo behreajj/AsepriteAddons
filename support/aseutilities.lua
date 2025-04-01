@@ -3076,8 +3076,8 @@ function AseUtilities.selToImage(sel, sprite, frame)
         while i < areaSel do
             local cStr = alphaPacked
             if sel:contains(xSel + i % wSel, ySel + i // wSel) then
-                local iBpp <const> = i * bpp
-                cStr = strsub(srcBytes, 1 + iBpp, bpp + iBpp)
+                local ibpp <const> = i * bpp
+                cStr = strsub(srcBytes, 1 + ibpp, bpp + ibpp)
             end
             i = i + 1
             trgBytesArr[i] = cStr

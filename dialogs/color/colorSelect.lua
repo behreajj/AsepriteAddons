@@ -6,6 +6,9 @@ local sampleModes <const> = { "ACTIVE", "COMPOSITE" }
 local connections <const> = { "DIAMOND", "SQUARE" }
 
 local defaults <const> = {
+    -- TODO: The built-in color picker fails on zero alpha colors that have
+    -- non-zero RGB.
+
     -- Original colorSelect script:
     -- 894bd701787526bae1786364073b8bc263d3a032
     uiMode = "COLOR",

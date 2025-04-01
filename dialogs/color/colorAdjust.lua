@@ -908,10 +908,7 @@ dlg:button {
             j = j + 1
             local trgCel <const> = trgCels[j]
             local trgImg <const> = trgCel.image
-            local trgSpec <const> = trgImg.spec
-            local wTrg <const> = trgSpec.width
-            local hTrg <const> = trgSpec.height
-            local lenTrg <const> = wTrg * hTrg
+            local lenTrg <const> = trgImg.width * trgImg.height
             local srcBytes <const> = trgImg.bytes
 
             ---@type string[]
@@ -919,12 +916,11 @@ dlg:button {
             local k = 0
             while k < lenTrg do
                 local k4 <const> = k * 4
-                local srcStr <const> = strsub(srcBytes, 1 + k4, 4 + k4)
-                local srcHex <const> = strunpack("<I4", srcStr)
+                local srcHex <const> = strunpack("<I4",
+                    strsub(srcBytes, 1 + k4, 4 + k4))
                 local trgHex <const> = srcToTrgHexDict[srcHex]
-                local trgStr <const> = strpack("<I4", trgHex)
                 k = k + 1
-                trgByteArr[k] = trgStr
+                trgByteArr[k] = strpack("<I4", trgHex)
             end
 
             -- Doesn't require a transaction wrapper?

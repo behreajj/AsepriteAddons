@@ -33,8 +33,10 @@ app.transaction("Find Like Images", function()
         local j <const> = h % lenLeaves
         local frObj <const> = frObjs[1 + i]
         local leaf <const> = leaves[1 + j]
+
         local isTilemap <const> = leaf.isTilemap
         local tileSet <const> = leaf.tileset
+
         local cel <const> = leaf:cel(frObj)
         if cel then
             local image = cel.image
