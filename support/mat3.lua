@@ -158,30 +158,6 @@ function Mat3.fromScale(width, depth)
         0.0, 0.0, 1.0)
 end
 
----Composes a matrix from a transform consisting of a
----translation, rotation and scale.
----@param tx number translation x
----@param ty number translation y
----@param r number angle
----@param w number width
----@param h number depth
----@return Mat3
-function Mat3.fromTransform(tx, ty, r, w, h)
-    -- TODO: Replace other instances of mat mul with this?
-    local wv <const> = (w and w ~= 0.0) and w or 1.0
-    local hv <const> = (h and h ~= 0.0) and h or wv
-    local tyv <const> = ty or 0.0
-    local txv <const> = tx or 0.0
-
-    local cosa <const> = math.cos(r)
-    local sina <const> = math.sin(r)
-
-    return Mat3.new(
-        wv * cosa, wv * -sina, txv,
-        hv * sina, hv * cosa, tyv,
-        0.0, 0.0, 1.0)
-end
-
 ---Constructs a matrix from a translation.
 ---@param x number translation x
 ---@param y number translation y
