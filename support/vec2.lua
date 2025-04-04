@@ -648,8 +648,7 @@ function Vec2.toJson(v)
         v.x, v.y)
 end
 
----Converts a vector to polar coordinates. Returns a table with 'radius' and
----'heading'.
+---Converts a vector to polar coordinates.
 ---@param v Vec2 vector
 ---@return { radius: number, heading: number }
 ---@nodiscard
