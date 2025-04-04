@@ -109,8 +109,10 @@ dlg:button {
         if formerColorSpace == newColorSpace then
             confirm = app.alert {
                 title = "Warning",
-                text = { "The sprite already uses this color profile.",
-                    "Do you wish to proceed anyway?" },
+                text = {
+                    "The sprite already uses this color profile.",
+                    "Do you wish to proceed anyway?"
+                },
                 buttons = { "&YES", "&CANCEL" }
             }
         end
