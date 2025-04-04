@@ -173,7 +173,7 @@ end
 ---@param sprite Sprite
 ---@param frIdx integer
 local function updateFromSelect(dialog, sprite, frIdx)
-    local v = AseUtilities.averageNormal(sprite, frIdx)
+    local v <const> = AseUtilities.averageNormal(sprite, frIdx)
     dialog:modify { id = "x", text = string.format("%.3f", v.x) }
     dialog:modify { id = "y", text = string.format("%.3f", v.y) }
     dialog:modify { id = "z", text = string.format("%.3f", v.z) }

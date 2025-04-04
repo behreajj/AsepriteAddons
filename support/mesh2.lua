@@ -555,8 +555,7 @@ function Mesh2.uniformData(source, target)
         while j < fSrcLen do
             j = j + 1
             k = k + 1
-            local vertSrc <const> = fSrc[j]
-            local vSrc <const> = vsSrc[vertSrc]
+            local vSrc <const> = vsSrc[fSrc[j]]
             local vTrg <const> = Vec2.new(vSrc.x, vSrc.y)
             vsTrg[k] = vTrg
             fTrg[j] = k

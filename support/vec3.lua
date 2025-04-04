@@ -936,8 +936,7 @@ function Vec3.toJson(v)
         v.x, v.y, v.z)
 end
 
----Converts a vector to spherical coordinates. Returns a table with 'radius',
----'azimuth' and 'inclination'.
+---Converts a vector to spherical coordinates.
 ---@param v Vec3 vector
 ---@return { radius: number, azimuth: number, inclination: number }
 ---@nodiscard
