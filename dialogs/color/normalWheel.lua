@@ -20,7 +20,7 @@ local defaults <const> = {
     maxSectors = 32,
     maxRings = 16,
     strokeColor = 0xffffffff,
-    strokeWeight = 2,
+    strokeWeight = 1,
 }
 
 local normalsPal <const> = {

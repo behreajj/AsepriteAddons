@@ -102,6 +102,8 @@ function ShapeUtilities.drawEllipse(
     local bottom <const> = yc - h
 
     if useAntiAlias then context.antialias = true end
+    if useStrokeVerif then context.strokeWidth = strokeWeight end
+
     context:beginPath()
     context:moveTo(right, yc)
     context:cubicTo(right, yc + kh, xc + kw, top, xc, top)
@@ -291,9 +293,8 @@ function ShapeUtilities.rasterizeMesh2(
     useFill, fillClr,
     useStroke, strokeClr, strokeWeight,
     useAntiAlias, useTrim)
-    -- TODO: Make more efficient by accepting an array of meshes?
-    -- Might not be as necessary, since a mesh is already an array
-    -- of faces.
+    -- Might not be necessary to make a method that accepts an array
+    -- of meshes, since a mesh is already an array of faces.
 
     local trgImg = Image(refSpec)
     local context <const> = trgImg.context

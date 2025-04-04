@@ -18,7 +18,7 @@ local defaults <const> = {
     strokeSize = 6,
     fillSize = 5,
     gamutTol = 0.001,
-    strokeWeight = 2,
+    strokeWeight = 1,
 }
 
 local dlg <const> = Dialog { title = "Lch Color Shades" }
