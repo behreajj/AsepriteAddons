@@ -215,17 +215,12 @@ dlg:button {
         local useAntialias <const> = args.useAntialias --[[@as boolean]]
 
         -- Create transform matrix.
-        local t <const> = Mat3.fromTranslation(xOrig, yOrig)
-
         local a = degrees * 0.017453292519943
         local query <const> = AseUtilities.DIMETRIC_ANGLES[degrees]
         if query then a = query end
-        local r <const> = Mat3.fromRotZ(a)
-
         local sclVerif <const> = math.max(2.0, scale)
-        local s <const> = Mat3.fromScale(sclVerif, -sclVerif)
-
-        local mat <const> = Mat3.mul(Mat3.mul(t, s), r)
+        local mat <const> = Mat3.fromTransform(
+            xOrig, yOrig, a, sclVerif, -sclVerif)
 
         local mesh <const> = Mesh2.star(
             sectors, skip, pick, inset * 0.01)
@@ -265,19 +260,17 @@ dlg:button {
         local fillColor <const> = args.fillClr --[[@as Color]]
         local useAntialias <const> = args.useAntialias --[[@as boolean]]
 
-        local r <const> = Mat3.fromRotZ(degrees * 0.017453292519943)
+        -- The brush image size must account for the stroke, and to
+        -- center the mesh within the image, the translation must use
+        -- image size. Fudge factor needed for, e.g., triangle corners.
         local sclVerif <const> = math.max(2.0, scale)
-        local s <const> = Mat3.fromScale(sclVerif, -sclVerif)
-
-        -- The brush image size must account for the stroke, and to center
-        -- the mesh within the image, the translation must use image size.
-        -- Fudge factor needed for, e.g., triangle corners.
         local wImage <const> = math.ceil(sclVerif + strokeWeight + 5)
         local hImage <const> = math.ceil(sclVerif + strokeWeight + 5)
-        local t <const> = Mat3.fromTranslation(
-            wImage * 0.5, hImage * 0.5)
 
-        local mat <const> = Mat3.mul(Mat3.mul(t, s), r)
+        local mat <const> = Mat3.fromTransform(
+            wImage * 0.5, hImage * 0.5,
+            degrees * 0.017453292519943,
+            sclVerif, -sclVerif)
         local mesh <const> = Mesh2.star(
             sectors, skip, pick, inset * 0.01)
         Utilities.mulMat3Mesh2(mat, mesh)
