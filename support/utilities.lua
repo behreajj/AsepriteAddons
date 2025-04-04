@@ -409,15 +409,15 @@ end
 ---Unclamped linear interpolation from an origin angle to a destination by a
 ---factor in [0.0, 1.0]. The range defaults to 360.0 for degrees, but can be
 ---tau for radians. Uses the counter-clockwise angular direction.
----@param origin number origin angle
+---@param orig number origin angle
 ---@param dest number destination angle
 ---@param t number factor
 ---@param range? number range
 ---@return number
 ---@nodiscard
-function Utilities.lerpAngleCcw(origin, dest, t, range)
+function Utilities.lerpAngleCcw(orig, dest, t, range)
     local valRange <const> = range or 360.0
-    local o <const> = origin % valRange
+    local o <const> = orig % valRange
     local d <const> = dest % valRange
     local diff <const> = d - o
     if diff == 0.0 then return o end
@@ -433,15 +433,15 @@ end
 ---Unclamped linear interpolation from an origin angle to a destination by a
 ---factor in [0.0, 1.0]. The range defaults to 360.0 for degrees, but can be
 ---tau for radians. Uses the clockwise angular direction.
----@param origin number origin angle
+---@param orig number origin angle
 ---@param dest number destination angle
 ---@param t number factor
 ---@param range? number range
 ---@return number
 ---@nodiscard
-function Utilities.lerpAngleCw(origin, dest, t, range)
+function Utilities.lerpAngleCw(orig, dest, t, range)
     local valRange <const> = range or 360.0
-    local o <const> = origin % valRange
+    local o <const> = orig % valRange
     local d <const> = dest % valRange
     local diff <const> = d - o
     if diff == 0.0 then return d end
@@ -457,16 +457,16 @@ end
 ---Unclamped linear interpolation from an origin angle to a destination by a
 ---factor in [0.0, 1.0]. The range defaults to 360.0 for degrees, but can be
 ---tau for radians. Uses the furthest angular direction.
----@param origin number origin angle
+---@param orig number origin angle
 ---@param dest number destination angle
 ---@param t number factor
 ---@param range? number range
 ---@return number
 ---@nodiscard
-function Utilities.lerpAngleFar(origin, dest, t, range)
+function Utilities.lerpAngleFar(orig, dest, t, range)
     local valRange <const> = range or 360.0
     local halfRange <const> = valRange * 0.5
-    local o <const> = origin % valRange
+    local o <const> = orig % valRange
     local d <const> = dest % valRange
     local diff <const> = d - o
     local u <const> = 1.0 - t
@@ -483,15 +483,15 @@ end
 ---Unclamped linear interpolation from an origin angle to a destination by a
 ---factor in [0.0, 1.0]. The range defaults to 360.0 for degrees, but can be
 ---tau for radians. Uses the nearest angular direction.
----@param origin number origin angle
+---@param orig number origin angle
 ---@param dest number destination angle
 ---@param t number factor
 ---@param range? number range
 ---@return number
 ---@nodiscard
-function Utilities.lerpAngleNear(origin, dest, t, range)
+function Utilities.lerpAngleNear(orig, dest, t, range)
     local valRange <const> = range or 360.0
-    local o <const> = origin % valRange
+    local o <const> = orig % valRange
     local d <const> = dest % valRange
     local diff <const> = d - o
     if diff == 0.0 then return o end
