@@ -629,8 +629,8 @@ dlg:button {
             -- Unpack angle.
             degrees = 360 - degrees
             local query <const> = AseUtilities.DIMETRIC_ANGLES[degrees]
-            local radians = degrees * 0.017453292519943
-            if query then radians = query end
+            local radians <const> = query
+                or (0.017453292519943 * degrees)
 
             -- Avoid trigonometric functions in while loop below.
             -- Cache sine and cosine here, then use formula for

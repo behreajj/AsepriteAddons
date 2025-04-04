@@ -135,8 +135,9 @@ dlg:button {
         local yOrigSigned <const> = 1.0 - (yOrigNorm + yOrigNorm)
 
         local query <const> = AseUtilities.DIMETRIC_ANGLES[angDegrees]
-        local angRadians = angDegrees * 0.017453292519943
-        if query then angRadians = query end
+        local angRadians <const> = query
+            or (0.017453292519943 * angDegrees)
+
         local cw = 1.0
         if args.cw then cw = -1.0 end
 

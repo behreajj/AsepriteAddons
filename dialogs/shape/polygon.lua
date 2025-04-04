@@ -217,9 +217,9 @@ dlg:button {
         -- Create transform matrix.
         local t <const> = Mat3.fromTranslation(xOrig, yOrig)
 
-        local a = degrees * 0.017453292519943
         local query <const> = AseUtilities.DIMETRIC_ANGLES[degrees]
-        if query then a = query end
+        local a <const> = query
+            or (0.017453292519943 * degrees)
         local r <const> = Mat3.fromRotZ(a)
 
         local sclVerif <const> = math.max(2.0, scale)
