@@ -12,6 +12,7 @@ local defaults <const> = {
     fps = 12,
     removeBkg = true,
     trimCels = true,
+    checkAlpha = false,
     palType = "EMBEDDED",
     uniquesOnly = true,
     prependMask = true,
@@ -174,18 +175,24 @@ dlg:newrow { always = false }
 
 dlg:check {
     id = "removeBkg",
-    label = "Convert:",
+    label = "Fix:",
     text = "&Bkg",
-    selected = defaults.removeBkg
+    selected = defaults.removeBkg,
+    visible = true,
 }
-
-dlg:newrow { always = false }
 
 dlg:check {
     id = "trimCels",
-    label = "Trim:",
-    text = "Layer Ed&ges",
-    selected = defaults.trimCels
+    text = "&Trim",
+    selected = defaults.trimCels,
+    visible = true,
+}
+
+dlg:check {
+    id = "checkAlpha",
+    text = "&Alpha",
+    selected = defaults.checkAlpha,
+    visible = true,
 }
 
 dlg:separator {
@@ -624,25 +631,43 @@ dlg:button {
         end
 
         local trimCels <const> = args.trimCels --[[@as boolean]]
-        if trimCels then
+        local checkAlpha <const> = args.checkAlpha --[[@as boolean]]
+        local acquireCels <const> = trimCels or checkAlpha
+
+        if acquireCels then
             local cels <const> = AseUtilities.filterCels(
                 openSprite, nil, {}, "ALL",
                 true, true, false, false)
-            app.transaction("Trim Cels", function()
-                local j = 0
-                local lenCels <const> = #cels
+            local lenCels <const> = #cels
+
+            if trimCels then
                 local trimImage <const> = AseUtilities.trimImageAlpha
-                while j < lenCels do
-                    j = j + 1
-                    local cel <const> = cels[j]
-                    local trgImg <const>, x <const>, y <const> = trimImage(
-                        cel.image, 0, 0)
-                    local srcPos <const> = cel.position
-                    cel.position = Point(srcPos.x + x, srcPos.y + y)
-                    cel.image = trgImg
-                end
-            end)
-        end
+                app.transaction("Trim Cels", function()
+                    local j = 0
+                    while j < lenCels do
+                        j = j + 1
+                        local cel <const> = cels[j]
+                        local trgImg <const>, x <const>, y <const> = trimImage(
+                            cel.image, 0, 0)
+                        local srcPos <const> = cel.position
+                        cel.position = Point(srcPos.x + x, srcPos.y + y)
+                        cel.image = trgImg
+                    end -- End cels loop.
+                end)    -- End transaction.
+            end         -- End trim cels.
+
+            if checkAlpha then
+                local correctZero <const> = AseUtilities.correctZeroAlpha
+                app.transaction("Correct Alpha", function()
+                    local j = 0
+                    while j < lenCels do
+                        j = j + 1
+                        local cel <const> = cels[j]
+                        cel.image = correctZero(cel.image)
+                    end -- End cels loop.
+                end)    -- End transaction.
+            end         -- End check alpha.
+        end             -- End acquire cels.
 
         -- Restore old preferences.
         if appPrefs then
