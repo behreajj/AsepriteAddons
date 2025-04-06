@@ -6,6 +6,8 @@ local interTypes <const> = { "HORIZONTAL", "VERTICAL" }
 local waveTypes <const> = { "BILINEAR", "GERSTNER", "INTERLACED", "RADIAL" }
 
 local defaults <const> = {
+    -- TODO: Instead of displacing whole pixels, allow displacement
+    -- by Lab color channel. See "chroma warp" effect.
     target = "ACTIVE",
     frameCount = 8,
     fps = 24,

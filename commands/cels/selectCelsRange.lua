@@ -46,14 +46,16 @@ if appRange.sprite == activeSprite then
             end     -- Layer is background check.
         end         -- Active Layer exists.
     else
-        local images <const> = appRange.images
-        local lenImages <const> = #images
+        -- TODO: Should the above default be activated when the images array
+        -- is lteq zero instead of the range being considered empty?
+        local rangeImages <const> = appRange.images
+        local lenRangeImages <const> = #rangeImages
         local union <const> = Selection()
 
         local i = 0
-        while i < lenImages do
+        while i < lenRangeImages do
             i = i + 1
-            local image <const> = images[i]
+            local image <const> = rangeImages[i]
             local cel <const> = image.cel
             local layer <const> = cel.layer
             if layer.isBackground then
