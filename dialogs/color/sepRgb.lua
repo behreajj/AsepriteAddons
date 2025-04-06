@@ -16,7 +16,6 @@ local defaults <const> = {
     opacityRed = 255,
     opacityGreen = 255,
     opacityBlue = 255,
-    pullFocus = false
 }
 
 local dlg <const> = Dialog { title = "Separate Layer RGB" }
@@ -131,7 +130,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "confirm",
     text = "&OK",
-    focus = defaults.pullFocus,
+    focus = true,
     onclick = function()
         local site <const> = app.site
         local activeSprite <const> = site.sprite
