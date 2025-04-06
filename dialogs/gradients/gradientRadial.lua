@@ -15,7 +15,6 @@ local defaults <const> = {
     maxRad = 100,
     distMetric = "EUCLIDEAN",
     minkExp = 2.0,
-    pullFocus = true
 }
 
 ---@param ax number
@@ -157,7 +156,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "confirm",
     text = "&OK",
-    focus = defaults.pullFocus,
+    focus = true,
     onclick = function()
         local site <const> = app.site
         local activeSprite = site.sprite

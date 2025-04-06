@@ -6,8 +6,7 @@ local defaults <const> = {
     frameTarget = "ALL",
     rangeStr = "",
     strExample = "4,6:9,13",
-    isCyclic = false,
-    pullFocus = true
+    isCyclic = false
 }
 
 local dlg <const> = Dialog { title = "Time Gradient" }
@@ -63,7 +62,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "confirm",
     text = "&OK",
-    focus = defaults.pullFocus,
+    focus = true,
     onclick = function()
         local activeSprite = app.site.sprite
         if not activeSprite then

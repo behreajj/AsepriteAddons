@@ -15,7 +15,6 @@ local defaults <const> = {
     m20 = false,
     m21 = true,
     m22 = false,
-    pullFocus = true
 }
 
 local dlg <const> = Dialog { title = "Outline Gradient" }
@@ -168,7 +167,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "ok",
     text = "&OK",
-    focus = defaults.pullFocus,
+    focus = true,
     onclick = function()
         local printElapsed <const> = false
         local startTime <const> = os.clock()

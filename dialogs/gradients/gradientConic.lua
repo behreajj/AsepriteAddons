@@ -8,7 +8,6 @@ local defaults <const> = {
     angle = 90,
     cw = false,
     isCyclic = false,
-    pullFocus = true
 }
 
 local dlg <const> = Dialog { title = "Sweep Gradient" }
@@ -63,7 +62,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "confirm",
     text = "&OK",
-    focus = defaults.pullFocus,
+    focus = true,
     onclick = function()
         local site <const> = app.site
         local activeSprite = site.sprite

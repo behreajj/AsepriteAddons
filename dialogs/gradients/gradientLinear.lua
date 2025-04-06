@@ -12,10 +12,6 @@ if app.preferences then
     end
 end
 
-local defaults <const> = {
-    pullFocus = true
-}
-
 local dlg <const> = Dialog { title = "Linear Gradient" }
 
 local gradient <const> = GradientUtilities.dialogWidgets(dlg, true)
@@ -30,7 +26,7 @@ CanvasUtilities.graphLine(
 dlg:button {
     id = "confirm",
     text = "&OK",
-    focus = defaults.pullFocus,
+    focus = true,
     onclick = function()
         local site <const> = app.site
         local activeSprite = site.sprite
