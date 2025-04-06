@@ -623,16 +623,11 @@ dlg:button {
             while h < lenTileSets do
                 h = h + 1
                 local tileSet <const> = tileSets[h]
-                local tsId = 0
-                local tileSetProps <const> = tileSet.properties
-                if tileSetProps["id"] then
-                    tsId = tileSetProps["id"] --[[@as integer]]
-                else
-                    tsId = rng(minint64, maxint64)
-                    tileSet.properties["id"] = tsId
-                end
-            end
-        end)
+                if tileSet.properties["id"] == nil then
+                    tileSet.properties["id"] = rng(minint64, maxint64)
+                end -- End id property is nil.
+            end     -- End tile sets loop.
+        end)        -- End transaction.
 
         -- For meta data export.
         ---@type table<integer, table>
