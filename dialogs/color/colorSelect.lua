@@ -740,10 +740,9 @@ dlg:button {
                     if cmIsIdx then
                         refInt = c
                         if c >= 0 and c < lenPalette then
-                            local aseColor <const> = palette:getColor(c)
-                            refClr = aseColorToClr(aseColor)
+                            refClr = aseColorToClr(palette:getColor(c))
                         else
-                            refClr = Clr.new(0, 0, 0, 0)
+                            refClr = Clr.new(0.0, 0.0, 0.0, 0.0)
                         end
                     elseif cmIsGry then
                         refInt = c
@@ -775,23 +774,21 @@ dlg:button {
                 if colorMode == ColorMode.INDEXED then
                     eval = function(c8)
                         if c8 >= 0 and c8 < lenPalette then
-                            local aseColor <const> = palette:getColor(c8)
-                            local srgb <const> = aseColorToClr(aseColor)
-                            local lab <const> = sRgbaToLab(srgb)
-                            return distSq(lab, refLab, tScl) <= tolsq
+                            return distSq(sRgbaToLab(aseColorToClr(
+                                palette:getColor(c8))), refLab, tScl) <= tolsq
                         end
                         return false
                     end
                 elseif colorMode == ColorMode.GRAY then
                     eval = function(c16)
-                        local lab <const> = sRgbaToLab(fromHex16(c16))
-                        return distSq(lab, refLab, tScl) <= tolsq
+                        return distSq(sRgbaToLab(fromHex16(c16)),
+                            refLab, tScl) <= tolsq
                     end
                 else
                     -- Default to RGB color mode.
                     eval = function(c32)
-                        local lab <const> = sRgbaToLab(fromHex32(c32))
-                        return distSq(lab, refLab, tScl) <= tolsq
+                        return distSq(sRgbaToLab(fromHex32(c32)),
+                            refLab, tScl) <= tolsq
                     end
                 end
             end
