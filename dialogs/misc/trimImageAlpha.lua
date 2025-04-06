@@ -8,7 +8,6 @@ local defaults <const> = {
     includeLocked = false,
     includeHidden = true,
     includeTiles = true,
-    pullFocus = false
 }
 
 local dlg <const> = Dialog { title = "Trim Image Alpha" }
@@ -58,7 +57,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "confirm",
     text = "&OK",
-    focus = defaults.pullFocus,
+    focus = false,
     onclick = function()
         local site <const> = app.site
         local activeSprite <const> = site.sprite

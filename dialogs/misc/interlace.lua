@@ -27,7 +27,6 @@ local defaults <const> = {
     xPick = 0,
     yPick = 0,
     aPick = 255,
-    pullFocus = false
 }
 
 local dlg <const> = Dialog { title = "Interlace" }
@@ -165,7 +164,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "confirm",
     text = "&OK",
-    focus = defaults.pullFocus,
+    focus = false,
     onclick = function()
         local site <const> = app.site
         local activeSprite <const> = site.sprite

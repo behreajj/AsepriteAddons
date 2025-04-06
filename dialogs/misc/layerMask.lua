@@ -8,7 +8,6 @@ local defaults <const> = {
     trimCels = false,
     delOver = "HIDE",
     delUnder = "HIDE",
-    pullFocus = false
 }
 
 local dlg <const> = Dialog { title = "Layer Mask" }
@@ -60,7 +59,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "confirm",
     text = "&OK",
-    focus = defaults.pullFocus,
+    focus = false,
     onclick = function()
         local site <const> = app.site
         local activeSprite <const> = site.sprite

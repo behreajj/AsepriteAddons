@@ -38,7 +38,6 @@ local defaults <const> = {
     scale = 2,
     leading = 0,
     printElapsed = false,
-    pullFocus = false
 }
 
 local dlg <const> = Dialog { title = "Insert Text" }
@@ -205,7 +204,7 @@ dlg:check {
 dlg:button {
     id = "confirm",
     text = "&OK",
-    focus = defaults.pullFocus,
+    focus = false,
     onclick = function()
         -- Begin measuring elapsed time.
         local args <const> = dlg.data
