@@ -13,7 +13,6 @@ local continuityOps <const> = { "NUMERIC", "VISUAL" }
 local defaults <const> = {
     colorSpaceType = "SRGB",
     continuityOp = "VISUAL",
-    pullFocus = false
 }
 
 local dlg <const> = Dialog { title = "Set Color Profile" }
@@ -57,7 +56,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "ok",
     text = "&OK",
-    focus = defaults.pullFocus,
+    focus = false,
     onclick = function()
         local activeSprite <const> = app.site.sprite
         if not activeSprite then

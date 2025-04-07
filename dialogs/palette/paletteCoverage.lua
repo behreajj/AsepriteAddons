@@ -35,7 +35,6 @@ local defaults <const> = {
     bkgColor = 0xff101010,
     frames = 32,
     fps = 24,
-    pullFocus = false
 }
 
 local dlg <const> = Dialog { title = "Palette Coverage" }
@@ -199,7 +198,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "confirm",
     text = "&OK",
-    focus = defaults.pullFocus,
+    focus = false,
     onclick = function()
         local args <const> = dlg.data
 

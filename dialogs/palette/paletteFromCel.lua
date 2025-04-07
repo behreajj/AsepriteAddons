@@ -30,7 +30,6 @@ local defaults <const> = {
     palTarget = "ACTIVE",
     paletteIndex = 1,
     clrSpacePreset = "LINEAR_RGB",
-    pullFocus = false
 }
 
 ---@param preset string

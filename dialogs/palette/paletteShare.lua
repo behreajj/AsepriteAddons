@@ -49,7 +49,6 @@ local defaults <const> = {
     prependMask = true,
     startIndex = 0,
     count = 256,
-    pullFocus = false
 }
 
 local dlg <const> = Dialog { title = "Share Palette" }
@@ -132,7 +131,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "confirm",
     text = "&OK",
-    focus = defaults.pullFocus,
+    focus = false,
     onclick = function()
         local openSprites <const> = app.sprites
         local lenOpenSprites <const> = #openSprites

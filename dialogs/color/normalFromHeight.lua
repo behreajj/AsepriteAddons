@@ -14,7 +14,6 @@ local defaults <const> = {
     showFlatMap = false,
     showGrayMap = false,
     preserveAlpha = false,
-    pullFocus = false
 }
 
 local dlg <const> = Dialog { title = "Normal From Height Map" }
@@ -101,7 +100,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "confirm",
     text = "&OK",
-    focus = defaults.pullFocus,
+    focus = false,
     onclick = function()
         -- Early returns.
         local activeSprite <const> = app.site.sprite

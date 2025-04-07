@@ -51,7 +51,6 @@ local defaults <const> = {
     yGrid = 0,
     wGrid = 20,
     hGrid = 20,
-    pullFocus = true,
     maxSize = 32767
 }
 
@@ -290,7 +289,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "confirm",
     text = "&OK",
-    focus = defaults.pullFocus,
+    focus = true,
     onclick = function()
         local args <const> = dlg.data
         local scale = args.aspectScale

@@ -2,7 +2,6 @@ local defaults <const> = {
     delete = 1,
     skip = 1,
     offset = 0,
-    pullFocus = false
 }
 
 local dlg <const> = Dialog { title = "Reduce Frames" }
@@ -40,7 +39,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "confirm",
     text = "&OK",
-    focus = defaults.pullFocus,
+    focus = false,
     onclick = function()
         local activeSprite <const> = app.site.sprite
         if not activeSprite then

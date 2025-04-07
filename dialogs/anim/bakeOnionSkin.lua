@@ -17,7 +17,6 @@ local defaults <const> = {
     useTint = true,
     foreTint = Color { r = 0, g = 0, b = 255, a = 128 },
     backTint = Color { r = 255, g = 0, b = 0, a = 128 },
-    pullFocus = false
 }
 
 local dlg <const> = Dialog { title = "Bake Onion Skin" }
@@ -133,7 +132,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "confirm",
     text = "&OK",
-    focus = defaults.pullFocus,
+    focus = false,
     onclick = function()
         local site <const> = app.site
         local activeSprite <const> = site.sprite

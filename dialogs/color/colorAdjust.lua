@@ -38,7 +38,6 @@ local defaults <const> = {
     aInvert = false,
     bInvert = false,
     alphaInvert = false,
-    pullFocus = false,
     barWidth = 240 // screenScale,
     barHeight = 16 // screenScale,
     reticleSize = 3 / screenScale,
@@ -591,7 +590,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "adjustButton",
     text = "&OK",
-    focus = defaults.pullFocus,
+    focus = false,
     onclick = function()
         -- Early returns.
         local site <const> = app.site
