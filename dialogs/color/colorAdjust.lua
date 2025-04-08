@@ -261,21 +261,25 @@ dlg:canvas {
         -- local h = active.hAdj - 0.5
         local lchTosRgb <const> = Clr.srLchTosRgb
         local toHex <const> = Clr.toHex
+        local strpack <const> = string.pack
 
         local ctx <const> = event.context
         local barWidth <const> = ctx.width
         local barHeight <const> = ctx.height
         active.lBarWidth = barWidth
 
-        local xToLight <const> = barWidth > 1 and 100.0 / (barWidth - 1.0) or 0.0
-        local img <const> = Image(barWidth, 1, ColorMode.RGB)
-        -- TODO: Update to remove pixel iterator.
-        local pxItr <const> = img:pixels()
-        for pixel in pxItr do
-            local xLight <const> = pixel.x * xToLight
-            pixel(toHex(lchTosRgb(xLight, 0.0, 0.0, 1.0)))
+        local xtol <const> = barWidth > 1 and 100.0 / (barWidth - 1.0) or 0.0
+        ---@type string[]
+        local bytes <const> = {}
+        local i = 0
+        while i < barWidth do
+            local xl <const> = i * xtol
+            bytes[1 + i] = strpack("<I4", toHex(lchTosRgb(xl, 0.0, 0.0, 1.0)))
+            i = i + 1
         end
 
+        local img <const> = Image(barWidth, 1, ColorMode.RGB)
+        img.bytes = table.concat(bytes)
         ctx:drawImage(img,
             Rectangle(0, 0, barWidth, 1),
             Rectangle(0, 0, barWidth, barHeight))
@@ -317,20 +321,25 @@ dlg:canvas {
         local h <const> = active.hAdj - 0.5
         local lchTosRgb <const> = Clr.srLchTosRgb
         local toHex <const> = Clr.toHex
+        local strpack <const> = string.pack
 
         local ctx <const> = event.context
         local barWidth <const> = ctx.width
         local barHeight <const> = ctx.height
         active.cBarWidth = barWidth
 
-        local xToChroma <const> = barWidth > 1 and cub / (barWidth - 1.0) or 0.0
-        local img <const> = Image(barWidth, 1, ColorMode.RGB)
-        -- TODO: Update to remove pixel iterator.
-        local pxItr <const> = img:pixels()
-        for pixel in pxItr do
-            local c <const> = pixel.x * xToChroma
-            pixel(toHex(lchTosRgb(50.0, c, h, 1.0)))
+        local xtoc <const> = barWidth > 1 and cub / (barWidth - 1.0) or 0.0
+        ---@type string[]
+        local bytes <const> = {}
+        local i = 0
+        while i < barWidth do
+            local xc <const> = i * xtoc
+            bytes[1 + i] = strpack("<I4", toHex(lchTosRgb(50.0, xc, h, 1.0)))
+            i = i + 1
         end
+
+        local img <const> = Image(barWidth, 1, ColorMode.RGB)
+        img.bytes = table.concat(bytes)
         ctx:drawImage(img,
             Rectangle(0, 0, barWidth, 1),
             Rectangle(0, 0, barWidth, barHeight))
@@ -433,6 +442,7 @@ dlg:canvas {
 
         local labTosRgb <const> = Clr.srLab2TosRgb
         local toHex <const> = Clr.toHex
+        local strpack <const> = string.pack
 
         local ctx <const> = event.context
         local barWidth <const> = ctx.width
@@ -440,20 +450,24 @@ dlg:canvas {
         active.aBarWidth = barWidth
 
         local xToFac <const> = barWidth > 1 and 1.0 / (barWidth - 1.0) or 0.0
-        local img <const> = Image(barWidth, 1, ColorMode.RGB)
-        -- TODO: Update to remove pixel iterator.
-        local pxItr <const> = img:pixels()
-        for pixel in pxItr do
-            local xFac <const> = pixel.x * xToFac
+        ---@type string[]
+        local bytes <const> = {}
+        local i = 0
+        while i < barWidth do
+            local xFac <const> = i * xToFac
             local a <const> = (1.0 - xFac) * visMin + xFac * visMax
-            pixel(toHex(labTosRgb(50.0, a, 0.0, 1.0)))
+            bytes[1 + i] = strpack("<I4", toHex(labTosRgb(50.0, a, 0.0, 1.0)))
+            i = i + 1
         end
 
-        local a01 <const> = (active.aAdj - alb) / (aub - alb)
-        local wt <const> = Color { r = 255, g = 255, b = 255, a = 255 }
+        local img <const> = Image(barWidth, 1, ColorMode.RGB)
+        img.bytes = table.concat(bytes)
         ctx:drawImage(img,
             Rectangle(0, 0, barWidth, 1),
             Rectangle(0, 0, barWidth, barHeight))
+
+        local a01 <const> = (active.aAdj - alb) / (aub - alb)
+        local wt <const> = Color { r = 255, g = 255, b = 255, a = 255 }
         CanvasUtilities.drawSliderReticle(
             ctx, a01, barWidth, barHeight,
             wt, reticleSize)
@@ -487,6 +501,7 @@ dlg:canvas {
 
         local labTosRgb <const> = Clr.srLab2TosRgb
         local toHex <const> = Clr.toHex
+        local strpack <const> = string.pack
 
         local ctx <const> = event.context
         local barWidth <const> = ctx.width
@@ -494,20 +509,24 @@ dlg:canvas {
         active.bBarWidth = barWidth
 
         local xToFac <const> = barWidth > 1 and 1.0 / (barWidth - 1.0) or 0.0
-        local img <const> = Image(barWidth, 1, ColorMode.RGB)
-        -- TODO: Update to remove pixel iterator.
-        local pxItr <const> = img:pixels()
-        for pixel in pxItr do
-            local xFac <const> = pixel.x * xToFac
+        ---@type string[]
+        local bytes <const> = {}
+        local i = 0
+        while i < barWidth do
+            local xFac <const> = i * xToFac
             local b <const> = (1.0 - xFac) * visMin + xFac * visMax
-            pixel(toHex(labTosRgb(50.0, 0.0, b, 1.0)))
+            bytes[1 + i] = strpack("<I4", toHex(labTosRgb(50.0, 0.0, b, 1.0)))
+            i = i + 1
         end
 
-        local b01 <const> = (active.bAdj - blb) / (bub - blb)
-        local wt <const> = Color { r = 255, g = 255, b = 255, a = 255 }
+        local img <const> = Image(barWidth, 1, ColorMode.RGB)
+        img.bytes = table.concat(bytes)
         ctx:drawImage(img,
             Rectangle(0, 0, barWidth, 1),
             Rectangle(0, 0, barWidth, barHeight))
+
+        local wt <const> = Color { r = 255, g = 255, b = 255, a = 255 }
+        local b01 <const> = (active.bAdj - blb) / (bub - blb)
         CanvasUtilities.drawSliderReticle(
             ctx, b01, barWidth, barHeight,
             wt, reticleSize)
