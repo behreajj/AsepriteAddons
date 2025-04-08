@@ -269,22 +269,27 @@ dlg:canvas {
         active.lBarWidth = barWidth
 
         local xtol <const> = barWidth > 1 and 100.0 / (barWidth - 1.0) or 0.0
+        local lAdj <const> = active.lAdj
+
         ---@type string[]
         local bytes <const> = {}
         local i = 0
         while i < barWidth do
             local xl <const> = i * xtol
-            bytes[1 + i] = strpack("<I4", toHex(lchTosRgb(xl, 0.0, 0.0, 1.0)))
+            local h0 <const> = toHex(lchTosRgb(xl, 0.0, 0.0, 1.0))
+            bytes[1 + i] = strpack("<I4", h0)
+
+            local h1 <const> = toHex(lchTosRgb(xl + lAdj, 0.0, 0.0, 1.0))
+            bytes[barWidth + 1 + i] = strpack("<I4", h1)
             i = i + 1
         end
 
-        local img <const> = Image(barWidth, 1, ColorMode.RGB)
+        local img <const> = Image(barWidth, 2, ColorMode.RGB)
         img.bytes = table.concat(bytes)
         ctx:drawImage(img,
-            Rectangle(0, 0, barWidth, 1),
+            Rectangle(0, 0, barWidth, 2),
             Rectangle(0, 0, barWidth, barHeight))
 
-        local lAdj <const> = active.lAdj
         local l01 <const> = lAdj * 0.005 + 0.5
         local bk <const> = Color { r = 0, g = 0, b = 0, a = 255 }
         local wt <const> = Color { r = 255, g = 255, b = 255, a = 255 }
@@ -329,22 +334,28 @@ dlg:canvas {
         active.cBarWidth = barWidth
 
         local xtoc <const> = barWidth > 1 and cub / (barWidth - 1.0) or 0.0
+        local cAdj <const> = active.cAdj
+
         ---@type string[]
         local bytes <const> = {}
         local i = 0
         while i < barWidth do
             local xc <const> = i * xtoc
-            bytes[1 + i] = strpack("<I4", toHex(lchTosRgb(50.0, xc, h, 1.0)))
+            local h0 <const> = toHex(lchTosRgb(50.0, xc, h, 1.0))
+            bytes[1 + i] = strpack("<I4", h0)
+
+            local h1 <const> = toHex(lchTosRgb(50.0, xc + cAdj, h, 1.0))
+            bytes[barWidth + 1 + i] = strpack("<I4", h1)
             i = i + 1
         end
 
-        local img <const> = Image(barWidth, 1, ColorMode.RGB)
+        local img <const> = Image(barWidth, 2, ColorMode.RGB)
         img.bytes = table.concat(bytes)
         ctx:drawImage(img,
-            Rectangle(0, 0, barWidth, 1),
+            Rectangle(0, 0, barWidth, 2),
             Rectangle(0, 0, barWidth, barHeight))
 
-        local c01 <const> = (active.cAdj - clb) / (cub - clb)
+        local c01 <const> = (cAdj - clb) / (cub - clb)
         local wt <const> = Color { r = 255, g = 255, b = 255, a = 255 }
         CanvasUtilities.drawSliderReticle(
             ctx, c01, barWidth, barHeight,
@@ -391,13 +402,11 @@ dlg:canvas {
         local i = 0
         while i < barWidth do
             local xHue <const> = i * xToHue + 0.5
-            local clr0 <const> = lchTosRgb(50.0, c, xHue, 1.0)
-            local hex0 <const> = toHex(clr0)
-            bytes[1 + i] = strpack("<I4", hex0)
+            local h0 <const> = toHex(lchTosRgb(50.0, c, xHue, 1.0))
+            bytes[1 + i] = strpack("<I4", h0)
 
-            local clr1 <const> = lchTosRgb(50.0, c, xHue + hAdj, 1.0)
-            local hex1 <const> = toHex(clr1)
-            bytes[barWidth + 1 + i] = strpack("<I4", hex1)
+            local h1 <const> = toHex(lchTosRgb(50.0, c, xHue + hAdj, 1.0))
+            bytes[barWidth + 1 + i] = strpack("<I4", h1)
 
             i = i + 1
         end
@@ -450,23 +459,29 @@ dlg:canvas {
         active.aBarWidth = barWidth
 
         local xToFac <const> = barWidth > 1 and 1.0 / (barWidth - 1.0) or 0.0
+        local aAdj <const> = active.aAdj
+
         ---@type string[]
         local bytes <const> = {}
         local i = 0
         while i < barWidth do
             local xFac <const> = i * xToFac
             local a <const> = (1.0 - xFac) * visMin + xFac * visMax
-            bytes[1 + i] = strpack("<I4", toHex(labTosRgb(50.0, a, 0.0, 1.0)))
+            local h0 <const> = toHex(labTosRgb(50.0, a, 0.0, 1.0))
+            bytes[1 + i] = strpack("<I4", h0)
+
+            local h1 <const> = toHex(labTosRgb(50.0, a + aAdj, 0.0, 1.0))
+            bytes[barWidth + 1 + i] = strpack("<I4", h1)
             i = i + 1
         end
 
-        local img <const> = Image(barWidth, 1, ColorMode.RGB)
+        local img <const> = Image(barWidth, 2, ColorMode.RGB)
         img.bytes = table.concat(bytes)
         ctx:drawImage(img,
-            Rectangle(0, 0, barWidth, 1),
+            Rectangle(0, 0, barWidth, 2),
             Rectangle(0, 0, barWidth, barHeight))
 
-        local a01 <const> = (active.aAdj - alb) / (aub - alb)
+        local a01 <const> = (aAdj - alb) / (aub - alb)
         local wt <const> = Color { r = 255, g = 255, b = 255, a = 255 }
         CanvasUtilities.drawSliderReticle(
             ctx, a01, barWidth, barHeight,
@@ -509,20 +524,26 @@ dlg:canvas {
         active.bBarWidth = barWidth
 
         local xToFac <const> = barWidth > 1 and 1.0 / (barWidth - 1.0) or 0.0
+        local bAdj <const> = active.bAdj
+
         ---@type string[]
         local bytes <const> = {}
         local i = 0
         while i < barWidth do
             local xFac <const> = i * xToFac
             local b <const> = (1.0 - xFac) * visMin + xFac * visMax
-            bytes[1 + i] = strpack("<I4", toHex(labTosRgb(50.0, 0.0, b, 1.0)))
+            local h0 <const> = toHex(labTosRgb(50.0, 0.0, b, 1.0))
+            bytes[1 + i] = strpack("<I4", h0)
+
+            local h1 <const> = toHex(labTosRgb(50.0, 0.0, b + bAdj, 1.0))
+            bytes[barWidth + 1 + i] = strpack("<I4", h1)
             i = i + 1
         end
 
-        local img <const> = Image(barWidth, 1, ColorMode.RGB)
+        local img <const> = Image(barWidth, 2, ColorMode.RGB)
         img.bytes = table.concat(bytes)
         ctx:drawImage(img,
-            Rectangle(0, 0, barWidth, 1),
+            Rectangle(0, 0, barWidth, 2),
             Rectangle(0, 0, barWidth, barHeight))
 
         local wt <const> = Color { r = 255, g = 255, b = 255, a = 255 }
