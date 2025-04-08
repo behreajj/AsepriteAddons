@@ -414,6 +414,7 @@ dlg:canvas {
         local lchTosRgb <const> = defaults.lchTosRgb
         local isInGamut <const> = Clr.rgbIsInGamut
         local toHex <const> = Clr.toHex
+        local strpack <const> = string.pack
 
         local ctx <const> = event.context
         ctx.blendMode = BlendMode.SRC
@@ -424,19 +425,22 @@ dlg:canvas {
         active.lBarWidth = barWidth
 
         local xToLight <const> = barWidth > 1 and 100.0 / (barWidth - 1.0) or 0.0
-        local img <const> = Image(barWidth, 1, ColorMode.RGB)
-        -- TODO: Update to remove pixel iterator.
-        local pxItr <const> = img:pixels()
-        for pixel in pxItr do
-            local xLight <const> = pixel.x * xToLight
+
+        ---@type string[]
+        local bytes <const> = {}
+        local i = 0
+        while i < barWidth do
+            local xLight <const> = i * xToLight
             local srgb <const> = lchTosRgb(xLight, c, h, 1.0)
-            if isInGamut(srgb, inGamutEps) then
-                pixel(toHex(srgb))
-            else
-                pixel(bkgHex)
-            end
+            local hex <const> = isInGamut(srgb, inGamutEps)
+                and toHex(srgb)
+                or bkgHex
+            bytes[1 + i] = strpack("<I4", hex)
+            i = i + 1
         end
 
+        local img <const> = Image(barWidth, 1, ColorMode.RGB)
+        img.bytes = table.concat(bytes)
         ctx:drawImage(img,
             Rectangle(0, 0, barWidth, 1),
             Rectangle(0, 0, barWidth, barHeight))
@@ -481,6 +485,7 @@ dlg:canvas {
         local lchTosRgb <const> = defaults.lchTosRgb
         local isInGamut <const> = Clr.rgbIsInGamut
         local toHex <const> = Clr.toHex
+        local strpack <const> = string.pack
 
         local ctx <const> = event.context
         ctx.blendMode = BlendMode.SRC
@@ -491,19 +496,22 @@ dlg:canvas {
         active.cBarWidth = barWidth
 
         local xToChroma <const> = barWidth > 1 and maxChroma / (barWidth - 1.0) or 0.0
-        local img <const> = Image(barWidth, 1, ColorMode.RGB)
-        -- TODO: Update to remove pixel iterator.
-        local pxItr <const> = img:pixels()
-        for pixel in pxItr do
-            local xChroma <const> = pixel.x * xToChroma
+
+        ---@type string[]
+        local bytes <const> = {}
+        local i = 0
+        while i < barWidth do
+            local xChroma <const> = i * xToChroma
             local srgb <const> = lchTosRgb(l, xChroma, h, 1.0)
-            if isInGamut(srgb, inGamutEps) then
-                pixel(toHex(srgb))
-            else
-                pixel(bkgHex)
-            end
+            local hex <const> = isInGamut(srgb, inGamutEps)
+                and toHex(srgb)
+                or bkgHex
+            bytes[1 + i] = strpack("<I4", hex)
+            i = i + 1
         end
 
+        local img <const> = Image(barWidth, 1, ColorMode.RGB)
+        img.bytes = table.concat(bytes)
         ctx:drawImage(img,
             Rectangle(0, 0, barWidth, 1),
             Rectangle(0, 0, barWidth, barHeight))
@@ -547,6 +555,7 @@ dlg:canvas {
         local lchTosRgb <const> = defaults.lchTosRgb
         local isInGamut <const> = Clr.rgbIsInGamut
         local toHex <const> = Clr.toHex
+        local strpack <const> = string.pack
 
         local ctx <const> = event.context
         ctx.blendMode = BlendMode.SRC
@@ -557,19 +566,22 @@ dlg:canvas {
         active.hBarWidth = barWidth
 
         local xToHue <const> = barWidth > 1 and 1.0 / (barWidth - 1.0) or 0.0
-        local img <const> = Image(barWidth, 1, ColorMode.RGB)
-        -- TODO: Update to remove pixel iterator.
-        local pxItr <const> = img:pixels()
-        for pixel in pxItr do
-            local xHue <const> = pixel.x * xToHue
+
+        ---@type string[]
+        local bytes <const> = {}
+        local i = 0
+        while i < barWidth do
+            local xHue <const> = i * xToHue
             local srgb <const> = lchTosRgb(l, c, xHue, 1.0)
-            if isInGamut(srgb, inGamutEps) then
-                pixel(toHex(srgb))
-            else
-                pixel(bkgHex)
-            end
+            local hex <const> = isInGamut(srgb, inGamutEps)
+                and toHex(srgb)
+                or bkgHex
+            bytes[1 + i] = strpack("<I4", hex)
+            i = i + 1
         end
 
+        local img <const> = Image(barWidth, 1, ColorMode.RGB)
+        img.bytes = table.concat(bytes)
         ctx:drawImage(img,
             Rectangle(0, 0, barWidth, 1),
             Rectangle(0, 0, barWidth, barHeight))
