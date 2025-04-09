@@ -348,10 +348,17 @@ dlg:button {
         local lLtZero <const> = lNormalizei < 0
         local tNorm <const> = abs(lNormalizei * 0.01)
         local uNorm <const> = 1.0 - tNorm
+
+        -- Only applicable for the positive factor.
         local lRange <const> = abs(lMax - lMin)
-        local lDenom <const> = lRange ~= 0.0 and 1.0 / lRange or 0.0
-        local tlDenom <const> = tNorm * 100.0 * lDenom
-        local tlOff <const> = lMin * tlDenom
+        local tlDenom <const> = lRange ~= 0.0
+            and tNorm * 100.0 / lRange
+            or tNorm
+        local tlOff <const> = lRange ~= 0.0
+            and lMin * tlDenom
+            or 0.0
+
+        -- Only applicable for negative factor.
         local lMean <const> = tally ~= 0.0 and lSum / tally or 0.0
         local tlMean <const> = tNorm * lMean
 
