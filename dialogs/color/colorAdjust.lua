@@ -1,14 +1,6 @@
 dofile("../../support/aseutilities.lua")
 dofile("../../support/canvasutilities.lua")
 
---[[Standardization is not the same as normalization.
-For standardization, a range's average must be found,
-then its standard deviation must be found:
-sqrt ( sum( ( arr[i] - mean ) ^ 2 / len ) )
-Then each element must be recalculated:
-elm[i]' = (elm[i] - mean) / std .
-]]
-
 local screenScale = 1
 if app.preferences then
     local generalPrefs <const> = app.preferences.general
@@ -24,11 +16,7 @@ local targets <const> = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
 local modes <const> = { "LAB", "LCH" }
 
 local defaults <const> = {
-    -- TODO: Separate frame target and layer target. See convention est.
-    -- by colorReplace (the relevant difference being that replace edits
-    -- a layer as is.)
-
-    -- TODO: Separate normalize and contrast into its own method.
+    -- TODO: Separate invert lab into its own method.
 
     target = "ACTIVE",
     mode = "LCH",

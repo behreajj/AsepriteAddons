@@ -1,3 +1,13 @@
+dofile("../../support/aseutilities.lua")
+
+--[[Standardization is not the same as normalization.
+For standardization, a range's average must be found,
+then its standard deviation must be found:
+sqrt ( sum( ( arr[i] - mean ) ^ 2 / len ) )
+Then each element must be recalculated:
+elm[i]' = (elm[i] - mean) / std .
+]]
+
 local targets <const> = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
 local modes <const> = {
     "L_NORMALIZE",
