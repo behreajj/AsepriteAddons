@@ -47,20 +47,15 @@ local function opaque(srcImg, threshold, absOpaque, usePremul)
         while i < len do
             local i4 <const> = i * 4
 
-            local r8, g8, b8 = 0, 0, 0
-            local a8 = strbyte(bytes, 4 + i4)
-            -- TODO: This interferes with premultiply.
-            a8 = a8 >= threshold and 255 or 0
-
-            if absOpaque or a8 > 0 then
-                r8, g8, b8 = strbyte(bytes, 1 + i4, 3 + i4)
-                if usePremul then
-                    r8 = (r8 * a8) // 255
-                    g8 = (g8 * a8) // 255
-                    b8 = (b8 * a8) // 255
-                end
-                a8 = 255
+            local r8, g8, b8, a8 = strbyte(bytes, 1 + i4, 4 + i4)
+            if usePremul then
+                r8 = (r8 * a8) // 255
+                g8 = (g8 * a8) // 255
+                b8 = (b8 * a8) // 255
+            elseif a8 < threshold then
+                r8, g8, b8 = 0, 0, 0
             end
+            a8 = (absOpaque or a8 >= threshold) and 255 or 0
 
             i = i + 1
             strBytes[i] = strpack("B B B B", r8, g8, b8, a8)
@@ -70,16 +65,13 @@ local function opaque(srcImg, threshold, absOpaque, usePremul)
         while i < len do
             local i2 <const> = i + i
 
-            local v8 = 0
-            local a8 = strbyte(bytes, 2 + i2)
-            -- TODO: This interferes with premultiply.
-            a8 = a8 >= threshold and 255 or 0
-
-            if absOpaque or a8 > 0 then
-                v8 = strbyte(bytes, 1 + i2)
-                if usePremul then v8 = (v8 * a8) // 255 end
-                a8 = 255
+            local v8, a8 = strbyte(bytes, 1 + i2, 2 + i2)
+            if usePremul then
+                v8 = (v8 * a8) // 255
+            elseif a8 < threshold then
+                v8 = 0
             end
+            a8 = (absOpaque or a8 >= threshold) and 255 or 0
 
             i = i + 1
             strBytes[i] = strpack("B B", v8, a8)
