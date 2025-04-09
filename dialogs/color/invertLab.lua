@@ -3,7 +3,6 @@ dofile("../../support/aseutilities.lua")
 local targets <const> = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
 
 local defaults <const> = {
-    -- TODO: Option to trim image alpha?
     target = "ACTIVE",
     lInvert = 0,
     aInvert = 0,
@@ -11,6 +10,7 @@ local defaults <const> = {
     tInvert = 0,
     ignoreSrcMask = false,
     fixZeroAlpha = true,
+    useTrim = false,
 }
 
 local dlg <const> = Dialog { title = "Invert Lab" }
@@ -71,16 +71,25 @@ dlg:newrow { always = false }
 
 dlg:check {
     id = "ignoreSrcMask",
-    text = "Ignore Source",
+    text = "Ignore Mask",
     selected = defaults.ignoreSrcMask,
+}
+
+dlg:check {
+    id = "fixZeroAlpha",
+    text = "Fix Zero",
+    selected = defaults.fixZeroAlpha,
 }
 
 dlg:newrow { always = false }
 
 dlg:check {
-    id = "fixZeroAlpha",
-    text = "Fix Target",
-    selected = defaults.fixZeroAlpha,
+    id = "useTrim",
+    label = "Trim:",
+    text = "Layer Ed&ges",
+    selected = defaults.useTrim,
+    visible = true,
+    focus = false
 }
 
 dlg:newrow { always = false }
@@ -125,6 +134,7 @@ dlg:button {
             or defaults.tInvert --[[@as integer]]
         local fixZeroAlpha <const> = args.fixZeroAlpha --[[@as boolean]]
         local ignoreSrcMask <const> = args.ignoreSrcMask --[[@as boolean]]
+        local useTrim <const> = args.useTrim --[[@as boolean]]
 
         if lInverti == 0
             and aInverti == 0
@@ -197,6 +207,7 @@ dlg:button {
 
         -- Cache methods used in loops.
         local tilesToImage <const> = AseUtilities.tileMapToImage
+        local trimImageAlpha <const> = AseUtilities.trimImageAlpha
         local fromHex <const> = Clr.fromHexAbgr32
         local toHex <const> = Clr.toHex
         local labTosRgba <const> = Clr.srLab2TosRgb
@@ -227,18 +238,22 @@ dlg:button {
                 local frIdx <const> = frIdcs[i]
                 local srcCel <const> = srcLayer:cel(frIdx)
                 if srcCel then
-                    local srcPos = srcCel.position
                     local srcImg = srcCel.image
 
                     if isTileMap then
                         srcImg = tilesToImage(srcImg, tileSet, ColorMode.RGB)
                     end
 
+                    local srcPos <const> = srcCel.position
+                    local xtlSrc = srcPos.x
+                    local ytlSrc = srcPos.y
+
                     if blitToCanvas then
                         local blit <const> = Image(activeSpec)
                         blit:drawImage(srcImg, srcPos, 255, BlendMode.SRC)
                         srcImg = blit
-                        srcPos = Point(0, 0)
+                        xtlSrc = 0
+                        ytlSrc = 0
                     end
 
                     local srcBytes <const> = srcImg.bytes
@@ -296,11 +311,23 @@ dlg:button {
                         trgByteArr[j] = strpack("<I4", trgAbgr32)
                     end -- End pixels loop.
 
-                    local trgImg <const> = Image(srcSpec)
+                    local trgImg = Image(srcSpec)
                     trgImg.bytes = tconcat(trgByteArr)
 
+                    local xtlTrg = xtlSrc
+                    local ytlTrg = ytlSrc
+                    if useTrim then
+                        local alphaIndex <const> = srcSpec.transparentColor
+                        local trimmed <const>,
+                        xtlTrm <const>,
+                        ytlTrm <const> = trimImageAlpha(trgImg, 0, alphaIndex)
+                        xtlTrg = xtlTrg + xtlTrm
+                        ytlTrg = ytlTrg + ytlTrm
+                        trgImg = trimmed
+                    end
+
                     local trgCel <const> = activeSprite:newCel(
-                        trgLayer, frIdx, trgImg, srcPos)
+                        trgLayer, frIdx, trgImg, Point(xtlTrg, ytlTrg))
                     trgCel.opacity = srcCel.opacity
                 end -- End source cel exists.
             end     -- End frames loop.
