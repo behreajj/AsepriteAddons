@@ -480,8 +480,7 @@ dlg:button {
                             -- end
                         end
 
-                        local srgbTrg <const> = labTosRgba(lTrg, aTrg, bTrg, tTrg)
-                        trgAbgr32 = toHex(srgbTrg)
+                        trgAbgr32 = toHex(labTosRgba(lTrg, aTrg, bTrg, tTrg))
                         srcToTrg[srcAbgr32] = trgAbgr32
                     end
 
