@@ -22,10 +22,10 @@ local defaults <const> = {
     lContrast = 0,
     cContrast = 0,
     sContrast = 0,
-    rangeLumEps = 0.07,
+    printElapsed = false,
 }
 
-local dlg <const> = Dialog { title = "Adjust Contrast" }
+local dlg <const> = Dialog { title = "Contrast" }
 
 dlg:combobox {
     id = "target",
@@ -107,11 +107,22 @@ dlg:slider {
 
 dlg:newrow { always = false }
 
+dlg:check {
+    id = "printElapsed",
+    label = "Print:",
+    text = "Diagnostic",
+    selected = defaults.printElapsed
+}
+
+dlg:newrow { always = false }
+
 dlg:button {
-    id = "adjustButton",
+    id = "confirm",
     text = "&OK",
     focus = true,
     onclick = function()
+        local startTime <const> = os.clock()
+
         -- Early returns.
         local site <const> = app.site
         local activeSprite <const> = site.sprite
@@ -358,14 +369,30 @@ dlg:button {
         -- local sRange <const> = abs(sMax - sMin)
 
         -- Create target layer.
-        app.transaction("Adjustment Layer", function()
+        app.transaction("Contrast Layer", function()
             local trgLayer <const> = activeSprite:newLayer()
             local srcLayerName = "Layer"
             if #srcLayer.name > 0 then
                 srcLayerName = srcLayer.name
             end
-            trgLayer.name = string.format(
-                "%s Adjusted", srcLayerName)
+
+            if useLNorm then
+                trgLayer.name = string.format(
+                    "%s Normalize %d",
+                    srcLayerName, lNormalizei)
+            elseif useLcCtr then
+                trgLayer.name = string.format(
+                    "%s Contrast L %d C %d",
+                    srcLayerName, lContrasti, cContrasti)
+            elseif useLsCtr then
+                trgLayer.name = string.format(
+                    "%s Contrast L %d S %d",
+                    srcLayerName, lContrasti, sContrasti)
+            else
+                trgLayer.name = string.format(
+                    "%s Contrast", srcLayerName)
+            end
+
             trgLayer.parent = AseUtilities.getTopVisibleParent(srcLayer)
             trgLayer.opacity = srcLayer.opacity or 255
             -- Do not copy blend mode, it only confuses things.
@@ -468,6 +495,20 @@ dlg:button {
         end
 
         app.refresh()
+
+        local printElapsed <const> = args.printElapsed --[[@as boolean]]
+        if printElapsed then
+            local endTime <const> = os.clock()
+            local elapsed <const> = endTime - startTime
+            app.alert {
+                title = "Diagnostic",
+                text = {
+                    string.format("Start: %.2f", startTime),
+                    string.format("End: %.2f", endTime),
+                    string.format("Elapsed: %.6f", elapsed)
+                }
+            }
+        end
     end
 }
 
