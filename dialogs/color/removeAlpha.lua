@@ -52,10 +52,15 @@ local function opaque(srcImg, threshold, absOpaque, usePremul)
                 r8 = (r8 * a8) // 255
                 g8 = (g8 * a8) // 255
                 b8 = (b8 * a8) // 255
-            elseif a8 < threshold then
-                r8, g8, b8 = 0, 0, 0
             end
-            a8 = (absOpaque or a8 >= threshold) and 255 or 0
+
+            if a8 < threshold then
+                r8, g8, b8, a8 = 0, 0, 0, 0
+            else
+                a8 = 255
+            end
+
+            a8 = absOpaque and 255 or a8
 
             i = i + 1
             strBytes[i] = strpack("B B B B", r8, g8, b8, a8)
@@ -68,10 +73,15 @@ local function opaque(srcImg, threshold, absOpaque, usePremul)
             local v8, a8 = strbyte(bytes, 1 + i2, 2 + i2)
             if usePremul then
                 v8 = (v8 * a8) // 255
-            elseif a8 < threshold then
-                v8 = 0
             end
-            a8 = (absOpaque or a8 >= threshold) and 255 or 0
+
+            if a8 < threshold then
+                v8, a8 = 0, 0
+            else
+                a8 = 255
+            end
+
+            a8 = absOpaque and 255 or a8
 
             i = i + 1
             strBytes[i] = strpack("B B", v8, a8)
