@@ -3,6 +3,7 @@ dofile("../../support/aseutilities.lua")
 local targets <const> = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
 
 local defaults <const> = {
+    -- TODO: Option to trim image alpha?
     target = "ACTIVE",
     lInvert = 0,
     aInvert = 0,
@@ -184,10 +185,11 @@ dlg:button {
         local bInv <const> = bInverti * 0.01
         local tInv <const> = tInverti * 0.01
 
-        local lCpl <const> = 1.0 - lInv
-        local aCpl <const> = 1.0 - aInv
-        local bCpl <const> = 1.0 - bInv
-        local tCpl <const> = 1.0 - tInv
+        local lInv100 <const> = lInv * 100.0
+        local lInv2 <const> = lInv + lInv
+        local aInv2 <const> = aInv + aInv
+        local bInv2 <const> = bInv + bInv
+        local tInv2 <const> = tInv + tInv
 
         local blitToCanvas <const> = tInverti > 0 or ignoreSrcMask
         local changeSrcZero <const> = not ignoreSrcMask
@@ -261,16 +263,27 @@ dlg:button {
                             local srcSrgb <const> = fromHex(srcAbgr32)
                             local tSrc <const> = srcSrgb.a
                             if changeSrcZero or tSrc > 0.0 then
-                                local tTrg <const> = tCpl * tSrc + tInv * (1.0 - tSrc)
+                                -- (1 - t) * a + t * (1 - a)
+                                -- a - ta + t - ta
+                                -- a + t - 2ta
+                                local tTrg <const> = tSrc + tInv - tInv2 * tSrc
+
                                 if changeTrgZero or tTrg > 0.0 then
                                     local srcLab <const> = sRgbaToLab(srcSrgb)
                                     local lSrc <const> = srcLab.l
                                     local aSrc <const> = srcLab.a
                                     local bSrc <const> = srcLab.b
 
-                                    local lTrg <const> = lCpl * lSrc + lInv * (100.0 - lSrc)
-                                    local aTrg <const> = aCpl * aSrc + aInv * -aSrc
-                                    local bTrg <const> = bCpl * bSrc + bInv * -bSrc
+                                    -- (1 - t) * l + t * (100 - l)
+                                    -- l - tl + t100 - tl
+                                    -- l + t100 - 2tl
+                                    local lTrg <const> = lSrc + lInv100 - lInv2 * lSrc
+
+                                    -- (1 - t) * a + t * -a
+                                    -- a - ta - ta
+                                    -- a - 2ta
+                                    local aTrg <const> = aSrc - aInv2 * aSrc
+                                    local bTrg <const> = bSrc - bInv2 * bSrc
 
                                     local srgbTrg <const> = labTosRgba(lTrg, aTrg, bTrg, tTrg)
                                     trgAbgr32 = toHex(srgbTrg)
