@@ -233,8 +233,6 @@ dlg:button {
 
         local tconcat <const> = table.concat
 
-        local rgbColorMode <const> = ColorMode.RGB
-
         local lMin = 2147483647
         -- local cMin = 2147483647
         -- local sMin = 2147483647
@@ -276,7 +274,7 @@ dlg:button {
             if srcCel then
                 local srcImg = srcCel.image
                 if isTileMap then
-                    srcImg = tilesToImage(srcImg, tileSet, rgbColorMode)
+                    srcImg = tilesToImage(srcImg, tileSet, ColorMode.RGB)
                 end
 
                 local srcBytes <const> = srcImg.bytes
@@ -328,7 +326,7 @@ dlg:button {
 
                 lenSources = lenSources + 1
                 srcImgs[lenSources] = srcImg
-                frIdx[lenSources] = frIdx
+                srcFrames[lenSources] = frIdx
                 srcPoses[lenSources] = srcCel.position
                 srcOpacities[lenSources] = srcCel.opacity
             end -- End cel exists.
@@ -388,22 +386,22 @@ dlg:button {
                 local srcSpec <const> = srcImg.spec
                 local wSrc <const> = srcSpec.width
                 local hSrc <const> = srcSpec.height
-                local areaSrc <const> = wSrc * hSrc
+                local area <const> = wSrc * hSrc
 
                 ---@type string[]
                 local trgByteArr <const> = {}
 
                 local j = 0
-                while j < areaSrc do
+                while j < area do
                     local j4 <const> = j * 4
-                    local abgr32Src <const> = strunpack("<I4", strsub(
+                    local srcAbgr32 <const> = strunpack("<I4", strsub(
                         srcBytes, 1 + j4, 4 + j4))
-                    local abgr32Trg = 0
+                    local trgAbgr32 = 0
 
-                    if srcToTrg[abgr32Src] then
-                        abgr32Trg = srcToTrg[abgr32Src]
+                    if srcToTrg[srcAbgr32] then
+                        trgAbgr32 = srcToTrg[srcAbgr32]
                     else
-                        local srcLab <const> = abgr32ToLab[abgr32Src]
+                        local srcLab <const> = abgr32ToLab[srcAbgr32]
                         local lSrc <const> = srcLab.l
                         local aSrc <const> = srcLab.a
                         local bSrc <const> = srcLab.b
@@ -444,12 +442,12 @@ dlg:button {
                         end
 
                         local srgbTrg <const> = labTosRgba(lTrg, aTrg, bTrg, tTrg)
-                        abgr32Trg = toHex(srgbTrg)
-                        srcToTrg[abgr32Src] = abgr32Trg
+                        trgAbgr32 = toHex(srgbTrg)
+                        srcToTrg[srcAbgr32] = trgAbgr32
                     end
 
                     j = j + 1
-                    trgByteArr[j] = strpack("<I4", abgr32Trg)
+                    trgByteArr[j] = strpack("<I4", trgAbgr32)
                 end -- End pixels loop.
 
                 local trgImg <const> = Image(srcSpec)
@@ -461,7 +459,7 @@ dlg:button {
             end -- End cels loop.
 
             app.layer = trgLayer
-        end) --End of transaction.
+        end) --End transaction.
 
         if removeSrcLayer then
             app.transaction("Delete Layer", function()
