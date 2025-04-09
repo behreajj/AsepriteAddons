@@ -60,7 +60,7 @@ dlg:newrow { always = false }
 
 dlg:slider {
     id = "lNormalize",
-    label = "Normalize:",
+    label = "Lightness:",
     focus = false,
     min = -100,
     max = 100,
@@ -133,9 +133,41 @@ dlg:button {
             return
         end
 
+        -- Unpack arguments.
         local args <const> = dlg.data
         local target <const> = args.target
             or defaults.target --[[@as string]]
+        local mode <const> = args.mode
+            or defaults.mode --[[@as string]]
+        local lNormalizei <const> = args.lNormalize
+            or defaults.lNormalize --[[@as integer]]
+        local lContrasti <const> = args.lContrast
+            or defaults.lContrast --[[@as integer]]
+        local cContrasti <const> = args.cContrast
+            or defaults.cContrast --[[@as integer]]
+        local sContrasti <const> = args.sContrast
+            or defaults.sContrast --[[@as integer]]
+
+        local useLNorm <const> = mode == "L_NORMALIZE"
+        local useLcCtr <const> = mode == "LC_CONTRAST"
+        local useLsCtr <const> = mode == "LS_CONTRAST"
+
+        if useLNorm
+            and lNormalizei == 0 then
+            return
+        end
+
+        if useLcCtr
+            and lContrasti == 0
+            and cContrasti == 0 then
+            return
+        end
+
+        if useLsCtr
+            and lContrasti == 0
+            and sContrasti == 0 then
+            return
+        end
 
         -- This needs to be done first, otherwise range will be lost.
         local isSelect <const> = target == "SELECTION"
@@ -184,39 +216,6 @@ dlg:button {
             tileSet = srcLayer.tileset
         end
 
-        -- Unpack arguments.
-        local mode <const> = args.mode
-            or defaults.mode --[[@as string]]
-        local lNormalizei <const> = args.lNormalize
-            or defaults.lNormalize --[[@as integer]]
-        local lContrasti <const> = args.lContrast
-            or defaults.lContrast --[[@as integer]]
-        local cContrasti <const> = args.cContrast
-            or defaults.cContrast --[[@as integer]]
-        local sContrasti <const> = args.sContrast
-            or defaults.sContrast --[[@as integer]]
-
-        local useLNorm <const> = mode == "L_NORMALIZE"
-        local useLcCtr <const> = mode == "LC_CONTRAST"
-        local useLsCtr <const> = mode == "LS_CONTRAST"
-
-        if useLNorm
-            and lNormalizei == 0 then
-            return
-        end
-
-        if useLcCtr
-            and lContrasti == 0
-            and cContrasti == 0 then
-            return
-        end
-
-        if useLsCtr
-            and lContrasti == 0
-            and sContrasti == 0 then
-            return
-        end
-
         -- Cache methods used in loops.
         local tilesToImage <const> = AseUtilities.tileMapToImage
 
@@ -259,15 +258,21 @@ dlg:button {
         }
         abgr32ToLab[0] = labZero
 
-        ---@type Cel[]
-        local srcCels <const> = {}
-        local lenSrcCels = 0
+        ---@type Image[]
+        local srcImgs <const> = {}
+        ---@type integer[]
+        local srcFrames <const> = {}
+        ---@type Point[]
+        local srcPoses <const> = {}
+        ---@type integer[]
+        local srcOpacities <const> = {}
+        local lenSources = 0
 
         local i = 0
         while i < lenFrIdcs do
             i = i + 1
-            local srcFrame <const> = frIdcs[i]
-            local srcCel <const> = srcLayer:cel(srcFrame)
+            local frIdx <const> = frIdcs[i]
+            local srcCel <const> = srcLayer:cel(frIdx)
             if srcCel then
                 local srcImg = srcCel.image
                 if isTileMap then
@@ -278,10 +283,10 @@ dlg:button {
                 local srcSpec <const> = srcImg.spec
                 local wSrc <const> = srcSpec.width
                 local hSrc <const> = srcSpec.height
-                local lenSrc <const> = wSrc * hSrc
+                local areaSrc <const> = wSrc * hSrc
 
                 local j = 0
-                while j < lenSrc do
+                while j < areaSrc do
                     local j4 <const> = j * 4
                     local abgr32 <const> = strunpack("<I4", strsub(
                         srcBytes, 1 + j4, 4 + j4))
@@ -321,26 +326,13 @@ dlg:button {
                     j = j + 1
                 end -- End pixels loop.
 
-                lenSrcCels = lenSrcCels + 1
-                srcCels[lenSrcCels] = srcCel
+                lenSources = lenSources + 1
+                srcImgs[lenSources] = srcImg
+                frIdx[lenSources] = frIdx
+                srcPoses[lenSources] = srcCel.position
+                srcOpacities[lenSources] = srcCel.opacity
             end -- End cel exists.
         end     -- End frames loop.
-
-        if lenSrcCels <= 0 then
-            app.alert {
-                title = "Error",
-                text = "No cels were selected."
-            }
-            return
-        end
-
-        if tally <= 0 then
-            app.alert {
-                title = "Error",
-                text = "No colors could be tallied."
-            }
-            return
-        end
 
         -- For normalizing lightness.
         local lGtZero <const> = lNormalizei > 0
@@ -351,7 +343,7 @@ dlg:button {
         local lDenom <const> = lRange ~= 0.0 and 1.0 / lRange or 0.0
         local tlDenom <const> = tNorm * 100.0 * lDenom
         local tlOff <const> = lMin * tlDenom
-        local lMean <const> = lSum / tally
+        local lMean <const> = tally ~= 0.0 and lSum / tally or 0.0
         local tlMean <const> = tNorm * lMean
 
         -- For adjusting contrast.
@@ -360,8 +352,8 @@ dlg:button {
         local sAdjVerif <const> = 1.0 + sContrasti * 0.01
 
         local lPivot <const> = 50.0
-        local cPivot <const> = cSum / tally
-        local sPivot <const> = sSum / tally
+        local cPivot <const> = tally ~= 0.0 and cSum / tally or 0.0
+        local sPivot <const> = tally ~= 0.0 and sSum / tally or 0.0
         -- Only relevant if you want to use the range as a pivot,
         -- not the arithmetic mean.
         -- local cRange <const> = abs(cMax - cMin)
@@ -384,26 +376,25 @@ dlg:button {
             local srcToTrg <const> = {}
 
             local k = 0
-            while k < lenSrcCels do
+            while k < lenSources do
                 k = k + 1
-                local srcCel <const> = srcCels[k]
 
-                local srcFrObj <const> = srcCel.frame
-                local srcImg <const> = srcCel.image
-                local srcPos <const> = srcCel.position
-                local srcOpacity <const> = srcCel.opacity
+                local srcFrame <const> = srcFrames[k]
+                local srcImg <const> = srcImgs[k]
+                local srcPos <const> = srcPoses[k]
+                local srcOpacity <const> = srcOpacities[k]
 
                 local srcBytes <const> = srcImg.bytes
                 local srcSpec <const> = srcImg.spec
                 local wSrc <const> = srcSpec.width
                 local hSrc <const> = srcSpec.height
-                local lenSrc <const> = wSrc * hSrc
+                local areaSrc <const> = wSrc * hSrc
 
                 ---@type string[]
                 local trgByteArr <const> = {}
 
                 local j = 0
-                while j < lenSrc do
+                while j < areaSrc do
                     local j4 <const> = j * 4
                     local abgr32Src <const> = strunpack("<I4", strsub(
                         srcBytes, 1 + j4, 4 + j4))
@@ -465,7 +456,7 @@ dlg:button {
                 trgImg.bytes = tconcat(trgByteArr)
 
                 local trgCel <const> = activeSprite:newCel(
-                    trgLayer, srcFrObj, trgImg, srcPos)
+                    trgLayer, srcFrame, trgImg, srcPos)
                 trgCel.opacity = srcOpacity
             end -- End cels loop.
 
