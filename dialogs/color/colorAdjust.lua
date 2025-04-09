@@ -858,6 +858,9 @@ dlg:button {
                         trgImg:drawImage(srcImg, srcPos, 255, blendModeSrc)
                         trgPos = Point(0, 0)
                     else
+                        -- TODO: This whole function needs to be refactored
+                        -- after the removal of invert and contrast adjust,
+                        -- it is completely wasteful.
                         trgImg = srcImg:clone()
                     end
 
