@@ -1,0 +1,322 @@
+dofile("../../support/aseutilities.lua")
+
+local targets <const> = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
+
+local defaults <const> = {
+    target = "ACTIVE",
+    lInvert = 0,
+    aInvert = 0,
+    bInvert = 0,
+    tInvert = 0,
+    ignoreSrcMask = false,
+    fixZeroAlpha = true,
+}
+
+local dlg <const> = Dialog { title = "Invert Lab" }
+
+dlg:combobox {
+    id = "target",
+    label = "Target:",
+    focus = false,
+    option = defaults.target,
+    options = targets
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "lInvert",
+    label = "L:",
+    focus = false,
+    min = 0,
+    max = 100,
+    value = defaults.lInvert
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "aInvert",
+    label = "A:",
+    focus = false,
+    min = 0,
+    max = 100,
+    value = defaults.aInvert
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "bInvert",
+    label = "B:",
+    focus = false,
+    min = 0,
+    max = 100,
+    value = defaults.bInvert
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "tInvert",
+    label = "Alpha:",
+    focus = false,
+    min = 0,
+    max = 100,
+    value = defaults.tInvert,
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "ignoreSrcMask",
+    text = "&Ignore Source",
+    selected = defaults.ignoreSrcMask,
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "fixZeroAlpha",
+    text = "&Fix Target",
+    selected = defaults.fixZeroAlpha,
+}
+
+dlg:newrow { always = false }
+
+dlg:button {
+    id = "adjustButton",
+    text = "&OK",
+    focus = true,
+    onclick = function()
+        -- Early returns.
+        local site <const> = app.site
+        local activeSprite <const> = site.sprite
+        if not activeSprite then
+            app.alert {
+                title = "Error",
+                text = "There is no active sprite."
+            }
+            return
+        end
+
+        local activeSpec <const> = activeSprite.spec
+        local colorMode <const> = activeSpec.colorMode
+        if colorMode ~= ColorMode.RGB then
+            app.alert {
+                title = "Error",
+                text = "Only RGB color mode is supported."
+            }
+            return
+        end
+
+        -- Unpack arguments.
+        local args <const> = dlg.data
+        local target <const> = args.target
+            or defaults.target --[[@as string]]
+        local lInverti <const> = args.lInvert
+            or defaults.lInvert --[[@as integer]]
+        local aInverti <const> = args.aInvert
+            or defaults.aInvert --[[@as integer]]
+        local bInverti <const> = args.bInvert
+            or defaults.bInvert --[[@as integer]]
+        local tInverti <const> = args.tInvert
+            or defaults.tInvert --[[@as integer]]
+        local fixZeroAlpha <const> = args.fixZeroAlpha --[[@as boolean]]
+        local ignoreSrcMask <const> = args.ignoreSrcMask --[[@as boolean]]
+
+        if lInverti == 0
+            and aInverti == 0
+            and bInverti == 0
+            and tInverti == 0 then
+            return
+        end
+
+        -- This needs to be done first, otherwise range will be lost.
+        local isSelect <const> = target == "SELECTION"
+        local frIdcs <const> = Utilities.flatArr2(
+            AseUtilities.getFrames(activeSprite,
+                isSelect and "ALL" or target))
+        local lenFrIdcs <const> = #frIdcs
+
+        local srcLayer = site.layer --[[@as Layer]]
+        local removeSrcLayer = false
+
+        if isSelect then
+            AseUtilities.filterCels(activeSprite, srcLayer, frIdcs, "SELECTION")
+            srcLayer = activeSprite.layers[#activeSprite.layers]
+            removeSrcLayer = true
+        else
+            if not srcLayer then
+                app.alert {
+                    title = "Error",
+                    text = "There is no active layer."
+                }
+                return
+            end
+
+            if srcLayer.isReference then
+                app.alert {
+                    title = "Error",
+                    text = "Reference layers are not supported."
+                }
+                return
+            end
+
+            if srcLayer.isGroup then
+                app.transaction("Flatten Group", function()
+                    srcLayer = AseUtilities.flattenGroup(
+                        activeSprite, srcLayer, frIdcs)
+                    removeSrcLayer = true
+                end)
+            end
+        end
+
+        -- Check for tile map support.
+        local isTileMap <const> = srcLayer.isTilemap
+        local tileSet = nil
+        if isTileMap then
+            tileSet = srcLayer.tileset
+        end
+
+        local lInv <const> = lInverti * 0.01
+        local aInv <const> = aInverti * 0.01
+        local bInv <const> = bInverti * 0.01
+        local tInv <const> = tInverti * 0.01
+
+        local lCpl <const> = 1.0 - lInv
+        local aCpl <const> = 1.0 - aInv
+        local bCpl <const> = 1.0 - bInv
+        local tCpl <const> = 1.0 - tInv
+
+        local blitToCanvas <const> = tInverti > 0 or ignoreSrcMask
+        local changeSrcZero <const> = not ignoreSrcMask
+        local changeTrgZero <const> = not fixZeroAlpha
+
+        -- Cache methods used in loops.
+        local tilesToImage <const> = AseUtilities.tileMapToImage
+        local fromHex <const> = Clr.fromHexAbgr32
+        local toHex <const> = Clr.toHex
+        local labTosRgba <const> = Clr.srLab2TosRgb
+        local sRgbaToLab <const> = Clr.sRgbToSrLab2
+        local strpack <const> = string.pack
+        local strsub <const> = string.sub
+        local strunpack <const> = string.unpack
+        local tconcat <const> = table.concat
+
+        -- Create target layer.
+        app.transaction("Invert Layer", function()
+            local trgLayer <const> = activeSprite:newLayer()
+            local srcLayerName = "Layer"
+            if #srcLayer.name > 0 then
+                srcLayerName = srcLayer.name
+            end
+            trgLayer.name = string.format(
+                "%s Inverted", srcLayerName)
+            trgLayer.parent = AseUtilities.getTopVisibleParent(srcLayer)
+            trgLayer.opacity = srcLayer.opacity or 255
+            -- Do not copy blend mode, it only confuses things.
+
+            ---@type table<integer, integer>
+            local srcToTrg <const> = {}
+
+            local i = 0
+            while i < lenFrIdcs do
+                i = i + 1
+                local frIdx <const> = frIdcs[i]
+                local srcCel <const> = srcLayer:cel(frIdx)
+                if srcCel then
+                    local srcPos = srcCel.position
+                    local srcImg = srcCel.image
+
+                    if isTileMap then
+                        srcImg = tilesToImage(srcImg, tileSet, ColorMode.RGB)
+                    end
+
+                    if blitToCanvas then
+                        local blit <const> = Image(activeSpec)
+                        blit:drawImage(srcImg, srcPos, 255, BlendMode.SRC)
+                        srcImg = blit
+                        srcPos = Point(0, 0)
+                    end
+
+                    local srcBytes <const> = srcImg.bytes
+                    local srcSpec <const> = srcImg.spec
+                    local wSrc <const> = srcSpec.width
+                    local hSrc <const> = srcSpec.height
+                    local area <const> = wSrc * hSrc
+
+                    ---@type string[]
+                    local trgByteArr <const> = {}
+
+                    local j = 0
+                    while j < area do
+                        local j4 <const> = j * 4
+                        local srcAbgr32 <const> = strunpack("<I4", strsub(
+                            srcBytes, 1 + j4, 4 + j4))
+                        local trgAbgr32 = 0
+
+                        if srcToTrg[srcAbgr32] then
+                            trgAbgr32 = srcToTrg[srcAbgr32]
+                        else
+                            local srcSrgb <const> = fromHex(srcAbgr32)
+                            local srcLab <const> = sRgbaToLab(srcSrgb)
+
+                            local tSrc <const> = srcLab.alpha
+                            if changeSrcZero or tSrc > 0.0 then
+                                local tTrg <const> = tCpl * tSrc + tInv * (1.0 - tSrc)
+                                if changeTrgZero or tTrg > 0.0 then
+                                    local lSrc <const> = srcLab.l
+                                    local aSrc <const> = srcLab.a
+                                    local bSrc <const> = srcLab.b
+
+                                    local lTrg <const> = lCpl * lSrc + lInv * (100.0 - lSrc)
+                                    local aTrg <const> = aCpl * aSrc + aInv * -aSrc
+                                    local bTrg <const> = bCpl * bSrc + bInv * -bSrc
+
+                                    local srgbTrg <const> = labTosRgba(lTrg, aTrg, bTrg, tTrg)
+                                    trgAbgr32 = toHex(srgbTrg)
+                                end
+                            end
+                            srcToTrg[srcAbgr32] = trgAbgr32
+                        end
+
+                        j = j + 1
+                        trgByteArr[j] = strpack("<I4", trgAbgr32)
+                    end -- End pixels loop.
+
+                    local trgImg <const> = Image(srcSpec)
+                    trgImg.bytes = tconcat(trgByteArr)
+
+                    local trgCel <const> = activeSprite:newCel(
+                        trgLayer, frIdx, trgImg, srcPos)
+                    trgCel.opacity = srcCel.opacity
+                end -- End source cel exists.
+            end     -- End frames loop.
+
+            app.layer = trgLayer
+        end) -- End transaction.
+
+        if removeSrcLayer then
+            app.transaction("Delete Layer", function()
+                activeSprite:deleteLayer(srcLayer)
+            end)
+        end
+
+        app.refresh()
+    end
+}
+
+dlg:button {
+    id = "cancel",
+    text = "&CANCEL",
+    focus = false,
+    onclick = function()
+        dlg:close()
+    end
+}
+
+dlg:show {
+    autoscrollbars = true,
+    wait = false
+}
