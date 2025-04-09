@@ -445,16 +445,20 @@ dlg:button {
                         elseif useLcCtr then
                             lTrg = (lSrc - lPivot) * lAdjVerif + lPivot
 
-                            local cSrc <const> = sqrt(aSrc * aSrc + bSrc * bSrc)
+                            local csqSrc <const> = aSrc * aSrc + bSrc * bSrc
+                            -- if csqSrc >= 0.1 then
+                            local cSrc <const> = sqrt(csqSrc)
                             local cTrg <const> = (cSrc - cPivot) * cAdjVerif + cPivot
 
                             local aby <const> = cSrc ~= 0.0 and cTrg / cSrc or 0.0
                             aTrg = aSrc * aby
                             bTrg = bSrc * aby
+                            -- end
                         elseif useLsCtr then
                             lTrg = (lSrc - lPivot) * lAdjVerif + lPivot
 
                             local csqSrc <const> = aSrc * aSrc + bSrc * bSrc
+                            -- if csqSrc >= 0.1 then
                             local cSrc <const> = sqrt(csqSrc)
                             local mcplSrc <const> = sqrt(csqSrc + lSrc * lSrc)
                             local mcplAdj <const> = sqrt(csqSrc + lTrg * lTrg)
@@ -466,6 +470,7 @@ dlg:button {
                             local aby <const> = cSrc ~= 0.0 and cTrg / cSrc or 0.0
                             aTrg = aSrc * aby
                             bTrg = bSrc * aby
+                            -- end
                         end
 
                         local srgbTrg <const> = labTosRgba(lTrg, aTrg, bTrg, tTrg)

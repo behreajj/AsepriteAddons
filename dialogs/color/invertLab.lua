@@ -204,7 +204,6 @@ dlg:button {
         local strunpack <const> = string.unpack
         local tconcat <const> = table.concat
 
-        -- Create target layer.
         app.transaction("Invert Layer", function()
             local trgLayer <const> = activeSprite:newLayer()
             local srcLayerName = "Layer"
@@ -260,12 +259,11 @@ dlg:button {
                             trgAbgr32 = srcToTrg[srcAbgr32]
                         else
                             local srcSrgb <const> = fromHex(srcAbgr32)
-                            local srcLab <const> = sRgbaToLab(srcSrgb)
-
-                            local tSrc <const> = srcLab.alpha
+                            local tSrc <const> = srcSrgb.a
                             if changeSrcZero or tSrc > 0.0 then
                                 local tTrg <const> = tCpl * tSrc + tInv * (1.0 - tSrc)
                                 if changeTrgZero or tTrg > 0.0 then
+                                    local srcLab <const> = sRgbaToLab(srcSrgb)
                                     local lSrc <const> = srcLab.l
                                     local aSrc <const> = srcLab.a
                                     local bSrc <const> = srcLab.b
