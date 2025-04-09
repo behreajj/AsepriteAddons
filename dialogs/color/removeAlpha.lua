@@ -310,13 +310,24 @@ dlg:button {
                 local threshold <const> = args.threshold
                     or defaults.threshold --[[@as integer]]
                 local usePremul <const> = args.usePremul --[[@as boolean]]
+                local trimImage <const> = AseUtilities.trimImageAlpha
                 app.transaction("Opaque Images", function()
                     local i = 0
                     while i < lenChosenCels do
                         i = i + 1
                         local cel <const> = chosenCels[i]
-                        cel.image = opaque(cel.image, threshold, absOpaque,
-                            usePremul)
+                        local opaqueImg <const> = opaque(cel.image, threshold,
+                            absOpaque, usePremul)
+                        if absOpaque then
+                            cel.image = opaqueImg
+                        else
+                            local srcPos <const> = cel.position
+                            local trimmed <const>,
+                            xTrm <const>,
+                            yTrm <const> = trimImage(opaqueImg, 0, alphaIndex)
+                            cel.image = trimmed
+                            cel.position = Point(srcPos.x + xTrm, srcPos.y + yTrm)
+                        end
                     end -- End chosen cels loop.
                 end)    -- End transaction.
             end         -- End chosen cels gt zero.
