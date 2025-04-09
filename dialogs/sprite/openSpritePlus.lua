@@ -12,7 +12,7 @@ local defaults <const> = {
     fps = 12,
     removeBkg = true,
     trimCels = true,
-    checkAlpha = false,
+    fixZeroAlpha = false,
     palType = "EMBEDDED",
     uniquesOnly = true,
     prependMask = true,
@@ -189,9 +189,9 @@ dlg:check {
 }
 
 dlg:check {
-    id = "checkAlpha",
+    id = "fixZeroAlpha",
     text = "&Alpha",
-    selected = defaults.checkAlpha,
+    selected = defaults.fixZeroAlpha,
     visible = true,
 }
 
@@ -631,8 +631,8 @@ dlg:button {
         end
 
         local trimCels <const> = args.trimCels --[[@as boolean]]
-        local checkAlpha <const> = args.checkAlpha --[[@as boolean]]
-        local acquireCels <const> = trimCels or checkAlpha
+        local fixZeroAlpha <const> = args.fixZeroAlpha --[[@as boolean]]
+        local acquireCels <const> = trimCels or fixZeroAlpha
 
         if acquireCels then
             local cels <const> = AseUtilities.filterCels(
@@ -656,7 +656,7 @@ dlg:button {
                 end)    -- End transaction.
             end         -- End trim cels.
 
-            if checkAlpha then
+            if fixZeroAlpha then
                 local correctZero <const> = AseUtilities.correctZeroAlpha
                 app.transaction("Correct Alpha", function()
                     local j = 0
