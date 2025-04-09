@@ -765,6 +765,7 @@ dlg:button {
                                         srcLab.alpha))
                                 end -- Lch v. Lab adjust.
                             end     -- Non zero alpha.
+                            srcToTrg[srcAbgr32] = trgAbgr32
                         end         -- Dictionary check.
 
                         j = j + 1
