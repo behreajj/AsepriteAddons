@@ -17,15 +17,17 @@ local defaults <const> = {
     removePalette = "ALL",
     removeImage = "ALL",
     removeTiles = "ALL",
+    threshold = 128,
     usePremul = true,
 }
 
 ---@param srcImg Image
+---@param threshold integer
 ---@param absOpaque boolean
 ---@param usePremul boolean
 ---@return Image
 ---@nodiscard
-local function opaque(srcImg, absOpaque, usePremul)
+local function opaque(srcImg, threshold, absOpaque, usePremul)
     local bytes <const> = srcImg.bytes
 
     local spec <const> = srcImg.spec
@@ -47,6 +49,8 @@ local function opaque(srcImg, absOpaque, usePremul)
 
             local r8, g8, b8 = 0, 0, 0
             local a8 = strbyte(bytes, 4 + i4)
+            -- TODO: This interferes with premultiply.
+            a8 = a8 >= threshold and 255 or 0
 
             if absOpaque or a8 > 0 then
                 r8, g8, b8 = strbyte(bytes, 1 + i4, 3 + i4)
@@ -68,6 +72,8 @@ local function opaque(srcImg, absOpaque, usePremul)
 
             local v8 = 0
             local a8 = strbyte(bytes, 2 + i2)
+            -- TODO: This interferes with premultiply.
+            a8 = a8 >= threshold and 255 or 0
 
             if absOpaque or a8 > 0 then
                 v8 = strbyte(bytes, 1 + i2)
@@ -175,6 +181,7 @@ dlg:combobox {
         local removeTiles <const> = args.removeTiles --[[@as string]]
         local notNone <const> = removeImage ~= "NONE"
             or removeTiles ~= "NONE"
+        dlg:modify { id = "threshold", visible = notNone }
         dlg:modify { id = "usePremul", visible = notNone }
     end
 }
@@ -192,8 +199,21 @@ dlg:combobox {
         local removeTiles <const> = args.removeTiles --[[@as string]]
         local notNone <const> = removeImage ~= "NONE"
             or removeTiles ~= "NONE"
+        dlg:modify { id = "threshold", visible = notNone }
         dlg:modify { id = "usePremul", visible = notNone }
     end
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "threshold",
+    label = "Threshold:",
+    min = 0,
+    max = 255,
+    value = defaults.threshold,
+    visible = defaults.removeImage ~= "NONE"
+        or defaults.removeTiles ~= "NONE"
 }
 
 dlg:newrow { always = false }
@@ -249,9 +269,10 @@ dlg:button {
             or defaults.removePalette --[[@as boolean]]
 
         if opaqueLayer ~= "NONE" then
-            -- TODO: As of 1.3.10 beta, this also has to do groups. Is it worth
-            -- making a filterGroups function? Is it necessary to use filter
-            -- layers here -- can you use a get layer hierarchy instead?
+            -- TODO: As of 1.3.10 beta, this also has to do groups.
+            -- See app.preferences.experimental.new_blend . Is it worth
+            -- making a filterGroups function?
+
             local chosenLayers <const> = AseUtilities.filterLayers(
                 activeSprite, site.layer, opaqueLayer, includeLocked,
                 includeHidden, includeTiles, false)
@@ -294,13 +315,16 @@ dlg:button {
             local lenChosenCels <const> = #chosenCels
 
             if lenChosenCels > 0 then
+                local threshold <const> = args.threshold
+                    or defaults.threshold --[[@as integer]]
                 local usePremul <const> = args.usePremul --[[@as boolean]]
                 app.transaction("Opaque Images", function()
                     local i = 0
                     while i < lenChosenCels do
                         i = i + 1
                         local cel <const> = chosenCels[i]
-                        cel.image = opaque(cel.image, absOpaque, usePremul)
+                        cel.image = opaque(cel.image, threshold, absOpaque,
+                            usePremul)
                     end -- End chosen cels loop.
                 end)    -- End transaction.
             end         -- End chosen cels gt zero.
@@ -322,6 +346,8 @@ dlg:button {
             local lenChosenTileSets <const> = #chosenTileSets
 
             if lenChosenTileSets > 0 then
+                local threshold <const> = args.threshold
+                    or defaults.threshold --[[@as integer]]
                 local usePremul <const> = args.usePremul --[[@as boolean]]
                 app.transaction("Opaque Tiles", function()
                     local i = 0
@@ -335,8 +361,8 @@ dlg:button {
                         while j < lenTileSet do
                             local tile <const> = tileSet:tile(j)
                             if tile then
-                                tile.image = opaque(tile.image, absOpaque,
-                                    usePremul)
+                                tile.image = opaque(tile.image, threshold,
+                                    absOpaque, usePremul)
                             end
                             j = j + 1
                         end -- End tile loop.
