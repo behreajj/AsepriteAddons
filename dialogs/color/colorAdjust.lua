@@ -417,6 +417,7 @@ dlg:canvas {
 
         local xToFac <const> = barWidth > 1 and 1.0 / (barWidth - 1.0) or 0.0
         local aAdj <const> = active.aAdj
+        local bAdj <const> = active.bAdj
 
         ---@type string[]
         local bytes <const> = {}
@@ -424,10 +425,10 @@ dlg:canvas {
         while i < barWidth do
             local xFac <const> = i * xToFac
             local a <const> = (1.0 - xFac) * visMin + xFac * visMax
-            local h0 <const> = toHex(labTosRgb(50.0, a, 0.0, 1.0))
+            local h0 <const> = toHex(labTosRgb(50.0, a, bAdj, 1.0))
             bytes[1 + i] = strpack("<I4", h0)
 
-            local h1 <const> = toHex(labTosRgb(50.0, a + aAdj, 0.0, 1.0))
+            local h1 <const> = toHex(labTosRgb(50.0, a + aAdj, bAdj, 1.0))
             bytes[barWidth + 1 + i] = strpack("<I4", h1)
             i = i + 1
         end
@@ -481,6 +482,7 @@ dlg:canvas {
         active.bBarWidth = barWidth
 
         local xToFac <const> = barWidth > 1 and 1.0 / (barWidth - 1.0) or 0.0
+        local aAdj <const> = active.aAdj
         local bAdj <const> = active.bAdj
 
         ---@type string[]
@@ -489,10 +491,10 @@ dlg:canvas {
         while i < barWidth do
             local xFac <const> = i * xToFac
             local b <const> = (1.0 - xFac) * visMin + xFac * visMax
-            local h0 <const> = toHex(labTosRgb(50.0, 0.0, b, 1.0))
+            local h0 <const> = toHex(labTosRgb(50.0, aAdj, b, 1.0))
             bytes[1 + i] = strpack("<I4", h0)
 
-            local h1 <const> = toHex(labTosRgb(50.0, 0.0, b + bAdj, 1.0))
+            local h1 <const> = toHex(labTosRgb(50.0, bAdj, b + bAdj, 1.0))
             bytes[barWidth + 1 + i] = strpack("<I4", h1)
             i = i + 1
         end
