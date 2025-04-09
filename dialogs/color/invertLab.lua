@@ -70,7 +70,7 @@ dlg:newrow { always = false }
 
 dlg:check {
     id = "ignoreSrcMask",
-    text = "&Ignore Source",
+    text = "Ignore Source",
     selected = defaults.ignoreSrcMask,
 }
 
@@ -78,7 +78,7 @@ dlg:newrow { always = false }
 
 dlg:check {
     id = "fixZeroAlpha",
-    text = "&Fix Target",
+    text = "Fix Target",
     selected = defaults.fixZeroAlpha,
 }
 
