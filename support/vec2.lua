@@ -350,6 +350,7 @@ end
 ---@nodiscard
 function Vec2.hashCode(v)
     -- https://stackoverflow.com/questions/300840/force-php-integer-overflow
+    -- https://stackoverflow.com/questions/23577810/simulate-a-32-bit-integer-overflow-in-javascript
     -- https://readafterwrite.wordpress.com/2017/03/23/floating-point-keys-in-lua/
     local xBits <const> = string.unpack("i4", string.pack("f", v.x))
     local yBits <const> = string.unpack("i4", string.pack("f", v.y))
