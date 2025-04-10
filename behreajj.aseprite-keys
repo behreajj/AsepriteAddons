@@ -674,6 +674,12 @@
         <key command="RunScript" shortcut="Alt+Shift+F">
             <param name="filename" value="path\to\Aseprite\scripts\commands\frames\prependFrame.lua"/>
         </key>
+        <key command="RunScript" shortcut="Alt+D">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\layers\copyLayer.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Alt+Shift+U">
+            <param name="filename" value="path\to\Aseprite\scripts\dialogs\color\contrast.lua"/>
+        </key>
     </commands>
     <tools>
         <key tool="polygonal_lasso" shortcut="Shift+Q" removed="true"/>
