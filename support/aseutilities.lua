@@ -472,7 +472,7 @@ end
 
 ---Finds the average color of a selection in a sprite. If there is no selection,
 ---tries getting the color at the editor mouse position. Calculates the average
----in the SR LAB 2 color space.
+---in the SR LAB 2 color space. Excludes colors with zero alpha.
 ---@param sprite Sprite
 ---@param frame Frame|integer
 ---@return { l: number, a: number, b: number, alpha: number }
@@ -2195,8 +2195,6 @@ end
 ---@return integer
 ---@nodiscard
 function AseUtilities.getMouse()
-    -- TODO: Return tiledMode integer third?
-
     -- With View Tiled Mode, the sprite position shifts to
     -- the top left corner tile, not the center tile.
     -- See https://github.com/aseprite/aseprite/issues/4659 .
