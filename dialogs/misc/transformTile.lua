@@ -35,7 +35,6 @@ local defaults <const> = {
     inPlace = true
 }
 
----Gets tiles available in the range.
 ---@param sprite Sprite
 ---@param tileSet Tileset tile set
 ---@return table<integer, Tile> tiles
@@ -58,6 +57,9 @@ local function getRangeTiles(sprite, tileSet)
         j = j + 1
         local idx <const> = rangeTiles[j]
         if idx > 0 and idx < lenTileSet then
+            -- You don't need to worry about tiles containing empty
+            -- images here, as the transformTiles method below will
+            -- ignore empties.
             tiles[idx] = tileSet:tile(idx)
         end
     end
