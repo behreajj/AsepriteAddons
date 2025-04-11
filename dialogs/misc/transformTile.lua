@@ -35,6 +35,37 @@ local defaults <const> = {
     inPlace = true
 }
 
+---Gets tiles available in the range.
+---@param sprite Sprite
+---@param tileSet Tileset tile set
+---@return table<integer, Tile> tiles
+---@return integer[] coords
+local function getRangeTiles(sprite, tileSet)
+    ---@type table<integer, Tile>
+    local tiles <const> = {}
+    ---@type integer[]
+    local coords <const> = {}
+
+    local range <const> = app.range
+    if range.sprite ~= sprite then return tiles, coords end
+
+    local rangeTiles <const> = range.tiles
+    local lenRangeTiles <const> = #rangeTiles
+    local lenTileSet <const> = #tileSet
+
+    local j = 0
+    while j < lenRangeTiles do
+        j = j + 1
+        local idx <const> = rangeTiles[j]
+        if idx > 0 and idx < lenTileSet then
+            tiles[idx] = tileSet:tile(idx)
+        end
+    end
+
+    -- For now, don't bother with getting coords from tile map.
+    return tiles, coords
+end
+
 ---Gets tiles from a tile map that are entirely contained by a selection.
 ---Returns a dictionary where the tile map index serves as the key and the Tile
 ---object is the value. The second return is an array of selected coordinates,
@@ -570,10 +601,22 @@ local function transformCel(dialog, preset)
     -- conversion to tilemap layer, it may go outside the canvas due to
     -- uniform tile size. This will lead to getSelectedTiles omitting tiles
     -- because tiles must be entirely contained.
-    local selection <const>, _ <const> = AseUtilities.getSelection(activeSprite)
-    local contained <const>, coords <const> = getSelectedTiles(
-        activeCel.image, tileSet, selection,
-        xtlCel, ytlCel)
+    local selection <const>,
+    isValid <const> = AseUtilities.getSelection(activeSprite)
+
+    ---@type table<integer, Tile>
+    local contained = {}
+    ---@type integer[]
+    local coords = {}
+
+    if isValid then
+        contained, coords = getSelectedTiles(
+            activeCel.image, tileSet, selection,
+            xtlCel, ytlCel)
+    else
+        contained, coords = getRangeTiles(
+            activeSprite, tileSet)
+    end
 
     local srcToTrgIdcs <const> = transformTiles(
         preset, contained, inPlace,
