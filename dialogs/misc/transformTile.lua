@@ -26,7 +26,7 @@ local defaults <const> = {
     -- Size of tiles in color bar is determined by
     -- app.preferences.color_bar.tiles_box_size . Without a command, however,
     -- this value can be set, but it won't update until Aseprite is restarted.
-    target = "TILE_MAP",
+    target = "CURSOR",
     useXFlip = false,
     useYFlip = false,
     useDFlip = false,
