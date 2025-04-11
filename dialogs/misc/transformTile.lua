@@ -1403,6 +1403,7 @@ dlg:button {
                 title = "Error",
                 text = "Tile size is nonuniform."
             }
+            return
         end
 
         -- Cache methods used in a for loop.
