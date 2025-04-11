@@ -885,7 +885,9 @@ dlg:button {
         if lenSelIndices <= 0 then return end
 
         -- A tile range appears in the color bar even when app.site tile map
-        -- mode is not tiles.
+        -- mode is not tiles. Could also require that app.site.tilemapMode
+        -- be TilemapMode.TILES, however, the tile range appears in the UI
+        -- even when the mode is inactive.
         if app.range.isEmpty or target == "TILES" then
             app.range.tiles = selIndices
         end
