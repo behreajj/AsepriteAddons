@@ -847,10 +847,15 @@ dlg:button {
         elseif target == "CURSOR" then
             local isValid <const>,
             mapIndex <const>,
-            _ <const>,
+            mapFlags <const>,
             _ <const>,
             _ <const> = getIndexAtCursor()
-            if isValid then selIndices[1] = mapIndex else selIndices[1] = 0 end
+            if isValid then
+                selIndices[1] = mapIndex
+                app.fgTile = app.pixelColor.tile(mapIndex, mapFlags)
+            else
+                selIndices[1] = 0
+            end
         else
             -- Default to "TILE_MAP" or "TILES"
             local rangeStr <const> = args.rangeStr
