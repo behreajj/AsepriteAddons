@@ -1262,12 +1262,12 @@ dlg:button {
         -- nil at its first index. Any other relevant data from a tile would
         -- also be cloned at this stage, e.g., user data.
         ---@type {image: Image, color: Color, data: string}[]
-        local sortedTsPackets = {}
+        local sortedTsPackets <const> = {}
 
         -- Flip the relationship between old (unsorted) and new (sorted)
         -- indices so that other tile maps can easily be updated.
         ---@type integer[]
-        local oldToNew = {}
+        local oldToNew <const> = {}
 
         local i = 0
         while i < lenTileSet do
