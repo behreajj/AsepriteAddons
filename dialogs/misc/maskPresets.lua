@@ -525,6 +525,11 @@ dlg:button {
 
         local trgSel <const> = Selection()
 
+        -- TODO: On one hand, it'd be nice to select tiles when
+        -- app.site.tilemapMode == TilemapMode.TILES , but that
+        -- requires overlap with transformTile, and so maybe
+        -- generalize methods there to AseUtilities method.
+
         local brush <const> = app.brush
         local brushType <const> = brush.type
         if brushType == BrushType.IMAGE then

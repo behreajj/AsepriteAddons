@@ -280,8 +280,8 @@ local function moveMap(xShift, yShift)
         local snap <const> = docPrefs.grid.snap --[[@as boolean]]
         if snap then
             local grid <const> = activeSprite.gridBounds
-            local xGrid <const> = grid.width
-            local yGrid <const> = grid.height
+            local xGrid <const> = math.max(1, math.abs(grid.width))
+            local yGrid <const> = math.max(1, math.abs(grid.height))
             xShScl = xShScl * xGrid
             yShScl = yShScl * yGrid
         end
