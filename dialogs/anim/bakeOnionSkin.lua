@@ -300,7 +300,9 @@ dlg:button {
         local args <const> = dlg.data
         local target <const> = args.target
             or defaults.target --[[@as string]]
-        local iterations <const> = args.iterations
+        -- TODO: Should iterations should be verified by clamping to length of
+        -- sprite frames?
+        local itrs <const> = args.iterations
             or defaults.iterations --[[@as integer]]
         local directions <const> = args.directions
             or defaults.directions --[[@as string]]
@@ -371,7 +373,7 @@ dlg:button {
             local yMxF = -2147483648
 
             local j = 0
-            while j < iterations do
+            while j < itrs do
                 j = j + 1
 
                 local frIdxBack = srcFrIdx - j
@@ -483,10 +485,12 @@ dlg:button {
             onionLayer.isCollapsed = true
         end)
 
-        local toFac <const> = iterations > 1
-            and 1.0 / (iterations - 1.0)
+        local toFac <const> = itrs > 1
+            and 1.0 / (itrs - 1.0)
             or 1.0
-        local toFac2 <const> = 1.0 / (iterations * 2 - 1)
+        -- Full range is (itr * 2 + 1) but the one is canceled out in the
+        -- denominator as above.
+        local toFac2 <const> = 1.0 / (itrs * 2)
         local minAlpha01 <const> = minAlphaVerif / 255.0
         local maxAlpha01 <const> = maxAlphaVerif / 255.0
         local blendMode <const> = BlendMode.NORMAL
@@ -520,7 +524,7 @@ dlg:button {
                         local trgImg <const> = Image(createSpec(wTrg, hTrg,
                             colorMode, colorSpace, alphaIndex))
 
-                        local k = iterations + 1
+                        local k = itrs + 1
                         while k > 1 do
                             local t <const> = (k - 2) * toFac
                             local u <const> = 1.0 - t
@@ -538,7 +542,7 @@ dlg:button {
                                 if useTint then
                                     local trgLab = backLab
                                     if mixTintVerif then
-                                        local tm <const> = (iterations - k) * toFac2
+                                        local tm <const> = (itrs - k) * toFac2
                                         local um <const> = 1.0 - tm
                                         trgLab = {
                                             l = um * backLab.l + tm * foreLab.l,
@@ -582,7 +586,7 @@ dlg:button {
                             colorMode, colorSpace, alphaIndex))
 
                         local k = 0
-                        while k < iterations do
+                        while k < itrs do
                             local t <const> = k * toFac
                             local u <const> = 1.0 - t
                             k = k + 1
@@ -599,7 +603,7 @@ dlg:button {
                                 if useTint then
                                     local trgLab = foreLab
                                     if mixTintVerif then
-                                        local tm <const> = (iterations + k - 1) * toFac2
+                                        local tm <const> = (itrs + k) * toFac2
                                         local um <const> = 1.0 - tm
                                         trgLab = {
                                             l = um * backLab.l + tm * foreLab.l,
