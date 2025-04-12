@@ -66,13 +66,15 @@ local function tintImage(srcImg, tint, preserveLight)
             trgAbgr32 = srcToTrg[srcAbgr32]
         else
             local srcsRgb <const> = fromHex(srcAbgr32)
-            local srcLab <const> = sRgbToLab(srcsRgb)
-            local trgsRgb <const> = labTosRgb(
-                preserveLight and srcLab.l or uTint * srcLab.l + tl,
-                uTint * srcLab.a + ta,
-                uTint * srcLab.b + tb,
-                srcLab.alpha)
-            trgAbgr32 = toHex(trgsRgb)
+            if srcsRgb.a > 0.0 then
+                local srcLab <const> = sRgbToLab(srcsRgb)
+                local trgsRgb <const> = labTosRgb(
+                    preserveLight and srcLab.l or uTint * srcLab.l + tl,
+                    uTint * srcLab.a + ta,
+                    uTint * srcLab.b + tb,
+                    srcLab.alpha)
+                trgAbgr32 = toHex(trgsRgb)
+            end
             srcToTrg[srcAbgr32] = trgAbgr32
         end
 
