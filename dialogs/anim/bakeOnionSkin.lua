@@ -362,15 +362,15 @@ dlg:button {
             i = i + 1
             local srcFrIdx <const> = frIdcs[i]
 
-            local xMinBack = 2147483647
-            local yMinBack = 2147483647
-            local xMaxBack = -2147483648
-            local yMaxBack = -2147483648
+            local xMnB = 2147483647
+            local yMnB = 2147483647
+            local xMxB = -2147483648
+            local yMxB = -2147483648
 
-            local xMinFore = 2147483647
-            local yMinFore = 2147483647
-            local xMaxFore = -2147483648
-            local yMaxFore = -2147483648
+            local xMnF = 2147483647
+            local yMnF = 2147483647
+            local xMxF = -2147483648
+            local yMxF = -2147483648
 
             local j = 0
             while j < iterations do
@@ -389,10 +389,10 @@ dlg:button {
                 if lookBackward and frIdxBack >= 1 then
                     local pack <const> = packets[frIdxBack]
                     if pack then
-                        if pack.xtl < xMinBack then xMinBack = pack.xtl end
-                        if pack.ytl < yMinBack then yMinBack = pack.ytl end
-                        if pack.xbr > xMaxBack then xMaxBack = pack.xbr end
-                        if pack.ybr > yMaxBack then yMaxBack = pack.ybr end
+                        if pack.xtl < xMnB then xMnB = pack.xtl end
+                        if pack.ytl < yMnB then yMnB = pack.ytl end
+                        if pack.xbr > xMxB then xMxB = pack.xbr end
+                        if pack.ybr > yMxB then yMxB = pack.ybr end
                     else
                         local isValid <const>, srcImg <const>, xtl <const>,
                         ytl <const>, celOpacity <const>,
@@ -404,10 +404,10 @@ dlg:button {
                         if isValid then
                             local xbr <const> = xtl + srcImg.width - 1
                             local ybr <const> = ytl + srcImg.height - 1
-                            if xtl < xMinBack then xMinBack = xtl end
-                            if ytl < yMinBack then yMinBack = ytl end
-                            if xbr > xMaxBack then xMaxBack = xbr end
-                            if ybr > yMaxBack then yMaxBack = ybr end
+                            if xtl < xMnB then xMnB = xtl end
+                            if ytl < yMnB then yMnB = ytl end
+                            if xbr > xMxB then xMxB = xbr end
+                            if ybr > yMxB then yMxB = ybr end
 
                             packets[frIdxBack] = {
                                 xtl = xtl,
@@ -424,10 +424,10 @@ dlg:button {
                 if lookForward and frIdxFore <= lenSpriteFrObjs then
                     local pack <const> = packets[frIdxFore]
                     if pack then
-                        if pack.xtl < xMinFore then xMinFore = pack.xtl end
-                        if pack.ytl < yMinFore then yMinFore = pack.ytl end
-                        if pack.xbr > xMaxFore then xMaxFore = pack.xbr end
-                        if pack.ybr > yMaxFore then yMaxFore = pack.ybr end
+                        if pack.xtl < xMnF then xMnF = pack.xtl end
+                        if pack.ytl < yMnF then yMnF = pack.ytl end
+                        if pack.xbr > xMxF then xMxF = pack.xbr end
+                        if pack.ybr > yMxF then yMxF = pack.ybr end
                     else
                         local isValid <const>, srcImg <const>, xtl <const>,
                         ytl <const>, celOpacity <const>,
@@ -439,10 +439,10 @@ dlg:button {
                         if isValid then
                             local xbr <const> = xtl + srcImg.width - 1
                             local ybr <const> = ytl + srcImg.height - 1
-                            if xtl < xMinFore then xMinFore = xtl end
-                            if ytl < yMinFore then yMinFore = ytl end
-                            if xbr > xMaxFore then xMaxFore = xbr end
-                            if ybr > yMaxFore then yMaxFore = ybr end
+                            if xtl < xMnF then xMnF = xtl end
+                            if ytl < yMnF then yMnF = ytl end
+                            if xbr > xMxF then xMxF = xbr end
+                            if ybr > yMxF then yMxF = ybr end
 
                             packets[frIdxFore] = {
                                 xtl = xtl,
@@ -457,19 +457,8 @@ dlg:button {
                 end         -- End look forward.
             end             -- End iterations loop.
 
-            extremaBack[i] = {
-                xtl = xMinBack,
-                ytl = yMinBack,
-                xbr = xMaxBack,
-                ybr = yMaxBack,
-            }
-
-            extremaFore[i] = {
-                xtl = xMinFore,
-                ytl = yMinFore,
-                xbr = xMaxFore,
-                ybr = yMaxFore,
-            }
+            extremaBack[i] = { xtl = xMnB, ytl = yMnB, xbr = xMxB, ybr = yMxB }
+            extremaFore[i] = { xtl = xMnF, ytl = yMnF, xbr = xMxF, ybr = yMxF }
         end -- End chosen frames loop.
 
         local foreLayer = nil
