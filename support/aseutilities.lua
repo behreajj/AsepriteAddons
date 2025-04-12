@@ -1737,7 +1737,8 @@ function AseUtilities.flattenGroup(
     return flattened
 end
 
----Creates a composite image from a group at a given frame.
+---Creates a composite image from a group at a given frame. Tile map images are
+---converted to images with the provided color mode.
 ---@param layer Layer group layer
 ---@param frame Frame|integer frame
 ---@param colorMode ColorMode sprite color mode

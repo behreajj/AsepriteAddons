@@ -1,23 +1,88 @@
 dofile("../../support/aseutilities.lua")
 
 local directOps <const> = { "BACKWARD", "BOTH", "FORWARD" }
-local targets <const> = { "ACTIVE", "ALL", "RANGE" }
+local targets <const> = { "ACTIVE", "ALL", "RANGE", "TAG" }
 
 local defaults <const> = {
     -- Also known as light table, ghost trail or echo in After Effects.
     -- This could be refactored with new drawImage, but
     -- it wouldn't offer much convenience, as layer blend modes
     -- use dest alpha, not source alpha (union, not intersect).
-    target = "ACTIVE",
+    target = "ALL",
     iterations = 3,
     maxIterations = 32,
     directions = "BACKWARD",
+    useLoop = false,
     minAlpha = 64,
     maxAlpha = 128,
     useTint = true,
-    foreTint = Color { r = 0, g = 0, b = 255, a = 128 },
-    backTint = Color { r = 255, g = 0, b = 0, a = 128 },
+    preserveLight = true,
+    mixTint = false,
+    foreTint = Color { r = 0, g = 0, b = 255, a = 170 },
+    backTint = Color { r = 255, g = 0, b = 0, a = 170 },
 }
+
+---@param srcImg Image
+---@param tint { l: number, a: number, b: number, alpha: number }
+---@param preserveLight boolean
+---@return Image
+local function tintImage(srcImg, tint, preserveLight)
+    local tTint <const> = tint.alpha
+    if tTint <= 0.0 then return srcImg end
+
+    local uTint <const> = 1.0 - tTint
+    local tl <const> = tTint * tint.l
+    local ta <const> = tTint * tint.a
+    local tb <const> = tTint * tint.b
+
+    local srcBytes <const> = srcImg.bytes
+    local srcSpec <const> = srcImg.spec
+    local trgImg <const> = Image(srcSpec)
+
+    ---@type table<integer, integer>
+    local srcToTrg <const> = {}
+    ---@type string[]
+    local trgByteArr <const> = {}
+
+    local wSrc <const> = srcSpec.width
+    local hSrc <const> = srcSpec.height
+    local area <const> = wSrc * hSrc
+
+    local strsub <const> = string.sub
+    local strunpack <const> = string.unpack
+    local strpack <const> = string.pack
+    local fromHex <const> = Clr.fromHexAbgr32
+    local toHex <const> = Clr.toHex
+    local sRgbToLab <const> = Clr.sRgbToSrLab2
+    local labTosRgb <const> = Clr.srLab2TosRgb
+
+    local i = 0
+    while i < area do
+        local i4 <const> = i * 4
+        local srcAbgr32 <const> = strunpack("<I4", strsub(srcBytes,
+            1 + i4, 4 + i4))
+        local trgAbgr32 = 0
+        if srcToTrg[srcAbgr32] then
+            trgAbgr32 = srcToTrg[srcAbgr32]
+        else
+            local srcsRgb <const> = fromHex(srcAbgr32)
+            local srcLab <const> = sRgbToLab(srcsRgb)
+            local trgsRgb <const> = labTosRgb(
+                preserveLight and srcLab.l or uTint * srcLab.l + tl,
+                uTint * srcLab.a + ta,
+                uTint * srcLab.b + tb,
+                srcLab.alpha)
+            trgAbgr32 = toHex(trgsRgb)
+            srcToTrg[srcAbgr32] = trgAbgr32
+        end
+
+        i = i + 1
+        trgByteArr[i] = strpack("<I4", trgAbgr32)
+    end
+
+    trgImg.bytes = table.concat(trgByteArr)
+    return trgImg
+end
 
 local dlg <const> = Dialog { title = "Bake Onion Skin" }
 
@@ -26,6 +91,14 @@ dlg:combobox {
     label = "Target:",
     option = defaults.target,
     options = targets
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "useLoop",
+    label = "Loop:",
+    selected = defaults.useLoop
 }
 
 dlg:newrow { always = false }
@@ -72,12 +145,15 @@ dlg:combobox {
         if md == "FORWARD" then
             dlg:modify { id = "foreTint", visible = useTint }
             dlg:modify { id = "backTint", visible = false }
+            dlg:modify { id = "mixTint", visible = false }
         elseif md == "BACKWARD" then
             dlg:modify { id = "foreTint", visible = false }
             dlg:modify { id = "backTint", visible = useTint }
+            dlg:modify { id = "mixTint", visible = false }
         else
             dlg:modify { id = "foreTint", visible = useTint }
             dlg:modify { id = "backTint", visible = useTint }
+            dlg:modify { id = "mixTint", visible = useTint }
         end
     end
 }
@@ -92,17 +168,42 @@ dlg:check {
         local args <const> = dlg.data
         local md <const> = args.directions --[[@as string]]
         local useTint <const> = args.useTint --[[@as boolean]]
+
+        dlg:modify { id = "preserveLight", visible = useTint }
         if md == "FORWARD" then
             dlg:modify { id = "foreTint", visible = useTint }
             dlg:modify { id = "backTint", visible = false }
+            dlg:modify { id = "mixTint", visible = false }
         elseif md == "BACKWARD" then
             dlg:modify { id = "foreTint", visible = false }
             dlg:modify { id = "backTint", visible = useTint }
+            dlg:modify { id = "mixTint", visible = false }
         else
             dlg:modify { id = "foreTint", visible = useTint }
             dlg:modify { id = "backTint", visible = useTint }
+            dlg:modify { id = "mixTint", visible = useTint }
         end
     end
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "preserveLight",
+    label = "Preserve:",
+    text = "Light",
+    selected = defaults.preserveLight,
+    visible = defaults.useTint
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "mixTint",
+    label = "Mix:",
+    selected = defaults.mixTint,
+    visible = defaults.useTint
+        and defaults.direcions == "BOTH"
 }
 
 dlg:newrow { always = false }
@@ -144,20 +245,12 @@ dlg:button {
             return
         end
 
-        local maxFrameCount <const> = #activeSprite.frames
-        if maxFrameCount < 2 then
+        local spriteFrObjs <const> = activeSprite.frames
+        local lenSpriteFrObjs <const> = #spriteFrObjs
+        if lenSpriteFrObjs <= 1 then
             app.alert {
                 title = "Error",
                 text = "The sprite contains only one frame."
-            }
-            return
-        end
-
-        local colorMode <const> = activeSprite.colorMode
-        if colorMode ~= ColorMode.RGB then
-            app.alert {
-                title = "Error",
-                text = "Only RGB color mode is supported."
             }
             return
         end
@@ -187,33 +280,24 @@ dlg:button {
             return
         end
 
-        if srcLayer.isGroup then
+        -- Unpack sprite spec.
+        local spriteSpec <const> = activeSprite.spec
+        local colorMode <const> = spriteSpec.colorMode
+        if colorMode ~= ColorMode.RGB then
             app.alert {
                 title = "Error",
-                text = "Group layers are not supported."
+                text = "Only RGB color mode is supported."
             }
             return
         end
 
-        -- Get sprite properties.
-        local colorSpace <const> = activeSprite.colorSpace
-        local alphaIndex <const> = activeSprite.transparentColor
+        local alphaIndex <const> = spriteSpec.transparentColor
+        local colorSpace <const> = spriteSpec.colorSpace
 
+        -- Get frame UI offset.
         local docPrefs <const> = app.preferences.document(activeSprite)
         local tlPrefs <const> = docPrefs.timeline
         local frameUiOffset <const> = tlPrefs.first_frame - 1 --[[@as integer]]
-
-        -- Cache global functions used in for loops.
-        local abs <const> = math.abs
-        local max <const> = math.max
-        local min <const> = math.min
-        local floor <const> = math.floor
-        local blend <const> = AseUtilities.blendRgba
-        local createSpec <const> = AseUtilities.createSpec
-        local getBytes <const> = AseUtilities.getBytes
-        local setBytes <const> = AseUtilities.setBytes
-        local strfmt <const> = string.format
-        local transact <const> = app.transaction
 
         -- Unpack arguments.
         local args <const> = dlg.data
@@ -227,9 +311,24 @@ dlg:button {
             or defaults.minAlpha --[[@as integer]]
         local maxAlpha <const> = args.maxAlpha
             or defaults.maxAlpha --[[@as integer]]
+        local useLoop <const> = args.useLoop --[[@as boolean]]
         local useTint <const> = args.useTint --[[@as boolean]]
+        local preserveLight <const> = args.preserveLight --[[@as boolean]]
         local backTint <const> = args.backTint --[[@as Color]]
         local foreTint <const> = args.foreTint --[[@as Color]]
+        local mixTint <const> = args.mixTint --[[@as boolean]]
+
+        -- Fill frames.
+        local frIdcs <const> = Utilities.flatArr2(
+            AseUtilities.getFrames(activeSprite, target, false))
+        local lenFrIdcs = #frIdcs
+        if lenFrIdcs <= 0 then
+            app.alert {
+                title = "Error",
+                text = "No frames were selected."
+            }
+            return
+        end
 
         -- Find directions.
         local useBoth <const> = directions == "BOTH"
@@ -237,264 +336,298 @@ dlg:button {
         local useBack <const> = directions == "BACKWARD"
         local lookForward <const> = useBoth or useFore
         local lookBackward <const> = useBoth or useBack
+        local mixTintVerif <const> = mixTint and useBoth
 
-        -- Unpack colors.
-        -- Neutral hex is when onion skin lands on current frame.
-        -- When "BOTH" directions are used, mix between back and fore.
-        local rBack <const> = backTint.red
-        local gBack <const> = backTint.green
-        local bBack <const> = backTint.blue
-        local aBack <const> = backTint.alpha
+        -- Cache methods used in for loop.
+        local floor <const> = math.floor
+        local createSpec <const> = AseUtilities.createSpec
+        local flatToImage <const> = AseUtilities.flatToImage
 
-        local rFore <const> = foreTint.red
-        local gFore <const> = foreTint.green
-        local bFore <const> = foreTint.blue
-        local aFore <const> = foreTint.alpha
+        ---@type table<integer, table>
+        local packets <const> = {}
+        ---@type {xtl: integer, ytl: integer, xbr: integer, ybr: integer}[]
+        local extremaBack <const> = {}
+        ---@type {xtl: integer, ytl: integer, xbr: integer, ybr: integer}[]
+        local extremaFore <const> = {}
 
-        local rNeut = 128
-        local gNeut = 128
-        local bNeut = 128
-        local aNeut = 0
-        if useBoth then
-            local clrBck <const> = AseUtilities.aseColorToClr(backTint)
-            local clrFor <const> = AseUtilities.aseColorToClr(foreTint)
-            local clrNeu <const> = Clr.mixSrLab2(clrBck, clrFor, 0.5)
-            rNeut = math.floor(clrNeu.r * 255.0 + 0.5)
-            gNeut = math.floor(clrNeu.g * 255.0 + 0.5)
-            bNeut = math.floor(clrNeu.b * 255.0 + 0.5)
-            aNeut = math.floor(clrNeu.a * 255.0 + 0.5)
-        end
+        local includeLocked <const> = true
+        local includeHidden <const> = not srcLayer.isVisible
+        local includeTiles <const> = true
+        local includeBkg <const> = false
 
-        -- Fill frames.
-        local frames <const> = Utilities.flatArr2(
-            AseUtilities.getFrames(activeSprite, target))
+        local i = 0
+        while i < lenFrIdcs do
+            i = i + 1
+            local srcFrIdx <const> = frIdcs[i]
 
-        -- Do not copy source layer blend mode.
-        local trgLayer <const> = activeSprite:newLayer()
+            local xMinBack = 2147483647
+            local yMinBack = 2147483647
+            local xMaxBack = -2147483648
+            local yMaxBack = -2147483648
+
+            local xMinFore = 2147483647
+            local yMinFore = 2147483647
+            local xMaxFore = -2147483648
+            local yMaxFore = -2147483648
+
+            local j = 0
+            while j < iterations do
+                j = j + 1
+
+                local frIdxBack = srcFrIdx - j
+                local frIdxFore = srcFrIdx + j
+                if useLoop then
+                    -- TODO: What if by use loop, the user means local to a tag,
+                    -- you'd have to make min frame, max frame, and wrap length
+                    -- abstract, then set the to sprite by default.
+                    frIdxBack = 1 + (frIdxBack - 1) % lenSpriteFrObjs
+                    frIdxFore = 1 + (frIdxFore - 1) % lenSpriteFrObjs
+                end
+
+                if lookBackward and frIdxBack >= 1 then
+                    local pack <const> = packets[frIdxBack]
+                    if pack then
+                        if pack.xtl < xMinBack then xMinBack = pack.xtl end
+                        if pack.ytl < yMinBack then yMinBack = pack.ytl end
+                        if pack.xbr > xMaxBack then xMaxBack = pack.xbr end
+                        if pack.ybr > yMaxBack then yMaxBack = pack.ybr end
+                    else
+                        local isValid <const>, srcImg <const>, xtl <const>,
+                        ytl <const>, celOpacity <const>,
+                        _ <const> = flatToImage(
+                            srcLayer, frIdxBack, colorMode, colorSpace,
+                            alphaIndex, includeLocked, includeHidden,
+                            includeTiles, includeBkg)
+
+                        if isValid then
+                            local xbr <const> = xtl + srcImg.width - 1
+                            local ybr <const> = ytl + srcImg.height - 1
+                            if xtl < xMinBack then xMinBack = xtl end
+                            if ytl < yMinBack then yMinBack = ytl end
+                            if xbr > xMaxBack then xMaxBack = xbr end
+                            if ybr > yMaxBack then yMaxBack = ybr end
+
+                            packets[frIdxBack] = {
+                                xtl = xtl,
+                                ytl = ytl,
+                                xbr = xbr,
+                                ybr = ybr,
+                                srcImg = srcImg,
+                                celOpacity = celOpacity,
+                            }
+                        end -- End flat is valid.
+                    end     -- End packet exists.
+                end         -- End look backward.
+
+                if lookForward and frIdxFore <= lenSpriteFrObjs then
+                    local pack <const> = packets[frIdxFore]
+                    if pack then
+                        if pack.xtl < xMinFore then xMinFore = pack.xtl end
+                        if pack.ytl < yMinFore then yMinFore = pack.ytl end
+                        if pack.xbr > xMaxFore then xMaxFore = pack.xbr end
+                        if pack.ybr > yMaxFore then yMaxFore = pack.ybr end
+                    else
+                        local isValid <const>, srcImg <const>, xtl <const>,
+                        ytl <const>, celOpacity <const>,
+                        _ <const> = flatToImage(
+                            srcLayer, frIdxFore, colorMode, colorSpace,
+                            alphaIndex, includeLocked, includeHidden,
+                            includeTiles, includeBkg)
+
+                        if isValid then
+                            local xbr <const> = xtl + srcImg.width - 1
+                            local ybr <const> = ytl + srcImg.height - 1
+                            if xtl < xMinFore then xMinFore = xtl end
+                            if ytl < yMinFore then yMinFore = ytl end
+                            if xbr > xMaxFore then xMaxFore = xbr end
+                            if ybr > yMaxFore then yMaxFore = ybr end
+
+                            packets[frIdxFore] = {
+                                xtl = xtl,
+                                ytl = ytl,
+                                xbr = xbr,
+                                ybr = ybr,
+                                srcImg = srcImg,
+                                celOpacity = celOpacity,
+                            }
+                        end -- End flat is valid.
+                    end     -- End packet exists.
+                end         -- End look forward.
+            end             -- End iterations loop.
+
+            extremaBack[i] = {
+                xtl = xMinBack,
+                ytl = yMinBack,
+                xbr = xMaxBack,
+                ybr = yMaxBack,
+            }
+
+            extremaFore[i] = {
+                xtl = xMinFore,
+                ytl = yMinFore,
+                xbr = xMaxFore,
+                ybr = yMaxFore,
+            }
+        end -- End chosen frames loop.
+
+        local foreLayer = nil
+        local backLayer = nil
+        local onionLayer = activeSprite:newGroup()
+
+        if lookBackward then backLayer = activeSprite:newLayer() end
+        if lookForward then foreLayer = activeSprite:newLayer() end
+
         app.transaction("Set Layer Props", function()
-            trgLayer.name = srcLayer.name .. " Onion"
-            trgLayer.parent = srcLayer.parent
-            trgLayer.opacity = srcLayer.opacity or 255
-            trgLayer.stackIndex = srcLayer.stackIndex
+            if backLayer then
+                backLayer.name = "Backward"
+                backLayer.parent = onionLayer
+            end
+
+            if foreLayer then
+                foreLayer.name = "Forward"
+                foreLayer.parent = onionLayer
+            end
+
+            onionLayer.name = srcLayer.name .. " Onion"
+            onionLayer.parent = srcLayer.parent
+            onionLayer.stackIndex = srcLayer.stackIndex
+            onionLayer.isCollapsed = true
         end)
 
-        -- Set function for both vs. forward or backward.
-        local lerpFunc = nil
-        if useBoth then
-            lerpFunc = function(aMin, aMax, i, d, s)
-                if s > 2 then
-                    local t <const> = (abs(i - d) + 1.0) / (0.5 * s)
-                    if t <= 0.0 then return aMax end
-                    if t >= 1.0 then return aMin end
-                    return (1.0 - t) * aMax + t * aMin
-                elseif s > 1 then
-                    return (aMin + aMax) * 0.5
-                else
-                    return aMin
-                end
-            end
-        else
-            lerpFunc = function(aMin, aMax, i, d, s)
-                if s > 2 then
-                    local t <const> = (abs(i - d) - 1.0) / (s - 2.0)
-                    return (1.0 - t) * aMax + t * aMin
-                elseif s > 1 then
-                    return (aMin + aMax) * 0.5
-                else
-                    return aMin
-                end
-            end
-        end
+        local toFac <const> = iterations > 1
+            and 1.0 / (iterations - 1.0)
+            or 1.0
+        local toFac2 <const> = 1.0 / (iterations * 2 - 1)
+        local minAlpha01 <const> = minAlpha / 255.0
+        local maxAlpha01 <const> = maxAlpha / 255.0
+        local blendMode <const> = BlendMode.NORMAL
 
-        local lenFrames <const> = #frames
-        local rgbColorMode <const> = ColorMode.RGB
-        local h = 0
-        while h < lenFrames do
-            h = h + 1
-            local srcFrame <const> = frames[h]
+        local backClr <const> = AseUtilities.aseColorToClr(backTint)
+        local foreClr <const> = AseUtilities.aseColorToClr(foreTint)
+        local backLab <const> = Clr.sRgbToSrLab2(backClr)
+        local foreLab <const> = Clr.sRgbToSrLab2(foreClr)
 
-            local startFrameIdx = srcFrame
-            if lookBackward then
-                startFrameIdx = max(1, srcFrame - iterations)
-            end
+        local j = 0
+        while j < lenFrIdcs do
+            j = j + 1
+            local srcFrIdx <const> = frIdcs[j]
 
-            local endFrameIdx = srcFrame
-            if lookForward then
-                endFrameIdx = min(maxFrameCount, srcFrame + iterations)
-            end
+            if backLayer then
+                local celBounds <const> = extremaBack[j]
 
-            local sampleCount <const> = abs(1 + endFrameIdx - startFrameIdx)
+                local xtlTrg <const> = celBounds.xtl
+                local ytlTrg <const> = celBounds.ytl
+                local wTrg <const> = 1 + celBounds.xbr - xtlTrg
+                local hTrg <const> = 1 + celBounds.ybr - ytlTrg
 
-            -- For the image to be as efficient (i.e., small) as
-            -- it can, find the top left and bottom right viable
-            -- corners occupied by sample images.
-            local xMin = 2147483647
-            local yMin = 2147483647
-            local xMax = -2147483648
-            local yMax = -2147483648
+                if wTrg > 0 and hTrg > 0 then
+                    local trgImg <const> = Image(createSpec(wTrg, hTrg,
+                        colorMode, colorSpace, alphaIndex))
 
-            ---@type nil[]|{frameIdx: integer, height: integer, pixels: integer[], tlx: integer, tly: integer, width: integer}[]
-            local packets <const> = {}
-            local packetIdx = 0
-            local i = 0
-            while i < sampleCount do
-                local frameIdx <const> = startFrameIdx + i
-                i = i + 1
+                    local k = iterations + 1
+                    while k > 1 do
+                        local t <const> = (k - 2) * toFac
+                        local u <const> = 1.0 - t
+                        k = k - 1
 
-                -- TODO: Support group layers. Maybe refactor the whole dialog?
-                -- Support wrapping around from last to first frame?
-                if frameIdx >= 1 and frameIdx <= maxFrameCount then
-                    local currCel <const> = srcLayer:cel(frameIdx)
-                    if currCel then
-                        local currImg <const> = currCel.image
-                        local currPos <const> = currCel.position
-                        local xTopLeft <const> = currPos.x
-                        local yTopLeft <const> = currPos.y
-
-                        -- Bottom right corner is cel's position plus image
-                        -- dimensions, minus one.
-                        local imgWidth <const> = currImg.width
-                        local imgHeight <const> = currImg.height
-                        local xBottomRight <const> = xTopLeft + imgWidth - 1
-                        local yBottomRight <const> = yTopLeft + imgHeight - 1
-
-                        -- Update minima and maxima.
-                        if xTopLeft < xMin then xMin = xTopLeft end
-                        if yTopLeft < yMin then yMin = yTopLeft end
-                        if xBottomRight > xMax then xMax = xBottomRight end
-                        if yBottomRight > yMax then yMax = yBottomRight end
-
-                        -- Get pixels as an array of bytes, 4 bytes per pixel.
-                        local pixels <const> = getBytes(currImg)
-
-                        -- Group all data into a packet.
-                        packetIdx = packetIdx + 1
-                        packets[packetIdx] = {
-                            frameIdx = frameIdx,
-                            height = imgHeight,
-                            pixels = pixels,
-                            tlx = xTopLeft,
-                            tly = yTopLeft,
-                            width = imgWidth,
-                        }
-                    else
-                        packetIdx = packetIdx + 1
-                    end
-                end
-            end
-
-            -- This was initially xMax ~= xMin and yMax ~= yMin, but then there
-            -- was a problem where a range containing empty cels in the initial
-            -- slots would freeze the program.
-            if packetIdx > 0 and xMax > xMin and yMax > yMin then
-                -- Find containing axis aligned bounding box.
-                -- Find minimum for top-left corner of cels.
-                local trgPos <const> = Point(xMin, yMin)
-                local wTrg <const> = 1 + xMax - xMin
-                local hTrg <const> = 1 + yMax - yMin
-                local trgSpec = createSpec(wTrg, hTrg, rgbColorMode,
-                    colorSpace, alphaIndex)
-                local trgImg <const> = Image(trgSpec)
-                local pxTrg <const> = getBytes(trgImg)
-
-                local j = 0
-                while j < sampleCount do
-                    j = j + 1
-                    local packet <const> = packets[j]
-                    if packet then
-                        local frameIdxShd <const> = packet.frameIdx
-                        local relFrameIdx <const> = srcFrame - frameIdxShd
-
-                        local fadeAlpha = maxAlpha
-                        if relFrameIdx ~= 0 then
-                            fadeAlpha = lerpFunc(
-                                minAlpha, maxAlpha,
-                                frameIdxShd, srcFrame, sampleCount)
-                            fadeAlpha = floor(0.5 + fadeAlpha)
+                        local frIdxBack = srcFrIdx - k
+                        if useLoop then
+                            frIdxBack = 1 + (frIdxBack - 1) % lenSpriteFrObjs
                         end
 
-                        local rTint = rNeut
-                        local gTint = gNeut
-                        local bTint = bNeut
-                        local aTint = aNeut
-                        if relFrameIdx > 0 then
-                            rTint = rBack
-                            gTint = gBack
-                            bTint = bBack
-                            aTint = aBack
-                        elseif relFrameIdx < 0 then
-                            rTint = rFore
-                            gTint = gFore
-                            bTint = bFore
-                            aTint = aFore
-                        end
-
-                        local pxShad <const> = packet.pixels
-                        local width <const> = packet.width
-                        local xOffset <const> = packet.tlx - xMin
-                        local yOffset <const> = packet.tly - yMin
-
-                        -- This operates only in RGB color mode, so the bytes
-                        -- per pixel is assumed to be 4.
-                        local lenBppPixels <const> = #pxShad
-                        local lenPixels = lenBppPixels // 4
-                        local k = 0
-                        while k < lenPixels do
-                            local k4 <const> = k * 4
-                            local aShad <const> = pxShad[4 + k4]
-                            if aShad > 0 then
-                                local rShad <const> = pxShad[1 + k4]
-                                local gShad <const> = pxShad[2 + k4]
-                                local bShad <const> = pxShad[3 + k4]
-
-                                local rDest = rShad
-                                local gDest = gShad
-                                local bDest = bShad
-                                local aDest = aShad
-                                if useTint then
-                                    rDest, gDest, bDest, aDest = blend(
-                                        rShad, gShad, bShad, aShad,
-                                        rTint, gTint, bTint, aTint)
+                        local pack <const> = packets[frIdxBack]
+                        if pack then
+                            local srcImg <const> = pack.srcImg
+                            local writeImg = srcImg
+                            if useTint then
+                                local trgLab = backLab
+                                if mixTintVerif then
+                                    local tm <const> = (iterations - k) * toFac2
+                                    local um <const> = 1.0 - tm
+                                    trgLab = {
+                                        l = um * backLab.l + tm * foreLab.l,
+                                        a = um * backLab.a + tm * foreLab.a,
+                                        b = um * backLab.b + tm * foreLab.b,
+                                        alpha = um * backLab.alpha + tm * foreLab.alpha,
+                                    }
                                 end
-                                aDest = min(aShad, fadeAlpha)
+                                writeImg = tintImage(srcImg, trgLab, preserveLight)
+                            end
 
-                                local x <const> = xOffset + k % width
-                                local y <const> = yOffset + k // width
-                                local m4 <const> = (y * wTrg + x) * 4
-                                local rOrig <const> = pxTrg[1 + m4]
-                                local gOrig <const> = pxTrg[2 + m4]
-                                local bOrig <const> = pxTrg[3 + m4]
-                                local aOrig <const> = pxTrg[4 + m4]
+                            local a01 <const> = (pack.celOpacity / 255.0)
+                                * (u * maxAlpha01 + t * minAlpha01)
 
-                                local rComp <const>,
-                                gComp <const>,
-                                bComp <const>,
-                                aComp <const> = blend(
-                                    rOrig, gOrig, bOrig, aOrig,
-                                    rDest, gDest, bDest, aDest)
+                            trgImg:drawImage(
+                                writeImg,
+                                Point(pack.xtl - xtlTrg, pack.ytl - ytlTrg),
+                                floor(a01 * 255.0 + 0.5),
+                                blendMode)
+                        end -- End packet exists.
+                    end     -- End iterations loop.
 
-                                pxTrg[1 + m4] = rComp
-                                pxTrg[2 + m4] = gComp
-                                pxTrg[3 + m4] = bComp
-                                pxTrg[4 + m4] = aComp
-                            end -- End of check alpha.
+                    activeSprite:newCel(backLayer,
+                        srcFrIdx, trgImg, Point(xtlTrg, ytlTrg))
+                end -- End valid dimensions.
+            end     -- End look backward.
 
-                            k = k + 1
-                        end -- End of pixels loop.
-                    end     -- End packet exists check.
-                end         -- End sample count loop.
+            if foreLayer then
+                local celBounds <const> = extremaFore[j]
 
-                setBytes(trgImg, pxTrg)
+                local xtlTrg <const> = celBounds.xtl
+                local ytlTrg <const> = celBounds.ytl
+                local wTrg <const> = 1 + celBounds.xbr - xtlTrg
+                local hTrg <const> = 1 + celBounds.ybr - ytlTrg
 
-                -- Important to break this into separate transactions
-                -- in case there is a bug that is causing an Aseprite crash.
-                transact(
-                    strfmt("Bake Onion %d", frameUiOffset + srcFrame),
-                    function()
-                        activeSprite:newCel(trgLayer, srcFrame, trgImg, trgPos)
-                    end)
-            end -- End nonzero min max size check.
-        end     -- End frames loop.
+                if wTrg > 0 and hTrg > 0 then
+                    local trgImg <const> = Image(createSpec(wTrg, hTrg,
+                        colorMode, colorSpace, alphaIndex))
+
+                    local k = 0
+                    while k < iterations do
+                        local t <const> = k * toFac
+                        local u <const> = 1.0 - t
+                        k = k + 1
+
+                        local frIdxFore = srcFrIdx + k
+                        if useLoop then
+                            frIdxFore = 1 + (frIdxFore - 1) % lenSpriteFrObjs
+                        end
+
+                        local pack <const> = packets[frIdxFore]
+                        if pack then
+                            local srcImg <const> = pack.srcImg
+                            local writeImg = srcImg
+                            if useTint then
+                                local trgLab = foreLab
+                                if mixTintVerif then
+                                    local tm <const> = (iterations + k - 1) * toFac2
+                                    local um <const> = 1.0 - tm
+                                    trgLab = {
+                                        l = um * backLab.l + tm * foreLab.l,
+                                        a = um * backLab.a + tm * foreLab.a,
+                                        b = um * backLab.b + tm * foreLab.b,
+                                        alpha = um * backLab.alpha + tm * foreLab.alpha,
+                                    }
+                                end
+                                writeImg = tintImage(srcImg, trgLab, preserveLight)
+                            end
+
+                            local a01 <const> = (pack.celOpacity / 255.0)
+                                * (u * maxAlpha01 + t * minAlpha01)
+
+                            trgImg:drawImage(
+                                writeImg,
+                                Point(pack.xtl - xtlTrg, pack.ytl - ytlTrg),
+                                floor(a01 * 255.0 + 0.5),
+                                blendMode)
+                        end -- End packet exists.
+                    end     -- End iterations loop.
+
+                    activeSprite:newCel(foreLayer,
+                        srcFrIdx, trgImg, Point(xtlTrg, ytlTrg))
+                end -- End valid dimensions.
+            end     -- End look forward.
+        end         -- End write frames loop.
 
         app.layer = srcLayer
         app.refresh()
