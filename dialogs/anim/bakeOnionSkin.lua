@@ -296,11 +296,6 @@ dlg:button {
         local alphaIndex <const> = spriteSpec.transparentColor
         local colorSpace <const> = spriteSpec.colorSpace
 
-        -- Get frame UI offset.
-        local docPrefs <const> = app.preferences.document(activeSprite)
-        local tlPrefs <const> = docPrefs.timeline
-        local frameUiOffset <const> = tlPrefs.first_frame - 1 --[[@as integer]]
-
         -- Unpack arguments.
         local args <const> = dlg.data
         local target <const> = args.target
@@ -345,6 +340,8 @@ dlg:button {
         local floor <const> = math.floor
         local createSpec <const> = AseUtilities.createSpec
         local flatToImage <const> = AseUtilities.flatToImage
+        local transact <const> = app.transaction
+        local strfmt <const> = string.format
 
         ---@type table<integer, table>
         local packets <const> = {}
@@ -499,127 +496,138 @@ dlg:button {
         local backLab <const> = Clr.sRgbToSrLab2(backClr)
         local foreLab <const> = Clr.sRgbToSrLab2(foreClr)
 
+        -- Get frame UI offset.
+        local docPrefs <const> = app.preferences.document(activeSprite)
+        local tlPrefs <const> = docPrefs.timeline
+        local frameUiOffset <const> = tlPrefs.first_frame - 1 --[[@as integer]]
+
         local j = 0
         while j < lenFrIdcs do
             j = j + 1
             local srcFrIdx <const> = frIdcs[j]
+            local uiFrIdx <const> = srcFrIdx + frameUiOffset
 
             if backLayer then
-                local celBounds <const> = extremaBack[j]
+                transact(strfmt("Onion Back %d", uiFrIdx), function()
+                    local celBounds <const> = extremaBack[j]
 
-                local xtlTrg <const> = celBounds.xtl
-                local ytlTrg <const> = celBounds.ytl
-                local wTrg <const> = 1 + celBounds.xbr - xtlTrg
-                local hTrg <const> = 1 + celBounds.ybr - ytlTrg
+                    local xtlTrg <const> = celBounds.xtl
+                    local ytlTrg <const> = celBounds.ytl
+                    local wTrg <const> = 1 + celBounds.xbr - xtlTrg
+                    local hTrg <const> = 1 + celBounds.ybr - ytlTrg
 
-                if wTrg > 0 and hTrg > 0 then
-                    local trgImg <const> = Image(createSpec(wTrg, hTrg,
-                        colorMode, colorSpace, alphaIndex))
+                    if wTrg > 0 and hTrg > 0 then
+                        local trgImg <const> = Image(createSpec(wTrg, hTrg,
+                            colorMode, colorSpace, alphaIndex))
 
-                    local k = iterations + 1
-                    while k > 1 do
-                        local t <const> = (k - 2) * toFac
-                        local u <const> = 1.0 - t
-                        k = k - 1
+                        local k = iterations + 1
+                        while k > 1 do
+                            local t <const> = (k - 2) * toFac
+                            local u <const> = 1.0 - t
+                            k = k - 1
 
-                        local frIdxBack = srcFrIdx - k
-                        if useLoop then
-                            frIdxBack = 1 + (frIdxBack - 1) % lenSpriteFrObjs
-                        end
-
-                        local pack <const> = packets[frIdxBack]
-                        if pack then
-                            local srcImg <const> = pack.srcImg
-                            local writeImg = srcImg
-                            if useTint then
-                                local trgLab = backLab
-                                if mixTintVerif then
-                                    local tm <const> = (iterations - k) * toFac2
-                                    local um <const> = 1.0 - tm
-                                    trgLab = {
-                                        l = um * backLab.l + tm * foreLab.l,
-                                        a = um * backLab.a + tm * foreLab.a,
-                                        b = um * backLab.b + tm * foreLab.b,
-                                        alpha = um * backLab.alpha + tm * foreLab.alpha,
-                                    }
-                                end
-                                writeImg = tintImage(srcImg, trgLab, preserveLight)
+                            local frIdxBack = srcFrIdx - k
+                            if useLoop then
+                                frIdxBack = 1 + (frIdxBack - 1) % lenSpriteFrObjs
                             end
 
-                            local a01 <const> = (pack.celOpacity / 255.0)
-                                * (u * maxAlpha01 + t * minAlpha01)
-                            local a8 <const> = floor(a01 * 255.0 + 0.5)
-                            if a8 > 0 then
-                                trgImg:drawImage(writeImg, Point(
-                                        pack.xtl - xtlTrg, pack.ytl - ytlTrg),
-                                    a8, blendMode)
-                            end -- End alpha is valid.
-                        end     -- End packet exists.
-                    end         -- End iterations loop.
+                            local pack <const> = packets[frIdxBack]
+                            if pack then
+                                local srcImg <const> = pack.srcImg
+                                local writeImg = srcImg
+                                if useTint then
+                                    local trgLab = backLab
+                                    if mixTintVerif then
+                                        local tm <const> = (iterations - k) * toFac2
+                                        local um <const> = 1.0 - tm
+                                        trgLab = {
+                                            l = um * backLab.l + tm * foreLab.l,
+                                            a = um * backLab.a + tm * foreLab.a,
+                                            b = um * backLab.b + tm * foreLab.b,
+                                            alpha = um * backLab.alpha + tm * foreLab.alpha,
+                                        }
+                                    end
+                                    writeImg = tintImage(srcImg, trgLab, preserveLight)
+                                end
 
-                    activeSprite:newCel(backLayer,
-                        srcFrIdx, trgImg, Point(xtlTrg, ytlTrg))
-                end -- End valid dimensions.
-            end     -- End look backward.
+                                local a01 <const> = (pack.celOpacity / 255.0)
+                                    * (u * maxAlpha01 + t * minAlpha01)
+                                local a8 <const> = floor(a01 * 255.0 + 0.5)
+                                if a8 > 0 then
+                                    trgImg:drawImage(writeImg, Point(
+                                            pack.xtl - xtlTrg, pack.ytl - ytlTrg),
+                                        a8, blendMode)
+                                end -- End alpha is valid.
+                            end     -- End packet exists.
+                        end         -- End iterations loop.
+
+                        activeSprite:newCel(backLayer,
+                            srcFrIdx, trgImg, Point(xtlTrg, ytlTrg))
+                    end -- End valid dimensions.
+                end)    -- End transaction.
+            end         -- End look backward.
+
 
             if foreLayer then
-                local celBounds <const> = extremaFore[j]
+                transact(strfmt("Onion Fore %d", uiFrIdx), function()
+                    local celBounds <const> = extremaFore[j]
 
-                local xtlTrg <const> = celBounds.xtl
-                local ytlTrg <const> = celBounds.ytl
-                local wTrg <const> = 1 + celBounds.xbr - xtlTrg
-                local hTrg <const> = 1 + celBounds.ybr - ytlTrg
+                    local xtlTrg <const> = celBounds.xtl
+                    local ytlTrg <const> = celBounds.ytl
+                    local wTrg <const> = 1 + celBounds.xbr - xtlTrg
+                    local hTrg <const> = 1 + celBounds.ybr - ytlTrg
 
-                if wTrg > 0 and hTrg > 0 then
-                    local trgImg <const> = Image(createSpec(wTrg, hTrg,
-                        colorMode, colorSpace, alphaIndex))
+                    if wTrg > 0 and hTrg > 0 then
+                        local trgImg <const> = Image(createSpec(wTrg, hTrg,
+                            colorMode, colorSpace, alphaIndex))
 
-                    local k = 0
-                    while k < iterations do
-                        local t <const> = k * toFac
-                        local u <const> = 1.0 - t
-                        k = k + 1
+                        local k = 0
+                        while k < iterations do
+                            local t <const> = k * toFac
+                            local u <const> = 1.0 - t
+                            k = k + 1
 
-                        local frIdxFore = srcFrIdx + k
-                        if useLoop then
-                            frIdxFore = 1 + (frIdxFore - 1) % lenSpriteFrObjs
-                        end
-
-                        local pack <const> = packets[frIdxFore]
-                        if pack then
-                            local srcImg <const> = pack.srcImg
-                            local writeImg = srcImg
-                            if useTint then
-                                local trgLab = foreLab
-                                if mixTintVerif then
-                                    local tm <const> = (iterations + k - 1) * toFac2
-                                    local um <const> = 1.0 - tm
-                                    trgLab = {
-                                        l = um * backLab.l + tm * foreLab.l,
-                                        a = um * backLab.a + tm * foreLab.a,
-                                        b = um * backLab.b + tm * foreLab.b,
-                                        alpha = um * backLab.alpha + tm * foreLab.alpha,
-                                    }
-                                end
-                                writeImg = tintImage(srcImg, trgLab, preserveLight)
+                            local frIdxFore = srcFrIdx + k
+                            if useLoop then
+                                frIdxFore = 1 + (frIdxFore - 1) % lenSpriteFrObjs
                             end
 
-                            local a01 <const> = (pack.celOpacity / 255.0)
-                                * (u * maxAlpha01 + t * minAlpha01)
-                            local a8 <const> = floor(a01 * 255.0 + 0.5)
-                            if a8 > 0 then
-                                trgImg:drawImage(writeImg, Point(
-                                        pack.xtl - xtlTrg, pack.ytl - ytlTrg),
-                                    a8, blendMode)
-                            end -- End alpha is valid.
-                        end     -- End packet exists.
-                    end         -- End iterations loop.
+                            local pack <const> = packets[frIdxFore]
+                            if pack then
+                                local srcImg <const> = pack.srcImg
+                                local writeImg = srcImg
+                                if useTint then
+                                    local trgLab = foreLab
+                                    if mixTintVerif then
+                                        local tm <const> = (iterations + k - 1) * toFac2
+                                        local um <const> = 1.0 - tm
+                                        trgLab = {
+                                            l = um * backLab.l + tm * foreLab.l,
+                                            a = um * backLab.a + tm * foreLab.a,
+                                            b = um * backLab.b + tm * foreLab.b,
+                                            alpha = um * backLab.alpha + tm * foreLab.alpha,
+                                        }
+                                    end
+                                    writeImg = tintImage(srcImg, trgLab, preserveLight)
+                                end
 
-                    activeSprite:newCel(foreLayer,
-                        srcFrIdx, trgImg, Point(xtlTrg, ytlTrg))
-                end -- End valid dimensions.
-            end     -- End look forward.
-        end         -- End write frames loop.
+                                local a01 <const> = (pack.celOpacity / 255.0)
+                                    * (u * maxAlpha01 + t * minAlpha01)
+                                local a8 <const> = floor(a01 * 255.0 + 0.5)
+                                if a8 > 0 then
+                                    trgImg:drawImage(writeImg, Point(
+                                            pack.xtl - xtlTrg, pack.ytl - ytlTrg),
+                                        a8, blendMode)
+                                end -- End alpha is valid.
+                            end     -- End packet exists.
+                        end         -- End iterations loop.
+
+                        activeSprite:newCel(foreLayer,
+                            srcFrIdx, trgImg, Point(xtlTrg, ytlTrg))
+                    end -- End valid dimensions.
+                end)    -- End transaction.
+            end         -- End look forward.
+        end             -- End write frames loop.
 
         app.layer = srcLayer
         app.refresh()
