@@ -9,6 +9,9 @@ local defaults <const> = {
     -- it wouldn't offer much convenience, as layer blend modes
     -- use dest alpha, not source alpha (union, not intersect).
 
+    -- Previous version:
+    -- 67fe815aeb9f2f63c99216fab7c19971c6f6d19e
+
     -- TODO: Option to mix tint even when there is only foreward
     -- or backward? Maybe mix it toward source rather than
     -- opposing tint?
