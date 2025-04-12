@@ -8,6 +8,10 @@ local defaults <const> = {
     -- This could be refactored with new drawImage, but
     -- it wouldn't offer much convenience, as layer blend modes
     -- use dest alpha, not source alpha (union, not intersect).
+
+    -- TODO: Option to mix tint even when there is only foreward
+    -- or backward? Maybe mix it toward source rather than
+    -- opposing tint?
     target = "ALL",
     iterations = 3,
     maxIterations = 32,
@@ -300,9 +304,7 @@ dlg:button {
         local args <const> = dlg.data
         local target <const> = args.target
             or defaults.target --[[@as string]]
-        -- TODO: Should iterations should be verified by clamping to length of
-        -- sprite frames?
-        local itrs <const> = args.iterations
+        local iterations <const> = args.iterations
             or defaults.iterations --[[@as integer]]
         local directions <const> = args.directions
             or defaults.directions --[[@as string]]
@@ -329,13 +331,15 @@ dlg:button {
             return
         end
 
-        local minAlphaVerif <const> = math.min(minAlpha, maxAlpha)
-        local maxAlphaVerif <const> = math.max(minAlpha, maxAlpha)
-
         -- Find directions.
         local useBoth <const> = directions == "BOTH"
         local lookForward <const> = useBoth or directions == "FORWARD"
         local lookBackward <const> = useBoth or directions == "BACKWARD"
+
+        -- Verify arguments.
+        local minAlphaVerif <const> = math.min(minAlpha, maxAlpha)
+        local maxAlphaVerif <const> = math.max(minAlpha, maxAlpha)
+        local itrs <const> = math.min(iterations, lenSpriteFrObjs)
         local mixTintVerif <const> = mixTint and useBoth
 
         -- Cache methods used in for loop.
