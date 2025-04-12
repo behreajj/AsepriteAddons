@@ -332,12 +332,13 @@ dlg:button {
             return
         end
 
+        local minAlphaVerif <const> = math.min(minAlpha, maxAlpha)
+        local maxAlphaVerif <const> = math.max(minAlpha, maxAlpha)
+
         -- Find directions.
         local useBoth <const> = directions == "BOTH"
-        local useFore <const> = directions == "FORWARD"
-        local useBack <const> = directions == "BACKWARD"
-        local lookForward <const> = useBoth or useFore
-        local lookBackward <const> = useBoth or useBack
+        local lookForward <const> = useBoth or directions == "FORWARD"
+        local lookBackward <const> = useBoth or directions == "BACKWARD"
         local mixTintVerif <const> = mixTint and useBoth
 
         -- Cache methods used in for loop.
@@ -489,8 +490,8 @@ dlg:button {
             and 1.0 / (iterations - 1.0)
             or 1.0
         local toFac2 <const> = 1.0 / (iterations * 2 - 1)
-        local minAlpha01 <const> = minAlpha / 255.0
-        local maxAlpha01 <const> = maxAlpha / 255.0
+        local minAlpha01 <const> = minAlphaVerif / 255.0
+        local maxAlpha01 <const> = maxAlphaVerif / 255.0
         local blendMode <const> = BlendMode.NORMAL
 
         local backClr <const> = AseUtilities.aseColorToClr(backTint)
@@ -547,14 +548,14 @@ dlg:button {
 
                             local a01 <const> = (pack.celOpacity / 255.0)
                                 * (u * maxAlpha01 + t * minAlpha01)
-
-                            trgImg:drawImage(
-                                writeImg,
-                                Point(pack.xtl - xtlTrg, pack.ytl - ytlTrg),
-                                floor(a01 * 255.0 + 0.5),
-                                blendMode)
-                        end -- End packet exists.
-                    end     -- End iterations loop.
+                            local a8 <const> = floor(a01 * 255.0 + 0.5)
+                            if a8 > 0 then
+                                trgImg:drawImage(writeImg, Point(
+                                        pack.xtl - xtlTrg, pack.ytl - ytlTrg),
+                                    a8, blendMode)
+                            end -- End alpha is valid.
+                        end     -- End packet exists.
+                    end         -- End iterations loop.
 
                     activeSprite:newCel(backLayer,
                         srcFrIdx, trgImg, Point(xtlTrg, ytlTrg))
@@ -605,14 +606,14 @@ dlg:button {
 
                             local a01 <const> = (pack.celOpacity / 255.0)
                                 * (u * maxAlpha01 + t * minAlpha01)
-
-                            trgImg:drawImage(
-                                writeImg,
-                                Point(pack.xtl - xtlTrg, pack.ytl - ytlTrg),
-                                floor(a01 * 255.0 + 0.5),
-                                blendMode)
-                        end -- End packet exists.
-                    end     -- End iterations loop.
+                            local a8 <const> = floor(a01 * 255.0 + 0.5)
+                            if a8 > 0 then
+                                trgImg:drawImage(writeImg, Point(
+                                        pack.xtl - xtlTrg, pack.ytl - ytlTrg),
+                                    a8, blendMode)
+                            end -- End alpha is valid.
+                        end     -- End packet exists.
+                    end         -- End iterations loop.
 
                     activeSprite:newCel(foreLayer,
                         srcFrIdx, trgImg, Point(xtlTrg, ytlTrg))
