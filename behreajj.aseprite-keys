@@ -46,8 +46,22 @@
         <key command="LayerProperties" context="Normal" shortcut="F2" removed="true"/>
         <key command="LayerVisibility" shortcut="Shift+X" removed="true"/>
         <key command="LayerVisibility" shortcut="5" removed="true"/>
+        <key command="NewLayer" shortcut="Shift+N" removed="true"/>
+        <key command="NewLayer" shortcut="Shift+Space+N" removed="true">
+            <param name="before" value="true"/>
+        </key>
         <key command="NewLayer" shortcut="Alt+Shift+N" removed="true">
             <param name="group" value="true"/>
+        </key>
+        <key command="NewLayer" shortcut="Ctrl+J" removed="true">
+            <param name="viaCopy" value="true"/>
+        </key>
+        <key command="NewLayer" shortcut="Ctrl+Shift+J" removed="true">
+            <param name="viaCut" value="true"/>
+        </key>
+        <key command="NewLayer" shortcut="Space+N" removed="true">
+            <param name="ask" value="true"/>
+            <param name="tilemap" value="true"/>
         </key>
         <key command="GotoPreviousLayer" context="Normal" shortcut="Down" removed="true"/>
         <key command="GotoNextLayer" context="Normal" shortcut="I" removed="true"/>
@@ -679,6 +693,9 @@
         </key>
         <key command="RunScript" shortcut="Alt+Shift+U">
             <param name="filename" value="path\to\Aseprite\scripts\dialogs\color\contrast.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Shift+N">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\layers\appendLayer.lua"/>
         </key>
     </commands>
     <tools>
