@@ -2493,10 +2493,11 @@ end
 ---@return Brush
 function AseUtilities.imageToBrush(
     image, centerPreset, pattern, xPattern, yPattern)
-    -- There are cases where it'd be better force RGB color mode and let the
-    -- brush be reinterpreted dynamically as the active sprite color
-    -- mode changes. However, when the indexed sprite transparent color is
-    -- not clear black, the brush has incorrect transparency.
+    -- There are cases where it'd be better to convert to RGB color mode image
+    -- and let the brush be reinterpreted dynamically as the active sprite
+    -- color mode changes. However, when the indexed sprite transparent color
+    -- is not clear black, and the palette contains no clear black, then an RGB
+    -- brush has incorrect transparency.
 
     if image:isEmpty() then
         -- Brush GUI does not properly update on assignment, so in case a blank
