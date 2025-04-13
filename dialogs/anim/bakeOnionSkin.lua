@@ -110,7 +110,7 @@ dlg:slider {
     label = "Iterations:",
     min = 1,
     max = defaults.maxIterations,
-    value = defaults.iterations
+    value = defaults.iterations,
 }
 
 dlg:newrow { always = false }
@@ -235,7 +235,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "confirm",
     text = "&OK",
-    focus = false,
+    focus = true,
     onclick = function()
         local site <const> = app.site
         local activeSprite <const> = site.sprite
@@ -560,8 +560,8 @@ dlg:button {
                             end     -- End packet exists.
                         end         -- End iterations loop.
 
-                        activeSprite:newCel(backLayer,
-                            srcFrIdx, trgImg, Point(xtlTrg, ytlTrg))
+                        activeSprite:newCel(backLayer, srcFrIdx, trgImg,
+                            Point(xtlTrg, ytlTrg))
                     end -- End valid dimensions.
                 end)    -- End transaction.
             end         -- End look backward.
@@ -620,8 +620,8 @@ dlg:button {
                             end     -- End packet exists.
                         end         -- End iterations loop.
 
-                        activeSprite:newCel(foreLayer,
-                            srcFrIdx, trgImg, Point(xtlTrg, ytlTrg))
+                        activeSprite:newCel(foreLayer, srcFrIdx, trgImg,
+                            Point(xtlTrg, ytlTrg))
                     end -- End valid dimensions.
                 end)    -- End transaction.
             end         -- End look forward.
