@@ -27,7 +27,7 @@ false, then returns to the first frame after reaching the last.
 
 ## Layers
 
-- `appendLayer`: Appends a new layer to the active parent sprite or group layer. The layer is appended to the top of the layer stack.
+- `appendLayer`: Appends a new layer to the active parent, either sprite or group layer. The layer is appended to the top of the layer stack. The new layer becomes the active layer.
 
 - `copyLayer`: Duplicates a layer, including group opacity and blend mode. Ignores reference layers. Ignores background layers in indexed color mode. Tile map layers are copied to regular layers (to avoid ambiguities with tile set reference vs. copy by value). For ranges, group layers are ignored and duplicates are parented to the sprite.
 
@@ -46,6 +46,8 @@ false, then returns to the first frame after reaching the last.
 - `growRangeLayers`: Expands the existing range to include more layers. If the layer is a group, selects its children. Then, selects the layer's neighbors. Then selects its parents. Treats reference layers as a boundary.
 
 - `nextLayer`: Moves the active layer to the next layer up the stack. Preserves timeline ranges of `RangeType.FRAMES`. Stops when the top of the sprite layer stack is reached.
+
+- `prependLayer`: Prepends a new layer to the active parent, either sprite or group layer. The layer is prepended to the bottom of the layer stack. The new layer becomes the active layer.
 
 - `prevLayer`: Moves the active layer to the previous layer down the stack. Preserves timeline ranges of `RangeType.FRAMES`. Stops when the bottom of the sprite layer stack is reached.
 

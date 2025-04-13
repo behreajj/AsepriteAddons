@@ -1493,8 +1493,7 @@ function AseUtilities.expandImageToPow2(img, nonUniform)
         wDest = Utilities.nextPowerOf2(wOrig)
         hDest = Utilities.nextPowerOf2(hOrig)
     else
-        wDest = Utilities.nextPowerOf2(
-            math.max(wOrig, hOrig))
+        wDest = Utilities.nextPowerOf2(math.max(wOrig, hOrig))
         hDest = wDest
     end
 

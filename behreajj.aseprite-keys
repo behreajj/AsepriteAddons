@@ -46,6 +46,7 @@
         <key command="LayerProperties" context="Normal" shortcut="F2" removed="true"/>
         <key command="LayerVisibility" shortcut="Shift+X" removed="true"/>
         <key command="LayerVisibility" shortcut="5" removed="true"/>
+        <key command="OpenGroup" shortcut="Shift+E" removed="true"/>
         <key command="NewLayer" shortcut="Shift+N" removed="true"/>
         <key command="NewLayer" shortcut="Shift+Space+N" removed="true">
             <param name="before" value="true"/>
@@ -438,9 +439,6 @@
         <key command="RunScript" shortcut="Ctrl+2" removed="true">
             <param name="filename" value="path\to\Aseprite\scripts\commands\cycleStackDown.lua"/>
         </key>
-        <key command="RunScript" shortcut="Ctrl+Shift+N">
-            <param name="filename" value="path\to\Aseprite\scripts\gridTemplate.lua"/>
-        </key>
         <key command="RunScript" shortcut="Ctrl+4" removed="true">
             <param name="filename" value="path\to\Aseprite\scripts\commands\cycleFrameLeft.lua"/>
         </key>
@@ -628,7 +626,7 @@
         <key command="RunScript" shortcut="Alt+Del">
             <param name="filename" value="path\to\Aseprite\scripts\commands\layers\deleteLayer.lua"/>
         </key>
-        <key command="RunScript" shortcut="Alt+Shift+N">
+        <key command="RunScript" shortcut="Ctrl+Shift+N">
             <param name="filename" value="path\to\Aseprite\scripts\commands\layers\groupLayers.lua"/>
         </key>
         <key command="RunScript" shortcut="Shift+X" removed="true">
@@ -696,6 +694,9 @@
         </key>
         <key command="RunScript" shortcut="Shift+N">
             <param name="filename" value="path\to\Aseprite\scripts\commands\layers\appendLayer.lua"/>
+        </key>
+        <key command="RunScript" shortcut="Alt+Shift+N">
+            <param name="filename" value="path\to\Aseprite\scripts\commands\layers\prependLayer.lua"/>
         </key>
     </commands>
     <tools>
