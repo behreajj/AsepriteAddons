@@ -5,16 +5,8 @@ local targets <const> = { "ACTIVE", "ALL", "RANGE", "TAG" }
 
 local defaults <const> = {
     -- Also known as light table, ghost trail or echo in After Effects.
-    -- This could be refactored with new drawImage, but
-    -- it wouldn't offer much convenience, as layer blend modes
-    -- use dest alpha, not source alpha (union, not intersect).
-
     -- Previous version:
     -- 67fe815aeb9f2f63c99216fab7c19971c6f6d19e
-
-    -- TODO: Option to mix tint even when there is only foreward
-    -- or backward? Maybe mix it toward source rather than
-    -- opposing tint?
     target = "ALL",
     iterations = 3,
     maxIterations = 32,
@@ -29,6 +21,7 @@ local defaults <const> = {
     backTint = Color { r = 255, g = 0, b = 0, a = 170 },
 }
 
+---Returns source image by reference if tint alpha is zero or less.
 ---@param srcImg Image
 ---@param tint { l: number, a: number, b: number, alpha: number }
 ---@param preserveLight boolean
@@ -292,6 +285,9 @@ dlg:button {
         -- Unpack sprite spec.
         local spriteSpec <const> = activeSprite.spec
         local colorMode <const> = spriteSpec.colorMode
+        local alphaIndex <const> = spriteSpec.transparentColor
+        local colorSpace <const> = spriteSpec.colorSpace
+
         if colorMode ~= ColorMode.RGB then
             app.alert {
                 title = "Error",
@@ -299,9 +295,6 @@ dlg:button {
             }
             return
         end
-
-        local alphaIndex <const> = spriteSpec.transparentColor
-        local colorSpace <const> = spriteSpec.colorSpace
 
         -- Unpack arguments.
         local args <const> = dlg.data
@@ -369,15 +362,10 @@ dlg:button {
             i = i + 1
             local srcFrIdx <const> = frIdcs[i]
 
-            local xMnB = 2147483647
-            local yMnB = 2147483647
-            local xMxB = -2147483648
-            local yMxB = -2147483648
-
-            local xMnF = 2147483647
-            local yMnF = 2147483647
-            local xMxF = -2147483648
-            local yMxF = -2147483648
+            local xMnB, yMnB = 2147483647, 2147483647
+            local xMxB, yMxB = -2147483648, -2147483648
+            local xMnF, yMnF = 2147483647, 2147483647
+            local xMxF, yMxF = -2147483648, -2147483648
 
             local j = 0
             while j < itrs do
@@ -470,7 +458,7 @@ dlg:button {
 
         local foreLayer = nil
         local backLayer = nil
-        local onionLayer = activeSprite:newGroup()
+        local onionLayer <const> = activeSprite:newGroup()
 
         if lookBackward then backLayer = activeSprite:newLayer() end
         if lookForward then foreLayer = activeSprite:newLayer() end
@@ -495,9 +483,9 @@ dlg:button {
         local toFac <const> = itrs > 1
             and 1.0 / (itrs - 1.0)
             or 1.0
-        -- Full range is (itr * 2 + 1) but the one is canceled out in the
-        -- denominator as above.
-        local toFac2 <const> = 1.0 / (itrs * 2)
+        -- Full range is (itr * 2 + 1) but the plus one is canceled out by
+        -- the minus one, as above.
+        local toFac2 <const> = 0.5 / itrs
         local minAlpha01 <const> = minAlphaVerif / 255.0
         local maxAlpha01 <const> = maxAlphaVerif / 255.0
         local blendMode <const> = BlendMode.NORMAL
@@ -533,8 +521,6 @@ dlg:button {
 
                         local k = itrs + 1
                         while k > 1 do
-                            local t <const> = (k - 2) * toFac
-                            local u <const> = 1.0 - t
                             k = k - 1
 
                             local frIdxBack = srcFrIdx - k
@@ -561,12 +547,14 @@ dlg:button {
                                     writeImg = tintImage(srcImg, trgLab, preserveLight)
                                 end
 
+                                local t <const> = (k - 1) * toFac
                                 local a01 <const> = (pack.celOpacity / 255.0)
-                                    * (u * maxAlpha01 + t * minAlpha01)
+                                    * ((1.0 - t) * maxAlpha01 + t * minAlpha01)
                                 local a8 <const> = floor(a01 * 255.0 + 0.5)
                                 if a8 > 0 then
                                     trgImg:drawImage(writeImg, Point(
-                                            pack.xtl - xtlTrg, pack.ytl - ytlTrg),
+                                            pack.xtl - xtlTrg,
+                                            pack.ytl - ytlTrg),
                                         a8, blendMode)
                                 end -- End alpha is valid.
                             end     -- End packet exists.
@@ -577,7 +565,6 @@ dlg:button {
                     end -- End valid dimensions.
                 end)    -- End transaction.
             end         -- End look backward.
-
 
             if foreLayer then
                 transact(strfmt("Onion Fore %d", uiFrIdx), function()
@@ -594,8 +581,6 @@ dlg:button {
 
                         local k = 0
                         while k < itrs do
-                            local t <const> = k * toFac
-                            local u <const> = 1.0 - t
                             k = k + 1
 
                             local frIdxFore = srcFrIdx + k
@@ -622,12 +607,14 @@ dlg:button {
                                     writeImg = tintImage(srcImg, trgLab, preserveLight)
                                 end
 
+                                local t <const> = (k - 1) * toFac
                                 local a01 <const> = (pack.celOpacity / 255.0)
-                                    * (u * maxAlpha01 + t * minAlpha01)
+                                    * ((1.0 - t) * maxAlpha01 + t * minAlpha01)
                                 local a8 <const> = floor(a01 * 255.0 + 0.5)
                                 if a8 > 0 then
                                     trgImg:drawImage(writeImg, Point(
-                                            pack.xtl - xtlTrg, pack.ytl - ytlTrg),
+                                            pack.xtl - xtlTrg,
+                                            pack.ytl - ytlTrg),
                                         a8, blendMode)
                                 end -- End alpha is valid.
                             end     -- End packet exists.
