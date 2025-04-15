@@ -2,14 +2,9 @@ dofile("../../support/aseutilities.lua")
 dofile("../../support/canvasutilities.lua")
 
 local targets <const> = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
-local channels <const> = { "L", "A", "B", "Alpha" }
+local channels <const> = { "L", "A", "B" }
 
-local idPrefixes <const> = {
-    "lCurve",
-    "aCurve",
-    "bCurve",
-    "tCurve"
-}
+local idPrefixes <const> = { "lCurve", "aCurve", "bCurve" }
 local lenIdPrefixes <const> = #idPrefixes
 
 local coPostfixes <const> = {
@@ -51,11 +46,12 @@ if app.theme then
 end
 
 local defaults <const> = {
+    -- Last commit to support alpha:
+    -- 8d745a1006da271ad9d62010551226522b6b9a62
     target = "ACTIVE",
     channel = "L",
     useRelative = false,
     printElapsed = false,
-    fixZeroAlpha = true,
     alpSampleCount = 256,
     aAbsMin = -104.18850360397,
     aAbsRange = 208.37700720794,
@@ -89,9 +85,6 @@ local function setInputFromColor(coPostfix)
     elseif channel == "B" then
         idPrefix = idPrefixes[3]
         val = (lab.b - defaults.bAbsMin) / defaults.bAbsRange
-    elseif channel == "Alpha" then
-        idPrefix = idPrefixes[4]
-        val = lab.alpha
     end
 
     local id <const> = idPrefix .. "_" .. coPostfix
@@ -119,8 +112,7 @@ dlg:combobox {
         local bools <const> = {
             channel == "L",
             channel == "A",
-            channel == "B",
-            channel == "Alpha"
+            channel == "B"
         }
 
         local i = 0
@@ -203,15 +195,6 @@ while h < lenIdPrefixes do
         5, 0.33333, 0.33333, 0.66667, 0.66667,
         curveColor, gridColor)
 end
-
-dlg:check {
-    id = "fixZeroAlpha",
-    text = "Fix Zero",
-    selected = defaults.fixZeroAlpha,
-    visible = false
-}
-
-dlg:newrow { always = false }
 
 dlg:check {
     id = "printElapsed",
@@ -369,9 +352,6 @@ dlg:button {
             -- print(table.concat(strs, ",\n"))
         end
 
-        local fixZeroAlpha <const> = args.fixZeroAlpha --[[@as boolean]]
-        local changeTrgZero <const> = not fixZeroAlpha
-
         local useRelative <const> = args.useRelative --[[@as boolean]]
         local aAbsMin <const> = defaults.aAbsMin
         local aAbsMax <const> = -defaults.aAbsMin
@@ -482,52 +462,46 @@ dlg:button {
                 ---@type string[]
                 local trgByteArr <const> = {}
                 for abgr32Src, labSrc in pairs(abgr32ToLab) do
-                    -- Lightness.
-                    local lTrg = labSrc.l
-                    local lx <const> = labSrc.l * 0.01
-                    local lSamples <const> = curveSamples[1]
-                    local li = bisectRight(lSamples, lx, samplesCompare)
-                    li = min(max(li, 1), alpSampleCount)
-                    local ly <const> = lSamples[li].y
-                    lTrg = ly * 100.0
+                    local tTrg <const> = labSrc.alpha
+                    local abgr32Trg = 0
+                    if tTrg > 0.0 then
+                        -- Lightness.
+                        local lTrg = labSrc.l
+                        local lx <const> = labSrc.l * 0.01
+                        local lSamples <const> = curveSamples[1]
+                        local li = bisectRight(lSamples, lx, samplesCompare)
+                        li = min(max(li, 1), alpSampleCount)
+                        local ly <const> = lSamples[li].y
+                        lTrg = ly * 100.0
 
-                    -- A (green to magenta).
-                    local aTrg = labSrc.a
-                    if aViable then
-                        local ax <const> = (labSrc.a - aMin) * aDenom
-                        local aSamples <const> = curveSamples[2]
-                        local ai = bisectRight(aSamples, ax, samplesCompare)
-                        ai = min(max(ai, 1), alpSampleCount)
-                        local ay <const> = aSamples[ai].y
-                        aTrg = ay * aRange + aMin
+                        -- A (green to magenta).
+                        local aTrg = labSrc.a
+                        if aViable then
+                            local ax <const> = (labSrc.a - aMin) * aDenom
+                            local aSamples <const> = curveSamples[2]
+                            local ai = bisectRight(aSamples, ax, samplesCompare)
+                            ai = min(max(ai, 1), alpSampleCount)
+                            local ay <const> = aSamples[ai].y
+                            aTrg = ay * aRange + aMin
+                        end
+
+                        -- B (blue to yellow).
+                        local bTrg = labSrc.b
+                        if bViable then
+                            local bx <const> = (labSrc.b - bMin) * bDenom
+                            local bSamples <const> = curveSamples[3]
+                            local bi = bisectRight(bSamples, bx, samplesCompare)
+                            bi = min(max(bi, 1), alpSampleCount)
+                            local by <const> = bSamples[bi].y
+                            bTrg = by * bRange + bMin
+                        end
+
+                        -- Find adjusted lab color, convert to hex.
+                        abgr32Trg = toHex(labTosRgb(lTrg, aTrg, bTrg, tTrg))
                     end
-
-                    -- B (blue to yellow).
-                    local bTrg = labSrc.b
-                    if bViable then
-                        local bx <const> = (labSrc.b - bMin) * bDenom
-                        local bSamples <const> = curveSamples[3]
-                        local bi = bisectRight(bSamples, bx, samplesCompare)
-                        bi = min(max(bi, 1), alpSampleCount)
-                        local by <const> = bSamples[bi].y
-                        bTrg = by * bRange + bMin
-                    end
-
-                    -- Transparency.
-                    local tTrg = labSrc.alpha
-                    local tSamples <const> = curveSamples[4]
-                    local ti = bisectRight(tSamples, labSrc.alpha,
-                        samplesCompare)
-                    ti = min(max(ti, 1), alpSampleCount)
-                    tTrg = tSamples[ti].y
-
-                    -- Find adjusted lab color, convert to hex.
-                    local abgr32Trg <const> = (changeTrgZero or tTrg > 0.0)
-                        and toHex(labTosRgb(lTrg, aTrg, bTrg, tTrg))
-                        or 0
-                    local abgr32Packed <const> = strpack("<I4", abgr32Trg)
 
                     -- Fill in target pixels with adjusted color.
+                    local abgr32Packed <const> = strpack("<I4", abgr32Trg)
                     local idcsArr <const> = abgr32Idcs[abgr32Src]
                     local lenIdcsArr <const> = #idcsArr
                     local n = 0
