@@ -2,7 +2,7 @@ local site <const> = app.site
 local sprite <const> = site.sprite
 if not sprite then return end
 
-app.transaction("New Layer", function()
+app.transaction("Prepend Layer", function()
     local srcLayer <const> = site.layer
     local parent <const> = srcLayer
         and srcLayer.parent
