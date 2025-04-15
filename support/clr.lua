@@ -209,10 +209,11 @@ function Clr.fromHexWeb(hexstr)
 end
 
 ---Creates a one-dimensional table of colors arranged in a Cartesian grid from
----(0.0, 0.0, 0.0) to (1.0, 1.0, 1.0), representing standard RGB.
----@param cols integer columns
----@param rows integer rows
----@param layers integer layers
+---(0.0, 0.0, 0.0) to (1.0, 1.0, 1.0), representing standard RGB. Red changes
+---across columns, green across rows and blue across layers.
+---@param cols integer columns, red
+---@param rows integer rows, green
+---@param layers integer layers, blue
 ---@param alpha number opacity
 ---@return Clr[]
 ---@nodiscard
