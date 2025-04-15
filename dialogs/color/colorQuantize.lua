@@ -147,12 +147,16 @@ dlg:button {
                     local gQtz <const> = gqFunc(g / 255.0, gLvVrf, gDelta)
                     local rQtz <const> = rqFunc(r / 255.0, rLvVrf, rDelta)
 
-                    palette:setColor(i, Color {
-                        r = floor(rQtz * 255.0 + 0.5),
-                        g = floor(gQtz * 255.0 + 0.5),
-                        b = floor(bQtz * 255.0 + 0.5),
-                        a = floor(aQtz * 255.0 + 0.5)
-                    })
+                    if aQtz > 0.0 then
+                        palette:setColor(i, Color {
+                            r = floor(rQtz * 255.0 + 0.5),
+                            g = floor(gQtz * 255.0 + 0.5),
+                            b = floor(bQtz * 255.0 + 0.5),
+                            a = floor(aQtz * 255.0 + 0.5)
+                        })
+                    else
+                        palette:setColor(i, Color { r = 0, g = 0, b = 0, a = 0 })
+                    end
 
                     i = i + 1
                 end
@@ -268,10 +272,10 @@ dlg:button {
                         local g8Trg <const> = floor(gq * 255.0 + 0.5)
                         local r8Trg <const> = floor(rq * 255.0 + 0.5)
 
-                        trgAbgr32 = a8Trg << 0x18
+                        trgAbgr32 = a8Trg <= 0 and 0 or (a8Trg << 0x18
                             | b8Trg << 0x10
                             | g8Trg << 0x08
-                            | r8Trg
+                            | r8Trg)
                         srcToTrgDict[srcAbgr32] = trgAbgr32
                     end
 

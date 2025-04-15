@@ -553,10 +553,13 @@ dlg:button {
             local floor <const> = math.floor
 
             closestFunc = function(r8Src, g8Src, b8Src, a8Src)
+                local aQtz <const> = quantize(a8Src / 255.0, aLevels, aDelta)
+                if aQtz <= 0.0 then return 0.0, 0.0, 0.0, 0.0 end
+
                 local rQtz <const> = quantize(r8Src / 255.0, rLevels, rDelta)
                 local gQtz <const> = quantize(g8Src / 255.0, gLevels, gDelta)
                 local bQtz <const> = quantize(b8Src / 255.0, bLevels, bDelta)
-                local aQtz <const> = quantize(a8Src / 255.0, aLevels, aDelta)
+
                 return floor(rQtz * 255.0 + 0.5),
                     floor(gQtz * 255.0 + 0.5),
                     floor(bQtz * 255.0 + 0.5),
