@@ -55,11 +55,12 @@ local defaults <const> = {
     channel = "L",
     useRelative = false,
     printElapsed = false,
+    fixZeroAlpha = true,
     alpSampleCount = 256,
     aAbsMin = -104.18850360397,
     aAbsRange = 208.37700720794,
     bAbsMin = -110.47816964815,
-    bAbsRange = 220.9563392963
+    bAbsRange = 220.9563392963,
 }
 
 local dlg <const> = Dialog { title = "Color Curves" }
@@ -202,6 +203,15 @@ while h < lenIdPrefixes do
         5, 0.33333, 0.33333, 0.66667, 0.66667,
         curveColor, gridColor)
 end
+
+dlg:check {
+    id = "fixZeroAlpha",
+    text = "Fix Zero",
+    selected = defaults.fixZeroAlpha,
+    visible = false
+}
+
+dlg:newrow { always = false }
 
 dlg:check {
     id = "printElapsed",
@@ -359,6 +369,9 @@ dlg:button {
             -- print(table.concat(strs, ",\n"))
         end
 
+        local fixZeroAlpha <const> = args.fixZeroAlpha --[[@as boolean]]
+        local changeTrgZero <const> = not fixZeroAlpha
+
         local useRelative <const> = args.useRelative --[[@as boolean]]
         local aAbsMin <const> = defaults.aAbsMin
         local aAbsMax <const> = -defaults.aAbsMin
@@ -435,8 +448,7 @@ dlg:button {
                     if not abgr32ToLab[abgr32] then
                         abgr32ToLab[abgr32] = labZero
                         if abgr32 & 0xff000000 ~= 0 then
-                            local srgbSrc <const> = fromHex(abgr32)
-                            local labSrc <const> = sRgbaToLab(srgbSrc)
+                            local labSrc <const> = sRgbaToLab(fromHex(abgr32))
                             abgr32ToLab[abgr32] = labSrc
 
                             local aSrc <const> = labSrc.a
@@ -474,8 +486,7 @@ dlg:button {
                     local lTrg = labSrc.l
                     local lx <const> = labSrc.l * 0.01
                     local lSamples <const> = curveSamples[1]
-                    local li = bisectRight(
-                        lSamples, lx, samplesCompare)
+                    local li = bisectRight(lSamples, lx, samplesCompare)
                     li = min(max(li, 1), alpSampleCount)
                     local ly <const> = lSamples[li].y
                     lTrg = ly * 100.0
@@ -485,8 +496,7 @@ dlg:button {
                     if aViable then
                         local ax <const> = (labSrc.a - aMin) * aDenom
                         local aSamples <const> = curveSamples[2]
-                        local ai = bisectRight(
-                            aSamples, ax, samplesCompare)
+                        local ai = bisectRight(aSamples, ax, samplesCompare)
                         ai = min(max(ai, 1), alpSampleCount)
                         local ay <const> = aSamples[ai].y
                         aTrg = ay * aRange + aMin
@@ -497,8 +507,7 @@ dlg:button {
                     if bViable then
                         local bx <const> = (labSrc.b - bMin) * bDenom
                         local bSamples <const> = curveSamples[3]
-                        local bi = bisectRight(
-                            bSamples, bx, samplesCompare)
+                        local bi = bisectRight(bSamples, bx, samplesCompare)
                         bi = min(max(bi, 1), alpSampleCount)
                         local by <const> = bSamples[bi].y
                         bTrg = by * bRange + bMin
@@ -506,17 +515,16 @@ dlg:button {
 
                     -- Transparency.
                     local tTrg = labSrc.alpha
-                    local tx <const> = labSrc.alpha
                     local tSamples <const> = curveSamples[4]
-                    local ti = bisectRight(
-                        tSamples, tx, samplesCompare)
+                    local ti = bisectRight(tSamples, labSrc.alpha,
+                        samplesCompare)
                     ti = min(max(ti, 1), alpSampleCount)
-                    local ty <const> = tSamples[ti].y
-                    tTrg = ty
+                    tTrg = tSamples[ti].y
 
                     -- Find adjusted lab color, convert to hex.
-                    local srgbTrg <const> = labTosRgb(lTrg, aTrg, bTrg, tTrg)
-                    local abgr32Trg <const> = toHex(srgbTrg)
+                    local abgr32Trg <const> = (changeTrgZero or tTrg > 0.0)
+                        and toHex(labTosRgb(lTrg, aTrg, bTrg, tTrg))
+                        or 0
                     local abgr32Packed <const> = strpack("<I4", abgr32Trg)
 
                     -- Fill in target pixels with adjusted color.
@@ -525,8 +533,7 @@ dlg:button {
                     local n = 0
                     while n < lenIdcsArr do
                         n = n + 1
-                        local idx <const> = idcsArr[n]
-                        trgByteArr[1 + idx] = abgr32Packed
+                        trgByteArr[1 + idcsArr[n]] = abgr32Packed
                     end
                 end
 
