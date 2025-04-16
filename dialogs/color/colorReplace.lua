@@ -19,9 +19,6 @@ local minorTargets <const> = {
 }
 
 local defaults <const> = {
-    -- TODO: The built-in color picker fails on zero alpha colors that have
-    -- non-zero RGB.
-
     majorTarget = "ACTIVE",
     minorTarget = "ACTIVE",
     includeLocked = false,

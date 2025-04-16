@@ -6,13 +6,6 @@ local sampleModes <const> = { "ACTIVE", "COMPOSITE" }
 local connections <const> = { "DIAMOND", "SQUARE" }
 
 local defaults <const> = {
-    -- TODO: The built-in color picker fails on zero alpha colors that have
-    -- non-zero RGB. Replace with canvas similar to that in LCH picker where
-    -- left click gets fg, right click gets bg... alternatively, might need
-    -- separate get, set and canvas buttons? Unlike LCH picker, ensure that
-    -- colors with zero alpha and non-zero RGB are supported. Or just make a
-    -- mini LCH picker dialog which accepts a parent dialog.
-
     -- Original colorSelect script:
     -- 894bd701787526bae1786364073b8bc263d3a032
     uiMode = "COLOR",
