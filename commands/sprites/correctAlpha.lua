@@ -45,9 +45,8 @@ end
 -- otherwise images within linked cels will not be recognized.
 local leaves <const> = AseUtilities.getLayerHierarchy(sprite,
     true, true, false, false)
-local frObjs <const> = sprite.frames
 local cels <const> = AseUtilities.getUniqueCelsFromLeaves(
-    leaves, frObjs)
+    leaves, sprite.frames)
 local lenCels <const> = #cels
 local correctZero <const> = AseUtilities.correctZeroAlpha
 
