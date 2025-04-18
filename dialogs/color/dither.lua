@@ -442,7 +442,7 @@ dlg:button {
 
         local alphaFunc = function(a8Src) return a8Src end
         if alphaMode == "THRESHOLD" then
-            local alphaThreshold = defaults.alphaThreshold
+            local alphaThreshold <const> = defaults.alphaThreshold
             alphaFunc = function(a8Src)
                 return a8Src >= alphaThreshold and 255 or 0
             end
