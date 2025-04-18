@@ -3,6 +3,7 @@ dofile("../../support/quantizeutilities.lua")
 dofile("../../support/octree.lua")
 
 local ditherModes <const> = { "ONE_BIT", "PALETTE", "QUANTIZE" }
+local alphaModes <const> = { "SOURCE", "THRESHOLD" }
 local areaTargets <const> = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
 local palTargets <const> = { "ACTIVE", "FILE" }
 local greyMethods <const> = { "AVERAGE", "HSL", "HSV", "LUMINANCE" }
@@ -11,6 +12,7 @@ local defaults <const> = {
     -- Last commit for old version of dithering:
     -- 23e391771391d5ffaf3e7f2385389e4af7e84004
     ditherMode = "PALETTE",
+    alphaMode = "THRESHOLD",
     areaTarget = "ACTIVE",
     palTarget = "ACTIVE",
     threshold = 50,
@@ -19,10 +21,11 @@ local defaults <const> = {
     maxCapacityBits = 16,
     factor = 100,
     greyMethod = "LUMINANCE",
+    alphaThreshold = 128,
     printElapsed = false,
 }
 
----Changes pixel array in place. Ignores alpha channel.
+---Changes pixel array in place.
 ---@param pixels integer[] bytes of length w * h * bpp
 ---@param wSrc integer source image width
 ---@param hSrc integer source image height
@@ -163,6 +166,15 @@ dlg:combobox {
     label = "Target:",
     option = defaults.areaTarget,
     options = areaTargets
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "alphaMode",
+    label = "Alpha:",
+    option = defaults.alphaMode,
+    options = alphaModes,
 }
 
 dlg:newrow { always = false }
@@ -400,7 +412,10 @@ dlg:button {
             end
         end
 
-        local ditherMode <const> = args.ditherMode --[[@as string]]
+        local alphaMode <const> = args.alphaMode
+            or defaults.alphaMode --[[@as string]]
+        local ditherMode <const> = args.ditherMode
+            or defaults.ditherMode --[[@as string]]
         local factor100 <const> = args.factor
             or defaults.factor --[[@as integer]]
 
@@ -425,6 +440,17 @@ dlg:button {
         local getBytes <const> = AseUtilities.getBytes
         local setBytes <const> = AseUtilities.setBytes
 
+        local alphaFunc = function(a8Src)
+            return a8Src
+        end
+
+        if alphaMode == "THRESHOLD" then
+            local alphaThreshold = defaults.alphaThreshold
+            alphaFunc = function(a8Src)
+                return a8Src >= alphaThreshold and 255 or 0
+            end
+        end
+
         -- String that is assigned to new layer name to clarify operation.
         local dmStr = ""
 
@@ -437,7 +463,7 @@ dlg:button {
         ---@return integer b8Trg
         ---@return integer a8Trg
         local closestFunc = function(r8Src, g8Src, b8Src, a8Src)
-            return r8Src, g8Src, b8Src, a8Src
+            return r8Src, g8Src, b8Src, alphaFunc(a8Src)
         end
 
         if ditherMode == "ONE_BIT" then
@@ -507,10 +533,12 @@ dlg:button {
 
             local threshold <const> = thresh100 * 0.01
             closestFunc = function(r8Src, g8Src, b8Src, a8Src)
+                local a8Trg <const> = alphaFunc(a8Src)
+                if a8Trg <= 0 then return 0, 0, 0, 0 end
                 if greyMethod(r8Src, g8Src, b8Src) >= threshold then
-                    return dr8, dg8, db8, a8Src
+                    return dr8, dg8, db8, a8Trg
                 end
-                return or8, og8, ob8, a8Src
+                return or8, og8, ob8, a8Trg
             end
 
             dmStr = string.format("OneBit %s %03d", greyStr, thresh100)
@@ -520,12 +548,10 @@ dlg:button {
             local rLevels = args.rLevels --[[@as integer]]
             local gLevels = args.gLevels --[[@as integer]]
             local bLevels = args.bLevels --[[@as integer]]
-            local aLevels = args.aLevels --[[@as integer]]
 
             local rDelta = 0.0
             local gDelta = 0.0
             local bDelta = 0.0
-            local aDelta = 0.0
 
             local quantize = Utilities.quantizeUnsignedInternal
 
@@ -535,26 +561,23 @@ dlg:button {
                 rDelta = 1.0 / (rLevels - 1.0)
                 gDelta = 1.0 / (gLevels - 1.0)
                 bDelta = 1.0 / (bLevels - 1.0)
-                aDelta = 1.0 / (aLevels - 1.0)
             else
                 quantize = Utilities.quantizeSignedInternal
 
                 rLevels = rLevels - 1
                 gLevels = gLevels - 1
                 bLevels = bLevels - 1
-                aLevels = aLevels - 1
 
                 rDelta = 1.0 / rLevels
                 gDelta = 1.0 / gLevels
                 bDelta = 1.0 / bLevels
-                aDelta = 1.0 / aLevels
             end
 
             local floor <const> = math.floor
 
             closestFunc = function(r8Src, g8Src, b8Src, a8Src)
-                local aQtz <const> = quantize(a8Src / 255.0, aLevels, aDelta)
-                if aQtz <= 0.0 then return 0.0, 0.0, 0.0, 0.0 end
+                local a8Trg <const> = alphaFunc(a8Src)
+                if a8Trg <= 0 then return 0, 0, 0, 0 end
 
                 local rQtz <const> = quantize(r8Src / 255.0, rLevels, rDelta)
                 local gQtz <const> = quantize(g8Src / 255.0, gLevels, gDelta)
@@ -563,12 +586,12 @@ dlg:button {
                 return floor(rQtz * 255.0 + 0.5),
                     floor(gQtz * 255.0 + 0.5),
                     floor(bQtz * 255.0 + 0.5),
-                    floor(aQtz * 255.0 + 0.5)
+                    a8Trg
             end
 
             dmStr = string.format(
-                "Quantized R%02d G%02d B%02d A%02d",
-                rLevels, gLevels, bLevels, aLevels)
+                "Quantized R%02d G%02d B%02d",
+                rLevels, gLevels, bLevels)
         elseif ditherMode == "PALETTE" then
             local palTarget <const> = args.palTarget
                 or defaults.palTarget --[[@as string]]
@@ -666,6 +689,9 @@ dlg:button {
 
             Octree.cull(octree)
             closestFunc = function(r8Src, g8Src, b8Src, a8Src)
+                local a8Trg <const> = alphaFunc(a8Src)
+                if a8Trg <= 0 then return 0, 0, 0, 0 end
+
                 local srgb <const> = cnew(
                     r8Src / 255.0,
                     g8Src / 255.0,
@@ -687,7 +713,7 @@ dlg:button {
                     end
                 end
 
-                return r8Trg, g8Trg, b8Trg, a8Src
+                return r8Trg, g8Trg, b8Trg, a8Trg
             end
 
             dmStr = "Palette"
