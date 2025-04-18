@@ -1,4 +1,4 @@
-dofile("../../support/aseutilities.lua")
+dofile("../../support/gradientutilities.lua")
 dofile("../../support/quantizeutilities.lua")
 dofile("../../support/octree.lua")
 
@@ -8,6 +8,11 @@ local palTargets <const> = { "ACTIVE", "FILE" }
 local greyMethods <const> = { "AVERAGE", "HSL", "HSV", "LUMINANCE" }
 
 local defaults <const> = {
+    -- TODO: Unlike error diffusion, ordered dithering (Bayer) is stable
+    -- across frames, so that may be preferable.
+    -- These functions are needed because Aseprite's built-in ordered dither
+    -- doesn't recognize alpha!!
+
     -- Last commit for old version of dithering:
     -- 23e391771391d5ffaf3e7f2385389e4af7e84004
     ditherMode = "PALETTE",
@@ -22,7 +27,65 @@ local defaults <const> = {
     printElapsed = false,
 }
 
----Changes pixel array in place. Ignores alpha channel.
+---Changes pixel array in place.
+---@param pixels integer[] bytes of length w * h * bpp
+---@param wSrc integer source image width
+---@param hSrc integer source image height
+---@param srcBpp integer source image bytes per pixel
+---@param factor number dither factor
+---@param closestFunc fun(r8Src: integer, g8Src: integer, b8Src: integer, a8Src: integer): integer, integer, integer, integer
+local function bayerDither(pixels, wSrc, hSrc, srcBpp, factor, closestFunc)
+    local floor <const> = math.floor
+    local max <const> = math.max
+    local min <const> = math.min
+    local matrix <const> = GradientUtilities.BAYER_MATRICES[3]
+    local cols <const> = 8
+    local rows <const> = 8
+
+    local areaImage <const> = wSrc * hSrc
+    local i = 0
+    while i < areaImage do
+        local iSrcBpp <const> = i * srcBpp
+        local x <const> = i % wSrc
+        local y <const> = i // wSrc
+
+        local matIdx <const> = 1 + (x % cols) + (y % rows) * cols
+        local matFac <const> = (matrix[matIdx] - 0.5) * factor
+
+        local r8Src <const> = pixels[1 + iSrcBpp]
+        local g8Src <const> = pixels[2 + iSrcBpp]
+        local b8Src <const> = pixels[3 + iSrcBpp]
+        local a8Src <const> = pixels[4 + iSrcBpp]
+
+        local r8Err <const> = min(max(matFac + r8Src / 255.0, 0.0), 1.0)
+        local g8Err <const> = min(max(matFac + g8Src / 255.0, 0.0), 1.0)
+        local b8Err <const> = min(max(matFac + b8Src / 255.0, 0.0), 1.0)
+        local a8Err <const> = min(max(matFac + a8Src / 255.0, 0.0), 1.0)
+
+        local r8Trg,
+        g8Trg,
+        b8Trg,
+        a8Trg = closestFunc(
+            floor(r8Err * 255.0 + 0.5),
+            floor(g8Err * 255.0 + 0.5),
+            floor(b8Err * 255.0 + 0.5),
+            floor(a8Err * 255.0 + 0.5))
+
+        if r8Trg < 0 then r8Trg = 0 elseif r8Trg > 255 then r8Trg = 255 end
+        if g8Trg < 0 then g8Trg = 0 elseif g8Trg > 255 then g8Trg = 255 end
+        if b8Trg < 0 then b8Trg = 0 elseif b8Trg > 255 then b8Trg = 255 end
+        if a8Trg < 0 then a8Trg = 0 elseif a8Trg > 255 then a8Trg = 255 end
+
+        pixels[1 + iSrcBpp] = r8Trg
+        pixels[2 + iSrcBpp] = g8Trg
+        pixels[3 + iSrcBpp] = b8Trg
+        pixels[4 + iSrcBpp] = a8Trg
+
+        i = i + 1
+    end -- End pixel loop.
+end
+
+---Changes pixel array in place.
 ---@param pixels integer[] bytes of length w * h * bpp
 ---@param wSrc integer source image width
 ---@param hSrc integer source image height
@@ -428,6 +491,12 @@ dlg:button {
         -- String that is assigned to new layer name to clarify operation.
         local dmStr = ""
 
+        -- TODO: Dither alpha as well? Maybe if the source alpha is < 128,
+        -- then the target alpha should be 0, otherwise 255?
+        local alphaFunc = function(a8Src)
+            return a8Src
+        end
+
         ---@param r8Src integer
         ---@param g8Src integer
         ---@param b8Src integer
@@ -665,6 +734,7 @@ dlg:button {
             end
 
             Octree.cull(octree)
+
             closestFunc = function(r8Src, g8Src, b8Src, a8Src)
                 local srgb <const> = cnew(
                     r8Src / 255.0,
@@ -732,7 +802,8 @@ dlg:button {
                     local hSrc <const> = srcSpec.height
                     local srcBpp <const> = srcImg.bytesPerPixel
                     local trgPixels <const> = getBytes(srcImg)
-                    fsDither(trgPixels, wSrc, hSrc, srcBpp, factor, closestFunc)
+                    -- fsDither(trgPixels, wSrc, hSrc, srcBpp, factor, closestFunc)
+                    bayerDither(trgPixels, wSrc, hSrc, srcBpp, factor, closestFunc)
                     trgImg = Image(srcSpec)
                     setBytes(trgImg, trgPixels)
                     premadeTrgImgs[srcImgId] = trgImg
