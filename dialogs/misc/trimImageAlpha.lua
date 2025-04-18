@@ -4,7 +4,7 @@ local targets <const> = { "ACTIVE", "ALL", "RANGE" }
 
 local defaults <const> = {
     padding = 0,
-    target = "ACTIVE",
+    target = "ALL",
     includeLocked = false,
     includeHidden = true,
     includeTiles = true,
@@ -57,7 +57,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "confirm",
     text = "&OK",
-    focus = false,
+    focus = true,
     onclick = function()
         local site <const> = app.site
         local activeSprite <const> = site.sprite

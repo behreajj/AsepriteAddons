@@ -440,10 +440,7 @@ dlg:button {
         local getBytes <const> = AseUtilities.getBytes
         local setBytes <const> = AseUtilities.setBytes
 
-        local alphaFunc = function(a8Src)
-            return a8Src
-        end
-
+        local alphaFunc = function(a8Src) return a8Src end
         if alphaMode == "THRESHOLD" then
             local alphaThreshold = defaults.alphaThreshold
             alphaFunc = function(a8Src)
