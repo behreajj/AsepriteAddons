@@ -1,4 +1,4 @@
-dofile("../support/shapeutilities.lua")
+dofile("../support/aseutilities.lua")
 
 local site <const> = app.site
 local sprite <const> = site.sprite
@@ -43,7 +43,8 @@ if not isValid then
     local brushDegrees <const> = brush.angle
 
     if brushSize <= 1 then return end
-    if brushType == BrushType.IMAGE then
+    if brushType == BrushType.IMAGE
+        or brushType == BrushType.CIRCLE then
         return
     end
 
@@ -57,13 +58,11 @@ if not isValid then
     local brushRadians <const> = query
         or (0.017453292519943 * brushDegrees)
 
-    local isCircle <const> = brushType == BrushType.CIRCLE
+    local cosa <const> = math.cos(brushRadians)
+    local sina <const> = math.sin(brushRadians)
     local rotPeriodDegrees <const> = brushType == BrushType.SQUARE
         and 90 or (brushType == BrushType.LINE and 180 or 1)
-    local rotNeeded <const> = (not isCircle)
-        and brushDegrees % rotPeriodDegrees ~= 0
-    local cosa <const> = rotNeeded and math.cos(brushRadians) or 1.0
-    local sina <const> = rotNeeded and math.sin(brushRadians) or 0.0
+    local rotNeeded <const> = brushDegrees % rotPeriodDegrees ~= 0
 
     -- Calculate needed size of image to rotate image.
     local wTrgi = brushSize
@@ -84,68 +83,44 @@ if not isValid then
 
     local context <const> = image.context
     if not context then return end
+    context.antialias = false
+    context.color = fillColor
 
     local xCenteri <const> = math.floor(wTrgi * 0.5 + 0.5)
     local yCenteri <const> = math.floor(hTrgi * 0.5 + 0.5)
     local sizeHalfReal <const> = brushSize * 0.5
 
-    local pixelRatio <const> = sprite.pixelRatio
-    local wPixel <const> = math.max(1, math.abs(pixelRatio.width))
-    local hPixel <const> = math.max(1, math.abs(pixelRatio.height))
-    local shortPixel <const> = math.min(wPixel, hPixel)
-
-    local xSize = sizeHalfReal
-    local ySize = sizeHalfReal
-    if wPixel ~= hPixel then
-        if wPixel == shortPixel then
-            ySize = ySize * (wPixel / hPixel)
-        elseif hPixel == shortPixel then
-            xSize = xSize * (hPixel / wPixel)
-        end
-    end
-
     if brushType == BrushType.SQUARE then
-        local xCosaSzHf <const> = cosa * xSize
-        local xSinaSzHf <const> = sina * xSize
-        local ySinaSzHf <const> = sina * ySize
-        local yCosaSzHf <const> = cosa * ySize
+        if rotNeeded then
+            local cosaSzHf <const> = cosa * sizeHalfReal
+            local sinaSzHf <const> = sina * sizeHalfReal
 
-        context.antialias = false
-        context.color = fillColor
-        context:beginPath()
-        context:moveTo(
-            math.floor(xCenteri - xCosaSzHf + xSinaSzHf),
-            math.floor(yCenteri + yCosaSzHf + ySinaSzHf))
-        context:lineTo(
-            math.floor(xCenteri + xCosaSzHf + xSinaSzHf),
-            math.floor(yCenteri + yCosaSzHf - ySinaSzHf))
-        context:lineTo(
-            math.floor(xCenteri + xCosaSzHf - xSinaSzHf),
-            math.floor(yCenteri - yCosaSzHf - ySinaSzHf))
-        context:lineTo(
-            math.floor(xCenteri - xCosaSzHf - xSinaSzHf),
-            math.floor(yCenteri - yCosaSzHf + ySinaSzHf))
-        context:closePath()
-        context:fill()
+            context:beginPath()
+            context:moveTo(
+                math.floor(xCenteri - cosaSzHf + sinaSzHf),
+                math.floor(yCenteri + cosaSzHf + sinaSzHf))
+            context:lineTo(
+                math.floor(xCenteri + cosaSzHf + sinaSzHf),
+                math.floor(yCenteri + cosaSzHf - sinaSzHf))
+            context:lineTo(
+                math.floor(xCenteri + cosaSzHf - sinaSzHf),
+                math.floor(yCenteri - cosaSzHf - sinaSzHf))
+            context:lineTo(
+                math.floor(xCenteri - cosaSzHf - sinaSzHf),
+                math.floor(yCenteri - cosaSzHf + sinaSzHf))
+            context:closePath()
+            context:fill()
+        else
+            image:clear(fillColor)
+        end
     elseif brushType == BrushType.LINE then
-        local xCosaSize <const> = cosa * xSize
-        local ySinaSize <const> = sina * ySize
+        local cosaSzHf <const> = cosa * sizeHalfReal
+        local sinaSzHf <const> = sina * sizeHalfReal
 
-        context.antialias = false
-        context.color = fillColor
         context:beginPath()
-        context:moveTo(xCenteri - xCosaSize, yCenteri + ySinaSize)
-        context:lineTo(xCenteri + xCosaSize, yCenteri - ySinaSize)
+        context:moveTo(xCenteri - cosaSzHf, yCenteri + sinaSzHf)
+        context:lineTo(xCenteri + cosaSzHf, yCenteri - sinaSzHf)
         context:stroke()
-    elseif brushType == BrushType.CIRCLE then
-        -- TODO: This has uneven dimensions.
-        ShapeUtilities.drawEllipse(
-            context,
-            xCenteri, yCenteri,
-            xSize, ySize,
-            true, fillColor,
-            false, Color(), 0,
-            false)
     end
 
     AseUtilities.setBrush(AseUtilities.imageToBrush(image, centerPreset))
