@@ -70,8 +70,8 @@ end
 ---@param context GraphicsContext canvas
 ---@param xc number center x
 ---@param yc number center y
----@param w number width
----@param h number height
+---@param w number radius x
+---@param h number radius y
 ---@param useFill boolean use fill
 ---@param fillClr Color fill color
 ---@param useStroke boolean use stroke
