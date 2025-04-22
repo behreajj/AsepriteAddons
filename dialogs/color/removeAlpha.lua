@@ -1,3 +1,5 @@
+dofile("../../support/aseutilities.lua")
+
 local removeLayerOptions <const> = { "ACTIVE", "ALL", "NONE", "RANGE" }
 local removeCelOptions <const> = { "ACTIVE", "ALL", "NONE", "RANGE" }
 local removeImageOptions <const> = { "ACTIVE", "ALL", "NONE", "RANGE" }
