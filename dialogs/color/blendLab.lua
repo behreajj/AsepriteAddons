@@ -44,6 +44,8 @@ local lCompOptions <const> = {
 }
 
 local tCompOptions <const> = {
+    -- TODO: Option where over alpha is shifted from [0.0, 1.0] to [-1.0, 1.0],
+    -- then is added to under alpha?
     "BLEND",
     "MAX",
     "MIN",
