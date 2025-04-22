@@ -1,5 +1,5 @@
-dofile("../../support/aseutilities.lua")
-dofile("../../support/canvasutilities.lua")
+dofile("../../../support/aseutilities.lua")
+dofile("../../../support/canvasutilities.lua")
 
 local targets <const> = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
 local channels <const> = { "L", "A", "B" }

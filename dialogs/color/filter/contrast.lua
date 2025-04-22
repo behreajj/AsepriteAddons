@@ -1,4 +1,4 @@
-dofile("../../support/aseutilities.lua")
+dofile("../../../support/aseutilities.lua")
 
 --[[Standardization is not the same as normalization.
 For standardization, a range's average must be found,

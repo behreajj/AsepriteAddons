@@ -1,5 +1,5 @@
-dofile("../../support/aseutilities.lua")
-dofile("../../support/quantizeutilities.lua")
+dofile("../../../support/aseutilities.lua")
+dofile("../../../support/quantizeutilities.lua")
 
 local targets <const> = { "ACTIVE", "ALL", "PALETTE", "RANGE" }
 

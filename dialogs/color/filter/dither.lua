@@ -1,6 +1,6 @@
-dofile("../../support/aseutilities.lua")
-dofile("../../support/quantizeutilities.lua")
-dofile("../../support/octree.lua")
+dofile("../../../support/aseutilities.lua")
+dofile("../../../support/quantizeutilities.lua")
+dofile("../../../support/octree.lua")
 
 local ditherModes <const> = { "ONE_BIT", "PALETTE", "QUANTIZE" }
 local alphaModes <const> = { "SOURCE", "THRESHOLD" }
