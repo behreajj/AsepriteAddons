@@ -1416,7 +1416,8 @@ function AseUtilities.createSprite(spec, fileName, showLayerEdges)
     local appPrefs <const> = app.preferences
     local appTool <const> = app.tool
     if appTool then
-        if appTool.id == "slice" then
+        if appTool.id == "slice"
+            or appTool.id == "text" then
             app.tool = "hand"
         end
 
