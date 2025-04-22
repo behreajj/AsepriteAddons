@@ -232,7 +232,7 @@ dlg:button {
         Utilities.mulMat3Mesh2(mat, mesh)
 
         local layer <const> = sprite:newLayer()
-        layer.name = mesh.name
+        layer.name = string.format("Arc %d to %d", startAngle, stopAngle)
 
         local useTrim <const> = true
         ShapeUtilities.drawMesh2(sprite, mesh, useFill, fillColor,
