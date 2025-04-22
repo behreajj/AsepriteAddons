@@ -20,6 +20,9 @@ setmetatable(Mesh2, {
 ---@param name? string name
 ---@return Mesh2
 function Mesh2.new(fs, vs, name)
+    -- Last commit to include dimetric grid:
+    -- 00579a9465d6616b29aef45aa668f171f2210431
+
     local inst <const> = setmetatable({}, Mesh2)
     inst.fs = fs or {}
     inst.vs = vs or {}

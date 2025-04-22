@@ -22,6 +22,9 @@ setmetatable(Curve2, {
 ---@return Curve2
 ---@nodiscard
 function Curve2.new(cl, knots, name)
+    -- Last commit to include hex grid:
+    -- 99d41ea5364585a9126a46efeed1d7fa836f82ec
+
     local inst <const> = setmetatable({}, Curve2)
     inst.closedLoop = cl or false
     inst.knots = knots or {}
