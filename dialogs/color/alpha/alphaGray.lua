@@ -9,6 +9,7 @@ local defaults <const> = {
     mode = "ALPHA_TO_GRAY",
     absOpaque = false,
     rgbOption = "SOURCE",
+    trimCels = true,
 }
 
 local dlg <const> = Dialog { title = "Convert Alpha Gray" }
@@ -82,6 +83,15 @@ dlg:color {
 
 dlg:newrow { always = false }
 
+dlg:check {
+    id = "trimCels",
+    label = "Trim:",
+    text = "Layer Ed&ges",
+    selected = defaults.trimCels
+}
+
+dlg:newrow { always = false }
+
 dlg:button {
     id = "confirm",
     text = "&OK",
@@ -100,6 +110,8 @@ dlg:button {
         -- Unpack sprite spec.
         local spriteSpec <const> = activeSprite.spec
         local colorMode <const> = spriteSpec.colorMode
+        local alphaIndex <const> = spriteSpec.transparentColor
+
         if colorMode ~= ColorMode.RGB then
             app.alert {
                 title = "Error",
@@ -117,6 +129,7 @@ dlg:button {
         local absOpaque <const> = args.absOpaque --[[@as boolean]]
         local rgbOption <const> = args.rgbOption --[[@as string]]
         local maskColor <const> = args.maskColor --[[@as Color]]
+        local trimCels <const> = args.trimCels --[[@as boolean]]
 
         -- This needs to be done first, otherwise range will be lost.
         local isSelect <const> = target == "SELECTION"
@@ -178,6 +191,7 @@ dlg:button {
 
         -- Cache methods used in loops.
         local tilesToImage <const> = AseUtilities.tileMapToImage
+        local trim <const> = AseUtilities.trimImageAlpha
         local fromHex <const> = Clr.fromHexAbgr32
         local sRgbaToLab <const> = Clr.sRgbToSrLab2
         local floor <const> = math.floor
@@ -227,6 +241,14 @@ dlg:button {
                     srcImg = blit
                     xtlSrc = 0
                     ytlSrc = 0
+                elseif trimCels then
+                    local trimmed <const>,
+                    xShift <const>,
+                    yShift <const> = trim(srcImg, 0, alphaIndex)
+
+                    srcImg = trimmed
+                    xtlSrc = xtlSrc + xShift
+                    ytlSrc = ytlSrc + yShift
                 end
 
                 local srcBytes <const> = srcImg.bytes
@@ -282,14 +304,24 @@ dlg:button {
                     end -- End pixels loop.
                 end     -- End mode block.
 
-                local trgImg <const> = Image(srcSpec)
+                local trgImg = Image(srcSpec)
                 trgImg.bytes = tconcat(trgByteArr)
 
-                -- TODO: Trim image alpha.
+                local xtlTrg = xtlSrc
+                local ytlTrg = ytlSrc
+                if trimCels then
+                    local trimmed <const>,
+                    xShift <const>,
+                    yShift <const> = trim(trgImg, 0, alphaIndex)
+
+                    trgImg = trimmed
+                    xtlTrg = xtlTrg + xShift
+                    ytlTrg = ytlTrg + yShift
+                end
 
                 transact("Alpha Convert", function()
                     local trgCel <const> = activeSprite:newCel(
-                        trgLayer, frIdx, trgImg, Point(xtlSrc, ytlSrc))
+                        trgLayer, frIdx, trgImg, Point(xtlTrg, ytlTrg))
                     trgCel.opacity = srcCel.opacity
                 end) -- End transaction.
             end      -- End source cel exists.
