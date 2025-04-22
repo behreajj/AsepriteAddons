@@ -4,9 +4,9 @@ local targets <const> = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
 
 local defaults <const> = {
     target = "ACTIVE",
-    lInvert = 0,
-    aInvert = 0,
-    bInvert = 0,
+    lInvert = 100,
+    aInvert = 100,
+    bInvert = 100,
     tInvert = 0,
     ignoreSrcMask = false,
     fixZeroAlpha = true,
