@@ -53,10 +53,6 @@ This repo includes
 
   ![FS Dither](screencaps/dither.png)
 
-- A text insertion dialog.
-
-  ![Insert Text](screencaps/insertText.png)
-
 - Interlaced layers. ([Test image source](https://en.wikipedia.org/wiki/File:Fire_breathing_2_Luc_Viatour.jpg).)
 
   ![Interlaced](screencaps/interlaced.png)
