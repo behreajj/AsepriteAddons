@@ -1,4 +1,4 @@
-dofile("../../support/shapeutilities.lua")
+dofile("../../../support/shapeutilities.lua")
 
 local palTypes <const> = { "ACTIVE", "DEFAULT", "FILE" }
 

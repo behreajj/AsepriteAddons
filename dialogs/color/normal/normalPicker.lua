@@ -1,5 +1,5 @@
-dofile("../../support/aseutilities.lua")
-dofile("../../support/canvasutilities.lua")
+dofile("../../../support/aseutilities.lua")
+dofile("../../../support/canvasutilities.lua")
 
 local screenScale = 1
 if app.preferences then
