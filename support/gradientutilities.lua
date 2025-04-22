@@ -262,6 +262,7 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         reticleSize = 10 // screenScale,
         wCheck = 8,
         hCheck = 8,
+        epsilon = 0.025,
     }
 
     ---@param event { context: GraphicsContext }
@@ -393,17 +394,11 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
 
     ---@param event MouseEvent
     local function onMouseDownGradient(event)
-        local quantizeUnsigned <const> = Utilities.quantizeUnsigned
-
+        local abs <const> = math.abs
         local wCanvas <const> = grdUtlActive.wCanvas
         local xNorm <const> = wCanvas > 1
             and event.x / (wCanvas - 1.0)
             or 0.0
-
-        -- TODO: Improve mouse hit detection. Use a while loop that checks
-        -- for less than a threshold instead?
-        local levels <const> = 2 * GradientUtilities.MAX_KEYS
-        local xq <const> = quantizeUnsigned(xNorm, levels)
 
         local keys <const> = gradient:getKeys()
         local lenKeys <const> = #keys
@@ -412,7 +407,7 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         while grdUtlActive.idxCurrent == -1
             and i < lenKeys do
             i = i + 1
-            if xq == quantizeUnsigned(keys[i].step, levels) then
+            if abs(xNorm - keys[i].step) < grdUtlActive.epsilon then
                 grdUtlActive.idxCurrent = i
             end
         end
@@ -432,14 +427,10 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         if x < 0 then return end
         if x >= wCanvas then return end
 
-        -- TODO: Improve mouse hit detection. Use a while loop that checks
-        -- for less than a threshold instead?
-        local levels <const> = 2 * GradientUtilities.MAX_KEYS
-        local quantizeUnsigned <const> = Utilities.quantizeUnsigned
+        local abs <const> = math.abs
         local xNorm <const> = wCanvas > 1
             and x / (wCanvas - 1.0)
             or 0.0
-        local xq <const> = quantizeUnsigned(xNorm, levels)
 
         local keys <const> = gradient:getKeys()
         local lenKeys <const> = #keys
@@ -449,7 +440,7 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
             local j = 0
             while search and j < lenKeys do
                 j = j + 1
-                if xq == quantizeUnsigned(keys[j].step, levels) then
+                if abs(xNorm - keys[j].step) < grdUtlActive.epsilon then
                     grdUtlActive.idxHover = j
                     search = false
                 end
@@ -465,7 +456,7 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
             while conflictingKeyIndex == -1
                 and i < lenKeys do
                 i = i + 1
-                if xq == quantizeUnsigned(keys[i].step, levels) then
+                if abs(xNorm - keys[i].step) < grdUtlActive.epsilon then
                     conflictingKeyIndex = i
                 end
             end
@@ -511,6 +502,9 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
                         gradient:getKey(grdUtlActive.idxCurrent).clr = newClr
                     end
                 else
+                    -- TODO: Ux might feel better if this could be moved to
+                    -- on mouse down.
+
                     -- Add a new key.
                     local wCanvas <const> = grdUtlActive.wCanvas
                     local xNorm <const> = wCanvas > 1

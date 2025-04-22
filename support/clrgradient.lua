@@ -73,20 +73,20 @@ function ClrGradient:getKeys()
 end
 
 ---Inserts a color key into the keys array based on the index returned by
----bisectRight. Does not check for duplicates. Returns true if the key was
----successfully inserted.
+---bisectRight. Does not check for duplicates. If the key was successfully
+---inserted, returns the index. Otherwise, returns -1.
 ---@param ck ClrKey color key
 ---@param tol? number tolerance
----@return boolean
+---@return integer
 function ClrGradient:insortRight(ck, tol)
     local eps <const> = tol or ClrGradient.TOLERANCE
     local i <const> = ClrGradient.bisectRight(self, ck.step)
     local dupe <const> = self.keys[i - 1]
     if dupe and (math.abs(ck.step - dupe.step) <= eps) then
-        return false
+        return -1
     end
     table.insert(self.keys, i, ck)
-    return true
+    return i
 end
 
 ---Removes a color key at the index if the gradient has more than 2
