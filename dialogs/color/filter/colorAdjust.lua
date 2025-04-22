@@ -584,8 +584,8 @@ dlg:button {
             return
         end
 
-        local activeSpec <const> = activeSprite.spec
-        local colorMode <const> = activeSpec.colorMode
+        local spriteSpec <const> = activeSprite.spec
+        local colorMode <const> = spriteSpec.colorMode
         if colorMode ~= ColorMode.RGB then
             app.alert {
                 title = "Error",
@@ -654,13 +654,8 @@ dlg:button {
         local aAdj <const> = active.aAdj
         local bAdj <const> = active.bAdj
 
-        local lAdjNonZero <const> = lAdj ~= 0.0
-        local useLabAdj <const> = mode == "LAB"
-            and (lAdjNonZero
-                or aAdj ~= 0.0
-                or bAdj ~= 0.0)
         local useLchAdj <const> = mode == "LCH"
-            and (lAdjNonZero
+            and (lAdj ~= 0.0
                 or cAdj ~= 0.0
                 or hAdj ~= 0.0)
 
