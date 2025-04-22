@@ -153,7 +153,7 @@ dlg:button {
             tileSetUnder = underLayer.tileset
         end
 
-        local frames = Utilities.flatArr2(
+        local frames <const> = Utilities.flatArr2(
             AseUtilities.getFrames(activeSprite, target))
 
         -- Unpack layer opacity.
