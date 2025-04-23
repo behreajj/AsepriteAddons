@@ -50,7 +50,8 @@ setmetatable(QuantizeUtilities, {
 })
 
 ---Generates the dialog widgets shared across color quantization dialogs.
----Places a new row at the end of the widgets.
+---Places a new row at the end of the widgets. Enable alpha does not impact
+---widget visibility, only functionality.
 ---@param dlg Dialog dialog
 ---@param isVisible boolean visible by default
 ---@param enableAlpha boolean enable alpha channel
