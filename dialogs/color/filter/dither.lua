@@ -275,9 +275,8 @@ dlg:slider {
 
 dlg:newrow { always = false }
 
-QuantizeUtilities.dialogWidgets(
-    dlg, defaults.ditherMode == "QUANTIZE",
-    true)
+QuantizeUtilities.dialogWidgets(dlg,
+    defaults.ditherMode == "QUANTIZE", false)
 
 dlg:combobox {
     id = "palTarget",
