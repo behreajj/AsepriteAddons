@@ -9,6 +9,17 @@ local palTargets <const> = { "ACTIVE", "FILE" }
 local greyMethods <const> = { "AVERAGE", "HSL", "HSV", "LUMINANCE" }
 
 local defaults <const> = {
+    -- TODO: Built-in Bayer ordered dithering doesn't support alpha,
+    -- and Floyd Steinberg error diffusion is too distracting for
+    -- animations, so it'd be nice to have a custom Bayer method that
+    -- handles alpha. From Wikipedia:
+    -- c' = nearestPalette(c + r * (M(x % n, y % n) - 0.5))
+    -- assuming palette with 2^(3N) colors in [0, 255], r
+    -- is typically 255 / N
+    -- This discusses the limitations of the simple approach above:
+    -- Arbitrary-palette positional dithering algorithm
+    -- https://bisqwit.iki.fi/story/howto/dither/jy/
+
     -- Last commit for old version of dithering:
     -- 23e391771391d5ffaf3e7f2385389e4af7e84004
     ditherMode = "PALETTE",
