@@ -502,9 +502,6 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
                         gradient:getKey(grdUtlActive.idxCurrent).clr = newClr
                     end
                 else
-                    -- TODO: Ux might feel better if this could be moved to
-                    -- on mouse down.
-
                     -- Add a new key.
                     local wCanvas <const> = grdUtlActive.wCanvas
                     local xNorm <const> = wCanvas > 1

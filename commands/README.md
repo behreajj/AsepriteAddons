@@ -6,7 +6,7 @@ Unlike `dialog` scripts, it's not always apparent what `commands` scripts do. No
 
 - `cycleCelRight`: Moves a cel to the next frame. If the next frame is occupied by another cel, swaps the other cel into the active cel's frame. Loops around at the first and last frame. Ignores reference layers.
 
-- `findLikeImages`: Assigns a signed 64 bit integer hash of an image to the key "hash" in non empty cels' [property](https://github.com/aseprite/api/blob/main/api/properties.md). Cels that contain duplicate images according to the hash are highlighted in red.
+- `findLikeImages`: Assigns a signed 64 bit integer hash of an image to the key "hash" in non empty cels' [properties](https://github.com/aseprite/api/blob/main/api/properties.md). Cels that contain duplicate images according to the hash are highlighted in red.
 
 - `selectCelsRange`: Creates a selection based on the timeline range, or the active cel if the range is empty. Finds the union of images in the range. Ignores reference layers. Selects tile map layers based on non-empty tiles. Equivalent to holding down `Ctrl` and clicking on an inactive layer in the timeline.
 
@@ -83,7 +83,7 @@ false, then returns to the first frame after reaching the last.
 
 - `correctTags`: Removes tags with out-of-bounds frames. Tags with duplicate names have a number appended to the end of the name.
 
-- `correctTilesets`: Checks tile set names for empty strings, invalid characters in file paths, and duplicates. Renames tile sets as needed. Assigns a unique ID to each set's `properties`.
+- `correctTilesets`: Checks tile set names for empty strings, invalid characters, and duplicates. Renames tile sets as needed. Assigns a unique ID to each set's `properties`.
 
 - `nextTab`: Moves the active sprite to the next tab. Converts the fore- and background colors to RGB. If the slice tool is active, switches to the hand tool.
 
