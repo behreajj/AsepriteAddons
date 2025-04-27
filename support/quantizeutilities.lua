@@ -1,8 +1,8 @@
 QuantizeUtilities = {}
 QuantizeUtilities.__index = QuantizeUtilities
 
----Default bits for alphachannel.
-QuantizeUtilities.BITS_DEFAULT_A = 8
+---Default bits for alpha channel.
+QuantizeUtilities.BITS_DEFAULT_A = 4
 
 ---Default bits for RGB channels.
 QuantizeUtilities.BITS_DEFAULT_RGB = 4
@@ -20,7 +20,7 @@ QuantizeUtilities.INPUT_DEFAULT = "UNIFORM"
 QuantizeUtilities.INPUTS = { "NON_UNIFORM", "UNIFORM" }
 
 ---Default levels for alpha channel.
-QuantizeUtilities.LEVELS_DEFAULT_A = 256
+QuantizeUtilities.LEVELS_DEFAULT_A = 16
 
 ---Default levels for RGB channels.
 QuantizeUtilities.LEVELS_DEFAULT_RGB = 16

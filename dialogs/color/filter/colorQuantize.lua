@@ -137,26 +137,31 @@ dlg:button {
                 while i < lenPalette do
                     local aseColor <const> = palette:getColor(i)
 
-                    local a <const> = aseColor.alpha
-                    local b <const> = aseColor.blue
-                    local g <const> = aseColor.green
-                    local r <const> = aseColor.red
+                    local a8Src <const> = aseColor.alpha
+                    local aq <const> = aqFunc(a8Src / 255.0, aLvVrf, aDelta)
+                    local a8Trg <const> = floor(aq * 255.0 + 0.5)
 
-                    local aQtz <const> = aqFunc(a / 255.0, aLvVrf, aDelta)
-                    local bQtz <const> = bqFunc(b / 255.0, bLvVrf, bDelta)
-                    local gQtz <const> = gqFunc(g / 255.0, gLvVrf, gDelta)
-                    local rQtz <const> = rqFunc(r / 255.0, rLvVrf, rDelta)
+                    local r8Trg, g8Trg, b8Trg = 0, 0, 0
+                    if a8Trg > 0 then
+                        local b8Src <const> = aseColor.blue
+                        local g8Src <const> = aseColor.green
+                        local r8Src <const> = aseColor.red
 
-                    if aQtz > 0.0 then
-                        palette:setColor(i, Color {
-                            r = floor(rQtz * 255.0 + 0.5),
-                            g = floor(gQtz * 255.0 + 0.5),
-                            b = floor(bQtz * 255.0 + 0.5),
-                            a = floor(aQtz * 255.0 + 0.5)
-                        })
-                    else
-                        palette:setColor(i, Color { r = 0, g = 0, b = 0, a = 0 })
+                        local bq <const> = bqFunc(b8Src / 255.0, bLvVrf, bDelta)
+                        local gq <const> = gqFunc(g8Src / 255.0, gLvVrf, gDelta)
+                        local rq <const> = rqFunc(r8Src / 255.0, rLvVrf, rDelta)
+
+                        b8Trg = floor(bq * 255.0 + 0.5)
+                        g8Trg = floor(gq * 255.0 + 0.5)
+                        r8Trg = floor(rq * 255.0 + 0.5)
                     end
+
+                    palette:setColor(i, Color {
+                        r = r8Trg,
+                        g = g8Trg,
+                        b = b8Trg,
+                        a = a8Trg
+                    })
 
                     i = i + 1
                 end
@@ -252,30 +257,37 @@ dlg:button {
                     local j4 <const> = j * 4
                     local srcAbgr32 <const> = strunpack("<I4", strsub(
                         srcBytes, 1 + j4, 4 + j4))
-                    local trgAbgr32 = srcToTrgDict[srcAbgr32]
-                    if not trgAbgr32 then
+
+                    local trgAbgr32 = 0
+                    if srcToTrgDict[srcAbgr32] then
+                        trgAbgr32 = srcToTrgDict[srcAbgr32]
+                    else
                         local a8Src <const> = (srcAbgr32 >> 0x18) & 0xff
-                        local b8Src <const> = (srcAbgr32 >> 0x10) & 0xff
-                        local g8Src <const> = (srcAbgr32 >> 0x08) & 0xff
-                        local r8Src <const> = srcAbgr32 & 0xff
-
-                        -- Do not cache the division in a variable
-                        -- as 1.0 / 255.0. It leads to precision errors
-                        -- which impact alpha during unsigned quantize.
                         local aq <const> = aqFunc(a8Src / 255.0, aLvVrf, aDelta)
-                        local bq <const> = bqFunc(b8Src / 255.0, bLvVrf, bDelta)
-                        local gq <const> = gqFunc(g8Src / 255.0, gLvVrf, gDelta)
-                        local rq <const> = rqFunc(r8Src / 255.0, rLvVrf, rDelta)
-
                         local a8Trg <const> = floor(aq * 255.0 + 0.5)
-                        local b8Trg <const> = floor(bq * 255.0 + 0.5)
-                        local g8Trg <const> = floor(gq * 255.0 + 0.5)
-                        local r8Trg <const> = floor(rq * 255.0 + 0.5)
 
-                        trgAbgr32 = a8Trg <= 0 and 0 or (a8Trg << 0x18
-                            | b8Trg << 0x10
-                            | g8Trg << 0x08
-                            | r8Trg)
+                        if a8Trg > 0 then
+                            local b8Src <const> = (srcAbgr32 >> 0x10) & 0xff
+                            local g8Src <const> = (srcAbgr32 >> 0x08) & 0xff
+                            local r8Src <const> = srcAbgr32 & 0xff
+
+                            -- Do not cache the division in a variable
+                            -- as 1.0 / 255.0. It leads to precision errors
+                            -- which impact alpha during unsigned quantize.
+                            local bq <const> = bqFunc(b8Src / 255.0, bLvVrf, bDelta)
+                            local gq <const> = gqFunc(g8Src / 255.0, gLvVrf, gDelta)
+                            local rq <const> = rqFunc(r8Src / 255.0, rLvVrf, rDelta)
+
+                            local b8Trg <const> = floor(bq * 255.0 + 0.5)
+                            local g8Trg <const> = floor(gq * 255.0 + 0.5)
+                            local r8Trg <const> = floor(rq * 255.0 + 0.5)
+
+                            trgAbgr32 = a8Trg << 0x18
+                                | b8Trg << 0x10
+                                | g8Trg << 0x08
+                                | r8Trg
+                        end
+
                         srcToTrgDict[srcAbgr32] = trgAbgr32
                     end
 
