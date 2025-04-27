@@ -1739,7 +1739,7 @@ end
 
 ---Creates a composite image from a group at a given frame. Tile map images are
 ---converted to images with the provided color mode.
----@param layer Layer group layer
+---@param parent Layer|Sprite parent, group layer or sprite
 ---@param frame Frame|integer frame
 ---@param colorMode ColorMode sprite color mode
 ---@param colorSpace ColorSpace color space
@@ -1757,7 +1757,7 @@ end
 ---@return integer celOpacity
 ---@return integer zIndex
 function AseUtilities.flatToImage(
-    layer, frame, colorMode, colorSpace, alphaIndex,
+    parent, frame, colorMode, colorSpace, alphaIndex,
     includeLocked, includeHidden, includeTiles, includeBkg,
     wDefault, hDefault)
     local isValid = false
@@ -1767,10 +1767,14 @@ function AseUtilities.flatToImage(
     local celOpacity = 255
     local zIndex = 0
 
-    if (includeLocked or layer.isEditable)
-        and (includeHidden or layer.isVisible) then
-        if layer.isGroup then
-            local children <const> = layer.layers
+    ---@diagnostic disable-next-line: undefined-field
+    local isSprite <const> = parent.__name == "doc::Sprite"
+    local layer <const> = parent --[[@as Layer]]
+
+    if isSprite or ((includeLocked or layer.isEditable)
+            and (includeHidden or layer.isVisible)) then
+        if isSprite or layer.isGroup then
+            local children <const> = parent.layers
             if children then
                 local lenChildren <const> = #children
 
