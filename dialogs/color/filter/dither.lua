@@ -9,15 +9,11 @@ local palTargets <const> = { "ACTIVE", "FILE" }
 local greyMethods <const> = { "AVERAGE", "HSL", "HSV", "LUMINANCE" }
 
 local defaults <const> = {
-    -- TODO: Built-in Bayer ordered dithering doesn't support alpha,
-    -- and Floyd Steinberg error diffusion is too distracting for
-    -- animations, so it'd be nice to have a custom Bayer method that
-    -- handles alpha. From Wikipedia:
-    -- c' = nearestPalette(c + r * (M(x % n, y % n) - 0.5))
+    -- TODO: Built-in Bayer ordered dithering doesn't support translucency,
+    -- From Wikipedia: c' = nearestPalette(c + r * (M(x % n, y % n) - 0.5))
     -- assuming palette with 2^(3N) colors in [0, 255], r
     -- is typically 255 / N
-    -- This discusses the limitations of the simple approach above:
-    -- Arbitrary-palette positional dithering algorithm
+    -- Limitations of the simple approach above:
     -- https://bisqwit.iki.fi/story/howto/dither/jy/
 
     -- Last commit for old version of dithering:
@@ -461,6 +457,9 @@ dlg:button {
         -- String that is assigned to new layer name to clarify operation.
         local dmStr = ""
 
+        -- Unlike color quantize, dither cannot set zero alpha pixels to clear
+        -- black because it relies on comparison with neighbors. Excess clear
+        -- black distorts accuracy of color comparison.
         ---@param r8Src integer
         ---@param g8Src integer
         ---@param b8Src integer
@@ -541,7 +540,6 @@ dlg:button {
             local threshold <const> = thresh100 * 0.01
             closestFunc = function(r8Src, g8Src, b8Src, a8Src)
                 local a8Trg <const> = alphaFunc(a8Src)
-                if a8Trg <= 0 then return 0, 0, 0, 0 end
                 if greyMethod(r8Src, g8Src, b8Src) >= threshold then
                     return dr8, dg8, db8, a8Trg
                 end
@@ -584,7 +582,6 @@ dlg:button {
 
             closestFunc = function(r8Src, g8Src, b8Src, a8Src)
                 local a8Trg <const> = alphaFunc(a8Src)
-                if a8Trg <= 0 then return 0, 0, 0, 0 end
 
                 local rQtz <const> = quantize(r8Src / 255.0, rLevels, rDelta)
                 local gQtz <const> = quantize(g8Src / 255.0, gLevels, gDelta)
@@ -606,7 +603,8 @@ dlg:button {
             local octCapacity = args.octCapacity
                 or defaults.octCapacityBits --[[@as integer]]
 
-            local hexesProfile <const>, hexesSrgb <const> = AseUtilities.asePaletteLoad(
+            local hexesProfile <const>,
+            hexesSrgb <const> = AseUtilities.asePaletteLoad(
                 palTarget, palFile, 0, 512, true)
 
             octCapacity = 1 << octCapacity
@@ -697,8 +695,6 @@ dlg:button {
             Octree.cull(octree)
             closestFunc = function(r8Src, g8Src, b8Src, a8Src)
                 local a8Trg <const> = alphaFunc(a8Src)
-                if a8Trg <= 0 then return 0, 0, 0, 0 end
-
                 local srgb <const> = cnew(
                     r8Src / 255.0,
                     g8Src / 255.0,
