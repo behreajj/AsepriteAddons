@@ -85,7 +85,7 @@ false, then returns to the first frame after reaching the last.
 
 - `correctTilesets`: Checks tile set names for empty strings, invalid characters, and duplicates. Renames tile sets as needed. Assigns a unique ID to each set's `properties`.
 
-- `flattenSprite`: Flattens a sprite's layers to one layer. Deletes all layers that are not references, regardless of visibility.
+- `flattenSprite`: Flattens a sprite's layers to one layer. Deletes all layers other than the flattened layer, including references.
 
 - `nextTab`: Moves the active sprite to the next tab. Converts the fore- and background colors to RGB. If the slice tool is active, switches to the hand tool.
 

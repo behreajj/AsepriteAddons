@@ -37,15 +37,16 @@ app.transaction("Flatten Sprite", function()
 
     local topLayers <const> = activeSprite.layers
     local lenTopLayers <const> = #topLayers
-    -- Omit the usual plus 1, because you want
-    -- the flattened layer to be omitted.
+    -- Omit the usual plus 1, because the flattened layer at the top of the
+    -- stack will be preserved.
+    -- No point in retaining top level reference layers, as ones within hidden
+    -- groups would be deleted. To retain them, they would have to be
+    -- reparented as necessary.
     local j = lenTopLayers
     while j > 1 do
         j = j - 1
         local topLayer <const> = topLayers[j]
-        if not topLayer.isReference then
-            activeSprite:deleteLayer(topLayer)
-        end
+        activeSprite:deleteLayer(topLayer)
     end
 end)
 
