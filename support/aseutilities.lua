@@ -1840,7 +1840,7 @@ function AseUtilities.flatToImage(
                     end -- End child is valid.
                 end     -- End children loop.
 
-                -- Composite order here does match Aseprite.... but for now
+                -- Composite order here does not match Aseprite, but for now
                 -- their composite is borked anyway.
 
                 -- https://github.com/aseprite/aseprite/blob/main/docs/ase-file-specs.md#note5
