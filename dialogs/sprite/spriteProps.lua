@@ -50,7 +50,7 @@ local fileName <const> = sprite.filename
 
 local dlg <const> = Dialog {
     title = string.format(
-        "Properties (v %s)",
+        "Properties (v %s) ",
         tostring(app.version))
 }
 
