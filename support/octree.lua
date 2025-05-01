@@ -5,7 +5,7 @@ dofile("./bounds3.lua")
 ---@field protected capacity integer point capacity
 ---@field protected children Octree[] child nodes
 ---@field protected level integer level, or depth
----@field protected points {l: number, a: number, b: number, alpha: number}[] points array
+---@field protected points Vec3[] points array
 ---@operator len(): integer
 Octree = {}
 Octree.__index = Octree
@@ -49,7 +49,7 @@ Octree.FRONT_NORTH_EAST = 8
 ---@return Octree
 function Octree.new(bounds, capacity, level)
     local inst <const> = setmetatable({}, Octree)
-    inst.bounds = bounds or Bounds3.srLab2()
+    inst.bounds = bounds or Bounds3.unitCubeSigned()
     inst.capacity = capacity or 16
     inst.children = {}
     inst.level = level or 1
@@ -77,35 +77,11 @@ function Octree:__tostring()
     return Octree.toJson(self)
 end
 
----Bisects an array of vectors to find the appropriate insertion point for a
----vector. Biases towards the right insert point. Should be used with sorted
----arrays.
----@param arr {l: number, a: number, b: number, alpha: number}[] vectors array
----@param elm{l: number, a: number, b: number, alpha: number} vector
----@param compare fun(a: {l: number, a: number, b: number, alpha: number}, b: {l: number, a: number, b: number, alpha: number}): boolean comparator
----@return integer
----@nodiscard
-function Octree.bisectRight(arr, elm, compare)
-    local low = 0
-    local high = #arr
-    if high < 1 then return 1 end
-    while low < high do
-        local middle <const> = (low + high) // 2
-        local right <const> = arr[1 + middle]
-        if right and compare(elm, right) then
-            high = middle
-        else
-            low = middle + 1
-        end
-    end
-    return 1 + low
-end
-
 ---Finds the mean center of each leaf node in an octree. Appends centers to an
 ---array if provided, otherwise creates a new array.
 ---@param o Octree octree
----@param arr? {l: number, a: number, b: number, alpha: number}[] array
----@return {l: number, a: number, b: number, alpha: number}[]
+---@param arr? Vec3[] array
+---@return Vec3[]
 function Octree.centersMean(o, arr)
     local arrVrf <const> = arr or {}
     local children <const> = o.children
@@ -123,16 +99,15 @@ function Octree.centersMean(o, arr)
         local leafPoints <const> = o.points
         local lenLeafPoints <const> = #leafPoints
         if lenLeafPoints > 1 then
-            local xSum, ySum, zSum, wSum = 0.0, 0.0, 0.0, 0.0
+            local xSum, ySum, zSum = 0.0, 0.0, 0.0
 
             local j = 0
             while j < lenLeafPoints do
                 j = j + 1
                 local pt <const> = leafPoints[j]
-                xSum = xSum + pt.l
-                ySum = ySum + pt.a
-                zSum = zSum + pt.b
-                wSum = wSum + pt.alpha
+                xSum = xSum + pt.x
+                ySum = ySum + pt.y
+                zSum = zSum + pt.z
             end
 
             local lenInv <const> = 1.0 / lenLeafPoints
@@ -142,32 +117,12 @@ function Octree.centersMean(o, arr)
                 zSum * lenInv)
         elseif lenLeafPoints > 0 then
             local pt <const> = leafPoints[1]
-            arrVrf[cursor] = {
-                l = pt.l,
-                a = pt.a,
-                b = pt.b,
-                alpha = pt.alpha
-            }
+            arrVrf[cursor] = Vec3.new(
+                pt.x, pt.y, pt.z)
         end
     end
 
     return arrVrf
-end
-
----A comparator method to sort vectors in a table according to their highest
----dimension first.
----@param o {l: number, a: number, b: number, alpha: number} left comparisand
----@param d {l: number, a: number, b: number, alpha: number} right comparisand
----@return boolean
----@nodiscard
-function Octree.comparator(o, d)
-    if o.l < d.l then return true end
-    if o.l > d.l then return false end
-    if o.b < d.b then return true end
-    if o.b > d.b then return false end
-    if o.a < d.a then return true end
-    if o.a > d.a then return false end
-    return o.alpha < d.alpha
 end
 
 ---Counts the number of leaves held by this node. Returns 1 if the node is
@@ -237,35 +192,10 @@ function Octree.cull(o)
         and (#o.points < 1)
 end
 
----Evaluates whether two vectors are exactly equal. Checks for reference
----equality prior to value equality.
----@param o {l: number, a: number, b: number, alpha: number} left comparisand
----@param d {l: number, a: number, b: number, alpha: number} right comparisand
----@return boolean
----@nodiscard
-function Octree.equals(o, d)
-    if rawequal(o, d) then return true end
-    return o.l == d.l
-        and o.a == d.a
-        and o.b == d.b
-        and o.alpha == d.alpha
-end
-
----Hashes a lab object to an integer key.
----@param o {l: number, a: number, b: number, alpha: number} point
----@return integer
-function Octree.hashCode(o)
-    local t16 <const> = math.floor(o.alpha * 0xffff + 0.5)
-    local l16 <const> = math.floor(o.l * 655.35 + 0.5)
-    local a16 <const> = 0x8000 + math.floor(o.a * 257.0)
-    local b16 <const> = 0x8000 + math.floor(o.b * 257.0)
-    return t16 << 0x30 | l16 << 0x20 | a16 << 0x10 | b16
-end
-
 ---Inserts a point into the node by reference, not by value. Returns true if
 ---the point was successfully inserted into either the node or its children.
 ---@param o Octree octree
----@param point {l: number, a: number, b: number, alpha: number} point
+---@param point Vec3 point
 ---@return boolean
 function Octree.insert(o, point)
     if Bounds3.containsInclExcl(o.bounds, point) then
@@ -284,8 +214,7 @@ function Octree.insert(o, point)
             -- Using table.sort here was definitely the
             -- cause of a major performance loss.
             local points <const> = o.points
-            local success <const> = Octree.insortRight(points, point,
-                Octree.comparator)
+            Vec3.insortRight(points, point, Vec3.comparator)
             if #points > o.capacity then
                 Octree.split(o, o.capacity)
             end
@@ -313,22 +242,6 @@ function Octree.insertAll(o, ins)
         flag = flag and Octree.insert(o, ins[i])
     end
     return flag
-end
-
----Inserts a vector into a table so as to maintain sorted order. Biases toward
----the right insertion point. Returns true if the unique vector was inserted.
----@param arr {l: number, a: number, b: number, alpha: number}[] vectors array
----@param elm {l: number, a: number, b: number, alpha: number} vector
----@param compare fun(a: {l: number, a: number, b: number, alpha: number}, b: {l: number, a: number, b: number, alpha: number}): boolean comparator
----@return boolean
-function Octree.insortRight(arr, elm, compare)
-    local i <const> = Octree.bisectRight(arr, elm, compare)
-    local dupe <const> = arr[i - 1]
-    if dupe and Octree.equals(dupe, elm) then
-        return false
-    end
-    table.insert(arr, i, elm)
-    return true
 end
 
 ---Evaluates whether a node has any children. Returns true if not.
@@ -362,13 +275,33 @@ function Octree.maxLevel(o)
 end
 
 ---Queries the node with a sphere. If a point can be found within the bounds,
+---returns a point and distance from the query center. If it cannot be found,
+---returns a default point, which may be nil.
+---@param o Octree octree
+---@param center Vec3 sphere center
+---@param radius number sphere radius
+---@param dfPt Vec3|nil default point
+---@return Vec3|nil
+---@return number
+function Octree.query(o, center, radius, dfPt)
+    local rVrf <const> = radius or 46340
+    local v <const>, d <const> = Octree.queryInternal(
+        o, center, rVrf, Vec3.distEuclidean)
+    if v then
+        return Vec3.new(v.x, v.y, v.z), d
+    else
+        return dfPt, d
+    end
+end
+
+---Queries the node with a sphere. If a point can be found within the bounds,
 ---returns it with the square distance from the query center. If a point
 ---cannot be found, returns nil.
 ---@param o Octree octree
----@param center {l: number, a: number, b: number, alpha: number} sphere center
+---@param center Vec3 sphere center
 ---@param rad number sphere radius
----@param df fun(a: {l: number, a: number, b: number, alpha: number}, b: {l: number, a: number, b: number, alpha: number}): number distance function
----@return {l: number, a: number, b: number, alpha: number}|nil
+---@param df fun(a: Vec3, b: Vec3): number distance function
+---@return Vec3|nil
 ---@return number
 function Octree.queryInternal(o, center, rad, df)
     local nearPoint = nil
@@ -426,7 +359,7 @@ function Octree.split(o, childCapacity)
     while i < 8 do
         i = i + 1
         children[i] = Octree.new(
-            Bounds3.srLab2(),
+            Bounds3.unitCubeSigned(),
             chCpVerif, nextLevel)
     end
 
@@ -511,10 +444,7 @@ function Octree.toJson(o)
         local i = 0
         while i < ptsLen do
             i = i + 1
-            local pt <const> = pts[i]
-            ptsStrs[i] = string.format(
-                "{\"l\":%.4f,\"a\":%.4f,\"b\":%.4f,\"alpha\":%.4f}",
-                pt.l, pt.a, pt.b, pt.alpha)
+            ptsStrs[i] = Vec3.toJson(pts[i])
         end
 
         leafStr = string.format(

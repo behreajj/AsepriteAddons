@@ -288,7 +288,7 @@ dlg:button {
         local octCapacity = args.octCapacity
             or defaults.octCapacityBits --[[@as integer]]
         octCapacity = 1 << octCapacity
-        local bounds <const> = Bounds3.srLab2()
+        local bounds <const> = Bounds3.lab()
         local octree <const> = Octree.new(bounds, octCapacity, 1)
 
         -- Unpack unique colors to data.

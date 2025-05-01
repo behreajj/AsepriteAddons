@@ -2,23 +2,62 @@ dofile("../../support/aseutilities.lua")
 dofile("../../support/octree.lua")
 
 local areaTargets <const> = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
+local colorSpaces <const> = { "LINEAR_RGB", "S_RGB", "SR_LAB_2" }
 local palTargets <const> = { "ACTIVE", "FILE" }
 
 local defaults <const> = {
     areaTarget = "ACTIVE",
     palTarget = "ACTIVE",
     cvgLabRad = 175,
+    cvgNormRad = 120,
     octCapacityBits = 4,
     minCapacityBits = 2,
     maxCapacityBits = 16,
     printElapsed = false,
+    clrSpacePreset = "LINEAR_RGB"
 }
+
+---@param preset string
+---@return Bounds3
+local function boundsFromPreset(preset)
+    if preset == "CIE_LAB"
+        or preset == "SR_LAB_2" then
+        return Bounds3.lab()
+    else
+        return Bounds3.unitCubeUnsigned()
+    end
+end
+
+---@param clr Clr
+---@return Vec3
+local function clrToVec3lRgb(clr)
+    local lin <const> = Clr.sRgbTolRgbInternal(clr)
+    return Vec3.new(lin.r, lin.g, lin.b)
+end
+
+---@param clr Clr
+---@return Vec3
+local function clrToVec3sRgb(clr)
+    return Vec3.new(clr.r, clr.g, clr.b)
+end
 
 ---@param clr Clr
 ---@return Vec3
 local function clrToVec3SrLab2(clr)
     local lab <const> = Clr.sRgbToSrLab2(clr)
     return Vec3.new(lab.a, lab.b, lab.l)
+end
+
+---@param preset string
+---@return fun(clr: Clr): Vec3
+local function clrToV3FuncFromPreset(preset)
+    if preset == "LINEAR_RGB" then
+        return clrToVec3lRgb
+    elseif preset == "SR_LAB_2" then
+        return clrToVec3SrLab2
+    else
+        return clrToVec3sRgb
+    end
 end
 
 local dlg <const> = Dialog { title = "Palette To Cel" }
@@ -55,6 +94,53 @@ dlg:file {
     filename = app.fs.joinPath(app.fs.userConfigPath, "palettes", "*.*"),
     open = true,
     visible = defaults.palTarget == "FILE"
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "clrSpacePreset",
+    label = "Color Space:",
+    option = defaults.clrSpacePreset,
+    options = colorSpaces,
+    onchange = function()
+        local args <const> = dlg.data
+        local preset <const> = args.clrSpacePreset --[[@as string]]
+        local isLab <const> = preset == "CIE_LAB"
+            or preset == "SR_LAB_2"
+        dlg:modify {
+            id = "cvgLabRad",
+            visible = isLab
+        }
+        dlg:modify {
+            id = "cvgNormRad",
+            visible = not isLab
+        }
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "cvgLabRad",
+    label = "Radius:",
+    min = 25,
+    max = 242,
+    value = defaults.cvgLabRad,
+    visible = defaults.clrSpacePreset == "CIE_LAB"
+        or defaults.clrSpacePreset == "SR_LAB_2"
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "cvgNormRad",
+    label = "Radius:",
+    min = 5,
+    max = 174,
+    value = defaults.cvgNormRad,
+    visible = defaults.clrSpacePreset ~= "CIE_LAB"
+        and defaults.clrSpacePreset ~= "SR_LAB_2"
 }
 
 dlg:newrow { always = false }
@@ -175,14 +261,18 @@ dlg:button {
         local v3Hash <const> = Vec3.hashCode
 
         -- Select which conversion functions to use.
-        local octBounds <const> = Bounds3.srLab2()
-        local clrV3Func <const> = clrToVec3SrLab2
+        local clrSpacePreset <const> = args.clrSpacePreset
+            or defaults.clrSpacePreset --[[@as string]]
+        local octBounds <const> = boundsFromPreset(clrSpacePreset)
+        local clrV3Func <const> = clrToV3FuncFromPreset(clrSpacePreset)
 
         -- Select query radius according to color space.
         local cvgRad = 0.0
         local distFunc = Vec3.distEuclidean
-        if true then
-            cvgRad = defaults.cvgLabRad
+        if clrSpacePreset == "CIE_LAB"
+            or clrSpacePreset == "SR_LAB_2" then
+            cvgRad = args.cvgLabRad
+                or defaults.cvgLabRad --[[@as number]]
 
             -- See https://www.wikiwand.com/en/
             -- Color_difference#/Other_geometric_constructions
@@ -192,6 +282,10 @@ dlg:button {
                 return math.sqrt(da * da + db * db)
                     + math.abs(b.z - a.z)
             end
+        else
+            cvgRad = args.cvgNormRad
+                or defaults.cvgNormRad --[[@as number]]
+            cvgRad = cvgRad * 0.01
         end
 
         local palTarget <const> = args.palTarget
@@ -230,7 +324,7 @@ dlg:button {
                 srcLayerName = srcLayer.name
             end
             trgLayer.name = string.format("%s %s %03d",
-                srcLayerName, "SR_LAB_2", lenHexesSrgb)
+                srcLayerName, clrSpacePreset, lenHexesSrgb)
             trgLayer.parent = AseUtilities.getTopVisibleParent(srcLayer)
             trgLayer.opacity = srcLayer.opacity or 255
             trgLayer.blendMode = srcLayer.blendMode
