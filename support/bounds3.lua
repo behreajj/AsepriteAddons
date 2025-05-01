@@ -1,8 +1,6 @@
-dofile("./vec3.lua")
-
 ---@class Bounds3
----@field public mn Vec3 lower bound
----@field public mx Vec3 upper bound
+---@field public mn {l: number, a: number, b: number, alpha: number} lower bound
+---@field public mx {l: number, a: number, b: number, alpha: number} upper bound
 Bounds3 = {}
 Bounds3.__index = Bounds3
 
@@ -15,8 +13,8 @@ setmetatable(Bounds3, {
 ---Constructs a new axis aligned bounding box (AABB) for a 3D volume,
 ---represented by a minimum and maximum coordinate. Defaults to passing vectors
 ---by value.
----@param mn Vec3|number lower bound
----@param mx Vec3|number upper bound
+---@param mn {l: number, a: number, b: number, alpha: number} lower bound
+---@param mx {l: number, a: number, b: number, alpha: number} upper bound
 ---@return Bounds3
 ---@nodiscard
 function Bounds3.new(mn, mx)
@@ -26,21 +24,21 @@ end
 ---Constructs a new axis aligned bounding box (AABB) for a 3D volume,
 ---represented by a minimum and maximum coordinate. Vectors are assigned by
 ---reference.
----@param mn Vec3 lower bound
----@param mx Vec3 upper bound
+---@param mn {l: number, a: number, b: number, alpha: number} lower bound
+---@param mx {l: number, a: number, b: number, alpha: number} upper bound
 ---@return Bounds3
 ---@nodiscard
 function Bounds3.newByRef(mn, mx)
     local inst <const> = setmetatable({}, Bounds3)
-    inst.mn = mn or Vec3.new(-0.5, -0.5, -0.5)
-    inst.mx = mx or Vec3.new(0.5, 0.5, 0.5)
+    inst.mn = mn or { l = 0.0, a = -111.0, b = -111.0, alpha = 0.0 }
+    inst.mx = mx or { l = 100.0, a = 111.0, b = 111.0, alpha = 1.0 }
     return inst
 end
 
 ---Constructs a new axis aligned bounding box (AABB) for a 3D volume,
 ---represented by a minimum and maximum coordinate. Vectors are copied by value.
----@param mn Vec3|number lower bound
----@param mx Vec3|number upper bound
+---@param mn {l: number, a: number, b: number, alpha: number} lower bound
+---@param mx {l: number, a: number, b: number, alpha: number} upper bound
 ---@return Bounds3
 ---@nodiscard
 function Bounds3.newByVal(mn, mx)
@@ -48,24 +46,16 @@ function Bounds3.newByVal(mn, mx)
 
     inst.mn = nil
     if mn then
-        if type(mn) == "number" then
-            inst.mn = Vec3.new(mn, mn, mn)
-        else
-            inst.mn = Vec3.new(mn.x, mn.y, mn.z)
-        end
+        inst.mn = { l = mn.l, a = mn.a, b = mn.b, alpha = mn.alpha }
     else
-        inst.mn = Vec3.new(-0.5, -0.5, -0.5)
+        inst.mn = { l = 0.0, a = -111.0, b = -111.0, alpha = 0.0 }
     end
 
     inst.mx = nil
     if mx then
-        if type(mx) == "number" then
-            inst.mx = Vec3.new(mx, mx, mx)
-        else
-            inst.mx = Vec3.new(mx.x, mx.y, mx.z)
-        end
+        inst.mx = { l = mx.l, a = mx.a, b = mx.b, alpha = mx.alpha }
     else
-        inst.mx = Vec3.new(0.5, 0.5, 0.5)
+        inst.mx = { l = 100.0, a = 111.0, b = 111.0, alpha = 1.0 }
     end
 
     return inst
@@ -94,67 +84,75 @@ end
 ---Evaluates whether a point is within the bounds, lower bounds inclusive, upper
 ---bounds exclusive.
 ---@param b Bounds3 bounds
----@param pt Vec3 point
+---@param pt {l: number, a: number, b: number, alpha: number} point
 ---@return boolean
 ---@nodiscard
 function Bounds3.containsInclExcl(b, pt)
     local mn <const> = b.mn
     local mx <const> = b.mx
-    return (pt.x >= mn.x and pt.x < mx.x)
-        and (pt.y >= mn.y and pt.y < mx.y)
-        and (pt.z >= mn.z and pt.z < mx.z)
+    return (pt.l >= mn.l and pt.l < mx.l)
+        and (pt.a >= mn.a and pt.a < mx.a)
+        and (pt.b >= mn.b and pt.b < mx.b)
+        and (pt.alpha >= mn.alpha and pt.alpha < mx.alpha)
 end
 
 ---Evaluates whether a bounding box intersects a sphere.
 ---@param a Bounds3 bounds
----@param center Vec3 sphere center
+---@param center {l: number, a: number, b: number, alpha: number} sphere center
 ---@param radius number sphere radius
 ---@return boolean
 ---@nodiscard
 function Bounds3.intersectsSphere(a, center, radius)
     return Bounds3.intersectsSphereInternal(
-        a, center, radius * radius)
+        a, center, radius * radius, 0.0)
 end
 
 ---Evaluates whether a bounding box intersects a sphere. Internal helper
 ---function for octrees, as it assumes that the squared-radius has already been
 ---calculated.
----@param a Bounds3 bounds
----@param center Vec3 sphere center
+---@param v Bounds3 bounds
+---@param center {l: number, a: number, b: number, alpha: number} sphere center
 ---@param rsq number sphere radius, squared
+---@param alphaScale number alpha scalar
 ---@return boolean
 ---@nodiscard
-function Bounds3.intersectsSphereInternal(a, center, rsq)
-    local xd, yd, zd = 0.0, 0.0, 0.0
+function Bounds3.intersectsSphereInternal(v, center, rsq, alphaScale)
+    local ld, ad, bd, td = 0.0, 0.0, 0.0, 0.0
 
-    if center.x < a.mn.x then
-        xd = center.x - a.mn.x
-    elseif center.x > a.mx.x then
-        xd = center.x - a.mx.x
+    if center.l < v.mn.l then
+        ld = center.l - v.mn.l
+    elseif center.l > v.mx.l then
+        ld = center.l - v.mx.l
     end
 
-    if center.y < a.mn.y then
-        yd = center.y - a.mn.y
-    elseif center.y > a.mx.y then
-        yd = center.y - a.mx.y
+    if center.a < v.mn.a then
+        ad = center.a - v.mn.a
+    elseif center.a > v.mx.a then
+        ad = center.a - v.mx.a
     end
 
-    if center.z < a.mn.z then
-        zd = center.z - a.mn.z
-    elseif center.z > a.mx.z then
-        zd = center.z - a.mx.z
+    if center.b < v.mn.b then
+        bd = center.b - v.mn.b
+    elseif center.b > v.mx.b then
+        bd = center.b - v.mx.b
     end
 
-    return (xd * xd + yd * yd + zd * zd) < rsq
+    if center.alpha < v.mn.alpha then
+        td = center.alpha - v.mn.alpha
+    elseif center.alpha > v.mx.alpha then
+        td = center.alpha - v.mx.alpha
+    end
+
+    return (ld * ld + ad * ad + bd * bd + alphaScale * td * td) < rsq
 end
 
 ---Splits a bounding box into octants according to three factors in the range
 ---[0.0, 1.0]. The factor on the x axis governs the vertical split. On the y
 ---axis, the horizontal split. On the z axis, the depth split.
----@param b Bounds3 bounds
----@param xFac number vertical factor
----@param yFac number horizontal vector
----@param zFac number depth factor
+---@param v Bounds3 bounds
+---@param lFac number vertical factor
+---@param aFac number horizontal vector
+---@param bFac number depth factor
 ---@param bsw Bounds3 back south west octant
 ---@param bse Bounds3 back south east octant
 ---@param bnw Bounds3 back north west octant
@@ -164,32 +162,32 @@ end
 ---@param fnw Bounds3 front north west octant
 ---@param fne Bounds3 front north east octant
 function Bounds3.splitInternal(
-    b, xFac, yFac, zFac,
+    v, lFac, aFac, bFac,
     bsw, bse, bnw, bne, fsw, fse, fnw, fne)
-    local bMn <const> = b.mn
-    local bMx <const> = b.mx
+    local vMn <const> = v.mn
+    local vMx <const> = v.mx
 
-    local x <const> = (1.0 - xFac) * bMn.x + xFac * bMx.x
-    local y <const> = (1.0 - yFac) * bMn.y + yFac * bMx.y
-    local z <const> = (1.0 - zFac) * bMn.z + zFac * bMx.z
+    local l <const> = (1.0 - lFac) * vMn.l + lFac * vMx.l
+    local a <const> = (1.0 - aFac) * vMn.a + aFac * vMx.a
+    local b <const> = (1.0 - bFac) * vMn.b + bFac * vMx.b
 
-    bsw.mn = Vec3.new(bMn.x, bMn.y, bMn.z)
-    bse.mn = Vec3.new(x, bMn.y, bMn.z)
-    bnw.mn = Vec3.new(bMn.x, y, bMn.z)
-    bne.mn = Vec3.new(x, y, bMn.z)
-    fsw.mn = Vec3.new(bMn.x, bMn.y, z)
-    fse.mn = Vec3.new(x, bMn.y, z)
-    fnw.mn = Vec3.new(bMn.x, y, z)
-    fne.mn = Vec3.new(x, y, z)
+    bsw.mn = { l = vMn.l, a = vMn.a, b = vMn.b, alpha = vMn.alpha }
+    bse.mn = { l = l, a = vMn.a, b = vMn.b, alpha = vMn.alpha }
+    bnw.mn = { l = vMn.l, a = a, b = vMn.b, alpha = vMn.alpha }
+    bne.mn = { l = l, a = a, b = vMn.b, alpha = vMn.alpha }
+    fsw.mn = { l = vMn.l, a = vMn.a, b = b, alpha = vMn.alpha }
+    fse.mn = { l = l, a = vMn.a, b = b, alpha = vMn.alpha }
+    fnw.mn = { l = vMn.l, a = a, b = b, alpha = vMn.alpha }
+    fne.mn = { l = l, a = a, b = b, alpha = vMn.alpha }
 
-    bsw.mx = Vec3.new(x, y, z)
-    bse.mx = Vec3.new(bMx.x, y, z)
-    bnw.mx = Vec3.new(x, bMx.y, z)
-    bne.mx = Vec3.new(bMx.x, bMx.y, z)
-    fsw.mx = Vec3.new(x, y, bMx.z)
-    fse.mx = Vec3.new(bMx.x, y, bMx.z)
-    fnw.mx = Vec3.new(x, bMx.y, bMx.z)
-    fne.mx = Vec3.new(bMx.x, bMx.y, bMx.z)
+    bsw.mx = { l = l, a = a, b = b, alpha = vMx.alpha }
+    bse.mx = { l = vMx.l, a = a, b = b, alpha = vMx.alpha }
+    bnw.mx = { l = l, a = vMx.a, b = b, alpha = vMx.alpha }
+    bne.mx = { l = vMx.l, a = vMx.a, b = b, alpha = vMx.alpha }
+    fsw.mx = { l = l, a = a, b = vMx.b, alpha = vMx.alpha }
+    fse.mx = { l = vMx.l, a = a, b = vMx.b, alpha = vMx.alpha }
+    fnw.mx = { l = l, a = vMx.a, b = vMx.b, alpha = vMx.alpha }
+    fne.mx = { l = vMx.l, a = vMx.a, b = vMx.b, alpha = vMx.alpha }
 end
 
 ---Returns a JSON string of the bounds.
@@ -198,39 +196,20 @@ end
 ---@nodiscard
 function Bounds3.toJson(b)
     return string.format(
-        "{\"mn\":%s,\"mx\":%s}",
-        Vec3.toJson(b.mn),
-        Vec3.toJson(b.mx))
+        "{\"mn\":{\"l\":%.4f,\"a\":%.4f,\"b\":%.4f,\"alpha\":%.4f}" ..
+        ",\"mx\":{\"l\":%.4f,\"a\":%.4f,\"b\":%.4f,\"alpha\":%.4f}",
+        b.mn.l, b.mn.a, b.mn.b, b.mn.alpha,
+        b.mx.l, b.mx.a, b.mx.b, b.mx.alpha)
 end
 
----Returns a bounds with the dimensions of the CIE LAB or SR LAB 2 color spaces.
+---Returns a bounds with the dimensions of the SR LAB 2 color space.
 ---Intended for use with an octree containing points of color.
 ---@return Bounds3
 ---@nodiscard
-function Bounds3.lab()
+function Bounds3.srLab2()
     return Bounds3.newByRef(
-        Vec3.new(-111.0, -111.0, -1.0),
-        Vec3.new(111.0, 111.0, 101.0))
-end
-
----Returns a bounds containing a signed unit cube in Cartesian coordinates,
----from [-1.0, 1.0].
----@return Bounds3
----@nodiscard
-function Bounds3.unitCubeSigned()
-    return Bounds3.newByRef(
-        Vec3.new(-1.000002, -1.000002, -1.000002),
-        Vec3.new(1.000002, 1.000002, 1.000002))
-end
-
----Returns a bounds containing an unsigned unit cube in Cartesian coordinates,
----from [0.0, 1.0].
----@return Bounds3
----@nodiscard
-function Bounds3.unitCubeUnsigned()
-    return Bounds3.newByRef(
-        Vec3.new(-0.000002, -0.000002, -0.000002),
-        Vec3.new(1.000002, 1.000002, 1.000002))
+        { l = -0.01, a = -111.0, b = -111.0, alpha = -0.01 },
+        { l = 100.1, a = 111.0, b = 111.0, alpha = 1.01 })
 end
 
 return Bounds3
