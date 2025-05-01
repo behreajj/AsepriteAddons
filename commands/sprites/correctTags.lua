@@ -8,10 +8,10 @@ local lenFrames <const> = #activeSprite.frames
 
 ---@type table<string, Tag[]>
 local dict <const> = {}
----@type Tag[][]
-local tagsToRename <const> = {}
+
 ---@type Tag[]
 local tagsToRemove <const> = {}
+local lenTagsToRemove = 0
 
 local i = 0
 while i < lenTags do
@@ -24,6 +24,8 @@ while i < lenTags do
         local toIdx <const> = toFrame.frameNumber
         if fromIdx <= lenFrames and toIdx <= lenFrames
             and fromIdx >= 1 and toIdx >= 1 then
+            -- TODO: Assign an ID similar to correctTilesets?
+
             local name <const> = tag.name
             local arr <const> = dict[name]
             if arr then
@@ -32,22 +34,28 @@ while i < lenTags do
                 dict[name] = { tag }
             end
         else
-            tagsToRemove[#tagsToRemove + 1] = tag
+            lenTagsToRemove = lenTagsToRemove + 1
+            tagsToRemove[lenTagsToRemove] = tag
         end
     else
-        tagsToRemove[#tagsToRemove + 1] = tag
+        lenTagsToRemove = lenTagsToRemove + 1
+        tagsToRemove[lenTagsToRemove] = tag
     end
 end
+
+---@type Tag[][]
+local tagsToRename <const> = {}
+local lenTagsToRename = 0
 
 -- Transfer dictionary of arrays to array of arrays.
 for _, arr in pairs(dict) do
     local lenArr <const> = #arr
     if lenArr > 1 then
-        tagsToRename[#tagsToRename + 1] = arr
+        lenTagsToRename = lenTagsToRename + 1
+        tagsToRename[lenTagsToRename] = arr
     end
 end
 
-local lenTagsToRename <const> = #tagsToRename
 if lenTagsToRename > 0 then
     local strfmt <const> = string.format
     app.transaction("Rename tags", function()
@@ -72,7 +80,6 @@ if lenTagsToRename > 0 then
     end)
 end
 
-local lenTagsToRemove <const> = #tagsToRemove
 if lenTagsToRemove > 0 then
     app.transaction("Remove tags", function()
         local m = lenTagsToRemove + 1
