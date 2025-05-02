@@ -11,6 +11,8 @@ Octree = {}
 Octree.__index = Octree
 
 setmetatable(Octree, {
+    -- Refactor to use Lab directly instead of Vec3:
+    -- a41cfad745bb9b2d5c5a7319b4cb7765364e0ad8
     __call = function(cls, ...)
         return cls.new(...)
     end

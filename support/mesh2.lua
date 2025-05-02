@@ -360,23 +360,20 @@ function Mesh2.star(sectors, skip, pick, inset)
     if skip then vSkip = skip end
     if pick then vPick = pick end
     if vSkip < 1 or vPick < 1
-        or (inset and (inset <= 0.0 or inset >= 1.0)) then
+        or (inset and (inset < 0.000002
+            or inset > 0.999998)) then
         return Mesh2.polygon(sectors)
     end
 
     -- Validate other arguments.
     local vRad <const> = 0.5
-    local vIns = 0.25
-    local vSect = 3
-    if inset then
-        vIns = vRad - vRad * math.min(math.max(
-            inset, 0.000002), 0.999998)
-    end
-    if sectors > 3 then vSect = sectors end
+    local vSect <const> = sectors >= 3 and sectors or 3
+    local vInset <const> = inset or 0.5
 
     local all <const> = vPick + vSkip
     local seg <const> = all * vSect
     local toTheta <const> = 6.2831853071796 / seg
+    local rInset <const> = (1.0 - vInset) * vRad * math.cos(toTheta)
 
     ---@type Vec2[]
     local vs <const> = {}
@@ -391,7 +388,7 @@ function Mesh2.star(sectors, skip, pick, inset)
         -- TODO: Angle offset so that the middle
         -- of an edge lines up with the x axis.
         local theta <const> = i * toTheta
-        local r = vIns
+        local r = rInset
         if (i % all) < vPick then
             r = vRad
         end
