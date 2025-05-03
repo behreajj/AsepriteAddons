@@ -29,8 +29,8 @@ local defaults <const> = {
     useTrim = true,
 }
 
----@param o { l: number, a: number, b: number, alpha: number }
----@param d { l: number, a: number, b: number, alpha: number }
+---@param o Lab
+---@param d Lab
 ---@param alphaScale number
 ---@return number
 local function distSqInclAlpha(o, d, alphaScale)
@@ -43,8 +43,8 @@ local function distSqInclAlpha(o, d, alphaScale)
     return ct * ct + cl * cl + ca * ca + cb * cb
 end
 
----@param o { l: number, a: number, b: number, alpha: number }
----@param d { l: number, a: number, b: number, alpha: number }
+---@param o Lab
+---@param d Lab
 ---@return number
 local function distSqNoAlpha(o, d)
     local cl <const> = d.l - o.l

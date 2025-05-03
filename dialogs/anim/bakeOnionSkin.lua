@@ -23,7 +23,7 @@ local defaults <const> = {
 
 ---Returns source image by reference if tint alpha is zero or less.
 ---@param srcImg Image
----@param tint { l: number, a: number, b: number, alpha: number }
+---@param tint Lab
 ---@param preserveLight boolean
 ---@return Image
 local function tintImage(srcImg, tint, preserveLight)

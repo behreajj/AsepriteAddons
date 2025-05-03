@@ -258,7 +258,7 @@ dlg:button {
         local sSum = 0.0
         local tally = 0
 
-        ---@type table<integer, { l: number, a: number, b: number, alpha: number }>
+        ---@type table<integer, Lab>
         local abgr32ToLab <const> = {}
         local labZero <const> = {
             l = 0.0,

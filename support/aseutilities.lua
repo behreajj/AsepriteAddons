@@ -475,7 +475,7 @@ end
 ---in the SR LAB 2 color space. Excludes colors with zero alpha.
 ---@param sprite Sprite
 ---@param frame Frame|integer
----@return { l: number, a: number, b: number, alpha: number }
+---@return Lab
 ---@nodiscard
 function AseUtilities.averageColor(sprite, frame)
     local sprSpec <const> = sprite.spec

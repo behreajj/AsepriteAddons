@@ -260,39 +260,6 @@ function Clr.gridsRgb(cols, rows, layers, alpha)
     return result
 end
 
----Converts a color from linear RGB to SR Lab 2.
----See Jan Behrens, https://www.magnetkern.de/srlab2.html .
----The return table uses the keys l, a, b and alpha.
----The alpha channel is unaffected by the transform.
----@param c Clr linear color
----@return { l: number, a: number, b: number, alpha: number }
----@nodiscard
----@deprecated
-function Clr.lRgbToSrLab2Internal(c)
-    local r <const> = c.r
-    local g <const> = c.g
-    local b <const> = c.b
-
-    local x = 0.32053 * r + 0.63692 * g + 0.04256 * b
-    local y = 0.161987 * r + 0.756636 * g + 0.081376 * b
-    local z = 0.017228 * r + 0.10866 * g + 0.874112 * b
-
-    -- 216.0 / 24389.0 = 0.0088564516790356
-    -- 24389.0 / 2700.0 = 9.032962962963
-    x = x <= 0.0088564516790356 and x * 9.032962962963
-        or (x ^ 0.33333333333333) * 1.16 - 0.16
-    y = y <= 0.0088564516790356 and y * 9.032962962963
-        or (y ^ 0.33333333333333) * 1.16 - 0.16
-    z = z <= 0.0088564516790356 and z * 9.032962962963
-        or (z ^ 0.33333333333333) * 1.16 - 0.16
-
-    return {
-        l = 37.095 * x + 62.9054 * y - 0.0008 * z,
-        a = 663.4684 * x - 750.5078 * y + 87.0328 * z,
-        b = 63.9569 * x + 108.4576 * y - 172.4152 * z,
-        alpha = c.a
-    }
-end
 
 ---Converts a color from linear RGB to standard RGB (sRGB).
 ---Clamps the input color to [0.0, 1.0].
@@ -585,7 +552,7 @@ end
 ---@param c number chroma
 ---@param h number hue
 ---@param a number opacity
----@return { l: number, a: number, b: number, alpha: number }
+---@return Lab
 ---@nodiscard
 ---@deprecated
 function Clr.srLchToSrLab2Internal(l, c, h, a)

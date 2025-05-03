@@ -429,7 +429,7 @@ dlg:button {
 
         ---@type fun(x: number): number
         local responseFunc = function(x) return 0.0 end
-        ---@type fun(lab: {l: number, a: number, b: number, alpha: number}): number
+        ---@type fun(lab: Lab): number
         local toFac = function(lab) return 0.0 end
         local biasLabel = ""
         if channel == "A" then

@@ -401,7 +401,7 @@ dlg:button {
                 local areaSrc <const> = wSrc * hSrc
                 local srcBytes <const> = srcImg.bytes
 
-                ---@type table<integer, {l: number, a: number, b: number, alpha: number}>
+                ---@type table<integer, Lab>
                 local abgr32ToLab <const> = {}
                 ---@type table<integer, integer[]>
                 local abgr32Idcs <const> = {}
