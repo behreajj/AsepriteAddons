@@ -14,12 +14,15 @@ setmetatable(Clr, {
 })
 
 ---Arbitrary hue assigned to lighter grays in SR LCH conversion functions.
+---@deprecated
 Clr.SR_LCH_HUE_LIGHT = 0.306391
 
 ---Arbitrary hue assigned to darker grays in SR LCH conversion functions.
+---@deprecated
 Clr.SR_LCH_HUE_SHADOW = 0.874676
 
 ---Maximum chroma of a color in SR LCH that is in gamut in standard RGB.
+---@deprecated
 Clr.SR_LCH_MAX_CHROMA = 119.07602046756
 
 ---Constructs a new color from red, green, blue and opacity channels. The
