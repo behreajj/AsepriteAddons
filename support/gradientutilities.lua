@@ -108,7 +108,7 @@ function GradientUtilities.clearGradient(gr)
 
             if lenRangeClrIdcs > GradientUtilities.MAX_KEYS then
                 local floor <const> = math.floor
-                local mix <const> = Clr.mixSrLab2Internal
+                local mix <const> = ColorUtilities.mixSrLab2Internal
                 local toFac <const> = 1.0 / (GradientUtilities.MAX_KEYS - 1.0)
 
                 local idxFirst <const> = rangeClrIdcs[1]
@@ -214,11 +214,11 @@ function GradientUtilities.clrSpcFuncFromPreset(clrSpcPreset, huePreset)
     elseif clrSpcPreset == "NORMAL_MAP" then
         return Clr.mixNormal
     elseif clrSpcPreset == "SR_LAB_2" then
-        return Clr.mixSrLab2Internal
+        return ColorUtilities.mixSrLab2Internal
     elseif clrSpcPreset == "SR_LCH" then
         local hef <const> = GradientUtilities.hueEasingFuncFromPreset(huePreset)
         return function(o, d, t)
-            return Clr.mixSrLchInternal(o, d, t, hef)
+            return ColorUtilities.mixSrLchInternal(o, d, t, hef)
         end
     else
         return Clr.mixlRgbaInternal
@@ -589,13 +589,13 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
                 local hMixFunc <const> = GradientUtilities.hueEasingFuncFromPreset(huePreset)
                 newKeys[1] = ClrKey.new(0.0, cgeval(gradient, 0.0, mixFunc))
                 newKeys[3] = ClrKey.new(1.0, cgeval(gradient, 1.0, mixFunc))
-                newKeys[2] = ClrKey.new(0.5, Clr.mixSrLch(
+                newKeys[2] = ClrKey.new(0.5, ColorUtilities.mixSrLch(
                     newKeys[1].clr, newKeys[3].clr, 0.5, hMixFunc))
             else
                 -- Cache methods used in loop.
                 local floor <const> = math.floor
-                local labTosRgb <const> = Clr.srLab2TosRgb
-                local sRgbToLab <const> = Clr.sRgbToSrLab2
+                local labTosRgb <const> = ColorUtilities.srLab2TosRgb
+                local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2
                 local crveval <const> = Curve3.eval
 
                 ---@type Vec3[]
@@ -636,8 +636,8 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
                     end
                     local point <const> = crveval(curve, iFac)
                     i = i + 1
-                    newKeys[i] = ClrKey.new(iFac, labTosRgb(
-                        point.z, point.x, point.y, alpha))
+                    local lab <const> = Lab.new(point.z, point.x, point.y, alpha)
+                    newKeys[i] = ClrKey.new(iFac, labTosRgb(lab))
                 end
             end
 
@@ -866,7 +866,7 @@ function GradientUtilities.imageToMatrix(image)
         -- conversion. To unpack colors to floats, you could try, e.g.,
         -- string.unpack("f", string.pack("i", 0x40490FDB)) to read,
         -- string.unpack("i", string.pack("f", 3.1415927410126)) to write.
-        local sRgbToLab <const> = Clr.sRgbToSrLab2
+        local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
         local clrnew <const> = Clr.new
 
         local h = 0
