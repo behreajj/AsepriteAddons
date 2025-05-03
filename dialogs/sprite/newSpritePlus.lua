@@ -371,10 +371,8 @@ dlg:button {
                 local specChroma <const> = args.spectrumChroma --[[@as number]]
                 local specHue <const> = args.spectrumHue --[[@as number]]
 
-                hexBkg = Clr.toHex(
-                    Clr.srLchTosRgb(
-                        specLight, specChroma, specHue,
-                        specAlpha))
+                hexBkg = Clr.toHex(ColorUtilities.srLchTosRgb(
+                    specLight, specChroma, specHue, specAlpha))
             end
         end
 
