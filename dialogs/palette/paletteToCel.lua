@@ -184,10 +184,6 @@ dlg:button {
         local search <const> = Octree.queryInternal
         local v3Hash <const> = Vec3.hashCode
 
-        -- Select which conversion functions to use.
-        local octBounds <const> = Bounds3.lab()
-        local clrV3Func <const> = clrToVec3SrLab2
-
         -- Select query radius according to color space.
         local cvgRad <const> = args.cvgLabRad
             or defaults.cvgLabRad --[[@as number]]
@@ -201,14 +197,15 @@ dlg:button {
         local palTarget <const> = args.palTarget
             or defaults.palTarget --[[@as string]]
         local palFile <const> = args.palFile --[[@as string]]
-        local hexesProfile <const>, hexesSrgb <const> = AseUtilities.asePaletteLoad(
+        local hexesProfile <const>,
+        hexesSrgb <const> = AseUtilities.asePaletteLoad(
             palTarget, palFile, 0, 512, true)
         local lenHexesSrgb <const> = #hexesSrgb
 
         local octExpBits <const> = args.octCapacity
             or defaults.octCapacityBits --[[@as integer]]
         local octCapacity = 1 << octExpBits
-        local octree <const> = Octree.new(octBounds, octCapacity, 1)
+        local octree <const> = Octree.new(Bounds3.lab(), octCapacity, 1)
 
         -- Convert source palette colors to points in an octree.
         -- Ignore colors with zero alpha.
@@ -219,7 +216,7 @@ dlg:button {
             h = h + 1
             local hexSrgb <const> = hexesSrgb[h]
             if (hexSrgb & 0xff000000) ~= 0 then
-                local pt <const> = clrV3Func(fromHex(hexSrgb))
+                local pt <const> = clrToVec3SrLab2(fromHex(hexSrgb))
                 ptToHexDict[v3Hash(pt)] = hexesProfile[h]
                 octInsert(octree, pt)
             end
@@ -288,7 +285,7 @@ dlg:button {
                     ---@type string[]
                     local trgBytesArr <const> = {}
                     for srcAbgr32, idcs in pairs(hexesUnique) do
-                        local ptSrc <const> = clrV3Func(fromHex(srcAbgr32))
+                        local ptSrc <const> = clrToVec3SrLab2(fromHex(srcAbgr32))
                         local ptTrg <const>, _ <const> = search(
                             octree, ptSrc, cvgRad, distFunc)
 

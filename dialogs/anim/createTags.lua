@@ -306,7 +306,7 @@ dlg:button {
         local max <const> = math.max
         local strfmt <const> = string.format
         local hueFunc <const> = GradientUtilities.lerpHueCcw
-        local mixer <const> = Clr.mixSrLch
+        local mixer <const> = ColorUtilities.mixSrLchInternal
         local clrToAse <const> = AseUtilities.clrToAseColor
         local transact <const> = app.transaction
 
