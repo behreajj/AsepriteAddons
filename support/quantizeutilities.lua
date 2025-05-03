@@ -333,40 +333,4 @@ function QuantizeUtilities.dialogWidgets(dlg, isVisible, enableAlpha)
     dlg:newrow { always = false }
 end
 
----Converts a gamma encoded standard RGB color channel in [0.0, 1.0] to a Sega
----Genesis color channel. Uses a cubic curve. See
----https://plutiedev.com/vdp-color-ramp and
----https://segaretro.org/Sega_Mega_Drive/Palettes_and_CRAM .
----@param x number color channel
----@return number
-function QuantizeUtilities.linearToSega(x)
-    if x <= 0.0 then return 0.0 end
-    if x >= 1.0 then return 1.0 end
-    local xe2 <const> = x * x
-    local xe3 <const> = xe2 * x
-    local y <const> = 1.09668 * xe3
-        - 1.67791 * xe2
-        + 1.57216 * x
-        + 0.00524086
-    return y or 0.0
-end
-
----Converts a Sega Genesis color channel in [0.0, 1.0] to a gamma encoded
----standard RGB color channel. Uses a cubic curve. See
----https://plutiedev.com/vdp-color-ramp and
----https://segaretro.org/Sega_Mega_Drive/Palettes_and_CRAM .
----@param x number color channel
----@return number
-function QuantizeUtilities.segaToLinear(x)
-    if x <= 0.0 then return 0.0 end
-    if x >= 1.0 then return 1.0 end
-    local xe2 <const> = x * x
-    local xe3 <const> = xe2 * x
-    local y <const> = -1.20393 * xe3
-        + 1.85109 * xe2
-        + 0.348584 * x
-        + 0.00318634
-    return y or 0.0
-end
-
 return QuantizeUtilities
