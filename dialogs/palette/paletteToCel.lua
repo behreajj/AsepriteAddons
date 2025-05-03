@@ -14,13 +14,6 @@ local defaults <const> = {
     printElapsed = false,
 }
 
----@param clr Clr
----@return Vec3
-local function clrToVec3SrLab2(clr)
-    local lab <const> = ColorUtilities.sRgbToSrLab2Internal(clr)
-    return Vec3.new(lab.a, lab.b, lab.l)
-end
-
 local dlg <const> = Dialog { title = "Palette To Cel" }
 
 dlg:combobox {
@@ -182,17 +175,13 @@ dlg:button {
         local fromHex <const> = Clr.fromHexAbgr32
         local octInsert <const> = Octree.insert
         local search <const> = Octree.queryInternal
-        local v3Hash <const> = Vec3.hashCode
+        local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
+        local labHash <const> = Lab.toHexWrap64
 
         -- Select query radius according to color space.
         local cvgRad <const> = args.cvgLabRad
             or defaults.cvgLabRad --[[@as number]]
-        local distFunc <const> = function(a, b)
-            local da <const> = b.x - a.x
-            local db <const> = b.y - a.y
-            return math.sqrt(da * da + db * db)
-                + math.abs(b.z - a.z)
-        end
+        local distFunc <const> = Lab.distCylindrical
 
         local palTarget <const> = args.palTarget
             or defaults.palTarget --[[@as string]]
@@ -205,7 +194,7 @@ dlg:button {
         local octExpBits <const> = args.octCapacity
             or defaults.octCapacityBits --[[@as integer]]
         local octCapacity = 1 << octExpBits
-        local octree <const> = Octree.new(Bounds3.lab(), octCapacity, 1)
+        local octree <const> = Octree.new(BoundsLab.srLab2(), octCapacity, 1)
 
         -- Convert source palette colors to points in an octree.
         -- Ignore colors with zero alpha.
@@ -216,8 +205,8 @@ dlg:button {
             h = h + 1
             local hexSrgb <const> = hexesSrgb[h]
             if (hexSrgb & 0xff000000) ~= 0 then
-                local pt <const> = clrToVec3SrLab2(fromHex(hexSrgb))
-                ptToHexDict[v3Hash(pt)] = hexesProfile[h]
+                local pt <const> = sRgbToLab(fromHex(hexSrgb))
+                ptToHexDict[labHash(pt)] = hexesProfile[h]
                 octInsert(octree, pt)
             end
         end
@@ -285,13 +274,13 @@ dlg:button {
                     ---@type string[]
                     local trgBytesArr <const> = {}
                     for srcAbgr32, idcs in pairs(hexesUnique) do
-                        local ptSrc <const> = clrToVec3SrLab2(fromHex(srcAbgr32))
+                        local ptSrc <const> = sRgbToLab(fromHex(srcAbgr32))
                         local ptTrg <const>, _ <const> = search(
                             octree, ptSrc, cvgRad, distFunc)
 
                         local trgAbgr32 = 0x00000000
                         if ptTrg then
-                            local hsh <const> = v3Hash(ptTrg)
+                            local hsh <const> = labHash(ptTrg)
                             if ptToHexDict[hsh] then
                                 trgAbgr32 = ptToHexDict[hsh]
                             end

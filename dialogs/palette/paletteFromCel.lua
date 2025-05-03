@@ -26,20 +26,6 @@ local defaults <const> = {
     paletteIndex = 1,
 }
 
----@param clr Clr
----@return Vec3
-local function clrToVec3SrLab2(clr)
-    local lab <const> = ColorUtilities.sRgbToSrLab2Internal(clr)
-    return Vec3.new(lab.a, lab.b, lab.l)
-end
-
----@param v3 Vec3
----@return Clr
-local function vec3ToClrSrLab2(v3)
-    local lab <const> = Lab.new(v3.z, v3.x, v3.y, 1.0)
-    return ColorUtilities.srLab2TosRgb(lab)
-end
-
 local dlg <const> = Dialog { title = "Palette From Cel" }
 
 dlg:combobox {
@@ -445,12 +431,13 @@ dlg:button {
             local fromHex <const> = Clr.fromHexAbgr32
             local toHex <const> = Clr.toHex
             local octins <const> = Octree.insert
+            local labTosRgb <const> = ColorUtilities.srLab2TosRgb
+            local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
 
             -- Subdivide once so that there are at least 8 colors
             -- returned in cases where an input palette count
             -- is barely over threshold, e.g., 380 over 255.
-            local bounds <const> = Bounds3.lab()
-            local octree <const> = Octree.new(bounds, octCapacity, 1)
+            local octree <const> = Octree.new(BoundsLab.srLab2(), octCapacity, 1)
             Octree.subdivide(octree, 1, octCapacity)
 
             -- This shouldn't need to check for transparent
@@ -459,7 +446,7 @@ dlg:button {
             while i < lenHexes do
                 i = i + 1
                 local clr <const> = fromHex(hexes[i])
-                octins(octree, clrToVec3SrLab2(clr))
+                octins(octree, sRgbToLab(clr))
             end
 
             Octree.cull(octree)
@@ -473,7 +460,7 @@ dlg:button {
             local j = 0
             while j < lenCenters do
                 j = j + 1
-                local srgb <const> = vec3ToClrSrLab2(centers[j])
+                local srgb <const> = labTosRgb(centers[j])
                 centerHexes[j] = toHex(srgb)
             end
 

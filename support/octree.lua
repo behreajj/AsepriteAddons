@@ -1,18 +1,16 @@
-dofile("./bounds3.lua")
+dofile("./boundslab.lua")
 
 ---@class Octree
----@field protected bounds Bounds3 bounding area
+---@field protected bounds BoundsLab bounding area
 ---@field protected capacity integer point capacity
 ---@field protected children Octree[] child nodes
 ---@field protected level integer level, or depth
----@field protected points Vec3[] points array
+---@field protected points Lab[] points array
 ---@operator len(): integer
 Octree = {}
 Octree.__index = Octree
 
 setmetatable(Octree, {
-    -- Refactor to use Lab directly instead of Vec3:
-    -- a41cfad745bb9b2d5c5a7319b4cb7765364e0ad8
     __call = function(cls, ...)
         return cls.new(...)
     end
@@ -45,13 +43,13 @@ Octree.FRONT_NORTH_EAST = 8
 ---Creates a new Octree node with an empty list of points at a given level. The
 ---capacity specifies the number of points the node can hold before it is split
 ---into children.
----@param bounds Bounds3 bounding volume
+---@param bounds BoundsLab bounding volume
 ---@param capacity integer point capacity
 ---@param level? integer level, or depth
 ---@return Octree
 function Octree.new(bounds, capacity, level)
     local inst <const> = setmetatable({}, Octree)
-    inst.bounds = bounds or Bounds3.unitCubeSigned()
+    inst.bounds = bounds or BoundsLab.srLab2()
     inst.capacity = capacity or 16
     inst.children = {}
     inst.level = level or 1
@@ -82,8 +80,8 @@ end
 ---Finds the mean center of each leaf node in an octree. Appends centers to an
 ---array if provided, otherwise creates a new array.
 ---@param o Octree octree
----@param arr? Vec3[] array
----@return Vec3[]
+---@param arr? Lab[] array
+---@return Lab[]
 function Octree.centersMean(o, arr)
     local arrVrf <const> = arr or {}
     local children <const> = o.children
@@ -101,26 +99,28 @@ function Octree.centersMean(o, arr)
         local leafPoints <const> = o.points
         local lenLeafPoints <const> = #leafPoints
         if lenLeafPoints > 1 then
-            local xSum, ySum, zSum = 0.0, 0.0, 0.0
+            local lSum, aSum, bSum, tSum = 0.0, 0.0, 0.0, 0.0
 
             local j = 0
             while j < lenLeafPoints do
                 j = j + 1
                 local pt <const> = leafPoints[j]
-                xSum = xSum + pt.x
-                ySum = ySum + pt.y
-                zSum = zSum + pt.z
+                lSum = lSum + pt.l
+                aSum = aSum + pt.a
+                bSum = bSum + pt.b
+                tSum = tSum + pt.alpha
             end
 
             local lenInv <const> = 1.0 / lenLeafPoints
-            arrVrf[cursor] = Vec3.new(
-                xSum * lenInv,
-                ySum * lenInv,
-                zSum * lenInv)
+            arrVrf[cursor] = Lab.new(
+                lSum * lenInv,
+                aSum * lenInv,
+                bSum * lenInv,
+                tSum * lenInv)
         elseif lenLeafPoints > 0 then
             local pt <const> = leafPoints[1]
-            arrVrf[cursor] = Vec3.new(
-                pt.x, pt.y, pt.z)
+            arrVrf[cursor] = Lab.new(
+                pt.l, pt.a, pt.b, pt.alpha)
         end
     end
 
@@ -197,10 +197,10 @@ end
 ---Inserts a point into the node by reference, not by value. Returns true if
 ---the point was successfully inserted into either the node or its children.
 ---@param o Octree octree
----@param point Vec3 point
+---@param point Lab point
 ---@return boolean
 function Octree.insert(o, point)
-    if Bounds3.containsInclExcl(o.bounds, point) then
+    if BoundsLab.containsInclExcl(o.bounds, point) then
         local children <const> = o.children
         local lenChildren <const> = #children
         local i = 0
@@ -216,7 +216,7 @@ function Octree.insert(o, point)
             -- Using table.sort here was definitely the
             -- cause of a major performance loss.
             local points <const> = o.points
-            Vec3.insortRight(points, point, Vec3.comparator)
+            Lab.insortRight(points, point, Lab.comparator)
             if #points > o.capacity then
                 Octree.split(o, o.capacity)
             end
@@ -233,7 +233,7 @@ end
 ---Inserts an array of points into an node. Returns true if all point
 ---insertions succeeded. Otherwise, returns false.
 ---@param o Octree octree
----@param ins Vec3[] insertions array
+---@param ins Lab[] insertions array
 ---@return boolean
 function Octree.insertAll(o, ins)
     local lenIns <const> = #ins
@@ -280,17 +280,17 @@ end
 ---returns a point and distance from the query center. If it cannot be found,
 ---returns a default point, which may be nil.
 ---@param o Octree octree
----@param center Vec3 sphere center
+---@param center Lab sphere center
 ---@param radius number sphere radius
----@param dfPt Vec3|nil default point
----@return Vec3|nil
+---@param dfPt Lab|nil default point
+---@return Lab|nil
 ---@return number
 function Octree.query(o, center, radius, dfPt)
     local rVrf <const> = radius or 46340
     local v <const>, d <const> = Octree.queryInternal(
-        o, center, rVrf, Vec3.distEuclidean)
+        o, center, rVrf, Lab.dist)
     if v then
-        return Vec3.new(v.x, v.y, v.z), d
+        return Lab.new(v.l, v.a, v.b, v.alpha), d
     else
         return dfPt, d
     end
@@ -300,15 +300,15 @@ end
 ---returns it with the square distance from the query center. If a point
 ---cannot be found, returns nil.
 ---@param o Octree octree
----@param center Vec3 sphere center
+---@param center Lab sphere center
 ---@param rad number sphere radius
----@param df fun(a: Vec3, b: Vec3): number distance function
----@return Vec3|nil
+---@param df fun(a: Lab, b: Lab): number distance function
+---@return Lab|nil
 ---@return number
 function Octree.queryInternal(o, center, rad, df)
     local nearPoint = nil
     local nearDist = 2147483647
-    if Bounds3.intersectsSphere(
+    if BoundsLab.intersectsSphere(
             o.bounds, center, rad) then
         local children <const> = o.children
         local lenChildren <const> = #children
@@ -361,11 +361,11 @@ function Octree.split(o, childCapacity)
     while i < 8 do
         i = i + 1
         children[i] = Octree.new(
-            Bounds3.unitCubeSigned(),
+            BoundsLab.srLab2(),
             chCpVerif, nextLevel)
     end
 
-    Bounds3.splitInternal(
+    BoundsLab.splitInternal(
         o.bounds, 0.5, 0.5, 0.5,
         children[Octree.BACK_SOUTH_WEST].bounds,
         children[Octree.BACK_SOUTH_EAST].bounds,
@@ -446,7 +446,7 @@ function Octree.toJson(o)
         local i = 0
         while i < ptsLen do
             i = i + 1
-            ptsStrs[i] = Vec3.toJson(pts[i])
+            ptsStrs[i] = Lab.toJson(pts[i])
         end
 
         leafStr = string.format(
@@ -472,7 +472,7 @@ function Octree.toJson(o)
     return string.format(
         "{\"level\":%d,\"bounds\":%s,\"capacity\":%d%s}",
         o.level - 1,
-        Bounds3.toJson(o.bounds),
+        BoundsLab.toJson(o.bounds),
         o.capacity,
         leafStr)
 end

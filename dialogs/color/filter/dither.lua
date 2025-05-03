@@ -608,8 +608,8 @@ dlg:button {
                 palTarget, palFile, 0, 512, true)
 
             octCapacity = 1 << octCapacity
-            local bounds <const> = Bounds3.lab()
-            local octree <const> = Octree.new(bounds, octCapacity, 1)
+            local octree <const> = Octree.new(
+                BoundsLab.srLab2(), octCapacity, 1)
 
             -- Find minimum and maximum channel values.
             local lMin = 2147483647
@@ -621,15 +621,12 @@ dlg:button {
             local bMax = -2147483648
 
             -- Cache methods to local.
-            local sqrt <const> = math.sqrt
-            local abs <const> = math.abs
             local cnew <const> = Clr.new
             local fromHex <const> = Clr.fromHexAbgr32
-            local sRgbaToLab <const> = Clr.sRgbToSrLab2
+            local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
             local octins <const> = Octree.insert
             local octquery <const> = Octree.queryInternal
-            local v3new <const> = Vec3.new
-            local v3hash <const> = Vec3.hashCode
+            local labHash <const> = Lab.toHexWrap64
 
             -- Unpack source palette to a dictionary and an octree.
             -- Ignore transparent colors in palette.
@@ -642,7 +639,7 @@ dlg:button {
                 idxPalHex = idxPalHex + 1
                 local hexSrgb <const> = hexesSrgb[idxPalHex]
                 if (hexSrgb & 0xff000000) ~= 0x0 then
-                    local lab <const> = sRgbaToLab(fromHex(hexSrgb))
+                    local lab <const> = sRgbToLab(fromHex(hexSrgb))
                     local l <const> = lab.l
                     local a <const> = lab.a
                     local b <const> = lab.b
@@ -656,9 +653,8 @@ dlg:button {
                     if b > bMax then bMax = b end
 
                     local hexProfile <const> = hexesProfile[idxPalHex]
-                    local point <const> = v3new(a, b, l)
-                    ptToHexDict[v3hash(point)] = hexProfile
-                    octins(octree, point)
+                    ptToHexDict[labHash(lab)] = hexProfile
+                    octins(octree, lab)
                     viableCount = viableCount + 1
                 end
             end
@@ -685,12 +681,7 @@ dlg:button {
             local queryRad <const> = lDiff * lDiff
                 + aDiff * aDiff
                 + bDiff * bDiff
-
-            local distFunc = function(a, b)
-                local da <const> = b.x - a.x
-                local db <const> = b.y - a.y
-                return sqrt(da * da + db * db) + abs(b.z - a.z)
-            end
+            local distFunc <const> = Lab.distCylindrical
 
             Octree.cull(octree)
             closestFunc = function(r8Src, g8Src, b8Src, a8Src)
@@ -700,14 +691,13 @@ dlg:button {
                     g8Src / 255.0,
                     b8Src / 255.0,
                     1.0)
-                local lab <const> = sRgbaToLab(srgb)
-                local query <const> = v3new(lab.a, lab.b, lab.l)
+                local lab <const> = sRgbToLab(srgb)
                 local nearPoint <const>, _ <const> = octquery(
-                    octree, query, queryRad, distFunc)
+                    octree, lab, queryRad, distFunc)
 
                 local r8Trg, g8Trg, b8Trg = 0, 0, 0
                 if nearPoint then
-                    local nearHash <const> = v3hash(nearPoint)
+                    local nearHash <const> = labHash(nearPoint)
                     local nearHex <const> = ptToHexDict[nearHash]
                     if nearHex ~= nil then
                         r8Trg = nearHex & 0xff

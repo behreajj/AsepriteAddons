@@ -270,16 +270,10 @@ dlg:button {
         local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
         local fromHex <const> = Clr.fromHexAbgr32
         local rotax <const> = Vec3.rotateInternal
-        local v3hash <const> = Vec3.hashCode
-        local v3new <const> = Vec3.new
+        local labHash <const> = Lab.toHexWrap64
+        local distFunc <const> = Lab.distCylindrical
         local octins <const> = Octree.insert
         local search <const> = Octree.queryInternal
-        local distFunc <const> = function(a, b)
-            local da <const> = b.x - a.x
-            local db <const> = b.y - a.y
-            return math.sqrt(da * da + db * db)
-                + math.abs(b.z - a.z)
-        end
         local screen <const> = Utilities.toScreen
         local drawEllipse <const> = ShapeUtilities.drawEllipse
         local tablesort <const> = table.sort
@@ -288,7 +282,7 @@ dlg:button {
         local octCapacity = args.octCapacity
             or defaults.octCapacityBits --[[@as integer]]
         octCapacity = 1 << octCapacity
-        local octree <const> = Octree.new(Bounds3.lab(), octCapacity, 1)
+        local octree <const> = Octree.new(BoundsLab.srLab2(), octCapacity, 1)
 
         -- Unpack unique colors to data.
         local uniqueHexesSrgbLen <const> = #uniqueHexesSrgb
@@ -300,9 +294,8 @@ dlg:button {
             local hexSrgb <const> = uniqueHexesSrgb[i]
             local srgb <const> = fromHex(hexSrgb)
             local lab <const> = sRgbToLab(srgb)
-            local point <const> = Vec3.new(lab.a, lab.b, lab.l)
-            ptHexDict[v3hash(point)] = uniqueHexesProfile[i]
-            octins(octree, point)
+            ptHexDict[labHash(lab)] = uniqueHexesProfile[i]
+            octins(octree, lab)
         end
 
         Octree.cull(octree)
@@ -346,12 +339,10 @@ dlg:button {
             j = j + 1
             local srcClr <const> = gridClrs[j]
             local srcLab <const> = sRgbToLab(srcClr)
-            local srcLabPt <const> = v3new(
-                srcLab.a, srcLab.b, srcLab.l)
 
-            local nearPoint <const>, _ <const> = search(octree, srcLabPt, queryRad, distFunc)
+            local nearPoint <const>, _ <const> = search(octree, srcLab, queryRad, distFunc)
             if nearPoint then
-                local ptHash <const> = v3hash(nearPoint)
+                local ptHash <const> = labHash(nearPoint)
                 local abgr32 <const> = ptHexDict[ptHash]
                 replaceRgbs[1 + j4] = abgr32 & 0xff
                 replaceRgbs[2 + j4] = (abgr32 >> 0x08) & 0xff
