@@ -106,43 +106,43 @@ function Bounds3.containsInclExcl(b, pt)
 end
 
 ---Evaluates whether a bounding box intersects a sphere.
----@param a Bounds3 bounds
+---@param bounds Bounds3 bounds
 ---@param center Vec3 sphere center
 ---@param radius number sphere radius
 ---@return boolean
 ---@nodiscard
-function Bounds3.intersectsSphere(a, center, radius)
+function Bounds3.intersectsSphere(bounds, center, radius)
     return Bounds3.intersectsSphereInternal(
-        a, center, radius * radius)
+        bounds, center, radius * radius)
 end
 
 ---Evaluates whether a bounding box intersects a sphere. Internal helper
 ---function for octrees, as it assumes that the squared-radius has already been
 ---calculated.
----@param a Bounds3 bounds
+---@param bounds Bounds3 bounds
 ---@param center Vec3 sphere center
 ---@param rsq number sphere radius, squared
 ---@return boolean
 ---@nodiscard
-function Bounds3.intersectsSphereInternal(a, center, rsq)
+function Bounds3.intersectsSphereInternal(bounds, center, rsq)
     local xd, yd, zd = 0.0, 0.0, 0.0
 
-    if center.x < a.mn.x then
-        xd = center.x - a.mn.x
-    elseif center.x > a.mx.x then
-        xd = center.x - a.mx.x
+    if center.x < bounds.mn.x then
+        xd = center.x - bounds.mn.x
+    elseif center.x > bounds.mx.x then
+        xd = center.x - bounds.mx.x
     end
 
-    if center.y < a.mn.y then
-        yd = center.y - a.mn.y
-    elseif center.y > a.mx.y then
-        yd = center.y - a.mx.y
+    if center.y < bounds.mn.y then
+        yd = center.y - bounds.mn.y
+    elseif center.y > bounds.mx.y then
+        yd = center.y - bounds.mx.y
     end
 
-    if center.z < a.mn.z then
-        zd = center.z - a.mn.z
-    elseif center.z > a.mx.z then
-        zd = center.z - a.mx.z
+    if center.z < bounds.mn.z then
+        zd = center.z - bounds.mn.z
+    elseif center.z > bounds.mx.z then
+        zd = center.z - bounds.mx.z
     end
 
     return (xd * xd + yd * yd + zd * zd) < rsq

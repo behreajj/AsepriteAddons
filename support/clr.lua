@@ -263,6 +263,7 @@ end
 ---@param c Clr linear color
 ---@return { l: number, a: number, b: number, alpha: number }
 ---@nodiscard
+---@deprecated
 function Clr.lRgbToSrLab2(c)
     return Clr.lRgbToSrLab2Internal(Clr.clamp01(c))
 end
@@ -274,6 +275,7 @@ end
 ---@param c Clr linear color
 ---@return { l: number, a: number, b: number, alpha: number }
 ---@nodiscard
+---@deprecated
 function Clr.lRgbToSrLab2Internal(c)
     local r <const> = c.r
     local g <const> = c.g

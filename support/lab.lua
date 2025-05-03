@@ -13,6 +13,22 @@ setmetatable(Lab, {
     end
 })
 
+---The maximum value on the green-magenta axis in SR LAB 2 for a color
+---converted from standard RGB.
+Lab.SR_A_MAX = 104.49946
+
+---The minimum value on the green-magenta axis in SR LAB 2 for a color
+---converted from standard RGB.
+Lab.SR_A_MIN = -82.955986
+
+---The maximum value on the blue-yellow axis in SR LAB 2 for a color
+---converted from standard RGB.
+Lab.SR_B_MAX = 95.18662
+
+---The minimum value on the blue-yellow axis in SR LAB 2 for a color
+---converted from standard RGB.
+Lab.SR_B_MIN = -110.8078
+
 ---Arbitrary hue assigned to lighter grays in SR LCH conversion functions.
 Lab.SR_LCH_HUE_LIGHT = 0.306391
 
@@ -42,11 +58,11 @@ function Lab.new(l, a, b, alpha)
 end
 
 function Lab:__eq(d)
-    return Lab.toHexWrap(self) == Lab.toHexWrap(d)
+    return Lab.toHexWrap64(self) == Lab.toHexWrap64(d)
 end
 
 function Lab:__le(d)
-    return Lab.toHexWrap(self) <= Lab.toHexWrap(d)
+    return Lab.toHexWrap64(self) <= Lab.toHexWrap64(d)
 end
 
 function Lab:__len()
@@ -54,7 +70,7 @@ function Lab:__len()
 end
 
 function Lab:__lt(d)
-    return Lab.toHexWrap(self) < Lab.toHexWrap(d)
+    return Lab.toHexWrap64(self) < Lab.toHexWrap64(d)
 end
 
 function Lab:__tostring()
@@ -178,6 +194,66 @@ function Lab.clamp(o)
         math.min(math.max(o.alpha, 0.0), 1.0))
 end
 
+---Evaluates whether two color are exactly equal. Checks for reference
+---equality prior to value equality.
+---@param o Lab left comparisand
+---@param d Lab right comparisand
+---@return boolean
+---@nodiscard
+function Lab.equals(o, d)
+    return rawequal(o, d)
+        or Lab.equalsValue(o, d)
+end
+
+---Evaluates whether two color are exactly equal by component
+---real number value.
+---@param o Lab left comparisand
+---@param d Lab right comparisand
+---@return boolean
+---@nodiscard
+function Lab.equalsValue(o, d)
+    return o.l == d.l
+        and o.a == d.a
+        and o.b == d.b
+        and o.alpha == d.alpha
+end
+
+---Converts from a hexadecimal representation of a color stored as
+---0xTTLLAABB.
+---@param c integer hexadecimal color
+---@return Lab
+---@nodiscard
+function Lab.fromHexTlab32(c)
+    local t8 <const> = c >> 0x18 & 0xff
+    local l8 <const> = c >> 0x10 & 0xff
+    local a8 <const> = c >> 0x08 & 0xff
+    local b8 <const> = c & 0xff
+
+    return Lab.new(
+        l8 / 2.55,
+        a8 - 0x80,
+        b8 - 0x80,
+        t8 / 255.0)
+end
+
+---Converts from a hexadecimal representation of a color stored as
+---0xTTTTLLLLAAAABBBB.
+---@param c integer hexadecimal color
+---@return Lab
+---@nodiscard
+function Lab.fromHexTlab64(c)
+    local t16 <const> = c >> 0x30 & 0xffff
+    local l16 <const> = c >> 0x20 & 0xffff
+    local a16 <const> = c >> 0x10 & 0xffff
+    local b16 <const> = c & 0xffff
+
+    return Lab.new(
+        l16 / 655.35,
+        (a16 - 0x8000) / 257.0,
+        (b16 - 0x8000) / 257.0,
+        t16 / 65535.0)
+end
+
 ---Converts a color from LCH, a cylindrical representation, to LAB.
 ---Lightness is expected to be in [0.0, 100.0].
 ---Chroma is unbounded, but expected to be in [0.0, 127.5].
@@ -231,6 +307,7 @@ end
 ---@return number
 ---@nodiscard
 function Lab.hue(o)
+    -- TODO: Should this return a purple to yellow hue when chroma is near zero?
     local hueSigned <const> = math.atan(o.b, o.a)
     local tau <const> = math.pi + math.pi
     local hueUnsigned <const> = hueSigned < 0.0
@@ -248,8 +325,7 @@ end
 function Lab.insortRight(arr, elm, compare)
     local i <const> = Lab.bisectRight(arr, elm, compare)
     local dupe <const> = arr[i - 1]
-    if dupe
-        and (Lab.toHexWrap(dupe) == Lab.toHexWrap(elm)) then
+    if dupe and Lab.equals(dupe, elm) then
         return false
     end
     table.insert(arr, i, elm)
@@ -305,27 +381,61 @@ function Lab.mixPolar(o, d, step, hueFunc)
         u * o.alpha + t * d.alpha)
 end
 
----Converts from a color to a hexadecimal integer. Channels are packed in
+---Generates a random color.
+---@return Lab
+function Lab.random()
+    local rl <const> = math.random()
+    local ra <const> = math.random()
+    local rb <const> = math.random()
+
+    return Lab.new(
+        (1.0 - rl) * 5.0 + rl * 95.0,
+        (1.0 - ra) * Lab.SR_A_MIN + ra * Lab.SR_A_MAX,
+        (1.0 - rb) * Lab.SR_B_MIN + rb * Lab.SR_B_MAX,
+        1.0)
+end
+
+---Converts from a color to a 32 bit hexadecimal integer. Channels are packed in
 ---0xTTTTLLLLAAAABBB order. Ensures that color values are valid.
 ---@param o Lab color
 ---@return integer
 ---@nodiscard
-function Lab.toHexSat(o)
-    return Lab.toHexWrap(Lab.clamp(o))
+function Lab.toHexSat32(o)
+    return Lab.toHexWrap32(Lab.clamp(o))
 end
 
----Converts from a color to a hexadecimal integer.
+---Converts from a color to a 64 bit hexadecimal integer. Channels are packed in
+---0xTTTTLLLLAAAABBB order. Ensures that color values are valid.
 ---@param o Lab color
 ---@return integer
 ---@nodiscard
-function Lab.toHexWrap(o)
+function Lab.toHexSat64(o)
+    return Lab.toHexWrap64(Lab.clamp(o))
+end
+
+---Converts from a color to a 32 bit hexadecimal integer.
+---@param o Lab color
+---@return integer
+---@nodiscard
+function Lab.toHexWrap32(o)
+    local t8 <const> = math.floor(o.alpha * 255.0 + 0.5)
+    local l8 <const> = math.floor(o.l * 2.55 + 0.5)
+    local a8 <const> = 0x80 + math.floor(o.a)
+    local b8 <const> = 0x80 + math.floor(o.b)
+
+    return t8 << 0x18 | l8 << 0x10 | a8 << 0x08 | b8
+end
+
+---Converts from a color to a 64 bit hexadecimal integer.
+---@param o Lab color
+---@return integer
+---@nodiscard
+function Lab.toHexWrap64(o)
     local t16 <const> = math.floor(o.alpha * 65535.0 + 0.5)
     local l16 <const> = math.floor(o.l * 655.35 + 0.5)
     local a16 <const> = 0x8000 + math.floor(o.a * 257.0)
     local b16 <const> = 0x8000 + math.floor(o.b * 257.0)
 
-    -- Prefer an order that matches priorities of octree?
-    -- return l16 << 0x30 | b16 << 0x20 | a16 << 0x10 | t16
     return t16 << 0x30 | l16 << 0x20 | a16 << 0x10 | b16
 end
 
