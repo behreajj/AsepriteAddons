@@ -166,7 +166,7 @@ local function fsDither(pixels, wSrc, hSrc, srcBpp, factor, closestFunc)
     end -- End pixel loop.
 end
 
-local dlg <const> = Dialog { title = "Dither" }
+local dlg <const> = Dialog { title = "Dither " }
 
 dlg:combobox {
     id = "areaTarget",
