@@ -324,9 +324,9 @@ function Lab.toHexWrap(o)
     local a16 <const> = 0x8000 + math.floor(o.a * 257.0)
     local b16 <const> = 0x8000 + math.floor(o.b * 257.0)
 
-    -- Prefer an order that matches priorities of octree.
-    -- return t16 << 0x30 | l16 << 0x20 | a16 << 0x10 | b16
-    return l16 << 0x30 | b16 << 0x20 | a16 << 0x10 | t16
+    -- Prefer an order that matches priorities of octree?
+    -- return l16 << 0x30 | b16 << 0x20 | a16 << 0x10 | t16
+    return t16 << 0x30 | l16 << 0x20 | a16 << 0x10 | b16
 end
 
 ---Converts a color from SR LAB 2 to SR LCH.

@@ -489,6 +489,7 @@ end
 ---@param t number step
 ---@return Clr
 ---@nodiscard
+---@deprecated
 function Clr.mixSrLab2(o, d, t)
     local u <const> = t or 0.5
     if u <= 0.0 then
@@ -506,6 +507,7 @@ end
 ---@param t number step
 ---@return Clr
 ---@nodiscard
+---@deprecated
 function Clr.mixSrLab2Internal(o, d, t)
     local u <const> = 1.0 - t
     local oLab <const> = Clr.sRgbToSrLab2(o)
@@ -526,6 +528,7 @@ end
 ---@param hueFunc? fun(o: number, d: number, t: number): number hue function
 ---@return Clr
 ---@nodiscard
+---@deprecated
 function Clr.mixSrLch(o, d, t, hueFunc)
     local u <const> = t or 0.5
     if u <= 0.0 then
@@ -562,6 +565,7 @@ end
 ---@param hueFunc fun(o: number, d: number, t: number): number hue function
 ---@return Clr
 ---@nodiscard
+---@deprecated
 function Clr.mixSrLchInternal(o, d, t, hueFunc)
     local oLab <const> = Clr.sRgbToSrLab2(o)
     local oa <const> = oLab.a
@@ -661,6 +665,7 @@ end
 ---@param c Clr linear color
 ---@return { l: number, a: number, b: number, alpha: number }
 ---@nodiscard
+---@deprecated
 function Clr.sRgbToSrLab2(c)
     return Clr.sRgbToSrLab2Internal(Clr.clamp01(c))
 end
@@ -672,6 +677,7 @@ end
 ---@param c Clr color
 ---@return { l: number, a: number, b: number, alpha: number }
 ---@nodiscard
+---@deprecated
 function Clr.sRgbToSrLab2Internal(c)
     return Clr.lRgbToSrLab2Internal(Clr.sRgbTolRgbInternal(c))
 end
@@ -683,6 +689,7 @@ end
 ---@param tol? number gray tolerance
 ---@return { l: number, c: number, h: number, a: number }
 ---@nodiscard
+---@deprecated
 function Clr.sRgbToSrLch(c, tol)
     local lab <const> = Clr.sRgbToSrLab2(c)
     return Clr.srLab2ToSrLch(lab.l, lab.a, lab.b, lab.alpha, tol)
@@ -698,6 +705,7 @@ end
 ---@param alpha number opacity
 ---@return Clr
 ---@nodiscard
+---@deprecated
 function Clr.srLab2TolRgb(l, a, b, alpha)
     local l01 <const> = l * 0.01
     local x = l01 + 0.000904127 * a + 0.000456344 * b
@@ -742,6 +750,7 @@ end
 ---@param alpha number opacity
 ---@return Clr
 ---@nodiscard
+---@deprecated
 function Clr.srLab2TosRgb(l, a, b, alpha)
     return Clr.lRgbTosRgbInternal(Clr.srLab2TolRgb(l, a, b, alpha))
 end
@@ -756,6 +765,7 @@ end
 ---@param tol? number gray tolerance
 ---@return { l: number, c: number, h: number, a: number }
 ---@nodiscard
+---@deprecated
 function Clr.srLab2ToSrLch(l, a, b, alpha, tol)
     -- 0.00004 is the square chroma for white.
     local vTol = 0.007072
@@ -791,6 +801,7 @@ end
 ---@param tol? number gray tolerance
 ---@return Clr
 ---@nodiscard
+---@deprecated
 function Clr.srLchTosRgb(l, c, h, a, tol)
     local lab <const> = Clr.srLchToSrLab2(l, c, h, a, tol)
     return Clr.srLab2TosRgb(lab.l, lab.a, lab.b, lab.alpha)
@@ -807,6 +818,7 @@ end
 ---@param tol? number gray tolerance
 ---@return { l: number, a: number, b: number, alpha: number }
 ---@nodiscard
+---@deprecated
 function Clr.srLchToSrLab2(l, c, h, a, tol)
     -- Return early cannot be done here because
     -- saturated colors are still possible at
@@ -833,6 +845,7 @@ end
 ---@param a number opacity
 ---@return { l: number, a: number, b: number, alpha: number }
 ---@nodiscard
+---@deprecated
 function Clr.srLchToSrLab2Internal(l, c, h, a)
     local hRad <const> = h * 6.2831853071796
     return {
