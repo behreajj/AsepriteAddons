@@ -4,6 +4,7 @@ dofile("../../../support/quantizeutilities.lua")
 local targets <const> = { "ACTIVE", "ALL", "PALETTE", "RANGE" }
 
 local defaults <const> = {
+    -- TODO: Option to generate a palette of colors at given levels?
     target = "ACTIVE",
     genPalette = false
 }
