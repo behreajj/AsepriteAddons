@@ -1,5 +1,5 @@
 dofile("./utilities.lua")
-dofile("./clr.lua")
+dofile("./colorutilities.lua")
 
 AseUtilities = {}
 AseUtilities.__index = AseUtilities
@@ -573,7 +573,7 @@ function AseUtilities.averageColor(sprite, frame)
     local count = 0
 
     local fromHex <const> = Clr.fromHexAbgr32
-    local sRgbToLab <const> = Clr.sRgbToSrLab2
+    local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2
     for hex, tally in pairs(hd) do
         local lab <const> = sRgbToLab(fromHex(hex))
         lSum = lSum + lab.l * tally
