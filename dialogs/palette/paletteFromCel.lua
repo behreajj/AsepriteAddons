@@ -428,8 +428,8 @@ dlg:button {
         local lenHexes = oldLenHexes
         if clampTo256 and lenHexes > ocThreshold then
             -- Cache methods to local.
-            local fromHex <const> = Clr.fromHexAbgr32
-            local toHex <const> = Clr.toHex
+            local fromHex <const> = Rgb.fromHexAbgr32
+            local toHex <const> = Rgb.toHex
             local octins <const> = Octree.insert
             local labTosRgb <const> = ColorUtilities.srLab2TosRgb
             local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal

@@ -290,7 +290,7 @@ dlg:button {
         -- Cache methods used in loop.
         local quantize <const> = Utilities.quantizeUnsigned
         local cgeval <const> = ClrGradient.eval
-        local toHex <const> = Clr.toHex
+        local toHex <const> = Rgb.toHex
 
         local labTosRgb <const> = ColorUtilities.srLab2TosRgb
         local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2

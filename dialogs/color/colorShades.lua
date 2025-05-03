@@ -148,9 +148,9 @@ dlg:button {
         local strpack <const> = string.pack
         local tconcat <const> = table.concat
 
-        local fromHex <const> = Clr.fromHexAbgr32
+        local fromHex <const> = Rgb.fromHexAbgr32
         local lchTosRgb <const> = ColorUtilities.srLchTosRgbInternal
-        local rgbIsInGamut <const> = Clr.rgbIsInGamut
+        local rgbIsInGamut <const> = Rgb.rgbIsInGamut
         local sRgbToLch <const> = ColorUtilities.sRgbToSrLchInternal
 
         local quantize <const> = Utilities.quantizeUnsigned

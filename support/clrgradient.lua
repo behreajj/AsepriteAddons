@@ -160,7 +160,7 @@ end
 ---@param y integer y coordinate
 ---@param cols integer matrix columns
 ---@param rows integer matrix rows
----@return Clr
+---@return Rgb
 ---@nodiscard
 function ClrGradient.dither(
     cg, step, matrix,
@@ -186,8 +186,8 @@ end
 ---standard RGB.
 ---@param cg ClrGradient color gradient
 ---@param step? number step
----@param easing? fun(o: Clr, d: Clr, t: number): Clr easing function
----@return Clr
+---@param easing? fun(o: Rgb, d: Rgb, t: number): Rgb easing function
+---@return Rgb
 ---@nodiscard
 function ClrGradient.eval(cg, step, easing)
     local prKey <const>, nxKey <const>, t <const> = ClrGradient.findKeys(
@@ -195,7 +195,7 @@ function ClrGradient.eval(cg, step, easing)
     local prStep <const> = prKey.step
     local denom = nxKey.step - prStep
     if denom ~= 0.0 then denom = 1.0 / denom end
-    local f <const> = easing or Clr.mixlRgbaInternal
+    local f <const> = easing or Rgb.mixlRgbaInternal
     return f(prKey.clr, nxKey.clr,
         (t - prStep) * denom)
 end
@@ -230,7 +230,7 @@ end
 ---@param step number step
 ---@param x integer x coordinate
 ---@param y integer y coordinate
----@return Clr
+---@return Rgb
 ---@nodiscard
 function ClrGradient.noise(cg, step, x, y)
     local prKey <const>, nxKey <const>, t <const> = ClrGradient.findKeys(
@@ -270,7 +270,7 @@ function ClrGradient.opaque(source)
         local srcKey <const> = srcKeys[i]
         local srcClr <const> = srcKey.clr
         local trgKey <const> = ClrKey.new(srcKey.step,
-            Clr.new(srcClr.r, srcClr.g, srcClr.b, 1.0))
+            Rgb.new(srcClr.r, srcClr.g, srcClr.b, 1.0))
         trgKeys[i] = trgKey
     end
 

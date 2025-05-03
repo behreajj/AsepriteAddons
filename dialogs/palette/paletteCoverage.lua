@@ -268,7 +268,7 @@ dlg:button {
         local sin <const> = math.sin
         local floor <const> = math.floor
         local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
-        local fromHex <const> = Clr.fromHexAbgr32
+        local fromHex <const> = Rgb.fromHexAbgr32
         local rotax <const> = Vec3.rotateInternal
         local labHash <const> = Lab.toHexWrap64
         local distFunc <const> = Lab.distCylindrical
@@ -322,7 +322,7 @@ dlg:button {
             Vec3.new(lbx, lby, lbz),
             Vec3.new(ubx, uby, ubz))
 
-        local gridClrs <const> = Clr.gridsRgb(
+        local gridClrs <const> = Rgb.gridsRgb(
             cols, rows, layersCube,
             swatchAlpha01)
 

@@ -172,7 +172,7 @@ dlg:button {
         local tconcat <const> = table.concat
         local transact <const> = app.transaction
         local tilesToImage <const> = AseUtilities.tileMapToImage
-        local fromHex <const> = Clr.fromHexAbgr32
+        local fromHex <const> = Rgb.fromHexAbgr32
         local octInsert <const> = Octree.insert
         local search <const> = Octree.queryInternal
         local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal

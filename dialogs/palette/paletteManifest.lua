@@ -460,7 +460,7 @@ dlg:button {
                     -- print(webProfileStr)
                 end
 
-                local clr <const> = Clr.new(
+                local clr <const> = Rgb.new(
                     redSrgb255 / 255.0,
                     greenSrgb255 / 255.0,
                     blueSrgb255 / 255.0,

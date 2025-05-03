@@ -155,8 +155,8 @@ dlg:button {
         local strunpack <const> = string.unpack
         local strsub <const> = string.sub
         local tconcat <const> = table.concat
-        local fromHex <const> = Clr.fromHexAbgr32
-        local toHex <const> = Clr.toHex
+        local fromHex <const> = Rgb.fromHexAbgr32
+        local toHex <const> = Rgb.toHex
         local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
         local quantize <const> = Utilities.quantizeUnsigned
         local tilesToImage <const> = AseUtilities.tileMapToImage

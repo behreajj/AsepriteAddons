@@ -143,7 +143,7 @@ dlg:button {
         local strsub <const> = string.sub
         local strunpack <const> = string.unpack
         local tconcat <const> = table.concat
-        local fromHex <const> = Clr.fromHexAbgr32
+        local fromHex <const> = Rgb.fromHexAbgr32
         local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
 
         -- Choose edge wrapping method.

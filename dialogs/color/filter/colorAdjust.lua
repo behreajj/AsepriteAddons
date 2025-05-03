@@ -217,7 +217,7 @@ dlg:canvas {
         -- local c = 50.0
         -- local h = active.hAdj - 0.5
         local lchTosRgb <const> = ColorUtilities.srLchTosRgbInternal
-        local toHex <const> = Clr.toHex
+        local toHex <const> = Rgb.toHex
         local strpack <const> = string.pack
 
         local ctx <const> = event.context
@@ -282,7 +282,7 @@ dlg:canvas {
 
         local h <const> = active.hAdj - 0.5
         local lchTosRgb <const> = ColorUtilities.srLchTosRgbInternal
-        local toHex <const> = Clr.toHex
+        local toHex <const> = Rgb.toHex
         local strpack <const> = string.pack
 
         local ctx <const> = event.context
@@ -343,7 +343,7 @@ dlg:canvas {
 
         local c <const> = 50.0
         local lchTosRgb <const> = ColorUtilities.srLchTosRgbInternal
-        local toHex <const> = Clr.toHex
+        local toHex <const> = Rgb.toHex
         local strpack <const> = string.pack
 
         local ctx <const> = event.context
@@ -408,7 +408,7 @@ dlg:canvas {
 
         local labTosRgb <const> = ColorUtilities.srLab2TosRgb
         local labnew <const> = Lab.new
-        local toHex <const> = Clr.toHex
+        local toHex <const> = Rgb.toHex
         local strpack <const> = string.pack
 
         local ctx <const> = event.context
@@ -475,7 +475,7 @@ dlg:canvas {
 
         local labTosRgb <const> = ColorUtilities.srLab2TosRgb
         local labnew <const> = Lab.new
-        local toHex <const> = Clr.toHex
+        local toHex <const> = Rgb.toHex
         local strpack <const> = string.pack
 
         local ctx <const> = event.context
@@ -662,8 +662,8 @@ dlg:button {
 
         -- Cache methods used in loops.
         local tilesToImage <const> = AseUtilities.tileMapToImage
-        local fromHex <const> = Clr.fromHexAbgr32
-        local toHex <const> = Clr.toHex
+        local fromHex <const> = Rgb.fromHexAbgr32
+        local toHex <const> = Rgb.toHex
         local labTosRgb <const> = ColorUtilities.srLab2TosRgb
         local labToLch <const> = Lab.toLch
         local lchToLab <const> = Lab.fromLchInternal

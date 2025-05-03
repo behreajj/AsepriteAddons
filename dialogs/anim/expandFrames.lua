@@ -97,7 +97,7 @@ local function crossFade(
     local strpack <const> = string.pack
     local tconcat <const> = table.concat
     local round <const> = Utilities.round
-    local clrnew <const> = Clr.new
+    local clrnew <const> = Rgb.new
     local mixSrLab2 <const> = ColorUtilities.mixSrLab2
 
     local leafName <const> = leaf.name

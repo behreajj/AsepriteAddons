@@ -328,7 +328,7 @@ dlg:button {
 
         local durToFac <const> = 1.0 / durRange
 
-        local easing <const> = Clr.mixlRgb
+        local easing <const> = Rgb.mixlRgb
         local cgeval <const> = ClrGradient.eval
         local clrToAseColor <const> = AseUtilities.clrToAseColor
 
@@ -338,22 +338,22 @@ dlg:button {
 
         local t <const> = 2.0 / 3.0
         local cg <const> = ClrGradient.new({
-            ClrKey.new(0.0, Clr.new(0.266667, 0.003922, 0.329412, t)),
-            ClrKey.new(0.06666667, Clr.new(0.282353, 0.100131, 0.420654, t)),
-            ClrKey.new(0.13333333, Clr.new(0.276078, 0.184575, 0.487582, t)),
-            ClrKey.new(0.2, Clr.new(0.254902, 0.265882, 0.527843, t)),
-            ClrKey.new(0.26666667, Clr.new(0.221961, 0.340654, 0.549281, t)),
-            ClrKey.new(0.33333333, Clr.new(0.192157, 0.405229, 0.554248, t)),
-            ClrKey.new(0.4, Clr.new(0.164706, 0.469804, 0.556863, t)),
-            ClrKey.new(0.46666667, Clr.new(0.139869, 0.534379, 0.553464, t)),
-            ClrKey.new(0.53333333, Clr.new(0.122092, 0.595033, 0.543007, t)),
-            ClrKey.new(0.6, Clr.new(0.139608, 0.658039, 0.516863, t)),
-            ClrKey.new(0.66666667, Clr.new(0.210458, 0.717647, 0.471895, t)),
-            ClrKey.new(0.73333333, Clr.new(0.326797, 0.773595, 0.407582, t)),
-            ClrKey.new(0.8, Clr.new(0.477647, 0.821961, 0.316863, t)),
-            ClrKey.new(0.86666667, Clr.new(0.648366, 0.858039, 0.208889, t)),
-            ClrKey.new(0.93333333, Clr.new(0.825098, 0.884967, 0.114771, t)),
-            ClrKey.new(1.0, Clr.new(0.992157, 0.905882, 0.145098, t))
+            ClrKey.new(0.0, Rgb.new(0.266667, 0.003922, 0.329412, t)),
+            ClrKey.new(0.06666667, Rgb.new(0.282353, 0.100131, 0.420654, t)),
+            ClrKey.new(0.13333333, Rgb.new(0.276078, 0.184575, 0.487582, t)),
+            ClrKey.new(0.2, Rgb.new(0.254902, 0.265882, 0.527843, t)),
+            ClrKey.new(0.26666667, Rgb.new(0.221961, 0.340654, 0.549281, t)),
+            ClrKey.new(0.33333333, Rgb.new(0.192157, 0.405229, 0.554248, t)),
+            ClrKey.new(0.4, Rgb.new(0.164706, 0.469804, 0.556863, t)),
+            ClrKey.new(0.46666667, Rgb.new(0.139869, 0.534379, 0.553464, t)),
+            ClrKey.new(0.53333333, Rgb.new(0.122092, 0.595033, 0.543007, t)),
+            ClrKey.new(0.6, Rgb.new(0.139608, 0.658039, 0.516863, t)),
+            ClrKey.new(0.66666667, Rgb.new(0.210458, 0.717647, 0.471895, t)),
+            ClrKey.new(0.73333333, Rgb.new(0.326797, 0.773595, 0.407582, t)),
+            ClrKey.new(0.8, Rgb.new(0.477647, 0.821961, 0.316863, t)),
+            ClrKey.new(0.86666667, Rgb.new(0.648366, 0.858039, 0.208889, t)),
+            ClrKey.new(0.93333333, Rgb.new(0.825098, 0.884967, 0.114771, t)),
+            ClrKey.new(1.0, Rgb.new(0.992157, 0.905882, 0.145098, t))
         })
 
         app.transaction("Time Heat Map", function()

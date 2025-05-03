@@ -96,7 +96,7 @@ end
 ---@return string
 local function updateHexCode(dialog, l, c, h)
     local srgb <const> = defaults.lchTosRgb(l, c, h, 1.0)
-    local str <const> = Clr.toHexWeb(srgb)
+    local str <const> = Rgb.toHexWeb(srgb)
     dialog:modify { id = "hexCode", text = str }
     return str
 end
@@ -194,7 +194,7 @@ local function setChromaMouseListen(event)
             local inGamutEps <const> = defaults.inGamutEps
             local incr <const> = 1.0
 
-            local isInGamut <const> = Clr.rgbIsInGamut
+            local isInGamut <const> = Rgb.rgbIsInGamut
             local lchTosRgb <const> = defaults.lchTosRgb
 
             local l <const> = active.l
@@ -296,7 +296,7 @@ dlg:entry {
         local args <const> = dlg.data
         local hexStr <const> = args.hexCode --[[@as string]]
 
-        local srgb <const> = Clr.fromHexWeb(hexStr)
+        local srgb <const> = Rgb.fromHexWeb(hexStr)
         local lch <const> = defaults.sRgbToLch(srgb)
         active.l = lch.l
         active.c = lch.c
@@ -329,8 +329,8 @@ dlg:canvas {
         local bkgColor <const> = app.theme.color.window_face
         local bkgClr <const> = AseUtilities.aseColorToClr(bkgColor)
         local srgb <const> = defaults.lchTosRgb(l, c, h, 1.0)
-        local alphaMix <const> = Clr.mix(bkgClr, srgb, a)
-        local srgbHex <const> = Clr.toHex(alphaMix)
+        local alphaMix <const> = Rgb.mix(bkgClr, srgb, a)
+        local srgbHex <const> = Rgb.toHex(alphaMix)
 
         -- Fill image with color.
         local ctx <const> = event.context
@@ -411,8 +411,8 @@ dlg:canvas {
 
         -- Cache methods.
         local lchTosRgb <const> = defaults.lchTosRgb
-        local isInGamut <const> = Clr.rgbIsInGamut
-        local toHex <const> = Clr.toHex
+        local isInGamut <const> = Rgb.rgbIsInGamut
+        local toHex <const> = Rgb.toHex
         local strpack <const> = string.pack
 
         local ctx <const> = event.context
@@ -482,8 +482,8 @@ dlg:canvas {
 
         -- Cache methods.
         local lchTosRgb <const> = defaults.lchTosRgb
-        local isInGamut <const> = Clr.rgbIsInGamut
-        local toHex <const> = Clr.toHex
+        local isInGamut <const> = Rgb.rgbIsInGamut
+        local toHex <const> = Rgb.toHex
         local strpack <const> = string.pack
 
         local ctx <const> = event.context
@@ -552,8 +552,8 @@ dlg:canvas {
 
         -- Cache methods.
         local lchTosRgb <const> = defaults.lchTosRgb
-        local isInGamut <const> = Clr.rgbIsInGamut
-        local toHex <const> = Clr.toHex
+        local isInGamut <const> = Rgb.rgbIsInGamut
+        local toHex <const> = Rgb.toHex
         local strpack <const> = string.pack
 
         local ctx <const> = event.context
@@ -627,7 +627,7 @@ dlg:canvas {
         local a <const> = active.a
 
         local srgb = defaults.lchTosRgb(l, c, h, a)
-        srgb = Clr.clamp01(srgb)
+        srgb = Rgb.clamp01(srgb)
         local rTrg <const> = srgb.r
         local gTrg <const> = srgb.g
         local bTrg <const> = srgb.b
@@ -896,7 +896,7 @@ dlg:canvas {
         local swatchRect <const> = Rectangle(0, 0, wsw, hsw)
 
         local lchTosRgb <const> = defaults.lchTosRgb
-        local isInGamut <const> = Clr.rgbIsInGamut
+        local isInGamut <const> = Rgb.rgbIsInGamut
         local clrToAseColor <const> = AseUtilities.clrToAseColor
 
         local j = 0

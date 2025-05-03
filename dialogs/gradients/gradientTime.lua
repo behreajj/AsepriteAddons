@@ -104,7 +104,7 @@ dlg:button {
         local useMixed <const> = stylePreset == "MIXED"
         local mixFunc <const> = GradientUtilities.clrSpcFuncFromPreset(
             clrSpacePreset, huePreset)
-        local toHex <const> = Clr.toHex
+        local toHex <const> = Rgb.toHex
 
         -- Frames are potentially discontinuous, but for now assume
         -- that, if so, user intended them to be that way?

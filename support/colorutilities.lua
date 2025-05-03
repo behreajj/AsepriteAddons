@@ -1,4 +1,4 @@
-dofile("./clr.lua")
+dofile("./rgb.lua")
 dofile("./lab.lua")
 
 ColorUtilities = {}
@@ -12,17 +12,17 @@ setmetatable(ColorUtilities, {
 
 ---Converts a color from linear RGB to SR LAB 2.
 ---Clamps the input color to [0.0, 1.0].
----@param c Clr linear color
+---@param c Rgb linear color
 ---@return Lab
 ---@nodiscard
 function ColorUtilities.lRgbToSrLab2(c)
-    return ColorUtilities.lRgbToSrLab2Internal(Clr.clamp01(c))
+    return ColorUtilities.lRgbToSrLab2Internal(Rgb.clamp01(c))
 end
 
 ---Converts a color from linear RGB to SR LAB 2.
 ---See Jan Behrens, https://www.magnetkern.de/srlab2.html .
 ---The alpha channel is unaffected by the transform.
----@param c Clr linear color
+---@param c Rgb linear color
 ---@return Lab
 ---@nodiscard
 function ColorUtilities.lRgbToSrLab2Internal(c)
@@ -48,24 +48,24 @@ end
 
 ---Converts an origin and destination color from sRGB to SR LAB 2, mixes the
 ---colors in LAB, then converts them back to sRGB.
----@param o Clr origin
----@param d Clr destination
+---@param o Rgb origin
+---@param d Rgb destination
 ---@param step? number step
----@return Clr
+---@return Rgb
 ---@nodiscard
 function ColorUtilities.mixSrLab2(o, d, step)
     local t <const> = step or 0.5
-    if t <= 0.0 then return Clr.new(o.r, o.g, o.b, o.a) end
-    if t >= 1.0 then return Clr.new(d.r, d.g, d.b, d.a) end
+    if t <= 0.0 then return Rgb.new(o.r, o.g, o.b, o.a) end
+    if t >= 1.0 then return Rgb.new(d.r, d.g, d.b, d.a) end
     return ColorUtilities.mixSrLab2Internal(o, d, t)
 end
 
 ---Converts an origin and destination color from sRGB to SR LAB 2, mixes the
 ---colors in LAB, then converts them back to sRGB.
----@param o Clr origin
----@param d Clr destination
+---@param o Rgb origin
+---@param d Rgb destination
 ---@param step number step
----@return Clr
+---@return Rgb
 ---@nodiscard
 function ColorUtilities.mixSrLab2Internal(o, d, step)
     return ColorUtilities.srLab2TosRgb(
@@ -77,16 +77,16 @@ end
 
 ---Converts an origin and destination color from sRGB to SR LCH, mixes the
 ---colors in LCH, then converts them back to sRGB.
----@param o Clr origin
----@param d Clr destination
+---@param o Rgb origin
+---@param d Rgb destination
 ---@param step number step
 ---@param hueFunc? fun(o: number, d: number, x: number): number hue function
----@return Clr
+---@return Rgb
 ---@nodiscard
 function ColorUtilities.mixSrLch(o, d, step, hueFunc)
     local t <const> = step or 0.5
-    if t <= 0.0 then return Clr.new(o.r, o.g, o.b, o.a) end
-    if t >= 1.0 then return Clr.new(d.r, d.g, d.b, d.a) end
+    if t <= 0.0 then return Rgb.new(o.r, o.g, o.b, o.a) end
+    if t >= 1.0 then return Rgb.new(d.r, d.g, d.b, d.a) end
 
     local f = hueFunc
     if f == nil then
@@ -116,11 +116,11 @@ end
 
 ---Converts an origin and destination color from sRGB to SR LCH, mixes the
 ---colors in LCH, then converts them back to sRGB.
----@param o Clr origin
----@param d Clr destination
+---@param o Rgb origin
+---@param d Rgb destination
 ---@param step number step
 ---@param hueFunc fun(o: number, d: number, t: number): number hue function
----@return Clr
+---@return Rgb
 ---@nodiscard
 function ColorUtilities.mixSrLchInternal(o, d, step, hueFunc)
     return ColorUtilities.srLab2TosRgb(
@@ -136,7 +136,7 @@ end
 ---but for sRGB, [-111.0, 111.0] suffice. For light, the expected range is
 ---[0.0, 100.0]. The alpha channel is unaffected by the transform.
 ---@param lab Lab lab color
----@return Clr
+---@return Rgb
 ---@nodiscard
 function ColorUtilities.srLab2TolRgb(lab)
     local l01 <const> = lab.l * 0.01
@@ -167,7 +167,7 @@ function ColorUtilities.srLab2TolRgb(lab)
         z = z * z * z
     end
 
-    return Clr.new(
+    return Rgb.new(
         5.435679 * x - 4.599131 * y + 0.163593 * z,
         -1.16809 * x + 2.327977 * y - 0.159798 * z,
         0.03784 * x - 0.198564 * y + 1.160644 * z,
@@ -177,10 +177,10 @@ end
 ---Converts a color from SR LAB 2 to standard RGB.
 ---sRGB color may be out of gamut.
 ---@param lab Lab lab color
----@return Clr
+---@return Rgb
 ---@nodiscard
 function ColorUtilities.srLab2TosRgb(lab)
-    return Clr.lRgbTosRgbInternal(ColorUtilities.srLab2TolRgb(lab))
+    return Rgb.lRgbTosRgbInternal(ColorUtilities.srLab2TolRgb(lab))
 end
 
 ---Converts a color from SR LCH to standard RGB.
@@ -193,7 +193,7 @@ end
 ---@param h number hue
 ---@param alpha number opacity
 ---@param tol? number gray tolerance
----@return Clr
+---@return Rgb
 ---@nodiscard
 function ColorUtilities.srLchTosRgb(l, c, h, alpha, tol)
     return ColorUtilities.srLab2TosRgb(Lab.fromLch(l, c, h, alpha, tol))
@@ -206,7 +206,7 @@ end
 ---@param c number chroma
 ---@param h number hue
 ---@param alpha number opacity
----@return Clr
+---@return Rgb
 ---@nodiscard
 function ColorUtilities.srLchTosRgbInternal(l, c, h, alpha)
     return ColorUtilities.srLab2TosRgb(Lab.fromLchInternal(l, c, h, alpha))
@@ -214,33 +214,33 @@ end
 
 ---Converts a color from standard RGB to SR LAB 2.
 ---Clamps the input color to [0.0, 1.0].
----@param c Clr standard color
+---@param c Rgb standard color
 ---@return Lab
 ---@nodiscard
 function ColorUtilities.sRgbToSrLab2(c)
-    return ColorUtilities.sRgbToSrLab2Internal(Clr.clamp01(c))
+    return ColorUtilities.sRgbToSrLab2Internal(Rgb.clamp01(c))
 end
 
 ---Converts a color from standard RGB to SR LAB 2.
----@param c Clr standard color
+---@param c Rgb standard color
 ---@return Lab
 ---@nodiscard
 function ColorUtilities.sRgbToSrLab2Internal(c)
-    return ColorUtilities.lRgbToSrLab2Internal(Clr.sRgbTolRgbInternal(c))
+    return ColorUtilities.lRgbToSrLab2Internal(Rgb.sRgbTolRgbInternal(c))
 end
 
 ---Converts a color from standard RGB to SR LCH.
 ---Clamps the input color to [0.0, 1.0].
----@param c Clr color
+---@param c Rgb color
 ---@param tol? number gray tolerance
 ---@return { l: number, c: number, h: number, a: number }
 ---@nodiscard
 function ColorUtilities.sRgbToSrLch(c, tol)
-    return ColorUtilities.sRgbToSrLchInternal(Clr.clamp01(c), tol)
+    return ColorUtilities.sRgbToSrLchInternal(Rgb.clamp01(c), tol)
 end
 
 ---Converts a color from standard RGB to SR LCH.
----@param c Clr color
+---@param c Rgb color
 ---@param tol? number gray tolerance
 ---@return { l: number, c: number, h: number, a: number }
 ---@nodiscard

@@ -1,7 +1,7 @@
-dofile("./clr.lua")
+dofile("./rgb.lua")
 
 ---@class ClrKey
----@field public clr Clr color
+---@field public clr Rgb color
 ---@field public step number step
 ClrKey = {}
 ClrKey.__index = ClrKey
@@ -14,7 +14,7 @@ setmetatable(ClrKey, {
 
 ---Creates a new color key. Defaults to passing the color by value.
 ---@param step number step
----@param clr Clr|integer color
+---@param clr Rgb|integer color
 ---@return ClrKey
 ---@nodiscard
 function ClrKey.new(step, clr)
@@ -24,7 +24,7 @@ end
 ---Creates a new color key. The color is assigned by reference. The step is
 ---clamped to [0.0, 1.0].
 ---@param step number step
----@param clr Clr color
+---@param clr Rgb color
 ---@return ClrKey
 ---@nodiscard
 function ClrKey.newByRef(step, clr)
@@ -33,14 +33,14 @@ function ClrKey.newByRef(step, clr)
     if step then
         inst.step = math.min(math.max(step, 0.0), 1.0)
     end
-    inst.clr = clr or Clr.new(0.0, 0.0, 0.0, 0.0)
+    inst.clr = clr or Rgb.new(0.0, 0.0, 0.0, 0.0)
     return inst
 end
 
 ---Creates a new color key. The color is copied by value. The step is clamped
 ---to [0.0, 1.0].
 ---@param step number step
----@param clr Clr|integer color
+---@param clr Rgb|integer color
 ---@return ClrKey
 ---@nodiscard
 function ClrKey.newByVal(step, clr)
@@ -55,12 +55,12 @@ function ClrKey.newByVal(step, clr)
     if clr then
         if type(clr) == "number"
             and math.type(clr) == "integer" then
-            inst.clr = Clr.fromHexAbgr32(clr)
+            inst.clr = Rgb.fromHexAbgr32(clr)
         else
-            inst.clr = Clr.new(clr.r, clr.g, clr.b, clr.a)
+            inst.clr = Rgb.new(clr.r, clr.g, clr.b, clr.a)
         end
     else
-        inst.clr = Clr.new(0.0, 0.0, 0.0, 0.0)
+        inst.clr = Rgb.new(0.0, 0.0, 0.0, 0.0)
     end
 
     return inst
@@ -90,7 +90,7 @@ function ClrKey.toJson(ck)
     return string.format(
         "{\"step\":%.4f,\"clr\":%s}",
         ck.step,
-        Clr.toJson(ck.clr))
+        Rgb.toJson(ck.clr))
 end
 
 return ClrKey

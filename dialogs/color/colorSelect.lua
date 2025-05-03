@@ -566,8 +566,8 @@ dlg:button {
         local cmIsGry <const> = colorMode == ColorMode.GRAY
 
         -- Cache global methods.
-        local fromHex32 <const> = Clr.fromHexAbgr32
-        local fromHex16 <const> = Clr.fromHexAv16
+        local fromHex32 <const> = Rgb.fromHexAbgr32
+        local fromHex16 <const> = Rgb.fromHexAv16
         local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
         local aseColorToClr <const> = AseUtilities.aseColorToClr
         local aseColorToHex <const> = AseUtilities.aseColorToHex
@@ -678,7 +678,7 @@ dlg:button {
                             local aseColor <const> = palette:getColor(c)
                             srgb = aseColorToClr(aseColor)
                         else
-                            srgb = Clr.new(0, 0, 0, 0)
+                            srgb = Rgb.new(0, 0, 0, 0)
                         end
                     elseif cmIsGry then
                         srgb = fromHex16(c)
@@ -739,7 +739,7 @@ dlg:button {
                         if c >= 0 and c < lenPalette then
                             refClr = aseColorToClr(palette:getColor(c))
                         else
-                            refClr = Clr.new(0.0, 0.0, 0.0, 0.0)
+                            refClr = Rgb.new(0.0, 0.0, 0.0, 0.0)
                         end
                     elseif cmIsGry then
                         refInt = c

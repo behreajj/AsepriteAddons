@@ -317,7 +317,7 @@ dlg:button {
             local frObj <const> = site.frame or activeSprite.frames[1]
             local palette <const> = AseUtilities.getPalette(frObj, palettes)
 
-            local grid <const> = Clr.gridsRgb(rLevels, gLevels, bLevels, 1.0)
+            local grid <const> = Rgb.gridsRgb(rLevels, gLevels, bLevels, 1.0)
             local clrToAseColor <const> = AseUtilities.clrToAseColor
 
             local trgLenPalette <const> = math.min(

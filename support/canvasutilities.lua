@@ -1000,7 +1000,7 @@ function CanvasUtilities.spectrum(
             local floor <const> = math.floor
             local strpack <const> = string.pack
             local lchTosRgb <const> = ColorUtilities.srLchTosRgbInternal
-            local toHex <const> = Clr.toHex
+            local toHex <const> = Rgb.toHex
 
             ---@type string[]
             local byteArr <const> = {}

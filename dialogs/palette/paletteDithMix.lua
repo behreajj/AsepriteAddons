@@ -288,10 +288,10 @@ dlg:button {
                 uniqueHexes[lenUniqueHexes] = hexProfile
 
                 local hexSrgb <const> = hexesSrgb[g]
-                local clr <const> = Clr.fromHexAbgr32(hexSrgb)
+                local clr <const> = Rgb.fromHexAbgr32(hexSrgb)
                 local lab <const> = ColorUtilities.sRgbToSrLab2Internal(clr)
                 hexLabDict[hexProfile] = lab
-                hexWebDict[hexProfile] = Clr.toHexWeb(clr)
+                hexWebDict[hexProfile] = Rgb.toHexWeb(clr)
             end
             -- end
         end
@@ -376,7 +376,7 @@ dlg:button {
         local tconcat <const> = table.concat
         local srLab2TosRgb <const> = ColorUtilities.srLab2TosRgb
         local labnew <const> = Lab.new
-        local toHex <const> = Clr.toHex
+        local toHex <const> = Rgb.toHex
         local clrToAseColor <const> = AseUtilities.clrToAseColor
         local hexToAseColor <const> = AseUtilities.hexToAseColor
 

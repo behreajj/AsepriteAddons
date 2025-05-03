@@ -497,7 +497,7 @@ dlg:button {
         local tilesToImage <const> = AseUtilities.tileMapToImage
         local createSpec <const> = AseUtilities.createSpec
 
-        local clrNew <const> = Clr.new
+        local clrNew <const> = Rgb.new
         local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
         local labTosRgb <const> = ColorUtilities.srLab2TosRgb
         local labToLch <const> = Lab.toLch

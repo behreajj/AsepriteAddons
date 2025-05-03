@@ -621,8 +621,8 @@ dlg:button {
             local bMax = -2147483648
 
             -- Cache methods to local.
-            local cnew <const> = Clr.new
-            local fromHex <const> = Clr.fromHexAbgr32
+            local cnew <const> = Rgb.new
+            local fromHex <const> = Rgb.fromHexAbgr32
             local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
             local octins <const> = Octree.insert
             local octquery <const> = Octree.queryInternal

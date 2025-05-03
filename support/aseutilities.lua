@@ -222,14 +222,14 @@ function AseUtilities.aseColorCopy(aseColor, flag)
     end
 end
 
----Converts an Aseprite Color object to a Clr. Both Aseprite Color and Clr
+---Converts an Aseprite Color object to an Rgb object. Both objects
 ---allow arguments to exceed the expected ranges, [0, 255] and [0.0, 1.0],
 ---respectively.
 ---@param aseColor Color aseprite color
----@return Clr
+---@return Rgb
 ---@nodiscard
 function AseUtilities.aseColorToClr(aseColor)
-    return Clr.new(
+    return Rgb.new(
         aseColor.red / 255.0,
         aseColor.green / 255.0,
         aseColor.blue / 255.0,
@@ -572,7 +572,7 @@ function AseUtilities.averageColor(sprite, frame)
     local lSum, aSum, bSum, alphaSum = 0.0, 0.0, 0.0, 0.0
     local count = 0
 
-    local fromHex <const> = Clr.fromHexAbgr32
+    local fromHex <const> = Rgb.fromHexAbgr32
     local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2
     for hex, tally in pairs(hd) do
         local lab <const> = sRgbToLab(fromHex(hex))
@@ -1128,11 +1128,11 @@ function AseUtilities.checkerImage(
     return trgImg
 end
 
----Converts a Clr to an Aseprite Color. Assumes that source and target are in
----sRGB. Clamps the Clr's channels to [0.0, 1.0] before they are converted.
+---Converts an Rgb to an Aseprite Color. Assumes that source and target are in
+---sRGB. Clamps the Rgb's channels to [0.0, 1.0] before they are converted.
 ---Beware that this could return (255, 0, 0, 0) or (0, 255, 0, 0), which may be
 ---visually indistinguishable from - and confused with - an alpha mask.
----@param clr Clr clr
+---@param clr Rgb clr
 ---@return Color
 ---@nodiscard
 function AseUtilities.clrToAseColor(clr)

@@ -582,7 +582,7 @@ dlg:button {
 
             biasLabel = string.format(
                 " Dist %s F %02d",
-                Clr.toHexWeb(refSrgb),
+                Rgb.toHexWeb(refSrgb),
                 respFocus100)
         else
             -- Default to lightness.
@@ -633,7 +633,7 @@ dlg:button {
         -- Cache functions used in loop.
         local tilesToImage <const> = AseUtilities.tileMapToImage
         local trimAlpha <const> = AseUtilities.trimImageAlpha
-        local fromHex <const> = Clr.fromHexAbgr32
+        local fromHex <const> = Rgb.fromHexAbgr32
         local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
         local floor <const> = math.floor
         local strpack <const> = string.pack

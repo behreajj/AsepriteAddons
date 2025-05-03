@@ -88,7 +88,7 @@ dlg:button {
         local atan2 <const> = math.atan
         local max <const> = math.max
         local strpack <const> = string.pack
-        local toHex <const> = Clr.toHex
+        local toHex <const> = Rgb.toHex
 
         -- Unpack arguments.
         local args <const> = dlg.data

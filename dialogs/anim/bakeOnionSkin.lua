@@ -51,8 +51,8 @@ local function tintImage(srcImg, tint, preserveLight)
     local strsub <const> = string.sub
     local strunpack <const> = string.unpack
     local strpack <const> = string.pack
-    local fromHex <const> = Clr.fromHexAbgr32
-    local toHex <const> = Clr.toHex
+    local fromHex <const> = Rgb.fromHexAbgr32
+    local toHex <const> = Rgb.toHex
     local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
     local labTosRgb <const> = ColorUtilities.srLab2TosRgb
 

@@ -182,7 +182,7 @@ dlg:button {
         local max <const> = math.max
         local min <const> = math.min
         local strpack <const> = string.pack
-        local toHex <const> = Clr.toHex
+        local toHex <const> = Rgb.toHex
         local quantize <const> = Utilities.quantizeUnsigned
 
         -- Unpack arguments.

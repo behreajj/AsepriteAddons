@@ -100,7 +100,7 @@ function GradientUtilities.clearGradient(gr)
                 frame, sprite.palettes)
             local lenPalette <const> = #palette
 
-            ---@type Clr[]
+            ---@type Rgb[]
             local validColors <const> = {}
             local lenValidColors = 0
             local rangeClrIdcs <const> = appRange.colors
@@ -114,12 +114,12 @@ function GradientUtilities.clearGradient(gr)
                 local idxFirst <const> = rangeClrIdcs[1]
                 local clrFirst <const> = (idxFirst >= 0 and idxFirst < lenPalette)
                     and aseColorToClr(palette:getColor(idxFirst))
-                    or Clr.new(0.0, 0.0, 0.0, 1.0)
+                    or Rgb.new(0.0, 0.0, 0.0, 1.0)
 
                 local idxLast <const> = rangeClrIdcs[lenRangeClrIdcs]
                 local clrLast <const> = (idxLast >= 0 and idxLast < lenPalette)
                     and aseColorToClr(palette:getColor(idxLast))
-                    or Clr.new(1.0, 1.0, 1.0, 1.0)
+                    or Rgb.new(1.0, 1.0, 1.0, 1.0)
 
                 local h = 0
                 while h < GradientUtilities.MAX_KEYS do
@@ -179,23 +179,23 @@ function GradientUtilities.clearGradient(gr)
             local bgClr <const> = aseColorToClr(app.fgColor)
             app.command.SwitchColors()
 
-            local fgHex <const> = Clr.toHex(fgClr)
-            local bgHex <const> = Clr.toHex(bgClr)
+            local fgHex <const> = Rgb.toHex(fgClr)
+            local bgHex <const> = Rgb.toHex(bgClr)
             if fgHex == bgHex
                 and fgHex ~= 0x00000000
                 and fgHex ~= 0xff000000
                 and fgHex ~= 0xffffffff then
-                origKeys[1] = ClrKey.new(0.0, Clr.new(0.0, 0.0, 0.0, fgClr.a))
+                origKeys[1] = ClrKey.new(0.0, Rgb.new(0.0, 0.0, 0.0, fgClr.a))
                 origKeys[2] = ClrKey.new(0.5, fgClr)
-                origKeys[3] = ClrKey.new(1.0, Clr.new(1.0, 1.0, 1.0, fgClr.a))
+                origKeys[3] = ClrKey.new(1.0, Rgb.new(1.0, 1.0, 1.0, fgClr.a))
             else
                 origKeys[1] = ClrKey.new(0.0, fgClr)
                 origKeys[2] = ClrKey.new(1.0, bgClr)
             end
         end
     else
-        origKeys[1] = ClrKey.new(0.0, Clr.new(0.0, 0.0, 0.0, 1.0))
-        origKeys[2] = ClrKey.new(1.0, Clr.new(1.0, 1.0, 1.0, 1.0))
+        origKeys[1] = ClrKey.new(0.0, Rgb.new(0.0, 0.0, 0.0, 1.0))
+        origKeys[2] = ClrKey.new(1.0, Rgb.new(1.0, 1.0, 1.0, 1.0))
     end
 
     gr:setKeys(origKeys)
@@ -206,13 +206,13 @@ end
 ---and hue preset.
 ---@param clrSpcPreset string color space preset
 ---@param huePreset string hue preset
----@return fun(o: Clr, d: Clr, t: number): Clr
+---@return fun(o: Rgb, d: Rgb, t: number): Rgb
 ---@nodiscard
 function GradientUtilities.clrSpcFuncFromPreset(clrSpcPreset, huePreset)
     if clrSpcPreset == "LINEAR_RGB" then
-        return Clr.mixsRgbInternal
+        return Rgb.mixsRgbInternal
     elseif clrSpcPreset == "NORMAL_MAP" then
-        return Clr.mixNormal
+        return Rgb.mixNormal
     elseif clrSpcPreset == "SR_LAB_2" then
         return ColorUtilities.mixSrLab2Internal
     elseif clrSpcPreset == "SR_LCH" then
@@ -221,7 +221,7 @@ function GradientUtilities.clrSpcFuncFromPreset(clrSpcPreset, huePreset)
             return ColorUtilities.mixSrLchInternal(o, d, t, hef)
         end
     else
-        return Clr.mixlRgbaInternal
+        return Rgb.mixlRgbaInternal
     end
 end
 
@@ -770,7 +770,7 @@ end
 ---@param stylePreset string style preset
 ---@param bayerIndex? integer Bayer exponent, 2^1
 ---@param ditherPath? string dither image path
----@return fun(cg: ClrGradient, step: number, x: integer, y: integer): Clr
+---@return fun(cg: ClrGradient, step: number, x: integer, y: integer): Rgb
 ---@nodiscard
 function GradientUtilities.ditherFromPreset(
     stylePreset, bayerIndex, ditherPath)
@@ -867,7 +867,7 @@ function GradientUtilities.imageToMatrix(image)
         -- string.unpack("f", string.pack("i", 0x40490FDB)) to read,
         -- string.unpack("i", string.pack("f", 3.1415927410126)) to write.
         local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
-        local clrnew <const> = Clr.new
+        local clrnew <const> = Rgb.new
 
         local h = 0
         while h < lenMat do
