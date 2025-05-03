@@ -124,15 +124,13 @@ end
 ---@return boolean
 ---@nodiscard
 function Lab.comparator(o, d)
-    -- This is sorted with a color's place in a octree in mind,
-    -- where l corresponds to z, b to y, a to x.
+    if o.alpha < d.alpha then return true end
+    if o.alpha > d.alpha then return false end
     if o.l < d.l then return true end
     if o.l > d.l then return false end
-    if o.b < d.b then return true end
-    if o.b > d.b then return false end
     if o.a < d.a then return true end
     if o.a > d.a then return false end
-    return o.alpha < d.alpha
+    return o.b < d.b
 end
 
 ---Finds the distance between two colors.
@@ -365,10 +363,10 @@ function Lab.mixPolar(o, d, step, hueFunc)
 
     local t <const> = step or 0.5
     local u <const> = 1.0 - t
+    local tau <const> = math.pi + math.pi
 
     local cc <const> = u * math.sqrt(ocsq)
         + t * math.sqrt(dcsq)
-    local tau <const> = math.pi + math.pi
     local ch <const> = tau * hueFunc(
         math.atan(o.b, o.a) / tau,
         math.atan(d.b, d.a) / tau,

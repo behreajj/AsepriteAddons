@@ -267,7 +267,7 @@ dlg:button {
         local cos <const> = math.cos
         local sin <const> = math.sin
         local floor <const> = math.floor
-        local sRgbToLab <const> = Clr.sRgbToSrLab2
+        local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
         local fromHex <const> = Clr.fromHexAbgr32
         local rotax <const> = Vec3.rotateInternal
         local v3hash <const> = Vec3.hashCode
@@ -288,8 +288,7 @@ dlg:button {
         local octCapacity = args.octCapacity
             or defaults.octCapacityBits --[[@as integer]]
         octCapacity = 1 << octCapacity
-        local bounds <const> = Bounds3.lab()
-        local octree <const> = Octree.new(bounds, octCapacity, 1)
+        local octree <const> = Octree.new(Bounds3.lab(), octCapacity, 1)
 
         -- Unpack unique colors to data.
         local uniqueHexesSrgbLen <const> = #uniqueHexesSrgb
