@@ -568,7 +568,7 @@ dlg:button {
         -- Cache global methods.
         local fromHex32 <const> = Clr.fromHexAbgr32
         local fromHex16 <const> = Clr.fromHexAv16
-        local sRgbaToLab <const> = Clr.sRgbToSrLab2
+        local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
         local aseColorToClr <const> = AseUtilities.aseColorToClr
         local aseColorToHex <const> = AseUtilities.aseColorToHex
         local strunpack <const> = string.unpack
@@ -685,7 +685,7 @@ dlg:button {
                     else
                         srgb = fromHex32(c)
                     end
-                    local lab <const> = sRgbaToLab(srgb)
+                    local lab <const> = sRgbToLab(srgb)
                     include = critEval(
                         lab, mint01, maxt01,
                         useLight, minLight, maxLight,
@@ -764,27 +764,27 @@ dlg:button {
             local useExactSearch <const> = (not uiIsCriteria)
                 and tolerance == 0
             if not useExactSearch then
-                local refLab <const> = sRgbaToLab(refClr)
+                local refLab <const> = sRgbToLab(refClr)
                 local tScl <const> = 100.0
                 local tolsq <const> = tolerance * tolerance
 
                 if colorMode == ColorMode.INDEXED then
                     eval = function(c8)
                         if c8 >= 0 and c8 < lenPalette then
-                            return distSq(sRgbaToLab(aseColorToClr(
+                            return distSq(sRgbToLab(aseColorToClr(
                                 palette:getColor(c8))), refLab, tScl) <= tolsq
                         end
                         return false
                     end
                 elseif colorMode == ColorMode.GRAY then
                     eval = function(c16)
-                        return distSq(sRgbaToLab(fromHex16(c16)),
+                        return distSq(sRgbToLab(fromHex16(c16)),
                             refLab, tScl) <= tolsq
                     end
                 else
                     -- Default to RGB color mode.
                     eval = function(c32)
-                        return distSq(sRgbaToLab(fromHex32(c32)),
+                        return distSq(sRgbToLab(fromHex32(c32)),
                             refLab, tScl) <= tolsq
                     end
                 end

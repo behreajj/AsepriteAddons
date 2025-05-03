@@ -210,8 +210,9 @@ dlg:button {
         local trimImageAlpha <const> = AseUtilities.trimImageAlpha
         local fromHex <const> = Clr.fromHexAbgr32
         local toHex <const> = Clr.toHex
-        local labTosRgba <const> = Clr.srLab2TosRgb
-        local sRgbaToLab <const> = Clr.sRgbToSrLab2
+        local labTosRgb <const> = ColorUtilities.srLab2TosRgb
+        local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
+        local labnew <const> = Lab.new
         local strpack <const> = string.pack
         local strsub <const> = string.sub
         local strunpack <const> = string.unpack
@@ -284,7 +285,7 @@ dlg:button {
                                 local tTrg <const> = tSrc + tInv - tInv2 * tSrc
 
                                 if changeTrgZero or tTrg > 0.0 then
-                                    local srcLab <const> = sRgbaToLab(srcSrgb)
+                                    local srcLab <const> = sRgbToLab(srcSrgb)
                                     local lSrc <const> = srcLab.l
                                     local aSrc <const> = srcLab.a
                                     local bSrc <const> = srcLab.b
@@ -299,9 +300,9 @@ dlg:button {
                                     -- a - 2ta
                                     local aTrg <const> = aSrc - aInv2 * aSrc
                                     local bTrg <const> = bSrc - bInv2 * bSrc
+                                    local trg <const> = labnew(lTrg, aTrg, bTrg, tTrg)
 
-                                    trgAbgr32 = toHex(labTosRgba(
-                                        lTrg, aTrg, bTrg, tTrg))
+                                    trgAbgr32 = toHex(labTosRgb(trg))
                                 end
                             end
                             srcToTrg[srcAbgr32] = trgAbgr32

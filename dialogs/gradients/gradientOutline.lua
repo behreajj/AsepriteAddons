@@ -292,8 +292,9 @@ dlg:button {
         local cgeval <const> = ClrGradient.eval
         local toHex <const> = Clr.toHex
 
-        local labTosRgb <const> = Clr.srLab2TosRgb
-        local sRgbaToLab <const> = Clr.sRgbToSrLab2
+        local labTosRgb <const> = ColorUtilities.srLab2TosRgb
+        local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2
+        local labnew <const> = Lab.new
         local tilesToImage <const> = AseUtilities.tileMapToImage
         local createSpec <const> = AseUtilities.createSpec
         local strfmt <const> = string.format
@@ -304,7 +305,7 @@ dlg:button {
         local transact <const> = app.transaction
 
         local bkgSrgb <const> = AseUtilities.aseColorToClr(aseBkgColor)
-        local bkgLab <const> = sRgbaToLab(bkgSrgb)
+        local bkgLab <const> = sRgbToLab(bkgSrgb)
         local bkgHex <const> = toHex(bkgSrgb)
 
         -- Problem where an iteration is lost when a gradient
@@ -370,14 +371,14 @@ dlg:button {
                 + fac * alphaStart
                 or 1.0 - srgb.a
 
-            local lab <const> = sRgbaToLab(srgb)
+            local lab <const> = sRgbToLab(srgb)
             local t <const> = 1.0 - u
             local tuv <const> = t + u * bkgSrgb.a
             local cl <const> = u * bkgLab.l + t * lab.l
             local ca <const> = u * bkgLab.a + t * lab.a
             local cb <const> = u * bkgLab.b + t * lab.b
 
-            srgb = labTosRgb(cl, ca, cb, tuv)
+            srgb = labTosRgb(labnew(cl, ca, cb, tuv))
             local otlHex <const> = toHex(srgb)
             hexesOutline[h] = otlHex
         end

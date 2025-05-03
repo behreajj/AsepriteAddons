@@ -375,8 +375,9 @@ dlg:button {
         local strunpack <const> = string.unpack
         local toHex <const> = Clr.toHex
         local fromHex <const> = Clr.fromHexAbgr32
-        local labTosRgb <const> = Clr.srLab2TosRgb
-        local sRgbaToLab <const> = Clr.sRgbToSrLab2
+        local labTosRgb <const> = ColorUtilities.srLab2TosRgb
+        local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
+        local labnew <const> = Lab.new
         local tconcat <const> = table.concat
         local bisectRight <const> = Utilities.bisectRight
         local tilesToImage <const> = AseUtilities.tileMapToImage
@@ -428,7 +429,7 @@ dlg:button {
                     if not abgr32ToLab[abgr32] then
                         abgr32ToLab[abgr32] = labZero
                         if abgr32 & 0xff000000 ~= 0 then
-                            local labSrc <const> = sRgbaToLab(fromHex(abgr32))
+                            local labSrc <const> = sRgbToLab(fromHex(abgr32))
                             abgr32ToLab[abgr32] = labSrc
 
                             local aSrc <const> = labSrc.a
@@ -497,7 +498,8 @@ dlg:button {
                         end
 
                         -- Find adjusted lab color, convert to hex.
-                        abgr32Trg = toHex(labTosRgb(lTrg, aTrg, bTrg, tTrg))
+                        local labTrg<const> = labnew(lTrg, aTrg, bTrg, tTrg)
+                        abgr32Trg = toHex(labTosRgb(labTrg))
                     end
 
                     -- Fill in target pixels with adjusted color.

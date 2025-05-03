@@ -266,7 +266,7 @@ dlg:button {
             or clrPrf == ColorSpace()
         local paddingGtEq1 <const> = padding >= 1
 
-        ---@type table<integer, { l: number, a: number, b: number, alpha: number }>
+        ---@type table<integer, Lab>
         local hexLabDict <const> = {}
 
         ---@type table<integer, string>
@@ -289,7 +289,7 @@ dlg:button {
 
                 local hexSrgb <const> = hexesSrgb[g]
                 local clr <const> = Clr.fromHexAbgr32(hexSrgb)
-                local lab <const> = Clr.sRgbToSrLab2(clr)
+                local lab <const> = ColorUtilities.sRgbToSrLab2Internal(clr)
                 hexLabDict[hexProfile] = lab
                 hexWebDict[hexProfile] = Clr.toHexWeb(clr)
             end
@@ -374,7 +374,8 @@ dlg:button {
         local strfmt <const> = string.format
         local strpack <const> = string.pack
         local tconcat <const> = table.concat
-        local srLab2TosRgb <const> = Clr.srLab2TosRgb
+        local srLab2TosRgb <const> = ColorUtilities.srLab2TosRgb
+        local labnew <const> = Lab.new
         local toHex <const> = Clr.toHex
         local clrToAseColor <const> = AseUtilities.clrToAseColor
         local hexToAseColor <const> = AseUtilities.hexToAseColor
@@ -546,11 +547,11 @@ dlg:button {
                         end
                     elseif useMix and i > j then
                         -- Mix colors.
-                        local srgbMixed <const> = srLab2TosRgb(
+                        local srgbMixed <const> = srLab2TosRgb(labnew(
                             (rowLab.l + colLab.l) * 0.5,
                             (rowLab.a + colLab.a) * 0.5,
                             (rowLab.b + colLab.b) * 0.5,
-                            (rowLab.alpha + colLab.alpha) * 0.5)
+                            (rowLab.alpha + colLab.alpha) * 0.5))
                         local hexMixed <const> = toHex(srgbMixed)
 
                         local mixImage <const> = Image(swatchSpec)

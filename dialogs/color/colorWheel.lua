@@ -178,10 +178,9 @@ dlg:button {
         local tconcat <const> = table.concat
 
         local fromHex <const> = Clr.fromHexAbgr32
-        local labTosRgba <const> = Clr.srLab2TosRgb
-        local lchTosRgba <const> = Clr.srLchTosRgb
+        local lchTosRgb <const> = ColorUtilities.srLchTosRgbInternal
         local rgbIsInGamut <const> = Clr.rgbIsInGamut
-        local sRgbaToLab <const> = Clr.sRgbToSrLab2
+        local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
 
         -- Unpack arguments.
         local args <const> = dlg.data
@@ -237,7 +236,7 @@ dlg:button {
         -- Quantization calculations.
         local quantAzims <const> = sectorCount > 0
         local quantRad <const> = ringCount > 0
-        local maxChroma <const> = Clr.SR_LCH_MAX_CHROMA
+        local maxChroma <const> = Lab.SR_LCH_MAX_CHROMA
         local gamutTol <const> = defaults.gamutTol
 
         -- Depending on case, may be hue, radians or degrees.
@@ -294,9 +293,9 @@ dlg:button {
                         h = floor(0.5 + h * azimAlpha) * azimBeta
                     end
 
-                    srgb = lchTosRgba(light, c, h, 1.0)
+                    srgb = lchTosRgb(light, c, h, 1.0)
                 else
-                    srgb = labTosRgba(light, 0.0, 0.0, 1.0)
+                    srgb = lchTosRgb(light, 0.0, 0.0, 1.0)
                 end
 
                 local r8 <const> = floor(min(max(srgb.r, 0.0), 1.0) * 255 + 0.5)
@@ -383,7 +382,7 @@ dlg:button {
                 local yi = center
                 local stroke = 0x0
                 if hexSrgb & 0xff000000 ~= 0 then
-                    local lab <const> = sRgbaToLab(fromHex(hexSrgb))
+                    local lab <const> = sRgbToLab(fromHex(hexSrgb))
 
                     -- From [0.0, chroma] to [0.0, 1.0]
                     local xNrm <const> = lab.a * invMaxChroma + 0.5

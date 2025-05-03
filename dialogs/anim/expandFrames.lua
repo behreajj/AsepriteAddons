@@ -98,7 +98,7 @@ local function crossFade(
     local tconcat <const> = table.concat
     local round <const> = Utilities.round
     local clrnew <const> = Clr.new
-    local mixSrLab2 <const> = Clr.mixSrLab2
+    local mixSrLab2 <const> = ColorUtilities.mixSrLab2
 
     local leafName <const> = leaf.name
     local trName <const> = string.format("Fade from %d to %d on %s",

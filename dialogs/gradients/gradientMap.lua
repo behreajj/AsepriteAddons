@@ -157,7 +157,7 @@ dlg:button {
         local tconcat <const> = table.concat
         local fromHex <const> = Clr.fromHexAbgr32
         local toHex <const> = Clr.toHex
-        local sRgbToLab <const> = Clr.sRgbToSrLab2Internal
+        local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
         local quantize <const> = Utilities.quantizeUnsigned
         local tilesToImage <const> = AseUtilities.tileMapToImage
         local transact <const> = app.transaction

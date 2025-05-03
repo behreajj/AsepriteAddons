@@ -143,6 +143,8 @@ dlg:button {
         local strsub <const> = string.sub
         local strunpack <const> = string.unpack
         local tconcat <const> = table.concat
+        local fromHex <const> = Clr.fromHexAbgr32
+        local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
 
         -- Choose edge wrapping method.
         local edgeType <const> = args.edgeType
@@ -254,8 +256,8 @@ dlg:button {
 
                     local lum = 0.0
                     if alpha > 0 then
-                        local clr <const> = Clr.fromHexAbgr32(abgr32)
-                        local lab <const> = Clr.sRgbToSrLab2(clr)
+                        local clr <const> = fromHex(abgr32)
+                        local lab <const> = sRgbToLab(clr)
                         lum = lab.l * 0.01
                     end
 

@@ -461,7 +461,7 @@ dlg:button {
             else
                 -- Fuzzy tolerance search.
                 local fromHex <const> = Clr.fromHexAbgr32
-                local sRgbaToLab <const> = Clr.sRgbToSrLab2
+                local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
                 local strunpack <const> = string.unpack
                 local distSq <const> = tIgnoreVerif
                     and distSqNoAlpha
@@ -469,7 +469,7 @@ dlg:button {
 
                 local tScl <const> = 100.0
                 local tolsq <const> = tolerance * tolerance
-                local frLab <const> = sRgbaToLab(fromHex(frInt))
+                local frLab <const> = sRgbToLab(fromHex(frInt))
 
                 local zeroLab <const> = { l = 0.0, a = 0.0, b = 0.0, alpha = 0.0 }
                 local useExpand <const> = distSq(frLab, zeroLab, tScl) <= tolsq
@@ -512,7 +512,7 @@ dlg:button {
                                 trgHexInt = dict[srcHexInt]
                             else
                                 local srcClr <const> = fromHex(srcHexInt)
-                                local srcLab <const> = sRgbaToLab(srcClr)
+                                local srcLab <const> = sRgbToLab(srcClr)
                                 if distSq(srcLab, frLab, tScl) <= tolsq then
                                     trgHexInt = toInt
                                 end

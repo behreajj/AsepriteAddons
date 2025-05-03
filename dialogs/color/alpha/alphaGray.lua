@@ -193,7 +193,7 @@ dlg:button {
         local tilesToImage <const> = AseUtilities.tileMapToImage
         local trim <const> = AseUtilities.trimImageAlpha
         local fromHex <const> = Clr.fromHexAbgr32
-        local sRgbaToLab <const> = Clr.sRgbToSrLab2
+        local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
         local floor <const> = math.floor
         local strbyte <const> = string.byte
         local strpack <const> = string.pack
@@ -273,7 +273,7 @@ dlg:button {
                         else
                             local srcSrgb <const> = fromHex(srcAbgr32)
                             if srcSrgb.a > 0.0 then
-                                local srcLab <const> = sRgbaToLab(srcSrgb)
+                                local srcLab <const> = sRgbToLab(srcSrgb)
                                 local l8 <const> = floor(srcLab.l * 2.55 + 0.5)
                                 local trgBgr24 = 0
                                 if l8 > 0 then

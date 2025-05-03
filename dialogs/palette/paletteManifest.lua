@@ -92,8 +92,9 @@ end
 ---@return Color
 local function invertAseColor(aseColor)
     local srgb <const> = AseUtilities.aseColorToClr(aseColor)
-    local lab <const> = Clr.sRgbToSrLab2(srgb)
-    local inv <const> = Clr.srLab2TosRgb(100 - lab.l, -lab.a, -lab.b, lab.alpha)
+    local lab <const> = ColorUtilities.sRgbToSrLab2(srgb)
+    local inv <const> = ColorUtilities.srLab2TosRgb(
+        Lab.new(100 - lab.l, -lab.a, -lab.b, lab.alpha))
     return AseUtilities.clrToAseColor(inv)
 end
 
@@ -380,8 +381,8 @@ dlg:button {
         local round <const> = Utilities.round
         local strfmt <const> = string.format
         local strsub <const> = string.sub
-        local sRgbToLab <const> = Clr.sRgbToSrLab2
-        local labToLch <const> = Clr.srLab2ToSrLch
+        local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
+        local labToLch <const> = Lab.toLch
         local strToChars <const> = Utilities.stringToCharArr
         local hexToAse <const> = AseUtilities.hexToAseColor
 
@@ -465,8 +466,7 @@ dlg:button {
                     blueSrgb255 / 255.0,
                     1.0)
                 local lab <const> = sRgbToLab(clr)
-                local lch <const> = labToLch(
-                    lab.l, lab.a, lab.b, 1.0)
+                local lch <const> = labToLch(lab)
 
                 -- Convert values to integers to make them
                 -- easier to sort and to make sorting conform

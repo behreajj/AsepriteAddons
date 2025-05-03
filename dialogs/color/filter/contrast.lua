@@ -232,8 +232,9 @@ dlg:button {
 
         local fromHex <const> = Clr.fromHexAbgr32
         local toHex <const> = Clr.toHex
-        local labTosRgba <const> = Clr.srLab2TosRgb
-        local sRgbaToLab <const> = Clr.sRgbToSrLab2
+        local labTosRgba <const> = ColorUtilities.srLab2TosRgb
+        local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
+        local labnew <const> = Lab.new
 
         local abs <const> = math.abs
         local sqrt <const> = math.sqrt
@@ -304,7 +305,7 @@ dlg:button {
                         local t8 <const> = (abgr32 >> 0x18) & 0xff
                         if t8 > 0 then
                             local srgbSrc <const> = fromHex(abgr32)
-                            local labSrc <const> = sRgbaToLab(srgbSrc)
+                            local labSrc <const> = sRgbToLab(srgbSrc)
                             abgr32ToLab[abgr32] = labSrc
 
                             local l <const> = labSrc.l
@@ -480,7 +481,8 @@ dlg:button {
                             -- end
                         end
 
-                        trgAbgr32 = toHex(labTosRgba(lTrg, aTrg, bTrg, tTrg))
+                        local labTrg <const> = labnew(lTrg, aTrg, bTrg, tTrg)
+                        trgAbgr32 = toHex(labTosRgba(labTrg))
                         srcToTrg[srcAbgr32] = trgAbgr32
                     end
 

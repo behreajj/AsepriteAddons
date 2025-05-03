@@ -613,7 +613,7 @@ dlg:button {
         end)
 
         local hueFunc <const> = GradientUtilities.hueEasingFuncFromPreset(huePreset)
-        local mixer <const> = Clr.mixSrLch
+        local mixer <const> = ColorUtilities.mixSrLchInternal
         local clrToAse <const> = AseUtilities.clrToAseColor
         local fromClr = AseUtilities.aseColorToClr(fromColor)
         local toClr = AseUtilities.aseColorToClr(toColor)

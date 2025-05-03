@@ -216,7 +216,7 @@ dlg:canvas {
         -- it is visible in both LAB and LCH mode.
         -- local c = 50.0
         -- local h = active.hAdj - 0.5
-        local lchTosRgb <const> = Clr.srLchTosRgb
+        local lchTosRgb <const> = ColorUtilities.srLchTosRgbInternal
         local toHex <const> = Clr.toHex
         local strpack <const> = string.pack
 
@@ -281,7 +281,7 @@ dlg:canvas {
         local cub <const> = defaults.maxChroma
 
         local h <const> = active.hAdj - 0.5
-        local lchTosRgb <const> = Clr.srLchTosRgb
+        local lchTosRgb <const> = ColorUtilities.srLchTosRgbInternal
         local toHex <const> = Clr.toHex
         local strpack <const> = string.pack
 
@@ -342,7 +342,7 @@ dlg:canvas {
         local reticleSize <const> = defaults.reticleSize
 
         local c <const> = 50.0
-        local lchTosRgb <const> = Clr.srLchTosRgb
+        local lchTosRgb <const> = ColorUtilities.srLchTosRgbInternal
         local toHex <const> = Clr.toHex
         local strpack <const> = string.pack
 
@@ -406,7 +406,8 @@ dlg:canvas {
         local visMin <const> = defaults.labVisMin
         local visMax <const> = defaults.labVisMax
 
-        local labTosRgb <const> = Clr.srLab2TosRgb
+        local labTosRgb <const> = ColorUtilities.srLab2TosRgb
+        local labnew <const> = Lab.new
         local toHex <const> = Clr.toHex
         local strpack <const> = string.pack
 
@@ -425,10 +426,10 @@ dlg:canvas {
         while i < barWidth do
             local xFac <const> = i * xToFac
             local a <const> = (1.0 - xFac) * visMin + xFac * visMax
-            local h0 <const> = toHex(labTosRgb(50.0, a, bAdj, 1.0))
+            local h0 <const> = toHex(labTosRgb(labnew(50.0, a, bAdj, 1.0)))
             bytes[1 + i] = strpack("<I4", h0)
 
-            local h1 <const> = toHex(labTosRgb(50.0, a + aAdj, bAdj, 1.0))
+            local h1 <const> = toHex(labTosRgb(labnew(50.0, a + aAdj, bAdj, 1.0)))
             bytes[barWidth + 1 + i] = strpack("<I4", h1)
             i = i + 1
         end
@@ -472,7 +473,8 @@ dlg:canvas {
         local visMin <const> = defaults.labVisMin
         local visMax <const> = defaults.labVisMax
 
-        local labTosRgb <const> = Clr.srLab2TosRgb
+        local labTosRgb <const> = ColorUtilities.srLab2TosRgb
+        local labnew <const> = Lab.new
         local toHex <const> = Clr.toHex
         local strpack <const> = string.pack
 
@@ -491,10 +493,10 @@ dlg:canvas {
         while i < barWidth do
             local xFac <const> = i * xToFac
             local b <const> = (1.0 - xFac) * visMin + xFac * visMax
-            local h0 <const> = toHex(labTosRgb(50.0, aAdj, b, 1.0))
+            local h0 <const> = toHex(labTosRgb(labnew(50.0, aAdj, b, 1.0)))
             bytes[1 + i] = strpack("<I4", h0)
 
-            local h1 <const> = toHex(labTosRgb(50.0, bAdj, b + bAdj, 1.0))
+            local h1 <const> = toHex(labTosRgb(labnew(50.0, bAdj, b + bAdj, 1.0)))
             bytes[barWidth + 1 + i] = strpack("<I4", h1)
             i = i + 1
         end
@@ -544,8 +546,7 @@ dlg:button {
         -- Black and white buttons could also set
         -- the active lightness?
         if mode == "LCH" then
-            local lch <const> = Clr.srLab2ToSrLch(
-                lab.l, lab.a, lab.b, lab.alpha)
+            local lch <const> = Lab.toLch(lab)
             active.cAdj = -lch.c
         else
             active.aAdj = -lab.a
@@ -663,10 +664,11 @@ dlg:button {
         local tilesToImage <const> = AseUtilities.tileMapToImage
         local fromHex <const> = Clr.fromHexAbgr32
         local toHex <const> = Clr.toHex
-        local labTosRgba <const> = Clr.srLab2TosRgb
-        local labToLch <const> = Clr.srLab2ToSrLch
-        local lchToLab <const> = Clr.srLchToSrLab2
-        local sRgbaToLab <const> = Clr.sRgbToSrLab2
+        local labTosRgb <const> = ColorUtilities.srLab2TosRgb
+        local labToLch <const> = Lab.toLch
+        local lchToLab <const> = Lab.fromLchInternal
+        local labnew <const> = Lab.new
+        local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
         local strpack <const> = string.pack
         local strsub <const> = string.sub
         local strunpack <const> = string.unpack
@@ -735,29 +737,21 @@ dlg:button {
                         else
                             local srcSrgb <const> = fromHex(srcAbgr32)
                             if srcSrgb.a > 0.0 then
-                                local srcLab <const> = sRgbaToLab(srcSrgb)
+                                local srcLab <const> = sRgbToLab(srcSrgb)
                                 if useLchAdj then
-                                    local lch <const> = labToLch(
-                                        srcLab.l,
-                                        srcLab.a,
-                                        srcLab.b,
-                                        srcLab.alpha)
+                                    local lch <const> = labToLch(srcLab)
                                     local labAdj <const> = lchToLab(
                                         lch.l + lAdj,
                                         lch.c + cAdj,
                                         lch.h + hAdj,
                                         lch.a)
-                                    trgAbgr32 = toHex(labTosRgba(
-                                        labAdj.l,
-                                        labAdj.a,
-                                        labAdj.b,
-                                        labAdj.alpha))
+                                    trgAbgr32 = toHex(labTosRgb(labAdj))
                                 else
-                                    trgAbgr32 = toHex(labTosRgba(
+                                    trgAbgr32 = toHex(labTosRgb(labnew(
                                         srcLab.l + lAdj,
                                         srcLab.a + aAdj,
                                         srcLab.b + bAdj,
-                                        srcLab.alpha))
+                                        srcLab.alpha)))
                                 end -- Lch v. Lab adjust.
                             end     -- Non zero alpha.
                             srcToTrg[srcAbgr32] = trgAbgr32

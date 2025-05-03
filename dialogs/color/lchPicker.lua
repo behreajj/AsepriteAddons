@@ -32,11 +32,11 @@ local defaults <const> = {
     -- particularly in normal wheel picker I.e., scroll wheel should
     -- only work when mouse button is up. That means separate
     -- functions would need to be made for scroll.
-    lchTosRgb = Clr.srLchTosRgb,
-    sRgbToLch = Clr.sRgbToSrLch,
-    sRgbToLab = Clr.sRgbToSrLab2,
-    labToLch = Clr.srLab2ToSrLch,
-    lchToLab = Clr.srLchToSrLab2,
+    lchTosRgb = ColorUtilities.srLchTosRgbInternal,
+    sRgbToLch = ColorUtilities.sRgbToSrLchInternal,
+    sRgbToLab = ColorUtilities.sRgbToSrLab2Internal,
+    labToLch = Lab.toLch,
+    lchToLab = Lab.fromLch,
     harmonyType = "SHADING",
     barWidth = 240 // screenScale,
     barHeight = 16 // screenScale,
@@ -123,8 +123,7 @@ local function setFromSelect(dialog, sprite, frIdx)
     local lab <const> = AseUtilities.averageColor(sprite, frIdx)
     if lab.alpha > 0.0 then
         -- Average color uses SR LAB 2.
-        local lch <const> = Clr.srLab2ToSrLch(
-            lab.l, lab.a, lab.b, lab.alpha)
+        local lch <const> = Lab.toLch(lab)
 
         active.l = lch.l
         active.c = lch.c
@@ -187,7 +186,7 @@ end
 local function setChromaMouseListen(event)
     if event.button ~= MouseButton.NONE then
         local bw <const> = active.cBarWidth
-        local maxChroma <const> = Clr.SR_LCH_MAX_CHROMA + 0.5
+        local maxChroma <const> = Lab.SR_LCH_MAX_CHROMA + 0.5
         local mx120 <const> = bw > 1
             and (maxChroma * event.x / (bw - 1.0))
             or 0.0
@@ -473,7 +472,7 @@ dlg:canvas {
 
         -- Unpack defaults.
         local inGamutEps <const> = defaults.inGamutEps
-        local maxChroma <const> = Clr.SR_LCH_MAX_CHROMA + 0.5
+        local maxChroma <const> = Lab.SR_LCH_MAX_CHROMA + 0.5
         local reticleSize <const> = defaults.reticleSize
 
         -- Unpack active.
@@ -866,6 +865,7 @@ dlg:canvas {
 
             local eval <const> = Curve3.eval
             local labToLch <const> = defaults.labToLch
+            local labnew <const> = Lab.new
             local curve <const> = Curve3.new(false, { kn0, kn1 }, "Shades")
             local toFac = 1.0
             if shadeCount > 1 then
@@ -875,7 +875,7 @@ dlg:canvas {
             while i < shadeCount do
                 local v <const> = eval(curve, i * toFac)
                 i = i + 1
-                swatches[i] = labToLch(v.z, v.x, v.y, a)
+                swatches[i] = labToLch(labnew(v.z, v.x, v.y, a))
             end
         end
         active.swatches = swatches

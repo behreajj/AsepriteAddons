@@ -289,8 +289,7 @@ dlg:button {
         local lab <const> = AseUtilities.averageColor(
             sprite, frObj.frameNumber)
         if lab.alpha > 0.0 then
-            local lch <const> = Clr.srLab2ToSrLch(
-                lab.l, lab.a, lab.b, lab.alpha)
+            local lch <const> = Lab.toLch(lab)
             if lch.c > 0.000001 then
                 local deg <const> = Utilities.round(lch.h * 360.0)
                 dlg:modify { id = "trgHue", value = deg }
@@ -559,7 +558,7 @@ dlg:button {
         elseif channel == "DIST" then
             local refColor <const> = args.refColor --[[@as Color]]
             local refSrgb <const> = AseUtilities.aseColorToClr(refColor)
-            local refLab <const> = Clr.sRgbToSrLab2(refSrgb)
+            local refLab <const> = ColorUtilities.sRgbToSrLab2(refSrgb)
             local normDist <const> = defaults.normDist
             local useInvert <const> = args.useInvert --[[@as boolean]]
             toFac = function(lab)
@@ -635,7 +634,7 @@ dlg:button {
         local tilesToImage <const> = AseUtilities.tileMapToImage
         local trimAlpha <const> = AseUtilities.trimImageAlpha
         local fromHex <const> = Clr.fromHexAbgr32
-        local sRgbaToLab <const> = Clr.sRgbToSrLab2
+        local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
         local floor <const> = math.floor
         local strpack <const> = string.pack
         local strsub <const> = string.sub
@@ -685,7 +684,7 @@ dlg:button {
                         else
                             if (srcAbgr32 & 0xff000000) ~= 0 then
                                 local clr <const> = fromHex(srcAbgr32)
-                                local lab <const> = sRgbaToLab(clr)
+                                local lab <const> = sRgbToLab(clr)
                                 local fac <const> = toFac(lab)
 
                                 -- Multiply results with source alpha even when

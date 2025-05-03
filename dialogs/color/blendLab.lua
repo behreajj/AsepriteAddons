@@ -498,10 +498,11 @@ dlg:button {
         local createSpec <const> = AseUtilities.createSpec
 
         local clrNew <const> = Clr.new
-        local sRgbToSrLab2 <const> = Clr.sRgbToSrLab2
-        local srLab2TosRgb <const> = Clr.srLab2TosRgb
-        local srLab2ToSrLch <const> = Clr.srLab2ToSrLch
-        local srLchToSrLab2 <const> = Clr.srLchToSrLab2
+        local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
+        local labTosRgb <const> = ColorUtilities.srLab2TosRgb
+        local labToLch <const> = Lab.toLch
+        local lchToLab <const> = Lab.fromLch
+        local labnew <const> = Lab.new
 
         -- Unpack arguments.
         local target <const> = args.target
@@ -622,9 +623,9 @@ dlg:button {
             compLayer.parent = parent
         end)
 
-        ---@type table<integer, {l: number, a: number, b: number, alpha: number}>
+        ---@type table<integer, Lab>
         local dict <const> = {}
-        dict[0] = { l = 0.0, a = 0.0, b = 0.0, alpha = 0.0 }
+        dict[0] = labnew(0.0, 0.0, 0.0, 0.0)
 
         local i = 0
         local lenFrames <const> = #frIdcs
@@ -749,7 +750,7 @@ dlg:button {
                         aGreen / 255.0,
                         aBlue / 255.0,
                         1.0)
-                    aLab = sRgbToSrLab2(aClr)
+                    aLab = sRgbToLab(aClr)
                     dict[aInt] = aLab
                 end
 
@@ -764,7 +765,7 @@ dlg:button {
                         bGreen / 255.0,
                         bBlue / 255.0,
                         1.0)
-                    bLab = sRgbToSrLab2(bClr)
+                    bLab = sRgbToLab(bClr)
                     dict[bInt] = bLab
                 end
 
@@ -792,13 +793,11 @@ dlg:button {
                     cl = lBlendFunc(aLab.l, bLab.l, v, t)
 
                     if useLch then
-                        local aLch <const> = srLab2ToSrLch(
-                            aLab.l, aLab.a, aLab.b, 1.0)
-                        local bLch <const> = srLab2ToSrLch(
-                            bLab.l, bLab.a, bLab.b, 1.0)
+                        local aLch <const> = labToLch(aLab)
+                        local bLch <const> = labToLch(bLab)
                         local cc <const> = cBlendFunc(aLch.c, bLch.c, v, t)
                         local ch <const> = hBlendFunc(aLch.h, bLch.h, t)
-                        local cLab <const> = srLchToSrLab2(cl, cc, ch, 1.0)
+                        local cLab <const> = lchToLab(cl, cc, ch, 1.0)
                         ca = cLab.a
                         cb = cLab.b
                     else
@@ -810,7 +809,7 @@ dlg:button {
                     end
                 end
 
-                local cClr <const> = srLab2TosRgb(cl, ca, cb, tuv)
+                local cClr <const> = labTosRgb(labnew(cl, ca, cb, tuv))
                 local cRed <const> = floor(min(max(cClr.r, 0.0), 1.0) * 255.0 + 0.5)
                 local cGreen <const> = floor(min(max(cClr.g, 0.0), 1.0) * 255.0 + 0.5)
                 local cBlue <const> = floor(min(max(cClr.b, 0.0), 1.0) * 255.0 + 0.5)

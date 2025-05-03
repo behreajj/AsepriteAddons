@@ -149,15 +149,15 @@ dlg:button {
         local tconcat <const> = table.concat
 
         local fromHex <const> = Clr.fromHexAbgr32
-        local lchTosRgba <const> = Clr.srLchTosRgb
+        local lchTosRgb <const> = ColorUtilities.srLchTosRgbInternal
         local rgbIsInGamut <const> = Clr.rgbIsInGamut
-        local sRgbaToLch <const> = Clr.sRgbToSrLch
+        local sRgbToLch <const> = ColorUtilities.sRgbToSrLchInternal
 
         local quantize <const> = Utilities.quantizeUnsigned
 
         -- Unpack arguments.
         local args <const> = dlg.data
-        local maxChroma <const> = Clr.SR_LCH_MAX_CHROMA
+        local maxChroma <const> = Lab.SR_LCH_MAX_CHROMA
         local gamutTol <const> = defaults.gamutTol
         local maxLight <const> = args.maxLight
             or defaults.maxLight --[[@as integer]]
@@ -238,7 +238,7 @@ dlg:button {
                 local xNrm <const> = quantize(x * szInv, quantization)
                 local chroma <const> = xNrm * maxChroma
 
-                local srgb <const> = lchTosRgba(light, chroma, hue, 1.0)
+                local srgb <const> = lchTosRgb(light, chroma, hue, 1.0)
 
                 local r8 <const> = floor(min(max(srgb.r, 0.0), 1.0) * 255 + 0.5)
                 local g8 <const> = floor(min(max(srgb.g, 0.0), 1.0) * 255 + 0.5)
@@ -324,7 +324,7 @@ dlg:button {
                 local yi = size
                 local stroke = 0x0
                 if (hexSrgb & 0xff000000) ~= 0 then
-                    local lch <const> = sRgbaToLch(fromHex(hexSrgb))
+                    local lch <const> = sRgbToLch(fromHex(hexSrgb))
 
                     -- Convert chroma to [0.0, 1.0].
                     local xNrm <const> = lch.c * invMaxChroma
