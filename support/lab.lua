@@ -217,24 +217,6 @@ function Lab.equalsValue(o, d)
 end
 
 ---Converts from a hexadecimal representation of a color stored as
----0xTTLLAABB.
----@param c integer hexadecimal color
----@return Lab
----@nodiscard
-function Lab.fromHexTlab32(c)
-    local t8 <const> = c >> 0x18 & 0xff
-    local l8 <const> = c >> 0x10 & 0xff
-    local a8 <const> = c >> 0x08 & 0xff
-    local b8 <const> = c & 0xff
-
-    return Lab.new(
-        l8 / 2.55,
-        a8 - 0x80,
-        b8 - 0x80,
-        t8 / 255.0)
-end
-
----Converts from a hexadecimal representation of a color stored as
 ---0xTTTTLLLLAAAABBBB.
 ---@param c integer hexadecimal color
 ---@return Lab
@@ -393,15 +375,6 @@ function Lab.random()
         1.0)
 end
 
----Converts from a color to a 32 bit hexadecimal integer. Channels are packed in
----0xTTTTLLLLAAAABBB order. Ensures that color values are valid.
----@param o Lab color
----@return integer
----@nodiscard
-function Lab.toHexSat32(o)
-    return Lab.toHexWrap32(Lab.clamp(o))
-end
-
 ---Converts from a color to a 64 bit hexadecimal integer. Channels are packed in
 ---0xTTTTLLLLAAAABBB order. Ensures that color values are valid.
 ---@param o Lab color
@@ -409,19 +382,6 @@ end
 ---@nodiscard
 function Lab.toHexSat64(o)
     return Lab.toHexWrap64(Lab.clamp(o))
-end
-
----Converts from a color to a 32 bit hexadecimal integer.
----@param o Lab color
----@return integer
----@nodiscard
-function Lab.toHexWrap32(o)
-    local t8 <const> = math.floor(o.alpha * 255.0 + 0.5)
-    local l8 <const> = math.floor(o.l * 2.55 + 0.5)
-    local a8 <const> = 0x80 + math.floor(o.a)
-    local b8 <const> = 0x80 + math.floor(o.b)
-
-    return t8 << 0x18 | l8 << 0x10 | a8 << 0x08 | b8
 end
 
 ---Converts from a color to a 64 bit hexadecimal integer.

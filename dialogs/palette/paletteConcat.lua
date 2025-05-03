@@ -301,8 +301,8 @@ dlg:button {
             local compare = nil
             if sortPreset == "GREEN_RED" then
                 compare = function(a, b)
-                    local aLab <const> = Clr.sRgbToSrLab2(Clr.fromHexAbgr32(a))
-                    local bLab <const> = Clr.sRgbToSrLab2(Clr.fromHexAbgr32(b))
+                    local aLab <const> = ColorUtilities.sRgbToSrLab2Internal(Clr.fromHexAbgr32(a))
+                    local bLab <const> = ColorUtilities.sRgbToSrLab2Internal(Clr.fromHexAbgr32(b))
                     return aLab.a < bLab.a
                 end
             elseif sortPreset == "ALPHA" then
@@ -313,8 +313,8 @@ dlg:button {
                 end
             elseif sortPreset == "BLUE_YELLOW" then
                 compare = function(a, b)
-                    local aLab <const> = Clr.sRgbToSrLab2(Clr.fromHexAbgr32(a))
-                    local bLab <const> = Clr.sRgbToSrLab2(Clr.fromHexAbgr32(b))
+                    local aLab <const> = ColorUtilities.sRgbToSrLab2Internal(Clr.fromHexAbgr32(a))
+                    local bLab <const> = ColorUtilities.sRgbToSrLab2Internal(Clr.fromHexAbgr32(b))
                     return aLab.b < bLab.b
                 end
             elseif sortPreset == "CHROMA" then
@@ -323,8 +323,8 @@ dlg:button {
                     local bClr <const> = Clr.fromHexAbgr32(b)
                     local aIsGray <const> = aClr.r == aClr.g and aClr.g == aClr.b
                     local bIsGray <const> = bClr.r == bClr.g and bClr.g == bClr.b
-                    local aLch <const> = Clr.sRgbToSrLch(aClr)
-                    local bLch <const> = Clr.sRgbToSrLch(bClr)
+                    local aLch <const> = ColorUtilities.sRgbToSrLchInternal(aClr)
+                    local bLch <const> = ColorUtilities.sRgbToSrLchInternal(bClr)
                     if aIsGray and bIsGray then return aLch.l < bLch.l end
                     return aLch.c < bLch.c
                 end
@@ -334,8 +334,8 @@ dlg:button {
                     local bClr <const> = Clr.fromHexAbgr32(b)
                     local aIsGray <const> = aClr.r == aClr.g and aClr.g == aClr.b
                     local bIsGray <const> = bClr.r == bClr.g and bClr.g == bClr.b
-                    local aLch <const> = Clr.sRgbToSrLch(aClr)
-                    local bLch <const> = Clr.sRgbToSrLch(bClr)
+                    local aLch <const> = ColorUtilities.sRgbToSrLchInternal(aClr)
+                    local bLch <const> = ColorUtilities.sRgbToSrLchInternal(bClr)
                     if aIsGray and bIsGray then return aLch.l < bLch.l end
                     if aIsGray then return true end
                     if bIsGray then return false end
@@ -343,8 +343,8 @@ dlg:button {
                 end
             elseif sortPreset == "LUMA" then
                 compare = function(a, b)
-                    local aLab <const> = Clr.sRgbToSrLab2(Clr.fromHexAbgr32(a))
-                    local bLab <const> = Clr.sRgbToSrLab2(Clr.fromHexAbgr32(b))
+                    local aLab <const> = ColorUtilities.sRgbToSrLab2Internal(Clr.fromHexAbgr32(a))
+                    local bLab <const> = ColorUtilities.sRgbToSrLab2Internal(Clr.fromHexAbgr32(b))
                     return aLab.l < bLab.l
                 end
             end
