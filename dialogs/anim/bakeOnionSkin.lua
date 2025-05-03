@@ -53,8 +53,8 @@ local function tintImage(srcImg, tint, preserveLight)
     local strpack <const> = string.pack
     local fromHex <const> = Clr.fromHexAbgr32
     local toHex <const> = Clr.toHex
-    local sRgbToLab <const> = Clr.sRgbToSrLab2
-    local labTosRgb <const> = Clr.srLab2TosRgb
+    local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
+    local labTosRgb <const> = ColorUtilities.srLab2TosRgb
 
     local i = 0
     while i < area do
@@ -68,11 +68,12 @@ local function tintImage(srcImg, tint, preserveLight)
             local srcsRgb <const> = fromHex(srcAbgr32)
             if srcsRgb.a > 0.0 then
                 local srcLab <const> = sRgbToLab(srcsRgb)
-                local trgsRgb <const> = labTosRgb(
+                local trgLab <const> = Lab.new(
                     preserveLight and srcLab.l or uTint * srcLab.l + tl,
                     uTint * srcLab.a + ta,
                     uTint * srcLab.b + tb,
                     srcLab.alpha)
+                local trgsRgb <const> = labTosRgb(trgLab)
                 trgAbgr32 = toHex(trgsRgb)
             end
             srcToTrg[srcAbgr32] = trgAbgr32
@@ -492,8 +493,8 @@ dlg:button {
 
         local backClr <const> = AseUtilities.aseColorToClr(backTint)
         local foreClr <const> = AseUtilities.aseColorToClr(foreTint)
-        local backLab <const> = Clr.sRgbToSrLab2(backClr)
-        local foreLab <const> = Clr.sRgbToSrLab2(foreClr)
+        local backLab <const> = ColorUtilities.sRgbToSrLab2(backClr)
+        local foreLab <const> = ColorUtilities.sRgbToSrLab2(foreClr)
 
         -- Get frame UI offset.
         local docPrefs <const> = app.preferences.document(activeSprite)
@@ -536,13 +537,7 @@ dlg:button {
                                     local trgLab = backLab
                                     if mixTintVerif then
                                         local tm <const> = (itrs - k) * toFac2
-                                        local um <const> = 1.0 - tm
-                                        trgLab = {
-                                            l = um * backLab.l + tm * foreLab.l,
-                                            a = um * backLab.a + tm * foreLab.a,
-                                            b = um * backLab.b + tm * foreLab.b,
-                                            alpha = um * backLab.alpha + tm * foreLab.alpha,
-                                        }
+                                        trgLab = Lab.mix(backLab, foreLab, tm)
                                     end
                                     writeImg = tintImage(srcImg, trgLab, preserveLight)
                                 end
@@ -596,13 +591,7 @@ dlg:button {
                                     local trgLab = foreLab
                                     if mixTintVerif then
                                         local tm <const> = (itrs + k) * toFac2
-                                        local um <const> = 1.0 - tm
-                                        trgLab = {
-                                            l = um * backLab.l + tm * foreLab.l,
-                                            a = um * backLab.a + tm * foreLab.a,
-                                            b = um * backLab.b + tm * foreLab.b,
-                                            alpha = um * backLab.alpha + tm * foreLab.alpha,
-                                        }
+                                        trgLab = Lab.mix(backLab, foreLab, tm)
                                     end
                                     writeImg = tintImage(srcImg, trgLab, preserveLight)
                                 end
