@@ -264,6 +264,16 @@ dlg:combobox {
 
 dlg:newrow { always = false }
 
+dlg:slider {
+    id = "factor",
+    label = "Factor:",
+    min = 0,
+    max = 100,
+    value = defaults.factor
+}
+
+dlg:newrow { always = false }
+
 dlg:combobox {
     id = "ditherMode",
     label = "Mode:",
@@ -398,16 +408,6 @@ dlg:slider {
     min = defaults.minCapacityBits,
     max = defaults.maxCapacityBits,
     value = defaults.octCapacityBits
-}
-
-dlg:newrow { always = false }
-
-dlg:slider {
-    id = "factor",
-    label = "Factor:",
-    min = 0,
-    max = 100,
-    value = defaults.factor
 }
 
 dlg:newrow { always = false }
