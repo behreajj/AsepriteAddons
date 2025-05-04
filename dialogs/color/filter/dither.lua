@@ -44,6 +44,8 @@ local function bayerDither(pixels, wSrc, hSrc, srcBpp, factor, closestFunc)
     local max <const> = math.max
     local min <const> = math.min
 
+    local complFac <const> = 1.0 - factor
+
     local areaImage <const> = wSrc * hSrc
     local i = 0
     while i < areaImage do
@@ -73,25 +75,22 @@ local function bayerDither(pixels, wSrc, hSrc, srcBpp, factor, closestFunc)
         local g01Src <const> = g8Src / 255.0
         local b01Src <const> = b8Src / 255.0
 
-        local r01Alt = r01Src + mFac
-        local g01Alt = g01Src + mFac
-        local b01Alt = b01Src + mFac
-
         -- Set the altered color to the relative luminance of the source.
+        -- Because the alt color is just the source plus the matrix entry,
+        -- the delta between source luma and alt luma is simplified.
         -- https://www.w3.org/TR/compositing-1/#blendingnonseparable
-        local yDelta <const> = -(0.3 * mFac + 0.59 * mFac + 0.11 * mFac)
-            * (1.0 - factor)
+        local yDelta <const> = (0.3 * mFac + 0.59 * mFac + 0.11 * mFac)
+            * complFac
 
-        r01Alt = min(max(r01Alt + yDelta, 0.0), 1.0)
-        g01Alt = min(max(g01Alt + yDelta, 0.0), 1.0)
-        b01Alt = min(max(b01Alt + yDelta, 0.0), 1.0)
-
-        local r8Alt <const> = floor(r01Alt * 255.0 + 0.5)
-        local g8Alt <const> = floor(g01Alt * 255.0 + 0.5)
-        local b8Alt <const> = floor(b01Alt * 255.0 + 0.5)
+        local r01Alt <const> = min(max(r01Src + mFac - yDelta, 0.0), 1.0)
+        local g01Alt <const> = min(max(g01Src + mFac - yDelta, 0.0), 1.0)
+        local b01Alt <const> = min(max(b01Src + mFac - yDelta, 0.0), 1.0)
 
         r8Trg, g8Trg, b8Trg, a8Trg = closestFunc(
-            r8Alt, g8Alt, b8Alt, a8Alt)
+            floor(r01Alt * 255.0 + 0.5),
+            floor(g01Alt * 255.0 + 0.5),
+            floor(b01Alt * 255.0 + 0.5),
+            a8Alt)
 
         pixels[1 + iSrcBpp] = r8Trg
         pixels[2 + iSrcBpp] = g8Trg
