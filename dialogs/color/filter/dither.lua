@@ -256,6 +256,15 @@ dlg:combobox {
 dlg:newrow { always = false }
 
 dlg:combobox {
+    id = "ditherPattern",
+    label = "Pattern:",
+    option = defaults.ditherPattern,
+    options = ditherPatterns,
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
     id = "ditherMode",
     label = "Mode:",
     option = defaults.ditherMode,
@@ -311,15 +320,6 @@ dlg:combobox {
         }
         dlg:modify { id = "octCapacity", visible = isPal }
     end
-}
-
-dlg:newrow { always = false }
-
-dlg:combobox {
-    id = "ditherPattern",
-    label = "Pattern:",
-    option = defaults.ditherPattern,
-    options = ditherPatterns,
 }
 
 dlg:newrow { always = false }
