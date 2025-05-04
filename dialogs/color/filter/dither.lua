@@ -59,10 +59,12 @@ local function bayerDither(pixels, wSrc, hSrc, srcBpp, factor, closestFunc)
         local mIdx <const> = (y % rows) * cols + (x % cols)
         local mFac <const> = factor * (m[1 + mIdx] - 0.5)
 
+        -- TODO: Test how well the alpha formula here works when dither
+        -- uses source rather than threshold.
         local r01Alt = r01Src + mFac
         local g01Alt = g01Src + mFac
         local b01Alt = b01Src + mFac
-        local a01Alt = a01Src + mFac
+        local a01Alt = min(max(a01Src + mFac, 0.0), 1.0)
 
         -- Set the altered color to the relative luminance of the source.
         -- https://www.w3.org/TR/compositing-1/#blendingnonseparable
