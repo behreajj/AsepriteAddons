@@ -41,6 +41,8 @@ local function bayerDither(pixels, wSrc, hSrc, srcBpp, factor, closestFunc)
     local m <const> = GradientUtilities.BAYER_MATRICES[bayerIndex]
 
     local floor <const> = math.floor
+    local max <const> = math.max
+    local min <const> = math.min
 
     local areaImage <const> = wSrc * hSrc
     local i = 0
@@ -67,9 +69,9 @@ local function bayerDither(pixels, wSrc, hSrc, srcBpp, factor, closestFunc)
         local yDelta <const> = (0.3 * r01Src + 0.59 * g01Src + 0.11 + b01Src)
             - (0.3 * r01Alt + 0.59 * g01Alt + 0.11 + b01Alt)
 
-        r01Alt = r01Alt + yDelta
-        g01Alt = g01Alt + yDelta
-        b01Alt = b01Alt + yDelta
+        r01Alt = min(max(r01Alt + yDelta, 0.0), 1.0)
+        g01Alt = min(max(g01Alt + yDelta, 0.0), 1.0)
+        b01Alt = min(max(b01Alt + yDelta, 0.0), 1.0)
 
         local r8Alt <const> = floor(r01Alt * 255.0 + 0.5)
         local g8Alt <const> = floor(g01Alt * 255.0 + 0.5)
