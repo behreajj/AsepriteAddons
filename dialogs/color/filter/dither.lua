@@ -1,24 +1,19 @@
-dofile("../../../support/aseutilities.lua")
+dofile("../../../support/gradientutilities.lua")
 dofile("../../../support/quantizeutilities.lua")
 dofile("../../../support/octree.lua")
 
 local ditherModes <const> = { "ONE_BIT", "PALETTE", "QUANTIZE" }
+local ditherPatterns <const> = { "BAYER", "FLOYD_STEINBERG" }
 local alphaModes <const> = { "SOURCE", "THRESHOLD" }
 local areaTargets <const> = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
 local palTargets <const> = { "ACTIVE", "FILE" }
 local greyMethods <const> = { "AVERAGE", "HSL", "HSV", "LUMINANCE" }
 
 local defaults <const> = {
-    -- TODO: Built-in Bayer ordered dithering doesn't support translucency,
-    -- From Wikipedia: c' = nearestPalette(c + r * (M(x % n, y % n) - 0.5))
-    -- assuming palette with 2^(3N) colors in [0, 255], r
-    -- is typically 255 / N
-    -- Limitations of the simple approach above:
-    -- https://bisqwit.iki.fi/story/howto/dither/jy/
-
     -- Last commit for old version of dithering:
     -- 23e391771391d5ffaf3e7f2385389e4af7e84004
     ditherMode = "PALETTE",
+    ditherPattern = "FLOYD_STEINBERG",
     alphaMode = "THRESHOLD",
     areaTarget = "ACTIVE",
     palTarget = "ACTIVE",
@@ -31,6 +26,69 @@ local defaults <const> = {
     alphaThreshold = 128,
     printElapsed = false,
 }
+
+---Changes pixel array in place.
+---@param pixels integer[] bytes of length w * h * bpp
+---@param wSrc integer source image width
+---@param hSrc integer source image height
+---@param srcBpp integer source image bytes per pixel
+---@param factor number dither factor
+---@param closestFunc fun(r8Src: integer, g8Src: integer, b8Src: integer, a8Src: integer): integer, integer, integer, integer
+local function bayerDither(pixels, wSrc, hSrc, srcBpp, factor, closestFunc)
+    local bayerIndex <const> = 2
+    local cols <const> = 1 << bayerIndex
+    local rows <const> = 1 << bayerIndex
+    local m <const> = GradientUtilities.BAYER_MATRICES[bayerIndex]
+
+    local floor <const> = math.floor
+
+    local areaImage <const> = wSrc * hSrc
+    local i = 0
+    while i < areaImage do
+        local iSrcBpp <const> = i * srcBpp
+
+        local r01Src <const> = pixels[1 + iSrcBpp] / 255.0
+        local g01Src <const> = pixels[2 + iSrcBpp] / 255.0
+        local b01Src <const> = pixels[3 + iSrcBpp] / 255.0
+        local a01Src <const> = pixels[4 + iSrcBpp] / 255.0
+
+        local x <const> = i % wSrc
+        local y <const> = i // wSrc
+        local mIdx <const> = (y % rows) * cols + (x % cols)
+        local mFac <const> = factor * (m[1 + mIdx] - 0.5)
+
+        local r01Alt = r01Src + mFac
+        local g01Alt = g01Src + mFac
+        local b01Alt = b01Src + mFac
+        local a01Alt = a01Src + mFac
+
+        -- Set the altered color to the relative luminance of the source.
+        -- https://www.w3.org/TR/compositing-1/#blendingnonseparable
+        local yDelta <const> = (0.3 * r01Src + 0.59 * g01Src + 0.11 + b01Src)
+            - (0.3 * r01Alt + 0.59 * g01Alt + 0.11 + b01Alt)
+
+        r01Alt = r01Alt + yDelta
+        g01Alt = g01Alt + yDelta
+        b01Alt = b01Alt + yDelta
+
+        local r8Alt <const> = floor(r01Alt * 255.0 + 0.5)
+        local g8Alt <const> = floor(g01Alt * 255.0 + 0.5)
+        local b8Alt <const> = floor(b01Alt * 255.0 + 0.5)
+        local a8Alt <const> = floor(a01Alt * 255.0 + 0.5)
+
+        local r8Trg <const>,
+        g8Trg <const>,
+        b8Trg <const>,
+        a8Trg <const> = closestFunc(r8Alt, g8Alt, b8Alt, a8Alt)
+
+        pixels[1 + iSrcBpp] = r8Trg
+        pixels[2 + iSrcBpp] = g8Trg
+        pixels[3 + iSrcBpp] = b8Trg
+        pixels[4 + iSrcBpp] = a8Trg
+
+        i = i + 1
+    end
+end
 
 ---Changes pixel array in place.
 ---@param pixels integer[] bytes of length w * h * bpp
@@ -246,6 +304,15 @@ dlg:combobox {
 
 dlg:newrow { always = false }
 
+dlg:combobox {
+    id = "ditherPattern",
+    label = "Pattern:",
+    option = defaults.ditherPattern,
+    options = ditherPatterns,
+}
+
+dlg:newrow { always = false }
+
 dlg:color {
     id = "oColor",
     label = "Colors:",
@@ -422,6 +489,8 @@ dlg:button {
             or defaults.alphaMode --[[@as string]]
         local ditherMode <const> = args.ditherMode
             or defaults.ditherMode --[[@as string]]
+        local ditherPattern <const> = args.ditherPattern
+            or defaults.ditherPattern --[[@as string]]
         local factor100 <const> = args.factor
             or defaults.factor --[[@as integer]]
 
@@ -452,6 +521,11 @@ dlg:button {
             alphaFunc = function(a8Src)
                 return a8Src >= alphaThreshold and 255 or 0
             end
+        end
+
+        local dither = fsDither
+        if ditherPattern == "BAYER" then
+            dither = bayerDither
         end
 
         -- String that is assigned to new layer name to clarify operation.
@@ -751,7 +825,7 @@ dlg:button {
                     local hSrc <const> = srcSpec.height
                     local srcBpp <const> = srcImg.bytesPerPixel
                     local trgPixels <const> = getBytes(srcImg)
-                    fsDither(trgPixels, wSrc, hSrc, srcBpp, factor, closestFunc)
+                    dither(trgPixels, wSrc, hSrc, srcBpp, factor, closestFunc)
                     trgImg = Image(srcSpec)
                     setBytes(trgImg, trgPixels)
                     premadeTrgImgs[srcImgId] = trgImg
