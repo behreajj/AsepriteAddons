@@ -102,22 +102,6 @@ function Lab.bisectRight(arr, elm, compare)
     return 1 + low
 end
 
----Finds the chroma of a color.
----@param o Lab color
----@return number
----@nodiscard
-function Lab.chroma(o)
-    return math.sqrt(o.a * o.a + o.b * o.b)
-end
-
----Finds the chroma squared of a color.
----@param o Lab color
----@return number
----@nodiscard
-function Lab.chromaSq(o)
-    return o.a * o.a + o.b * o.b
-end
-
 ---A comparator method to sort colors in a table.
 ---@param o Lab left comparisand
 ---@param d Lab right comparisand
@@ -281,21 +265,6 @@ function Lab.fromLchInternal(l, c, h, alpha)
         alpha or 1.0)
 end
 
----Finds a color's hue.
----Returns zero if the color's chroma is zero.
----@param o Lab color
----@return number
----@nodiscard
-function Lab.hue(o)
-    -- TODO: Should this return a purple to yellow hue when chroma is near zero?
-    local hueSigned <const> = math.atan(o.b, o.a)
-    local tau <const> = math.pi + math.pi
-    local hueUnsigned <const> = hueSigned < 0.0
-        and hueSigned + tau
-        or hueSigned
-    return hueUnsigned / tau
-end
-
 ---Inserts a color  into a table so as to maintain sorted order. Biases toward
 ---the right insertion point. Returns true if the unique color was inserted.
 ---@param arr Lab[] colors array
@@ -337,10 +306,10 @@ end
 ---@return Lab
 ---@nodiscard
 function Lab.mixPolar(o, d, step, hueFunc)
-    local ocsq <const> = Lab.chromaSq(o)
+    local ocsq <const> = o.a * o.a + o.b * o.b
     if ocsq < 0.00001 then return Lab.mix(o, d, step) end
 
-    local dcsq <const> = Lab.chromaSq(d)
+    local dcsq <const> = d.a * d.a + d.b * d.b
     if dcsq < 0.00001 then return Lab.mix(o, d, step) end
 
     local t <const> = step or 0.5
@@ -407,7 +376,7 @@ function Lab.toLch(o, tol)
     local vTol = 0.007072
     if tol then vTol = tol end
 
-    local chromasq <const> = Lab.chromaSq(o)
+    local chromasq <const> = o.a * o.a + o.b * o.b
     local c = 0.0
     local h = 0.0
 
