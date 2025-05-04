@@ -157,7 +157,7 @@ dlg:button {
 
         -- Unpack arguments.
         local args <const> = dlg.data
-        local maxChroma <const> = Lab.SR_LCH_MAX_CHROMA
+        local maxChroma <const> = Lab.SR_MAX_CHROMA
         local gamutTol <const> = defaults.gamutTol
         local maxLight <const> = args.maxLight
             or defaults.maxLight --[[@as integer]]

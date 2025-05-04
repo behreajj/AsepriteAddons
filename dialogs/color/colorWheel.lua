@@ -236,7 +236,7 @@ dlg:button {
         -- Quantization calculations.
         local quantAzims <const> = sectorCount > 0
         local quantRad <const> = ringCount > 0
-        local maxChroma <const> = Lab.SR_LCH_MAX_CHROMA
+        local maxChroma <const> = Lab.SR_MAX_CHROMA
         local gamutTol <const> = defaults.gamutTol
 
         -- Depending on case, may be hue, radians or degrees.

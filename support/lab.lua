@@ -30,13 +30,13 @@ Lab.SR_B_MAX = 95.18662
 Lab.SR_B_MIN = -110.8078
 
 ---Arbitrary hue assigned to lighter grays in SR LCH conversion functions.
-Lab.SR_LCH_HUE_LIGHT = 0.306391
+Lab.SR_HUE_LIGHT = 0.306391
 
 ---Arbitrary hue assigned to darker grays in SR LCH conversion functions.
-Lab.SR_LCH_HUE_SHADOW = 0.874676
+Lab.SR_HUE_SHADOW = 0.874676
 
 ---Maximum chroma of a color in SR LCH that is in gamut in standard RGB.
-Lab.SR_LCH_MAX_CHROMA = 119.07602046756
+Lab.SR_MAX_CHROMA = 119.07602046756
 
 ---Constructs a new color from lightness, a, b and alpha channels.
 ---The expected range for lightness is [0.0, 100.0].
@@ -382,13 +382,13 @@ function Lab.toLch(o, tol)
 
     if chromasq < (vTol * vTol) then
         if o.l <= 0.0 then
-            h = Lab.SR_LCH_HUE_SHADOW
+            h = Lab.SR_HUE_SHADOW
         elseif o.l >= 100.0 then
-            h = Lab.SR_LCH_HUE_LIGHT
+            h = Lab.SR_HUE_LIGHT
         else
             local fac <const> = o.l * 0.01
-            h = (1.0 - fac) * Lab.SR_LCH_HUE_SHADOW
-                + fac * (1.0 + Lab.SR_LCH_HUE_LIGHT)
+            h = (1.0 - fac) * Lab.SR_HUE_SHADOW
+                + fac * (1.0 + Lab.SR_HUE_LIGHT)
             h = h % 1.0
         end
     else

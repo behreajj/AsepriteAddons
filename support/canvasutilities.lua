@@ -900,7 +900,7 @@ function CanvasUtilities.spectrum(
     isVisible, lDef, cDef, hDef, aDef)
     local aDefVrf <const> = aDef or 1.0
     local hDefVrf <const> = hDef or 0.0
-    local cDefVrf <const> = cDef or (Lab.SR_LCH_MAX_CHROMA * 0.5)
+    local cDefVrf <const> = cDef or (Lab.SR_MAX_CHROMA * 0.5)
     local lDefVrf <const> = lDef or 50.0
 
     local isVisVrf = false
@@ -917,7 +917,7 @@ function CanvasUtilities.spectrum(
     local xToAlph01 <const> = 1.0 / (wVrf - 1.0)
     local xToAlpha255 <const> = 255.0 / (wVrf - 1.0)
     local yToLgt <const> = 100.0 / (spectrumHeight - 1.0)
-    local xToChr <const> = Lab.SR_LCH_MAX_CHROMA / (wVrf - 1.0)
+    local xToChr <const> = Lab.SR_MAX_CHROMA / (wVrf - 1.0)
     local xToHue <const> = 1.0 / wVrf
 
     local inSpectrum = false
@@ -955,7 +955,7 @@ function CanvasUtilities.spectrum(
             inChrBar = true
 
             local sMouse <const> = math.min(math.max(
-                xMouse * xToChr, 0.0), Lab.SR_LCH_MAX_CHROMA)
+                xMouse * xToChr, 0.0), Lab.SR_MAX_CHROMA)
             dialog:modify {
                 id = "spectrumChroma",
                 text = string.format("%.5f", sMouse)
