@@ -194,16 +194,19 @@ dlg:button {
                 local g <const> = aseColor.green
                 local b <const> = aseColor.blue
 
+                -- TODO: As of 2 16 2025 It should be safe to add leading
+                -- spaces to this, instead of leading zeroes.
+                -- https://www.cosmigo.com/pixel_animation_software/changelog
                 local entryStr = ""
                 if useAseGpl then
                     local a <const> = aseColor.alpha
                     entryStr = strfmt(
-                        "%03d %03d %03d %03d 0x%08x",
+                        "%3d %3d %3d %3d 0x%08x",
                         r, g, b, a,
                         a << 0x18 | b << 0x10 | g << 0x08 | r)
                 else
                     entryStr = strfmt(
-                        "%03d %03d %03d %06X",
+                        "%3d %3d %3d %06X",
                         r, g, b,
                         r << 0x10 | g << 0x08 | b)
                 end
