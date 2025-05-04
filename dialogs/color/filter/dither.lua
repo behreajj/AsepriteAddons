@@ -49,22 +49,32 @@ local function bayerDither(pixels, wSrc, hSrc, srcBpp, factor, closestFunc)
     while i < areaImage do
         local iSrcBpp <const> = i * srcBpp
 
-        local r01Src <const> = pixels[1 + iSrcBpp] / 255.0
-        local g01Src <const> = pixels[2 + iSrcBpp] / 255.0
-        local b01Src <const> = pixels[3 + iSrcBpp] / 255.0
-        local a01Src <const> = pixels[4 + iSrcBpp] / 255.0
+        local r8Src <const> = pixels[1 + iSrcBpp]
+        local g8Src <const> = pixels[2 + iSrcBpp]
+        local b8Src <const> = pixels[3 + iSrcBpp]
+        local a8Src <const> = pixels[4 + iSrcBpp]
+
+        local r8Trg, g8Trg, b8Trg, a8Trg = 0, 0, 0, 0
 
         local x <const> = i % wSrc
         local y <const> = i // wSrc
         local mIdx <const> = (y % rows) * cols + (x % cols)
         local mFac <const> = factor * (m[1 + mIdx] - 0.5)
 
-        -- TODO: Test how well the alpha formula here works when dither
-        -- uses source rather than threshold.
+        local a8Alt = a8Src
+        if a8Src > 0 and a8Src < 255 then
+            local a01Src <const> = a8Src / 255.0
+            local a01Alt = min(max(a01Src + mFac, 0.0), 1.0)
+            a8Alt = floor(a01Alt * 255.0 + 0.5)
+        end
+
+        local r01Src <const> = r8Src / 255.0
+        local g01Src <const> = g8Src / 255.0
+        local b01Src <const> = b8Src / 255.0
+
         local r01Alt = r01Src + mFac
         local g01Alt = g01Src + mFac
         local b01Alt = b01Src + mFac
-        local a01Alt = min(max(a01Src + mFac, 0.0), 1.0)
 
         -- Set the altered color to the relative luminance of the source.
         -- https://www.w3.org/TR/compositing-1/#blendingnonseparable
@@ -78,12 +88,9 @@ local function bayerDither(pixels, wSrc, hSrc, srcBpp, factor, closestFunc)
         local r8Alt <const> = floor(r01Alt * 255.0 + 0.5)
         local g8Alt <const> = floor(g01Alt * 255.0 + 0.5)
         local b8Alt <const> = floor(b01Alt * 255.0 + 0.5)
-        local a8Alt <const> = floor(a01Alt * 255.0 + 0.5)
 
-        local r8Trg <const>,
-        g8Trg <const>,
-        b8Trg <const>,
-        a8Trg <const> = closestFunc(r8Alt, g8Alt, b8Alt, a8Alt)
+        r8Trg, g8Trg, b8Trg, a8Trg = closestFunc(
+            r8Alt, g8Alt, b8Alt, a8Alt)
 
         pixels[1 + iSrcBpp] = r8Trg
         pixels[2 + iSrcBpp] = g8Trg
