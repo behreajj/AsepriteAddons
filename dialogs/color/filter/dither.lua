@@ -59,7 +59,7 @@ local function bayerDither(pixels, wSrc, hSrc, srcBpp, factor, closestFunc)
         local x <const> = i % wSrc
         local y <const> = i // wSrc
         local mIdx <const> = (y % rows) * cols + (x % cols)
-        local mFac <const> = factor * (m[1 + mIdx] - 0.5)
+        local mFac <const> = m[1 + mIdx] - 0.5
 
         -- Only dither the source alpha if it is translucent.
         local a8Alt = a8Src
@@ -79,8 +79,8 @@ local function bayerDither(pixels, wSrc, hSrc, srcBpp, factor, closestFunc)
 
         -- Set the altered color to the relative luminance of the source.
         -- https://www.w3.org/TR/compositing-1/#blendingnonseparable
-        local yDelta <const> = (0.3 * r01Src + 0.59 * g01Src + 0.11 * b01Src)
-            - (0.3 * r01Alt + 0.59 * g01Alt + 0.11 * b01Alt)
+        local yDelta <const> = -(0.3 * mFac + 0.59 * mFac + 0.11 * mFac)
+            * (1.0 - factor)
 
         r01Alt = min(max(r01Alt + yDelta, 0.0), 1.0)
         g01Alt = min(max(g01Alt + yDelta, 0.0), 1.0)
