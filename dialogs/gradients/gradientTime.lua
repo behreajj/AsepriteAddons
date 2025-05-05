@@ -165,7 +165,7 @@ dlg:button {
                 trgImages[i] = trgImage
             end
         else
-            local dither <const> = GradientUtilities.ditherFromPreset(
+            local dither <const> = GradientUtilities.ditherFuncFromPreset(
                 stylePreset, bayerIndex, ditherPath)
             local tconcat <const> = table.concat
             local strpack <const> = string.pack

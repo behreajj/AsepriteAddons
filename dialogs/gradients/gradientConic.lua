@@ -183,7 +183,7 @@ dlg:button {
                 trgByteStr[i] = strpack("<I4", trgAbgr32)
             end
         else
-            local dither <const> = GradientUtilities.ditherFromPreset(
+            local dither <const> = GradientUtilities.ditherFuncFromPreset(
                 stylePreset, bayerIndex, ditherPath)
             local i = 0
             while i < areaSprite do

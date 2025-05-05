@@ -772,23 +772,44 @@ end
 ---@param ditherPath? string dither image path
 ---@return fun(cg: ClrGradient, step: number, x: integer, y: integer): Rgb
 ---@nodiscard
-function GradientUtilities.ditherFromPreset(
+function GradientUtilities.ditherFuncFromPreset(
     stylePreset, bayerIndex, ditherPath)
-    if stylePreset == "DITHER_BAYER" then
-        local biVrf <const> = bayerIndex or 2
-        local matrix <const> = GradientUtilities.BAYER_MATRICES[biVrf]
-        local bayerSize <const> = 1 << biVrf
+    if stylePreset == "DITHER_BAYER"
+        or stylePreset == "DITHER_CUSTOM" then
+        local matrix <const>,
+        cols <const>,
+        rows <const> = GradientUtilities.ditherMatrixFromPreset(
+            stylePreset, bayerIndex, ditherPath)
 
         return function(cg, step, x, y)
             return ClrGradient.dither(
                 cg, step, matrix,
-                x, y, bayerSize, bayerSize)
+                x, y, cols, rows)
         end
-    elseif stylePreset == "DITHER_CUSTOM" then
-        local matrix = GradientUtilities.BAYER_MATRICES[2]
-        local c = 4
-        local r = 4
+    else
+        return ClrGradient.noise
+    end
+end
 
+---Finds the appropriate color gradient dither from a string preset.
+---"DITHER_CUSTOM" returns a custom matrix loaded from an image file path.
+---"DITHER_BAYER" returns a Bayer matrix.
+---Defaults to a smooth mix.
+---@param stylePreset string style preset
+---@param bayerIndex? integer Bayer exponent, 2^1
+---@param ditherPath? string dither image path
+---@return integer[]
+---@return integer cols
+---@return integer rows
+---@nodiscard
+function GradientUtilities.ditherMatrixFromPreset(
+    stylePreset, bayerIndex, ditherPath)
+    local biVrf <const> = bayerIndex or 2
+    local matrix = GradientUtilities.BAYER_MATRICES[biVrf]
+    local cols = 1 << biVrf
+    local rows = cols
+
+    if stylePreset == "DITHER_CUSTOM" then
         if ditherPath and #ditherPath > 0
             and app.fs.isFile(ditherPath) then
             -- Disable asking about color profiles when loading these images.
@@ -817,18 +838,12 @@ function GradientUtilities.ditherFromPreset(
             end
 
             if image then
-                matrix, c, r = GradientUtilities.imageToMatrix(image)
+                matrix, cols, rows = GradientUtilities.imageToMatrix(image)
             end -- End image exists check.
         end     -- End file path validity check.
+    end         -- End use custom dither.
 
-        return function(cg, step, x, y)
-            return ClrGradient.dither(
-                cg, step, matrix,
-                x, y, c, r)
-        end
-    else
-        return ClrGradient.noise
-    end
+    return matrix, cols, rows
 end
 
 ---Converts an Aseprite image to a dithering matrix. Returns the matrix along

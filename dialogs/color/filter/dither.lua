@@ -12,7 +12,11 @@ http://momentsingraphics.de/BlueNoise.html
 ]]
 
 local ditherModes <const> = { "ONE_BIT", "PALETTE", "QUANTIZE" }
-local ditherPatterns <const> = { "BAYER", "FLOYD_STEINBERG" }
+local ditherPatterns <const> = {
+    "DITHER_BAYER",
+    -- "DITHER_CUSTOM",
+    "FLOYD_STEINBERG",
+}
 local alphaModes <const> = { "SOURCE", "THRESHOLD" }
 local areaTargets <const> = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
 local palTargets <const> = { "ACTIVE", "FILE" }
@@ -553,17 +557,19 @@ dlg:button {
             end
         end
 
-        local dither = fsDither
-        if ditherPattern == "BAYER" then
-            dither = orderedDither
+        local dither = orderedDither
+        if ditherPattern == "FLOYD_STEINBERG" then
+            dither = fsDither
         end
 
-        -- TODO: Generalize this so that matrix, rows and columns
-        -- can be loaded from a file if needed and passed in as a parameter.
+        -- TODO: Expose dither path?
         local bayerIndex <const> = 2
-        local cols <const> = 1 << bayerIndex
-        local rows <const> = 1 << bayerIndex
-        local matrix <const> = GradientUtilities.BAYER_MATRICES[bayerIndex]
+        local ditherPath <const> = ""
+
+        local matrix <const>,
+        cols <const>,
+        rows <const> = GradientUtilities.ditherMatrixFromPreset(
+            ditherPattern, bayerIndex, ditherPath)
 
         -- String that is assigned to new layer name to clarify operation.
         local dmStr = ""

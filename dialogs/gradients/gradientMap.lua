@@ -165,7 +165,7 @@ dlg:button {
         local useMixed <const> = stylePreset == "MIXED"
         local mixFunc <const> = GradientUtilities.clrSpcFuncFromPreset(
             clrSpacePreset, huePreset)
-        local dither <const> = GradientUtilities.ditherFromPreset(
+        local dither <const> = GradientUtilities.ditherFuncFromPreset(
             stylePreset, bayerIndex, ditherPath)
         local cgmix <const> = ClrGradient.eval
 
