@@ -2,6 +2,15 @@ dofile("../../../support/gradientutilities.lua")
 dofile("../../../support/quantizeutilities.lua")
 dofile("../../../support/octree.lua")
 
+--[[
+Ditherpunk
+https://surma.dev/things/ditherpunk/
+Riemersma dither
+https://www.compuphase.com/riemer.htm
+Blue Noise dither
+http://momentsingraphics.de/BlueNoise.html
+]]
+
 local ditherModes <const> = { "ONE_BIT", "PALETTE", "QUANTIZE" }
 local ditherPatterns <const> = { "BAYER", "FLOYD_STEINBERG" }
 local alphaModes <const> = { "SOURCE", "THRESHOLD" }
@@ -31,15 +40,16 @@ local defaults <const> = {
 ---@param pixels integer[] bytes of length w * h * bpp
 ---@param wSrc integer source image width
 ---@param hSrc integer source image height
----@param srcBpp integer source image bytes per pixel
+---@param bppSrc integer source image bytes per pixel
 ---@param factor number dither factor
 ---@param closestFunc fun(r8Src: integer, g8Src: integer, b8Src: integer, a8Src: integer): integer, integer, integer, integer
-local function bayerDither(pixels, wSrc, hSrc, srcBpp, factor, closestFunc)
-    local bayerIndex <const> = 2
-    local cols <const> = 1 << bayerIndex
-    local rows <const> = 1 << bayerIndex
-    local m <const> = GradientUtilities.BAYER_MATRICES[bayerIndex]
-
+---@param matrix number[] ordered matrix
+---@param cols integer matrix columns count
+---@param rows integer matrix rows count
+local function orderedDither(
+    pixels, wSrc, hSrc, bppSrc,
+    factor, closestFunc,
+    matrix, cols, rows)
     local floor <const> = math.floor
     local max <const> = math.max
     local min <const> = math.min
@@ -49,19 +59,19 @@ local function bayerDither(pixels, wSrc, hSrc, srcBpp, factor, closestFunc)
     local areaImage <const> = wSrc * hSrc
     local i = 0
     while i < areaImage do
-        local iSrcBpp <const> = i * srcBpp
+        local iBppSrc <const> = i * bppSrc
 
-        local r8Src <const> = pixels[1 + iSrcBpp]
-        local g8Src <const> = pixels[2 + iSrcBpp]
-        local b8Src <const> = pixels[3 + iSrcBpp]
-        local a8Src <const> = pixels[4 + iSrcBpp]
+        local r8Src <const> = pixels[1 + iBppSrc]
+        local g8Src <const> = pixels[2 + iBppSrc]
+        local b8Src <const> = pixels[3 + iBppSrc]
+        local a8Src <const> = pixels[4 + iBppSrc]
 
         local r8Trg, g8Trg, b8Trg, a8Trg = 0, 0, 0, 0
 
         local x <const> = i % wSrc
         local y <const> = i // wSrc
         local mIdx <const> = (y % rows) * cols + (x % cols)
-        local mFac <const> = m[1 + mIdx] - 0.5
+        local mFac <const> = matrix[1 + mIdx] - 0.5
 
         -- Only dither the source alpha if it is translucent.
         local a8Alt = a8Src
@@ -92,10 +102,10 @@ local function bayerDither(pixels, wSrc, hSrc, srcBpp, factor, closestFunc)
             floor(b01Alt * 255.0 + 0.5),
             a8Alt)
 
-        pixels[1 + iSrcBpp] = r8Trg
-        pixels[2 + iSrcBpp] = g8Trg
-        pixels[3 + iSrcBpp] = b8Trg
-        pixels[4 + iSrcBpp] = a8Trg
+        pixels[1 + iBppSrc] = r8Trg
+        pixels[2 + iBppSrc] = g8Trg
+        pixels[3 + iBppSrc] = b8Trg
+        pixels[4 + iBppSrc] = a8Trg
 
         i = i + 1
     end
@@ -105,10 +115,21 @@ end
 ---@param pixels integer[] bytes of length w * h * bpp
 ---@param wSrc integer source image width
 ---@param hSrc integer source image height
----@param srcBpp integer source image bytes per pixel
+---@param bppSrc integer source image bytes per pixel
 ---@param factor number dither factor
 ---@param closestFunc fun(r8Src: integer, g8Src: integer, b8Src: integer, a8Src: integer): integer, integer, integer, integer
-local function fsDither(pixels, wSrc, hSrc, srcBpp, factor, closestFunc)
+---@param matrix number[] ordered matrix
+---@param cols integer matrix columns count
+---@param rows integer matrix rows count
+local function fsDither(
+    pixels, wSrc, hSrc, bppSrc,
+    factor, closestFunc,
+    matrix, cols, rows)
+    -- TODO: Can any of these tips be applied here to optimize?
+    -- "Speeding up your code when multiple cores aren’t an option"
+    -- by Itamar Turner-Trauring
+    -- https://pythonspeed.com/articles/optimizing-dithering/
+
     local fs_1_16 <const> = 0.0625 * factor
     local fs_3_16 <const> = 0.1875 * factor
     local fs_5_16 <const> = 0.3125 * factor
@@ -119,24 +140,24 @@ local function fsDither(pixels, wSrc, hSrc, srcBpp, factor, closestFunc)
     local areaImage <const> = wSrc * hSrc
     local i = 0
     while i < areaImage do
-        local iSrcBpp <const> = i * srcBpp
+        local iBppSrc <const> = i * bppSrc
         local x <const> = i % wSrc
         local y <const> = i // wSrc
 
-        local r8Src <const> = pixels[1 + iSrcBpp]
-        local g8Src <const> = pixels[2 + iSrcBpp]
-        local b8Src <const> = pixels[3 + iSrcBpp]
-        local a8Src <const> = pixels[4 + iSrcBpp]
+        local r8Src <const> = pixels[1 + iBppSrc]
+        local g8Src <const> = pixels[2 + iBppSrc]
+        local b8Src <const> = pixels[3 + iBppSrc]
+        local a8Src <const> = pixels[4 + iBppSrc]
 
         local r8Trg <const>,
         g8Trg <const>,
         b8Trg <const>,
         a8Trg <const> = closestFunc(r8Src, g8Src, b8Src, a8Src)
 
-        pixels[1 + iSrcBpp] = r8Trg
-        pixels[2 + iSrcBpp] = g8Trg
-        pixels[3 + iSrcBpp] = b8Trg
-        pixels[4 + iSrcBpp] = a8Trg
+        pixels[1 + iBppSrc] = r8Trg
+        pixels[2 + iBppSrc] = g8Trg
+        pixels[3 + iBppSrc] = b8Trg
+        pixels[4 + iBppSrc] = a8Trg
 
         -- Find difference between palette color and source color.
         local rErr <const> = r8Src - r8Trg
@@ -147,11 +168,11 @@ local function fsDither(pixels, wSrc, hSrc, srcBpp, factor, closestFunc)
         local xp1InBounds <const> = x + 1 < wSrc
         local yp1InBounds <const> = y + 1 < hSrc
 
-        local xBpp <const> = x * srcBpp
+        local xBpp <const> = x * bppSrc
 
         -- Find right neighbor.
         if xp1InBounds then
-            local idxNgbr0 <const> = y * wSrc * srcBpp + xBpp + srcBpp
+            local idxNgbr0 <const> = y * wSrc * bppSrc + xBpp + bppSrc
 
             local rne0 = pixels[1 + idxNgbr0] + floor(rErr * fs_7_16)
             local gne0 = pixels[2 + idxNgbr0] + floor(gErr * fs_7_16)
@@ -170,11 +191,11 @@ local function fsDither(pixels, wSrc, hSrc, srcBpp, factor, closestFunc)
         end
 
         if yp1InBounds then
-            local yp1WSrcBpp <const> = (y + 1) * wSrc * srcBpp
+            local yp1WSrcBpp <const> = (y + 1) * wSrc * bppSrc
 
             -- Find bottom left neighbor.
             if x > 0 then
-                local idxNgbr1 <const> = yp1WSrcBpp + xBpp - srcBpp
+                local idxNgbr1 <const> = yp1WSrcBpp + xBpp - bppSrc
 
                 local rne1 = pixels[1 + idxNgbr1] + floor(rErr * fs_3_16)
                 local gne1 = pixels[2 + idxNgbr1] + floor(gErr * fs_3_16)
@@ -212,7 +233,7 @@ local function fsDither(pixels, wSrc, hSrc, srcBpp, factor, closestFunc)
 
             -- Find bottom right neighbor.
             if xp1InBounds then
-                local idxNgbr3 <const> = yp1WSrcBpp + xBpp + srcBpp
+                local idxNgbr3 <const> = yp1WSrcBpp + xBpp + bppSrc
 
                 local rne3 = pixels[1 + idxNgbr3] + floor(rErr * fs_1_16)
                 local gne3 = pixels[2 + idxNgbr3] + floor(gErr * fs_1_16)
@@ -536,8 +557,15 @@ dlg:button {
 
         local dither = fsDither
         if ditherPattern == "BAYER" then
-            dither = bayerDither
+            dither = orderedDither
         end
+
+        -- TODO: Generalize this so that matrix, rows and columns
+        -- can be loaded from a file if needed and passed in as a parameter.
+        local bayerIndex <const> = 2
+        local cols <const> = 1 << bayerIndex
+        local rows <const> = 1 << bayerIndex
+        local matrix <const> = GradientUtilities.BAYER_MATRICES[bayerIndex]
 
         -- String that is assigned to new layer name to clarify operation.
         local dmStr = ""
@@ -836,7 +864,10 @@ dlg:button {
                     local hSrc <const> = srcSpec.height
                     local srcBpp <const> = srcImg.bytesPerPixel
                     local trgPixels <const> = getBytes(srcImg)
-                    dither(trgPixels, wSrc, hSrc, srcBpp, factor, closestFunc)
+                    dither(
+                        trgPixels, wSrc, hSrc, srcBpp,
+                        factor, closestFunc,
+                        matrix, cols, rows)
                     trgImg = Image(srcSpec)
                     setBytes(trgImg, trgPixels)
                     premadeTrgImgs[srcImgId] = trgImg

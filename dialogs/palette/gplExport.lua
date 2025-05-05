@@ -194,9 +194,6 @@ dlg:button {
                 local g <const> = aseColor.green
                 local b <const> = aseColor.blue
 
-                -- TODO: As of 2 16 2025 It should be safe to add leading
-                -- spaces to this, instead of leading zeroes.
-                -- https://www.cosmigo.com/pixel_animation_software/changelog
                 local entryStr = ""
                 if useAseGpl then
                     local a <const> = aseColor.alpha
