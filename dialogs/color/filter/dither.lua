@@ -14,7 +14,7 @@ http://momentsingraphics.de/BlueNoise.html
 local ditherModes <const> = { "ONE_BIT", "PALETTE", "QUANTIZE" }
 local ditherPatterns <const> = {
     "DITHER_BAYER",
-    -- "DITHER_CUSTOM",
+    "DITHER_CUSTOM",
     "FLOYD_STEINBERG",
 }
 local alphaModes <const> = { "SOURCE", "THRESHOLD" }
@@ -37,6 +37,7 @@ local defaults <const> = {
     factor = 100,
     greyMethod = "LUMINANCE",
     alphaThreshold = 128,
+    bayerIndex = 2,
     printElapsed = false,
 }
 
@@ -283,6 +284,24 @@ dlg:combobox {
     label = "Pattern:",
     option = defaults.ditherPattern,
     options = ditherPatterns,
+    onchange = function()
+        local args <const> = dlg.data
+        local ditherPattern <const> = args.ditherPattern
+        local isCustom <const> = ditherPattern == "DITHER_CUSTOM"
+        dlg:modify { id = "ditherPath", visible = isCustom }
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:file {
+    id = "ditherPath",
+    label = "File:",
+    filetypes = AseUtilities.FILE_FORMATS_OPEN,
+    filename = app.fs.joinPath(app.fs.userDocsPath, "*.*"),
+    open = true,
+    focus = false,
+    visible = defaults.ditherPattern == "DITHER_CUSTOM"
 }
 
 dlg:newrow { always = false }
@@ -562,9 +581,8 @@ dlg:button {
             dither = fsDither
         end
 
-        -- TODO: Expose dither path?
-        local bayerIndex <const> = 2
-        local ditherPath <const> = ""
+        local bayerIndex <const> = defaults.bayerIndex
+        local ditherPath <const> = args.ditherPath --[[@as string]]
 
         local matrix <const>,
         cols <const>,
