@@ -46,10 +46,12 @@ local defaults <const> = {
 ---@param matrix number[] ordered matrix
 ---@param cols integer matrix columns count
 ---@param rows integer matrix rows count
+---@param xOff integer x offset
+---@param yOff integer y offset
 local function orderedDither(
     pixels, wSrc, hSrc, bppSrc,
     factor, closestFunc,
-    matrix, cols, rows)
+    matrix, cols, rows, xOff, yOff)
     local floor <const> = math.floor
     local max <const> = math.max
     local min <const> = math.min
@@ -68,8 +70,8 @@ local function orderedDither(
 
         local r8Trg, g8Trg, b8Trg, a8Trg = 0, 0, 0, 0
 
-        local x <const> = i % wSrc
-        local y <const> = i // wSrc
+        local x <const> = xOff + i % wSrc
+        local y <const> = yOff + i // wSrc
         local mIdx <const> = (y % rows) * cols + (x % cols)
         local mFac <const> = matrix[1 + mIdx] - 0.5
 
@@ -118,13 +120,9 @@ end
 ---@param bppSrc integer source image bytes per pixel
 ---@param factor number dither factor
 ---@param closestFunc fun(r8Src: integer, g8Src: integer, b8Src: integer, a8Src: integer): integer, integer, integer, integer
----@param matrix number[] ordered matrix
----@param cols integer matrix columns count
----@param rows integer matrix rows count
 local function fsDither(
     pixels, wSrc, hSrc, bppSrc,
-    factor, closestFunc,
-    matrix, cols, rows)
+    factor, closestFunc)
     -- TODO: Can any of these tips be applied here to optimize?
     -- "Speeding up your code when multiple cores aren’t an option"
     -- by Itamar Turner-Trauring
@@ -852,30 +850,30 @@ dlg:button {
             local frIdx <const> = frIdcs[i]
             local srcCel <const> = srcLayer:cel(frIdx)
             if srcCel then
+                local srcPos <const> = srcCel.position
                 local origImg <const> = srcCel.image
                 local srcImgId <const> = origImg.id
                 local srcImg <const> = isTileMap
                     and tilesToImage(origImg, tileSet, cmRgb)
                     or origImg
                 local trgImg = premadeTrgImgs[srcImgId]
+
                 if not trgImg then
                     local srcSpec <const> = srcImg.spec
                     local wSrc <const> = srcSpec.width
                     local hSrc <const> = srcSpec.height
                     local srcBpp <const> = srcImg.bytesPerPixel
                     local trgPixels <const> = getBytes(srcImg)
-                    dither(
-                        trgPixels, wSrc, hSrc, srcBpp,
-                        factor, closestFunc,
-                        matrix, cols, rows)
+                    dither(trgPixels, wSrc, hSrc, srcBpp, factor, closestFunc,
+                        matrix, cols, rows, srcPos.x, srcPos.y)
                     trgImg = Image(srcSpec)
                     setBytes(trgImg, trgPixels)
                     premadeTrgImgs[srcImgId] = trgImg
-                end
+                end -- Target image not found.
 
                 transact(strfmt("Dither %d", frIdx + frameUiOffset), function()
                     local trgCel <const> = activeSprite:newCel(
-                        trgLayer, frIdx, trgImg, srcCel.position)
+                        trgLayer, frIdx, trgImg, srcPos)
                     trgCel.opacity = srcCel.opacity
                 end)
             end -- End source cel exists.
