@@ -766,7 +766,7 @@ end
 ---Finds the appropriate color gradient dither from a string preset.
 ---"DITHER_CUSTOM" returns a custom matrix loaded from an image file path.
 ---"DITHER_BAYER" returns a Bayer matrix.
----Defaults to a smooth mix.
+---Defaults to interleaved gradient noise.
 ---@param stylePreset string style preset
 ---@param bayerIndex? integer Bayer exponent, 2^1
 ---@param ditherPath? string dither image path
@@ -791,10 +791,9 @@ function GradientUtilities.ditherFuncFromPreset(
     end
 end
 
----Finds the appropriate color gradient dither from a string preset.
+---Finds an ordered dither matrix from a string preset.
 ---"DITHER_CUSTOM" returns a custom matrix loaded from an image file path.
----"DITHER_BAYER" returns a Bayer matrix.
----Defaults to a smooth mix.
+---Defaults to a Bayer matrix.
 ---@param stylePreset string style preset
 ---@param bayerIndex? integer Bayer exponent, 2^1
 ---@param ditherPath? string dither image path
