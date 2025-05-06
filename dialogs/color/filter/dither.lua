@@ -23,7 +23,9 @@ local palTargets <const> = { "ACTIVE", "FILE" }
 local greyMethods <const> = { "AVERAGE", "HSL", "HSV", "LUMINANCE" }
 
 local defaults <const> = {
-    -- Last commit for old version of dithering:
+    -- Animated x, y offset for ordered dither:
+    -- d4fe9fee58d8e3d4edd17cea96c30ad41422eafc
+    -- Last commit for old version:
     -- 23e391771391d5ffaf3e7f2385389e4af7e84004
     ditherMode = "PALETTE",
     ditherPattern = "FLOYD_STEINBERG",

@@ -1603,8 +1603,6 @@ end
 function AseUtilities.filterLayers(
     sprite, layer, target,
     includeLocked, includeHidden, includeTiles, includeBkg)
-    -- TODO: Are there other, older dialogs where this can be used?
-
     if target == "ALL" then
         return AseUtilities.getLayerHierarchy(sprite,
             includeLocked, includeHidden, includeTiles, includeBkg)

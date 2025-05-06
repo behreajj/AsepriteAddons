@@ -1,5 +1,3 @@
--- TODO: How should this impact any active tag's to and from frames?
-
 local site <const> = app.site
 local activeSprite <const> = site.sprite
 if not activeSprite then return end

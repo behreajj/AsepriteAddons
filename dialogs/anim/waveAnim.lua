@@ -487,8 +487,6 @@ dlg:button {
         -- Flatten sprite to images, associate with a factor
         -- and an angle theta.
 
-        -- TODO: Destructure this to an array of
-        -- durations, images, factors, thetas?
         ---@type {duration: number, image: Image, fac: number, theta: number}[]
         local packets <const> = {}
         if isActive then

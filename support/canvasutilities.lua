@@ -351,9 +351,6 @@ function CanvasUtilities.graphBezier(
             local xbr <const> = wVrf - 1
             local ybr <const> = hVrf - 1
 
-            -- TODO: Seems wasteful to import Utilities file
-            -- just to use round function... At the very least
-            -- use the Curve2 class if you've got it.
             local ap0xPx <const> = Utilities.round(ap0x * xbr)
             local ap0yPx <const> = ybr - Utilities.round(ap0y * ybr)
             local cp0xPx <const> = Utilities.round(cp0x * xbr)
