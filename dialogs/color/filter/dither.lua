@@ -38,6 +38,8 @@ local defaults <const> = {
     greyMethod = "LUMINANCE",
     alphaThreshold = 128,
     bayerIndex = 2,
+    xAnim = 0,
+    yAnim = 0,
     printElapsed = false,
 }
 
@@ -287,8 +289,11 @@ dlg:combobox {
     onchange = function()
         local args <const> = dlg.data
         local ditherPattern <const> = args.ditherPattern
+        local isFs <const> = ditherPattern == "FLOYD_STEINBERG"
         local isCustom <const> = ditherPattern == "DITHER_CUSTOM"
         dlg:modify { id = "ditherPath", visible = isCustom }
+        dlg:modify { id = "xAnim", visible = not isFs }
+        dlg:modify { id = "yAnim", visible = not isFs }
     end
 }
 
@@ -302,6 +307,25 @@ dlg:file {
     open = true,
     focus = false,
     visible = defaults.ditherPattern == "DITHER_CUSTOM"
+}
+
+dlg:newrow { always = false }
+
+dlg:number {
+    id = "xAnim",
+    label = "Animate:",
+    text = string.format("%d", defaults.xAnim),
+    decimals = 0,
+    focus = false,
+    visible = defaults.ditherPattern ~= "FLOYD_STEINBERG",
+}
+
+dlg:number {
+    id = "yAnim",
+    text = string.format("%d", defaults.yAnim),
+    decimals = 0,
+    focus = false,
+    visible = defaults.ditherPattern ~= "FLOYD_STEINBERG",
 }
 
 dlg:newrow { always = false }
@@ -544,10 +568,18 @@ dlg:button {
             or defaults.ditherMode --[[@as string]]
         local ditherPattern <const> = args.ditherPattern
             or defaults.ditherPattern --[[@as string]]
+        local ditherPath <const> = args.ditherPath --[[@as string]]
         local factor100 <const> = args.factor
             or defaults.factor --[[@as integer]]
+        local xAnim <const> = args.xAnim
+            or defaults.xAnim --[[@as integer]]
+        local yAnim <const> = args.yAnim
+            or defaults.yAnim --[[@as integer]]
 
         local factor <const> = factor100 * 0.01
+        local animOffset <const> = ditherPattern ~= "FLOYD_STEINBERG"
+            and xAnim ~= 0
+            and yAnim ~= 0
 
         -- Check for tile map support.
         local isTileMap <const> = srcLayer.isTilemap
@@ -562,6 +594,7 @@ dlg:button {
         local frameUiOffset <const> = tlPrefs.first_frame - 1 --[[@as integer]]
 
         -- Cache global methods to local.
+        local floor <const> = math.floor
         local strfmt <const> = string.format
         local tilesToImage <const> = AseUtilities.tileMapToImage
         local transact <const> = app.transaction
@@ -582,8 +615,6 @@ dlg:button {
         end
 
         local bayerIndex <const> = defaults.bayerIndex
-        local ditherPath <const> = args.ditherPath --[[@as string]]
-
         local matrix <const>,
         cols <const>,
         rows <const> = GradientUtilities.ditherMatrixFromPreset(
@@ -712,8 +743,6 @@ dlg:button {
                 gDelta = 1.0 / gLevels
                 bDelta = 1.0 / bLevels
             end
-
-            local floor <const> = math.floor
 
             closestFunc = function(r8Src, g8Src, b8Src, a8Src)
                 local a8Trg <const> = alphaFunc(a8Src)
@@ -882,14 +911,19 @@ dlg:button {
                     or origImg
                 local trgImg = premadeTrgImgs[srcImgId]
 
-                if not trgImg then
+                if animOffset or (not trgImg) then
+                    local xDelta <const> = (i - 1) * xAnim
+                    local yDelta <const> = (i - 1) * yAnim
+
                     local srcSpec <const> = srcImg.spec
                     local wSrc <const> = srcSpec.width
                     local hSrc <const> = srcSpec.height
                     local srcBpp <const> = srcImg.bytesPerPixel
                     local trgPixels <const> = getBytes(srcImg)
                     dither(trgPixels, wSrc, hSrc, srcBpp, factor, closestFunc,
-                        matrix, cols, rows, srcPos.x, srcPos.y)
+                        matrix, cols, rows,
+                        srcPos.x - xDelta,
+                        srcPos.y + yDelta)
                     trgImg = Image(srcSpec)
                     setBytes(trgImg, trgPixels)
                     premadeTrgImgs[srcImgId] = trgImg
