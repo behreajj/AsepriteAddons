@@ -9,6 +9,8 @@ Riemersma dither
 https://www.compuphase.com/riemer.htm
 Blue Noise dither
 http://momentsingraphics.de/BlueNoise.html
+Speeding up your code when multiple cores aren’t an option
+https://pythonspeed.com/articles/optimizing-dithering/
 ]]
 
 local ditherModes <const> = { "ONE_BIT", "PALETTE", "QUANTIZE" }
@@ -75,8 +77,6 @@ local function orderedDither(
         local b8Src <const> = pixels[3 + iBppSrc]
         local a8Src <const> = pixels[4 + iBppSrc]
 
-        local r8Trg, g8Trg, b8Trg, a8Trg = 0, 0, 0, 0
-
         local x <const> = xOff + i % wSrc
         local y <const> = yOff + i // wSrc
         local mIdx <const> = (y % rows) * cols + (x % cols)
@@ -96,16 +96,21 @@ local function orderedDither(
 
         -- Set the altered color to the relative luminance of the source.
         -- Because the alt color is just the source plus the matrix entry,
-        -- the delta between source luma and alt luma is simplified.
+        -- the delta between source luma and alt luma is simplified. Then,
+        -- because these are weighted to sum to 1, they can be discarded.
         -- https://www.w3.org/TR/compositing-1/#blendingnonseparable
-        local yDelta <const> = (0.3 * mFac + 0.59 * mFac + 0.11 * mFac)
-            * complFac
+        -- local yDelta <const> = (0.3 * mFac + 0.59 * mFac + 0.11 * mFac)
+        --     * complFac
+        local yDelta <const> = complFac * mFac
 
         local r01Alt <const> = min(max(r01Src + mFac - yDelta, 0.0), 1.0)
         local g01Alt <const> = min(max(g01Src + mFac - yDelta, 0.0), 1.0)
         local b01Alt <const> = min(max(b01Src + mFac - yDelta, 0.0), 1.0)
 
-        r8Trg, g8Trg, b8Trg, a8Trg = closestFunc(
+        local r8Trg <const>,
+        g8Trg <const>,
+        b8Trg <const>,
+        a8Trg <const> = closestFunc(
             floor(r01Alt * 255.0 + 0.5),
             floor(g01Alt * 255.0 + 0.5),
             floor(b01Alt * 255.0 + 0.5),
@@ -130,11 +135,6 @@ end
 local function fsDither(
     pixels, wSrc, hSrc, bppSrc,
     factor, closestFunc)
-    -- TODO: Can any of these tips be applied here to optimize?
-    -- "Speeding up your code when multiple cores aren’t an option"
-    -- by Itamar Turner-Trauring
-    -- https://pythonspeed.com/articles/optimizing-dithering/
-
     local fs_1_16 <const> = 0.0625 * factor
     local fs_3_16 <const> = 0.1875 * factor
     local fs_5_16 <const> = 0.3125 * factor
