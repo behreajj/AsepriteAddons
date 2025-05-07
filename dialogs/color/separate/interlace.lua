@@ -234,7 +234,6 @@ dlg:button {
             AseUtilities.getFrames(activeSprite, target))
 
         local srcBlendMode <const> = srcLayer.blendMode
-        local srcParent <const> = srcLayer.parent
 
         local skipLayer <const> = activeSprite:newLayer()
         local pickLayer <const> = activeSprite:newLayer()
