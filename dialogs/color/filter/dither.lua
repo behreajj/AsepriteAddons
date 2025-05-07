@@ -140,19 +140,25 @@ local function fsDither(
     local fs_5_16 <const> = 0.3125 * factor
     local fs_7_16 <const> = 0.4375 * factor
 
-    local floor <const> = math.floor
+    local bt1_16 <const> = math.floor(fs_1_16 * 255.0 + 0.5)
+    local bt3_16 <const> = math.floor(fs_3_16 * 255.0 + 0.5)
+    local bt5_16 <const> = math.floor(fs_5_16 * 255.0 + 0.5)
+    local bt7_16 <const> = math.floor(fs_7_16 * 255.0 + 0.5)
 
     local areaImage <const> = wSrc * hSrc
     local i = 0
     while i < areaImage do
         local iBppSrc <const> = i * bppSrc
-        local x <const> = i % wSrc
-        local y <const> = i // wSrc
 
-        local r8Src <const> = pixels[1 + iBppSrc]
-        local g8Src <const> = pixels[2 + iBppSrc]
-        local b8Src <const> = pixels[3 + iBppSrc]
-        local a8Src <const> = pixels[4 + iBppSrc]
+        local r8Src = pixels[1 + iBppSrc]
+        local g8Src = pixels[2 + iBppSrc]
+        local b8Src = pixels[3 + iBppSrc]
+        local a8Src = pixels[4 + iBppSrc]
+
+        if r8Src < 0 then r8Src = 0 elseif r8Src > 255 then r8Src = 255 end
+        if g8Src < 0 then g8Src = 0 elseif g8Src > 255 then g8Src = 255 end
+        if b8Src < 0 then b8Src = 0 elseif b8Src > 255 then b8Src = 255 end
+        if a8Src < 0 then a8Src = 0 elseif a8Src > 255 then a8Src = 255 end
 
         local r8Trg <const>,
         g8Trg <const>,
@@ -170,6 +176,8 @@ local function fsDither(
         local bErr <const> = b8Src - b8Trg
         local aErr <const> = a8Src - a8Trg
 
+        local x <const> = i % wSrc
+        local y <const> = i // wSrc
         local xp1InBounds <const> = x + 1 < wSrc
         local yp1InBounds <const> = y + 1 < hSrc
 
@@ -178,21 +186,10 @@ local function fsDither(
         -- Find right neighbor.
         if xp1InBounds then
             local idxNgbr0 <const> = y * wSrc * bppSrc + xBpp + bppSrc
-
-            local rne0 = pixels[1 + idxNgbr0] + floor(rErr * fs_7_16)
-            local gne0 = pixels[2 + idxNgbr0] + floor(gErr * fs_7_16)
-            local bne0 = pixels[3 + idxNgbr0] + floor(bErr * fs_7_16)
-            local ane0 = pixels[4 + idxNgbr0] + floor(aErr * fs_7_16)
-
-            if rne0 < 0 then rne0 = 0 elseif rne0 > 255 then rne0 = 255 end
-            if gne0 < 0 then gne0 = 0 elseif gne0 > 255 then gne0 = 255 end
-            if bne0 < 0 then bne0 = 0 elseif bne0 > 255 then bne0 = 255 end
-            if ane0 < 0 then ane0 = 0 elseif ane0 > 255 then ane0 = 255 end
-
-            pixels[1 + idxNgbr0] = rne0
-            pixels[2 + idxNgbr0] = gne0
-            pixels[3 + idxNgbr0] = bne0
-            pixels[4 + idxNgbr0] = ane0
+            pixels[1 + idxNgbr0] = pixels[1 + idxNgbr0] + (rErr * bt7_16) // 255
+            pixels[2 + idxNgbr0] = pixels[2 + idxNgbr0] + (gErr * bt7_16) // 255
+            pixels[3 + idxNgbr0] = pixels[3 + idxNgbr0] + (bErr * bt7_16) // 255
+            pixels[4 + idxNgbr0] = pixels[4 + idxNgbr0] + (aErr * bt7_16) // 255
         end
 
         if yp1InBounds then
@@ -201,59 +198,26 @@ local function fsDither(
             -- Find bottom left neighbor.
             if x > 0 then
                 local idxNgbr1 <const> = yp1WSrcBpp + xBpp - bppSrc
-
-                local rne1 = pixels[1 + idxNgbr1] + floor(rErr * fs_3_16)
-                local gne1 = pixels[2 + idxNgbr1] + floor(gErr * fs_3_16)
-                local bne1 = pixels[3 + idxNgbr1] + floor(bErr * fs_3_16)
-                local ane1 = pixels[4 + idxNgbr1] + floor(aErr * fs_3_16)
-
-                if rne1 < 0 then rne1 = 0 elseif rne1 > 255 then rne1 = 255 end
-                if gne1 < 0 then gne1 = 0 elseif gne1 > 255 then gne1 = 255 end
-                if bne1 < 0 then bne1 = 0 elseif bne1 > 255 then bne1 = 255 end
-                if ane1 < 0 then ane1 = 0 elseif ane1 > 255 then ane1 = 255 end
-
-                pixels[1 + idxNgbr1] = rne1
-                pixels[2 + idxNgbr1] = gne1
-                pixels[3 + idxNgbr1] = bne1
-                pixels[4 + idxNgbr1] = ane1
+                pixels[1 + idxNgbr1] = pixels[1 + idxNgbr1] + (rErr * bt3_16) // 255
+                pixels[2 + idxNgbr1] = pixels[2 + idxNgbr1] + (gErr * bt3_16) // 255
+                pixels[3 + idxNgbr1] = pixels[3 + idxNgbr1] + (bErr * bt3_16) // 255
+                pixels[4 + idxNgbr1] = pixels[4 + idxNgbr1] + (aErr * bt3_16) // 255
             end
 
             -- Find the bottom neighbor.
             local idxNgbr2 <const> = yp1WSrcBpp + xBpp
-
-            local rne2 = pixels[1 + idxNgbr2] + floor(rErr * fs_5_16)
-            local gne2 = pixels[2 + idxNgbr2] + floor(gErr * fs_5_16)
-            local bne2 = pixels[3 + idxNgbr2] + floor(bErr * fs_5_16)
-            local ane2 = pixels[4 + idxNgbr2] + floor(aErr * fs_5_16)
-
-            if rne2 < 0 then rne2 = 0 elseif rne2 > 255 then rne2 = 255 end
-            if gne2 < 0 then gne2 = 0 elseif gne2 > 255 then gne2 = 255 end
-            if bne2 < 0 then bne2 = 0 elseif bne2 > 255 then bne2 = 255 end
-            if ane2 < 0 then ane2 = 0 elseif ane2 > 255 then ane2 = 255 end
-
-            pixels[1 + idxNgbr2] = rne2
-            pixels[2 + idxNgbr2] = gne2
-            pixels[3 + idxNgbr2] = bne2
-            pixels[4 + idxNgbr2] = ane2
+            pixels[1 + idxNgbr2] = pixels[1 + idxNgbr2] + (rErr * bt5_16) // 255
+            pixels[2 + idxNgbr2] = pixels[2 + idxNgbr2] + (gErr * bt5_16) // 255
+            pixels[3 + idxNgbr2] = pixels[3 + idxNgbr2] + (bErr * bt5_16) // 255
+            pixels[4 + idxNgbr2] = pixels[4 + idxNgbr2] + (aErr * bt5_16) // 255
 
             -- Find bottom right neighbor.
             if xp1InBounds then
                 local idxNgbr3 <const> = yp1WSrcBpp + xBpp + bppSrc
-
-                local rne3 = pixels[1 + idxNgbr3] + floor(rErr * fs_1_16)
-                local gne3 = pixels[2 + idxNgbr3] + floor(gErr * fs_1_16)
-                local bne3 = pixels[3 + idxNgbr3] + floor(bErr * fs_1_16)
-                local ane3 = pixels[4 + idxNgbr3] + floor(aErr * fs_1_16)
-
-                if rne3 < 0 then rne3 = 0 elseif rne3 > 255 then rne3 = 255 end
-                if gne3 < 0 then gne3 = 0 elseif gne3 > 255 then gne3 = 255 end
-                if bne3 < 0 then bne3 = 0 elseif bne3 > 255 then bne3 = 255 end
-                if ane3 < 0 then ane3 = 0 elseif ane3 > 255 then ane3 = 255 end
-
-                pixels[1 + idxNgbr3] = rne3
-                pixels[2 + idxNgbr3] = gne3
-                pixels[3 + idxNgbr3] = bne3
-                pixels[4 + idxNgbr3] = ane3
+                pixels[1 + idxNgbr3] = pixels[1 + idxNgbr3] + (rErr * bt1_16) // 255
+                pixels[2 + idxNgbr3] = pixels[2 + idxNgbr3] + (gErr * bt1_16) // 255
+                pixels[3 + idxNgbr3] = pixels[3 + idxNgbr3] + (bErr * bt1_16) // 255
+                pixels[4 + idxNgbr3] = pixels[4 + idxNgbr3] + (aErr * bt1_16) // 255
             end -- End x + 1 in bounds.
         end     -- End y + 1 in bounds.
 
