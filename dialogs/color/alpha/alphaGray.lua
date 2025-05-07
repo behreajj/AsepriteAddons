@@ -1,6 +1,6 @@
 dofile("../../../support/aseutilities.lua")
 
-local targets <const> = { "ACTIVE", "ALL", "RANGE" }
+local targets <const> = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
 local modes <const> = { "ALPHA_TO_GRAY", "GRAY_TO_ALPHA" }
 local rgbOptions <const> = { "GRAY", "COLOR", "SOURCE" }
 
