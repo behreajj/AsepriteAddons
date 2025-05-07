@@ -117,49 +117,17 @@ function Lab.comparator(o, d)
     return o.b < d.b
 end
 
----Finds the distance between two colors.
----Alpha's contribution is based on its scalar, which defaults to 0.0.
----@param o Lab origin color
----@param d Lab destination color
----@param alphaScalar? number alpha scalar
----@return number
----@nodiscard
-function Lab.dist(o, d, alphaScalar)
-    return Lab.distCylindrical(o, d, alphaScalar)
-end
-
 ---Finds the cylindrical distance between two colors.
 ---Lightness is treated as the z axis.
----Alpha's contribution is based on its scalar, which defaults to 0.0.
 ---@param o Lab origin color
 ---@param d Lab destination color
----@param alphaScalar? number alpha scalar
 ---@return number
 ---@nodiscard
-function Lab.distCylindrical(o, d, alphaScalar)
+function Lab.distCylindrical(o, d)
     local ca <const> = d.a - o.a
     local cb <const> = d.b - o.b
-    local ts <const> = alphaScalar or 0.0
-    return math.abs(ts * (d.alpha - o.alpha))
-        + math.abs(d.l - o.l)
+    return math.abs(d.l - o.l)
         + math.sqrt(ca * ca + cb * cb)
-end
-
----Finds the spherical distance between two colors.
----Lightness is treated as the z axis.
----Alpha's contribution is based on its scalar, which defaults to 0.0.
----@param o Lab origin color
----@param d Lab destination color
----@param alphaScalar? number alpha scalar
----@return number
----@nodiscard
-function Lab.distSpherical(o, d, alphaScalar)
-    local ts <const> = alphaScalar or 0.0
-    local ct <const> = ts * (d.alpha - o.alpha)
-    local cl <const> = d.l - o.l
-    local ca <const> = d.a - o.a
-    local cb <const> = d.b - o.b
-    return math.sqrt(ct * ct + cl * cl + ca * ca + cb * cb)
 end
 
 ---Clamps a color to expected range, usually to prepare it for conversion to

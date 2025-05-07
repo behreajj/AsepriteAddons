@@ -288,7 +288,7 @@ end
 function Octree.query(o, center, radius, dfPt)
     local rVrf <const> = radius or 46340
     local v <const>, d <const> = Octree.queryInternal(
-        o, center, rVrf, Lab.dist)
+        o, center, rVrf, Lab.distCylindrical)
     if v then
         return Lab.new(v.l, v.a, v.b, v.alpha), d
     else
@@ -302,7 +302,7 @@ end
 ---@param o Octree octree
 ---@param center Lab sphere center
 ---@param rad number sphere radius
----@param df fun(a: Lab, b: Lab, ts: number): number distance function
+---@param df fun(a: Lab, b: Lab): number distance function
 ---@return Lab|nil
 ---@return number
 function Octree.queryInternal(o, center, rad, df)
@@ -327,8 +327,6 @@ function Octree.queryInternal(o, center, rad, df)
         end
 
         if lenChildren < 1 then
-            -- TODO: Make alpha scalar a parameter?
-            local alphaScalar <const> = 0.0
             local points <const> = o.points
             local lenPoints <const> = #points
 
@@ -336,7 +334,7 @@ function Octree.queryInternal(o, center, rad, df)
             while j < lenPoints do
                 j = j + 1
                 local point <const> = points[j]
-                local candDist <const> = df(center, point, alphaScalar)
+                local candDist <const> = df(center, point)
                 if (candDist < rad)
                     and (candDist < nearDist) then
                     nearPoint = point
