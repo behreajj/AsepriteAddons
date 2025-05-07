@@ -173,11 +173,11 @@ function ClrGradient.dither(
     if range ~= 0.0 then
         local matIdx <const> = 1 + (x % cols) + (y % rows) * cols
         if (t - prStep) / range >= matrix[matIdx] then
-            return nxKey.clr
+            return nxKey.rgb
         end
     end
 
-    return prKey.clr
+    return prKey.rgb
 end
 
 ---Evaluates a color gradient by a step with an easing function. Returns a
@@ -196,7 +196,7 @@ function ClrGradient.eval(cg, step, easing)
     local denom = nxKey.step - prStep
     if denom ~= 0.0 then denom = 1.0 / denom end
     local f <const> = easing or Rgb.mixlRgbaInternal
-    return f(prKey.clr, nxKey.clr,
+    return f(prKey.rgb, nxKey.rgb,
         (t - prStep) * denom)
 end
 
@@ -248,11 +248,11 @@ function ClrGradient.noise(cg, step, x, y)
         local ign <const> = math.fmod(52.9829189 * math.fmod(
             0.06711056 * x + 0.00583715 * y, 1.0), 1.0)
         if (t - prStep) / range >= ign then
-            return nxKey.clr
+            return nxKey.rgb
         end
     end
 
-    return prKey.clr
+    return prKey.rgb
 end
 
 ---Returns a new gradient with the colors of the source,
@@ -268,7 +268,7 @@ function ClrGradient.opaque(source)
     while i < lenSrcKeys do
         i = i + 1
         local srcKey <const> = srcKeys[i]
-        local srcClr <const> = srcKey.clr
+        local srcClr <const> = srcKey.rgb
         local trgKey <const> = ClrKey.new(srcKey.step,
             Rgb.new(srcClr.r, srcClr.g, srcClr.b, 1.0))
         trgKeys[i] = trgKey

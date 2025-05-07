@@ -1,7 +1,7 @@
 dofile("./rgb.lua")
 
 ---@class ClrKey
----@field public clr Rgb color
+---@field public rgb Rgb color
 ---@field public step number step
 ClrKey = {}
 ClrKey.__index = ClrKey
@@ -33,7 +33,7 @@ function ClrKey.newByRef(step, clr)
     if step then
         inst.step = math.min(math.max(step, 0.0), 1.0)
     end
-    inst.clr = clr or Rgb.new(0.0, 0.0, 0.0, 0.0)
+    inst.rgb = clr or Rgb.new(0.0, 0.0, 0.0, 0.0)
     return inst
 end
 
@@ -51,16 +51,16 @@ function ClrKey.newByVal(step, clr)
         inst.step = math.min(math.max(step, 0.0), 1.0)
     end
 
-    inst.clr = nil
+    inst.rgb = nil
     if clr then
         if type(clr) == "number"
             and math.type(clr) == "integer" then
-            inst.clr = Rgb.fromHexAbgr32(clr)
+            inst.rgb = Rgb.fromHexAbgr32(clr)
         else
-            inst.clr = Rgb.new(clr.r, clr.g, clr.b, clr.a)
+            inst.rgb = Rgb.new(clr.r, clr.g, clr.b, clr.a)
         end
     else
-        inst.clr = Rgb.new(0.0, 0.0, 0.0, 0.0)
+        inst.rgb = Rgb.new(0.0, 0.0, 0.0, 0.0)
     end
 
     return inst
@@ -90,7 +90,7 @@ function ClrKey.toJson(ck)
     return string.format(
         "{\"step\":%.4f,\"clr\":%s}",
         ck.step,
-        Rgb.toJson(ck.clr))
+        Rgb.toJson(ck.rgb))
 end
 
 return ClrKey

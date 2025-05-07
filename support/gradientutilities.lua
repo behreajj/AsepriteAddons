@@ -352,7 +352,7 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
             j = j + 1
             local key <const> = keys[j]
             local keyStep <const> = key.step
-            local keyClr <const> = key.clr
+            local keyClr <const> = key.rgb
 
             local x <const> = floor(keyStep * (wCanvas - 1.0) + 0.5)
 
@@ -374,7 +374,7 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         if grdUtlActive.idxHover ~= -1 then
             local keyHover <const> = gradient:getKey(grdUtlActive.idxHover)
             local stepHover <const> = keyHover.step
-            local clrHover <const> = keyHover.clr
+            local clrHover <const> = keyHover.rgb
             local avgLight <const> = (clrHover.r + clrHover.g + clrHover.b) / 3.0
             local tagColor <const> = avgLight >= 0.5 and aseBlack or aseWhite
             local x <const> = floor(stepHover * (wCanvas - 1.0) + 0.5)
@@ -462,9 +462,9 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
             end
 
             if conflictingKeyIndex ~= -1 then
-                local temp <const> = keys[conflictingKeyIndex].clr
-                keys[conflictingKeyIndex].clr = keys[grdUtlActive.idxCurrent].clr
-                keys[grdUtlActive.idxCurrent].clr = temp
+                local temp <const> = keys[conflictingKeyIndex].rgb
+                keys[conflictingKeyIndex].rgb = keys[grdUtlActive.idxCurrent].rgb
+                keys[grdUtlActive.idxCurrent].rgb = temp
 
                 grdUtlActive.idxCurrent = conflictingKeyIndex
             end
@@ -495,11 +495,11 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
                     if event.altKey then
                         app.command.SwitchColors()
                         local newClr <const> = AseUtilities.aseColorToClr(app.fgColor)
-                        gradient:getKey(grdUtlActive.idxCurrent).clr = newClr
+                        gradient:getKey(grdUtlActive.idxCurrent).rgb = newClr
                         app.command.SwitchColors()
                     else
                         local newClr <const> = AseUtilities.aseColorToClr(app.fgColor)
-                        gradient:getKey(grdUtlActive.idxCurrent).clr = newClr
+                        gradient:getKey(grdUtlActive.idxCurrent).rgb = newClr
                     end
                 else
                     -- Add a new key.
@@ -590,7 +590,7 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
                 newKeys[1] = ClrKey.new(0.0, cgeval(gradient, 0.0, mixFunc))
                 newKeys[3] = ClrKey.new(1.0, cgeval(gradient, 1.0, mixFunc))
                 newKeys[2] = ClrKey.new(0.5, ColorUtilities.mixSrLch(
-                    newKeys[1].clr, newKeys[3].clr, 0.5, hMixFunc))
+                    newKeys[1].rgb, newKeys[3].rgb, 0.5, hMixFunc))
             else
                 -- Cache methods used in loop.
                 local floor <const> = math.floor
