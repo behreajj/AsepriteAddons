@@ -29,7 +29,7 @@ false, then returns to the first frame after reaching the last.
 
 - `appendLayer`: Appends a new layer to the active parent, either sprite or group layer. The layer is appended to the top of the layer stack. If the active layer is a group, does *not* child the new layer to the group. The new layer becomes the active layer. 
 
-- `copyLayer`: Duplicates a layer, including group opacity and blend mode. Ignores reference layers. Ignores background layers in indexed color mode. Tile map layers are copied to regular layers (to avoid ambiguities with tile set reference vs. copy by value). For ranges, group layers are ignored and duplicates are parented to the sprite.
+- `copyLayer`: Duplicates a layer, including group opacity and blend mode. Ignores reference layers. Ignores background layers in indexed color mode. Ignores empty group layers. Tile map layers are copied to regular layers (to avoid ambiguities with tile set reference vs. copy by value). For ranges, group layers are ignored and duplicates are parented to the sprite.
 
 - `cycleStackDown`: Moves a layer down the stack. Ignores background layers. If the layer is at the bottom of the stack and its parent does not contain a background layer, moves it to the top.
 

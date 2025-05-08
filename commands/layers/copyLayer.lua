@@ -153,14 +153,17 @@ else
         return
     end
 
-    app.transaction("Copy Layer", function()
-        local trgLayer <const> = copyLayer(
-            activeLayer,
-            activeLayer.parent,
-            activeSprite.colorMode)
-        trgLayer.stackIndex = activeLayer.stackIndex + 1
-        app.layer = trgLayer
-    end)
+    local name <const> = activeLayer.name
+    app.transaction(
+        string.format("Copy %s", #name > 0 and name or "Layer"),
+        function()
+            local trgLayer <const> = copyLayer(
+                activeLayer,
+                activeLayer.parent,
+                activeSprite.colorMode)
+            trgLayer.stackIndex = activeLayer.stackIndex + 1
+            app.layer = trgLayer
+        end)
 end
 
 app.refresh()
