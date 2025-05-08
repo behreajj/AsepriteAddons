@@ -253,11 +253,6 @@ function Mesh2.arc(
     end
 
     local sctVal <const> = math.max(3, sectors)
-
-    -- TODO: Does this need to be fixed in the same way that Bezier
-    -- arc calculation in asediagrams needed to?
-    -- local kntAdd <const> = arcLen01 % 0.25 > 0.00001 and 1 or 0
-    -- local knCtVerif <const> = math.max(2, math.ceil(kntAdd + 4 * arcLen01))
     local sctCount <const> = math.ceil(1.0 + sctVal *
         arcLen * 0.1591549430919)
     local sctCount2 <const> = sctCount + sctCount
