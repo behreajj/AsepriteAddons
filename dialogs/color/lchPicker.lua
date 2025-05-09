@@ -23,6 +23,11 @@ local harmonyTypes <const> = {
 }
 
 local defaults <const> = {
+    -- TODO: Make LCH sliders into a child dialog that pops up when
+    -- a canvas representing a custom color widget is clicked. That
+    -- way it can be used by color select and replace dialogs. Then
+    -- make this a color wheel picker similar to Okhsl?
+
     -- TODO: Make backgrounds for colors with alpha consistent
     -- with gradient utilities UI.
 
@@ -135,7 +140,7 @@ local function setFromSelect(dialog, sprite, frIdx)
     end
 end
 
-local dlg <const> = Dialog { title = "LCH Color Picker" }
+local dlg <const> = Dialog { title = "LCH Color Picker " }
 
 ---@param event MouseEvent
 local function setAlphaMouseListen(event)

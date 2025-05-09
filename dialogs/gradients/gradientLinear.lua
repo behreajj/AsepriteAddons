@@ -12,7 +12,7 @@ if app.preferences then
     end
 end
 
-local dlg <const> = Dialog { title = "Linear Gradient" }
+local dlg <const> = Dialog { title = "Linear Gradient " }
 
 local gradient <const> = GradientUtilities.dialogWidgets(dlg, true)
 
