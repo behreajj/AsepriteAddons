@@ -258,11 +258,10 @@ end
 ---@return Lab
 ---@nodiscard
 function Lab.mix(o, d, step)
-    -- Arbitrary scalar to compensate for the fact
-    -- that black colors will still appear bright
-    -- due to clipping of out of gamut colors.
-    -- Multiplying the fudge by the step made the
-    -- gradient appear worse.
+    -- Arbitrary scalar to compensate for the fact that black Lab colors become
+    -- brighter RGB colors due to clipping of out of gamut.
+    -- Multiplying the fudge by the step made the gradient appear worse.
+    -- Smooth stepping the and cubing the fudge were also unsatisfying.
 
     local oIsBlack <const> = o.l < 0.000001
     local dIsBlack <const> = d.l < 0.000001
