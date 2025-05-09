@@ -616,6 +616,7 @@ dlg:button {
             }
         elseif dataType == "STRING" then
             assignment = args.stringValue --[[@as string]]
+            if #assignment <= 0 then assignment = nil end
         elseif dataType == "UUID" then
             -- Uuid must be validated against invalid strings.
             local uStr <const> = args.uuidValue --[[@as string]]
