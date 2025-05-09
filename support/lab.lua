@@ -258,12 +258,14 @@ end
 ---@return Lab
 ---@nodiscard
 function Lab.mix(o, d, step)
-    local oIsBlack <const> = o.l < 0.000001
-    local dIsBlack <const> = d.l < 0.000001
-
     -- Arbitrary scalar to compensate for the fact
     -- that black colors will still appear bright
     -- due to clipping of out of gamut colors.
+    -- Multiplying the fudge by the step made the
+    -- gradient appear worse.
+
+    local oIsBlack <const> = o.l < 0.000001
+    local dIsBlack <const> = d.l < 0.000001
 
     local oVerif = o
     local dVerif = d
@@ -271,10 +273,12 @@ function Lab.mix(o, d, step)
         oVerif = Lab.new(o.l, 0.0, 0.0, o.alpha)
         dVerif = Lab.new(d.l, 0.0, 0.0, d.alpha)
     elseif oIsBlack then
-        local fudge <const> = d.l * d.l * 0.0001
+        local lFac <const> = d.l * 0.01
+        local fudge <const> = lFac * lFac
         oVerif = Lab.new(o.l, d.a * fudge, d.b * fudge, o.alpha)
     elseif dIsBlack then
-        local fudge <const> = o.l * o.l * 0.0001
+        local lFac <const> = o.l * 0.01
+        local fudge <const> = lFac * lFac
         dVerif = Lab.new(d.l, o.a * fudge, o.b * fudge, d.alpha)
     end
 
