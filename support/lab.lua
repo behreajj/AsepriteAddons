@@ -310,10 +310,10 @@ end
 ---@nodiscard
 function Lab.mixPolar(o, d, step, hueFunc)
     local ocsq <const> = o.a * o.a + o.b * o.b
-    if ocsq < 0.01 then return Lab.mix(o, d, step) end
+    if ocsq < 0.02 then return Lab.mix(o, d, step) end
 
     local dcsq <const> = d.a * d.a + d.b * d.b
-    if dcsq < 0.01 then return Lab.mix(o, d, step) end
+    if dcsq < 0.02 then return Lab.mix(o, d, step) end
 
     local t <const> = step or 0.5
     local u <const> = 1.0 - t
