@@ -15,7 +15,6 @@ local targets <const> = {
 }
 
 local dataTypes <const> = {
-    -- TODO: Support UUIDs!
     "BOOLEAN",
     "COLOR",
     "INTEGER",
@@ -23,6 +22,7 @@ local dataTypes <const> = {
     "NUMBER",
     "POINT",
     "STRING",
+    "UUID",
 }
 
 local defaults <const> = {
@@ -35,6 +35,7 @@ local defaults <const> = {
     ptxValue = 0,
     ptyValue = 0,
     stringValue = "",
+    uuidValue = "00000000-0000-0000-0000-000000000000",
 }
 
 ---@param x any
@@ -305,6 +306,7 @@ dlg:combobox {
         local isNum <const> = dataType == "NUMBER"
         local isPt <const> = dataType == "POINT"
         local isStr <const> = dataType == "STRING"
+        local isUuid <const> = dataType == "UUID"
         local notNil <const> = dataType ~= "NIL"
 
         dlg:modify { id = "boolValue", visible = isBool and notNil }
@@ -315,6 +317,8 @@ dlg:combobox {
         dlg:modify { id = "ptxValue", visible = isPt and notNil }
         dlg:modify { id = "ptyValue", visible = isPt and notNil }
         dlg:modify { id = "stringValue", visible = isStr and notNil }
+        dlg:modify { id = "uuidValue", visible = isUuid and notNil }
+        dlg:modify { id = "genUuidButton", visible = isUuid and notNil }
     end
 }
 
@@ -415,6 +419,30 @@ dlg:entry {
 
 dlg:newrow { always = false }
 
+dlg:entry {
+    id = "uuidValue",
+    label = "UUID:",
+    text = defaults.uuidValue,
+    visible = defaults.dataType == "UUID",
+    focus = false,
+}
+
+dlg:newrow { always = false }
+
+dlg:button {
+    id = "genUuidButton",
+    text = "C&REATE",
+    visible = defaults.dataType == "UUID",
+    focus = false,
+    onclick = function()
+        local uuid <const> = Uuid()
+        local uStr <const> = JsonUtilities.uuidToJson(uuid)
+        dlg:modify { id = "uuidValue", text = uStr }
+    end
+}
+
+dlg:newrow { always = false }
+
 dlg:button {
     id = "get",
     text = "&GET",
@@ -441,6 +469,8 @@ dlg:button {
         dlg:modify { id = "ptxValue", visible = false }
         dlg:modify { id = "ptyValue", visible = false }
         dlg:modify { id = "stringValue", visible = false }
+        dlg:modify { id = "uuidValue", visible = false }
+        dlg:modify { id = "genUuidButton", visible = false }
 
         local query <const> = properties[1][propName]
         local typeQuery <const> = type(query)
@@ -472,6 +502,8 @@ dlg:button {
                 }
             end
         elseif typeQuery == "string" then
+            -- Not sure how to distinguish regular strings from Uuids here
+            -- without running into problems.
             dlg:modify { id = "dataType", option = "STRING" }
             dlg:modify { id = "stringValue", visible = true }
             dlg:modify { id = "stringValue", text = query }
@@ -584,6 +616,20 @@ dlg:button {
             }
         elseif dataType == "STRING" then
             assignment = args.stringValue --[[@as string]]
+        elseif dataType == "UUID" then
+            -- Uuid must be validated against invalid strings.
+            local uStr <const> = args.uuidValue --[[@as string]]
+            local uuidCand <const> = Uuid(uStr)
+            local notValid = true
+            local i = 0
+            while i < 8 do
+                i = i + 1
+                notValid = notValid and uuidCand[i] == 0
+            end
+            local uuidVerif <const> = notValid
+                and Uuid()
+                or uuidCand
+            assignment = JsonUtilities.uuidToJson(uuidVerif)
         else
             app.alert {
                 title = "Error",
