@@ -254,8 +254,12 @@ end
 
 ---Formats properties as a JSON string.
 ---@param properties table<string, any>
+---@param uuidPreset "INT_64"|"INT_32"|"STRING"? the format
+---@param uuidIndex integer? the index
 ---@return string
-function JsonUtilities.propsToJson(properties)
+function JsonUtilities.propsToJson(properties, uuidPreset, uuidIndex)
+    -- TODO: Functions that call this one should provide uuid args.
+
     ---@type string[]
     local propStrs <const> = {}
     local lenPropStrs = 0
@@ -277,15 +281,20 @@ function JsonUtilities.propsToJson(properties)
         elseif typev == "table" then
             vStr = JsonUtilities.propsToJson(v)
         elseif typev == "userdata" then
-            local namev <const> = v.__name --[[@as string]]
+            -- For UUIDs, the underscored name field is nil,
+            -- you need to get the metatable.
+            local namev <const> = v.__name
+                or getmetatable(v)["__name"] --[[@as string]]
             if namev == "gfx::Point" then
                 vStr = JsonUtilities.pointToJson(v.x, v.y)
             elseif namev == "gfx::Rect" then
                 vStr = JsonUtilities.rectToJson(v, "TOP_LEFT")
             elseif namev == "gfx::Size" then
                 vStr = JsonUtilities.pointToJson(v.width, v.height)
-            end
-        end
+            elseif namev == "Uuid" then
+                vStr = JsonUtilities.uuidToJson(v, uuidPreset, uuidIndex)
+            end -- Check name property.
+        end     -- Check Lua type.
 
         lenPropStrs = lenPropStrs + 1
         propStrs[lenPropStrs] = strfmt("\"%s\":%s", k, vStr)
@@ -380,6 +389,67 @@ function JsonUtilities.tagToJson(tag, fileName)
         tag.toFrame.frameNumber - 1,
         tag.repeats,
         JsonUtilities.propsToJson(tag.properties))
+end
+
+---Samples a unique identifier to retrieve a 32-bit integer subset
+---at a given index. The index is in [1, 4] and goes from left,
+---the most significant digit, to right, the least significant digit.
+---Use [0, -3] to access in the opposite direction.
+---@param uuid Uuid the unique identifier
+---@param index integer? the index
+---@return integer
+---@nodiscard
+function JsonUtilities.uuidToInt32(uuid, index)
+    local result = 0
+    local j <const> = 1 + ((index or 4) - 1) % 4
+    local offset <const> = j * 4
+    local k = 0
+    while k < 4 do
+        result = result | (uuid[offset - k] << (k * 8))
+        k = k + 1
+    end
+    return result
+end
+
+---Samples a unique identifier to retrieve a 64 bit integer subset
+---at a given index. The index is in [1, 2] and goes from left,
+---the most significant digit, to right, the least significant digit.
+---Use [0, -1] to access in the opposite direction.
+---@param uuid Uuid the unique identifier
+---@param index integer? the index
+---@return integer
+---@nodiscard
+function JsonUtilities.uuidToInt64(uuid, index)
+    local result = 0
+    local j <const> = 1 + ((index or 2) - 1) % 2
+    local offset <const> = j * 8
+    local k = 0
+    while k < 8 do
+        result = result | (uuid[offset - k] << (k * 8))
+        k = k + 1
+    end
+    return result
+end
+
+---Formats a Uuid as a JSON string.
+---@param uuid Uuid the unique identifier
+---@param preset "INT_64"|"INT_32"|"STRING"? the format
+---@param index integer? the index
+---@return string
+---@nodiscard
+function JsonUtilities.uuidToJson(uuid, preset, index)
+    -- UUID conversion to and from integers,
+    -- formerly in AseUtilities:
+    -- 04684a1dd3cf8ad52752fabe8773a200d926ce56 .
+
+    if preset == "INT_64" then
+        return string.format("%d",
+            JsonUtilities.uuidToInt64(uuid, index))
+    elseif preset == "INT_32" then
+        return string.format("%d",
+            JsonUtilities.uuidToInt32(uuid, index))
+    end
+    return string.format("%s", uuid)
 end
 
 ---Formats the Aseprite version as a JSON string.

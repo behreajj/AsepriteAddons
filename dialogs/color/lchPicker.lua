@@ -787,6 +787,9 @@ dlg:canvas {
         local h <const> = active.h
         local a <const> = active.a
 
+        -- TODO: Implement Lab harmony methods, then use those instead of
+        -- all this mess.
+
         -- RYB wheel color theory based on the idea that
         -- 180 degrees from key color is also opposite light,
         -- e.g., dark violet is opposite bright yellow.

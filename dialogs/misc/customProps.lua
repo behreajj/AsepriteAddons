@@ -15,6 +15,7 @@ local targets <const> = {
 }
 
 local dataTypes <const> = {
+    -- TODO: Support UUIDs!
     "BOOLEAN",
     "COLOR",
     "INTEGER",

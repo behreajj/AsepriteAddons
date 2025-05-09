@@ -299,14 +299,20 @@ function Lab.mixPolar(o, d, step, hueFunc)
 end
 
 ---Generates a random color.
+---@param lMin number lightness minimum
+---@param lMax number lightness maximum
 ---@return Lab
-function Lab.random()
+---@nodiscard
+function Lab.random(lMin, lMax)
     local rl <const> = math.random()
     local ra <const> = math.random()
     local rb <const> = math.random()
 
+    local lMinVerif <const> = lMin or 5.0
+    local lMaxVerif <const> = lMax or 95.0
+
     return Lab.new(
-        (1.0 - rl) * 5.0 + rl * 95.0,
+        (1.0 - rl) * lMinVerif + rl * lMaxVerif,
         (1.0 - ra) * Lab.SR_A_MIN + ra * Lab.SR_A_MAX,
         (1.0 - rb) * Lab.SR_B_MIN + rb * Lab.SR_B_MAX,
         1.0)
