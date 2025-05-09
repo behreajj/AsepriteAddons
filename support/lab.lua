@@ -269,16 +269,16 @@ function Lab.mix(o, d, step)
     local oVerif = o
     local dVerif = d
     if oIsBlack and dIsBlack then
-        oVerif = Lab.new(o.l, 0.0, 0.0, o.alpha)
-        dVerif = Lab.new(d.l, 0.0, 0.0, d.alpha)
+        oVerif = Lab.new(0.0, 0.0, 0.0, o.alpha)
+        dVerif = Lab.new(0.0, 0.0, 0.0, d.alpha)
     elseif oIsBlack then
         local lFac <const> = d.l * 0.01
         local fudge <const> = lFac * lFac
-        oVerif = Lab.new(o.l, d.a * fudge, d.b * fudge, o.alpha)
+        oVerif = Lab.new(0.0, d.a * fudge, d.b * fudge, o.alpha)
     elseif dIsBlack then
         local lFac <const> = o.l * 0.01
         local fudge <const> = lFac * lFac
-        dVerif = Lab.new(d.l, o.a * fudge, o.b * fudge, d.alpha)
+        dVerif = Lab.new(0.0, o.a * fudge, o.b * fudge, d.alpha)
     end
 
     return Lab.mixInternal(oVerif, dVerif, step)

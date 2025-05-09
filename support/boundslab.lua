@@ -80,7 +80,7 @@ end
 ---@return Lab
 ---@nodiscard
 function BoundsLab.center(b)
-    return Lab.mix(b.mn, b.mx, 0.5)
+    return Lab.mixInternal(b.mn, b.mx, 0.5)
 end
 
 ---Evaluates whether a point is within the bounds, lower bounds inclusive, upper
