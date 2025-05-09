@@ -250,12 +250,44 @@ function Lab.insortRight(arr, elm, compare)
 end
 
 ---Mixes two colors by a step. The mix is unclamped.
+---Compensates for either origin or destination being black
+---in SR LAB 2 mixing.
 ---@param o Lab origin
 ---@param d Lab destination
 ---@param step? number step
 ---@return Lab
 ---@nodiscard
 function Lab.mix(o, d, step)
+    local oIsBlack <const> = o.l < 0.000001
+    local dIsBlack <const> = d.l < 0.000001
+
+    -- Arbitrary scalar to compensate for the fact
+    -- that black colors will still appear bright
+    -- due to clipping of out of gamut colors.
+
+    local oVerif = o
+    local dVerif = d
+    if oIsBlack and dIsBlack then
+        oVerif = Lab.new(o.l, 0.0, 0.0, o.alpha)
+        dVerif = Lab.new(d.l, 0.0, 0.0, d.alpha)
+    elseif oIsBlack then
+        local fudge <const> = d.l * d.l * 0.0001
+        oVerif = Lab.new(o.l, d.a * fudge, d.b * fudge, o.alpha)
+    elseif dIsBlack then
+        local fudge <const> = o.l * o.l * 0.0001
+        dVerif = Lab.new(d.l, o.a * fudge, o.b * fudge, d.alpha)
+    end
+
+    return Lab.mixInternal(oVerif, dVerif, step)
+end
+
+---Mixes two colors by a step. The mix is unclamped.
+---@param o Lab origin
+---@param d Lab destination
+---@param step? number step
+---@return Lab
+---@nodiscard
+function Lab.mixInternal(o, d, step)
     local t <const> = step or 0.5
     local u <const> = 1.0 - t
     return Lab.new(

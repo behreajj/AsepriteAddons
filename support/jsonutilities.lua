@@ -136,9 +136,13 @@ end
 ---@param cel Cel|table cel or packet
 ---@param fileName string file name reference
 ---@param originFormat? string origin format
+---@param uuidPreset "INT_64"|"INT_32"|"STRING"? the format
+---@param uuidIndex integer? the index
 ---@return string
 ---@nodiscard
-function JsonUtilities.celToJson(cel, fileName, originFormat)
+function JsonUtilities.celToJson(
+    cel, fileName, originFormat,
+    uuidPreset, uuidIndex)
     local celDataVrf = "null"
     local celData <const> = cel.data
     if celData and #celData > 0 then
@@ -165,7 +169,8 @@ function JsonUtilities.celToJson(cel, fileName, originFormat)
         layerVrf,
         cel.opacity,
         cel.zIndex,
-        JsonUtilities.propsToJson(cel.properties))
+        JsonUtilities.propsToJson(cel.properties,
+            uuidPreset, uuidIndex))
 end
 
 ---Formats a frame, or table containing the same properties, as a JSON string.
@@ -185,9 +190,11 @@ end
 ---and stackIndex, the string contains an array of stack indices of the layer
 ---and of its parents.
 ---@param layer Layer|table
+---@param uuidPreset "INT_64"|"INT_32"|"STRING"? the format
+---@param uuidIndex integer? the index
 ---@return string
 ---@nodiscard
-function JsonUtilities.layerToJson(layer)
+function JsonUtilities.layerToJson(layer, uuidPreset, uuidIndex)
     local layerDataVrf = "null"
     local layerData <const> = layer.data
     if layerData and #layerData > 0 then
@@ -232,7 +239,8 @@ function JsonUtilities.layerToJson(layer)
         parentVrf,
         layer.stackIndex,
         tileSetVrf,
-        JsonUtilities.propsToJson(layer.properties))
+        JsonUtilities.propsToJson(layer.properties,
+            uuidPreset, uuidIndex))
 end
 
 ---Formats a point as a JSON string.
@@ -258,8 +266,6 @@ end
 ---@param uuidIndex integer? the index
 ---@return string
 function JsonUtilities.propsToJson(properties, uuidPreset, uuidIndex)
-    -- TODO: Functions that call this one should provide uuid args.
-
     ---@type string[]
     local propStrs <const> = {}
     local lenPropStrs = 0
@@ -279,7 +285,7 @@ function JsonUtilities.propsToJson(properties, uuidPreset, uuidIndex)
         elseif typev == "string" then
             vStr = strfmt("\"%s\"", v)
         elseif typev == "table" then
-            vStr = JsonUtilities.propsToJson(v)
+            vStr = JsonUtilities.propsToJson(v, uuidPreset, uuidIndex)
         elseif typev == "userdata" then
             -- For UUIDs, the underscored name field is nil,
             -- you need to get the metatable.
@@ -338,9 +344,11 @@ end
 
 ---Formats a sprite, or table containing the same properties, as a JSON string.
 ---@param sprite Sprite|table sprite or packet
+---@param uuidPreset "INT_64"|"INT_32"|"STRING"? the format
+---@param uuidIndex integer? the index
 ---@return string
 ---@nodiscard
-function JsonUtilities.spriteToJson(sprite)
+function JsonUtilities.spriteToJson(sprite, uuidPreset, uuidIndex)
     local spriteDataVrf = "null"
     local spriteData <const> = sprite.data
     if spriteData and #spriteData > 0 then
@@ -358,7 +366,8 @@ function JsonUtilities.spriteToJson(sprite)
         spriteDataVrf,
         JsonUtilities.pointToJson(pxa.width, pxa.height),
         JsonUtilities.pointToJson(spec.width, spec.height),
-        JsonUtilities.propsToJson(sprite.properties))
+        JsonUtilities.propsToJson(sprite.properties,
+            uuidPreset, uuidIndex))
 end
 
 ---Formats a tag, or table containing the same properties, as a JSON string.
@@ -370,9 +379,11 @@ end
 ---directory. This function does not do any filename validation.
 ---@param tag Tag|table tag or packet
 ---@param fileName string file name reference
+---@param uuidPreset "INT_64"|"INT_32"|"STRING"? the format
+---@param uuidIndex integer? the index
 ---@return string
 ---@nodiscard
-function JsonUtilities.tagToJson(tag, fileName)
+function JsonUtilities.tagToJson(tag, fileName, uuidPreset, uuidIndex)
     local tagDataVrf = "null"
     local tagData <const> = tag.data
     if tagData and #tagData > 0 then
@@ -388,7 +399,8 @@ function JsonUtilities.tagToJson(tag, fileName)
         tag.fromFrame.frameNumber - 1,
         tag.toFrame.frameNumber - 1,
         tag.repeats,
-        JsonUtilities.propsToJson(tag.properties))
+        JsonUtilities.propsToJson(tag.properties,
+            uuidPreset, uuidIndex))
 end
 
 ---Samples a unique identifier to retrieve a 32-bit integer subset
@@ -441,6 +453,9 @@ function JsonUtilities.uuidToJson(uuid, preset, index)
     -- UUID conversion to and from integers,
     -- formerly in AseUtilities:
     -- 04684a1dd3cf8ad52752fabe8773a200d926ce56 .
+
+    -- TODO: Create an enumeration here of the possible format
+    -- options that can then be referenced from custom properties.
 
     if preset == "INT_64" then
         return string.format("%d",

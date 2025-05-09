@@ -36,6 +36,8 @@ local defaults <const> = {
     ptyValue = 0,
     stringValue = "",
     uuidValue = "00000000-0000-0000-0000-000000000000",
+    uuidPreset = "STRING",
+    uuidIndex = 0,
 }
 
 ---@param x any
@@ -453,6 +455,9 @@ dlg:button {
         local dataType <const> = args.dataType --[[@as string]]
         local propName <const> = args.propName --[[@as string]]
 
+        local uuidPreset <const> = defaults.uuidPreset
+        local uuidIndex <const> = defaults.uuidIndex
+
         local properties <const>,
         success <const>,
         errMsg <const> = getProperties(target)
@@ -540,7 +545,8 @@ dlg:button {
                 dlg:modify { id = "stringValue", visible = true }
                 dlg:modify {
                     id = "stringValue",
-                    text = JsonUtilities.propsToJson(query)
+                    text = JsonUtilities.propsToJson(query,
+                        uuidPreset, uuidIndex)
                 }
             end
         else
@@ -684,6 +690,9 @@ dlg:button {
         local args <const> = dlg.data
         local target <const> = args.target --[[@as string]]
 
+        local uuidPreset <const> = defaults.uuidPreset
+        local uuidIndex <const> = defaults.uuidIndex
+
         local properties <const>,
         success <const>,
         errMsg <const> = getProperties(target)
@@ -698,7 +707,8 @@ dlg:button {
         local i = 0
         while i < lenProperties do
             i = i + 1
-            strArr[i] = JsonUtilities.propsToJson(properties[i])
+            strArr[i] = JsonUtilities.propsToJson(properties[i],
+                uuidPreset, uuidIndex)
         end
         strArr[1 + i] = ""
         print(table.concat(strArr, "\n"))
