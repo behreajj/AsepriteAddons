@@ -143,7 +143,9 @@ local dlg <const> = Dialog { title = "LCH Color Picker " }
 local function setAlphaMouseListen(event)
     if event.button ~= MouseButton.NONE then
         local bw <const> = active.aBarWidth
-        local mx01 <const> = bw > 1 and (event.x / (bw - 1.0)) or 0.0
+        local mx01 <const> = bw > 1
+            and (event.x / (bw - 1.0))
+            or 0.0
         if event.ctrlKey then
             active.a = 1.0
         elseif event.shiftKey then
@@ -165,7 +167,9 @@ end
 local function setLightMouseListen(event)
     if event.button ~= MouseButton.NONE then
         local bw <const> = active.lBarWidth
-        local mx100 <const> = bw > 1 and (100.0 * event.x / (bw - 1.0)) or 0.0
+        local mx100 <const> = bw > 1
+            and (100.0 * event.x / (bw - 1.0))
+            or 0.0
         if event.ctrlKey then
             active.l = 50.0
         elseif event.shiftKey then
@@ -180,6 +184,9 @@ local function setLightMouseListen(event)
             active.l = math.min(math.max(mx100, 0.0), 100.0)
         end
         dlg:repaint()
+
+        -- TODO: This poses the biggest problem for abstracting these methods
+        -- into a CanvasUtilities method.
         updateHexCode(dlg, active.l, active.c, active.h)
     end
 end
@@ -230,7 +237,9 @@ end
 local function setHueMouseListen(event)
     if event.button ~= MouseButton.NONE then
         local bw <const> = active.hBarWidth
-        local mx01 <const> = bw > 1 and (event.x / (bw - 1.0)) or 0.0
+        local mx01 <const> = bw > 1
+            and (event.x / (bw - 1.0))
+            or 0.0
         if event.ctrlKey then
             active.h = 0.0
         elseif event.shiftKey then
@@ -428,7 +437,9 @@ dlg:canvas {
         local barHeight <const> = ctx.height
         active.lBarWidth = barWidth
 
-        local xToLight <const> = barWidth > 1 and 100.0 / (barWidth - 1.0) or 0.0
+        local xToLight <const> = barWidth > 1
+            and 100.0 / (barWidth - 1.0)
+            or 0.0
 
         ---@type string[]
         local bytes <const> = {}
@@ -449,10 +460,9 @@ dlg:canvas {
             Rectangle(0, 0, barWidth, 1),
             Rectangle(0, 0, barWidth, barHeight))
 
-        local fill = Color { r = 0, g = 0, b = 0 }
-        if l < 54.0 then
-            fill = Color { r = 255, g = 255, b = 255 }
-        end
+        local fill <const> = l < 54.0
+            and Color { r = 255, g = 255, b = 255 }
+            or Color { r = 0, g = 0, b = 0 }
         CanvasUtilities.drawSliderReticle(
             ctx, l * 0.01, barWidth, barHeight,
             fill, reticleSize)
@@ -499,7 +509,9 @@ dlg:canvas {
         local barHeight <const> = ctx.height
         active.cBarWidth = barWidth
 
-        local xToChroma <const> = barWidth > 1 and maxChroma / (barWidth - 1.0) or 0.0
+        local xToChroma <const> = barWidth > 1
+            and maxChroma / (barWidth - 1.0)
+            or 0.0
 
         ---@type string[]
         local bytes <const> = {}
@@ -520,10 +532,9 @@ dlg:canvas {
             Rectangle(0, 0, barWidth, 1),
             Rectangle(0, 0, barWidth, barHeight))
 
-        local fill = Color { r = 0, g = 0, b = 0 }
-        if l < 54.0 then
-            fill = Color { r = 255, g = 255, b = 255 }
-        end
+        local fill <const> = l < 54.0
+            and Color { r = 255, g = 255, b = 255 }
+            or Color { r = 0, g = 0, b = 0 }
         CanvasUtilities.drawSliderReticle(
             ctx, c / maxChroma, barWidth, barHeight,
             fill, reticleSize)
@@ -569,7 +580,9 @@ dlg:canvas {
         local barHeight <const> = ctx.height
         active.hBarWidth = barWidth
 
-        local xToHue <const> = barWidth > 1 and 1.0 / (barWidth - 1.0) or 0.0
+        local xToHue <const> = barWidth > 1
+            and 1.0 / (barWidth - 1.0)
+            or 0.0
 
         ---@type string[]
         local bytes <const> = {}
@@ -590,10 +603,9 @@ dlg:canvas {
             Rectangle(0, 0, barWidth, 1),
             Rectangle(0, 0, barWidth, barHeight))
 
-        local fill = Color { r = 0, g = 0, b = 0 }
-        if l < 54.0 then
-            fill = Color { r = 255, g = 255, b = 255 }
-        end
+        local fill <const> = l < 54.0
+            and Color { r = 255, g = 255, b = 255 }
+            or Color { r = 0, g = 0, b = 0 }
         CanvasUtilities.drawSliderReticle(
             ctx, h, barWidth, barHeight,
             fill, reticleSize)
@@ -639,7 +651,9 @@ dlg:canvas {
 
         local floor <const> = math.floor
         local strpack <const> = string.pack
-        local xToFac <const> = barWidth > 1 and 1.0 / (barWidth - 1.0) or 0.0
+        local xToFac <const> = barWidth > 1
+            and 1.0 / (barWidth - 1.0)
+            or 0.0
         local img <const> = Image(barWidth, 1, ColorMode.RGB)
 
         ---@type string[]
@@ -662,10 +676,9 @@ dlg:canvas {
             Rectangle(0, 0, barWidth, 1),
             Rectangle(0, 0, barWidth, barHeight))
 
-        local fill = Color { r = 0, g = 0, b = 0 }
-        if l < 54.0 then
-            fill = Color { r = 255, g = 255, b = 255 }
-        end
+        local fill <const> = l < 54.0
+            and Color { r = 255, g = 255, b = 255 }
+            or Color { r = 0, g = 0, b = 0 }
         CanvasUtilities.drawSliderReticle(
             ctx, a, barWidth, barHeight,
             fill, reticleSize)
