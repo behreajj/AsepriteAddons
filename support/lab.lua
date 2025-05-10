@@ -13,29 +13,32 @@ setmetatable(Lab, {
     end
 })
 
----The maximum value on the green-magenta axis in SR LAB 2 for a color
----converted from standard RGB.
+---The maximum value on the green-magenta axis in SR LAB 2
+---for a color converted from standard RGB.
 Lab.SR_A_MAX = 104.49946
 
----The minimum value on the green-magenta axis in SR LAB 2 for a color
----converted from standard RGB.
+---The minimum value on the green-magenta axis in SR LAB 2
+---for a color converted from standard RGB.
 Lab.SR_A_MIN = -82.955986
 
----The maximum value on the blue-yellow axis in SR LAB 2 for a color
----converted from standard RGB.
+---The maximum value on the blue-yellow axis in SR LAB 2
+---for a color converted from standard RGB.
 Lab.SR_B_MAX = 95.18662
 
----The minimum value on the blue-yellow axis in SR LAB 2 for a color
----converted from standard RGB.
+---The minimum value on the blue-yellow axis in SR LAB 2
+---for a color converted from standard RGB.
 Lab.SR_B_MIN = -110.8078
 
----Arbitrary hue assigned to lighter grays in SR LCH conversion functions.
+---Arbitrary hue assigned to lighter grays in SR LCH
+---conversion functions.
 Lab.SR_HUE_LIGHT = 0.30922841685655
 
----Arbitrary hue assigned to darker grays in SR LCH conversion functions.
+---Arbitrary hue assigned to darker grays in SR LCH
+---conversion functions.
 Lab.SR_HUE_SHADOW = 0.80922841685655
 
----Maximum chroma of a color in SR LCH that is in gamut in standard RGB.
+---Maximum chroma of a color in SR LCH that is in gamut
+---in standard RGB.
 Lab.SR_MAX_CHROMA = 119.07602046756
 
 ---Constructs a new color from lightness, a, b and alpha channels.
@@ -77,9 +80,9 @@ function Lab:__tostring()
     return Lab.toJson(self)
 end
 
----Bisects an array of colors to find the appropriate insertion point for a
----color. Biases towards the right insert point. Should be used with sorted
----arrays.
+---Bisects an array of colors to find the appropriate insertion
+---point for a color. Biases towards the right insert point.
+---Should be used with sorted arrays.
 ---@param arr Lab[] colors array
 ---@param elm Lab color
 ---@param compare? fun(a: Lab, b: Lab): boolean comparator
@@ -130,9 +133,10 @@ function Lab.distCylindrical(o, d)
         + math.sqrt(ca * ca + cb * cb)
 end
 
----Clamps a color to expected range, usually to prepare it for conversion to
----a hexadecimal integer. Lightness is clamped to [0.0, 100.0], a and b to
----[-127.5, 127.5], alpha to [0.0, 1.0].
+---Clamps a color to expected range, usually to prepare it
+---for conversion to a hexadecimal integer. Lightness is
+---clamped to [0.0, 100.0], a and b to [-127.5, 127.5],
+---alpha to [0.0, 1.0].
 ---@param o Lab color
 ---@return Lab
 ---@nodiscard
@@ -144,8 +148,8 @@ function Lab.clamp(o)
         math.min(math.max(o.alpha, 0.0), 1.0))
 end
 
----Evaluates whether two color are exactly equal. Checks for reference
----equality prior to value equality.
+---Evaluates whether two color are exactly equal.
+---Checks for reference equality prior to value equality.
 ---@param o Lab left comparisand
 ---@param d Lab right comparisand
 ---@return boolean
@@ -233,7 +237,7 @@ function Lab.fromLchInternal(l, c, h, alpha)
         alpha or 1.0)
 end
 
----Creates an array of 2 LAB colors at analogous hues from the source.
+---Creates an array of 2 LAB colors at analogous hues from the key.
 ---The hues are positive and negative 30 degrees away.
 ---@param o Lab origin color
 ---@return Lab[]
@@ -257,18 +261,18 @@ function Lab.harmonyAnalogous(o)
     }
 end
 
----Creates an array of 1 LAB color complementary to the source.
----The hue is 180 degrees away, or the negation of the source a and b.
----@param o Lab origin color
+---Creates an array of 1 LAB color complementary to the key.
+---The hue is 180 degrees away, or the negation of the key a and b.
+---@param o Lab key color
 ---@return Lab[]
 ---@nodiscard
 function Lab.harmonyComplement(o)
     return { Lab.new(100.0 - o.l, -o.a, -o.b, o.alpha) }
 end
 
----Creates an array of 2 LAB colors at split hues from the source.
+---Creates an array of 2 LAB colors at split hues from the key.
 ---The hues are 150 and 210 degrees away.
----@param o Lab origin color
+---@param o Lab key color
 ---@return Lab[]
 ---@nodiscard
 function Lab.harmonySplit(o)
@@ -290,9 +294,9 @@ function Lab.harmonySplit(o)
     }
 end
 
----Creates an array of 3 LAB colors at square hues from the source.
+---Creates an array of 3 LAB colors at square hues from the key.
 ---The hues are 90, 180 and 270 degrees away.
----@param o Lab origin color
+---@param o Lab key color
 ---@return Lab[]
 ---@nodiscard
 function Lab.harmonySquare(o)
@@ -303,9 +307,9 @@ function Lab.harmonySquare(o)
     }
 end
 
----Creates an array of 3 LAB colors at tetradic hues from the source.
+---Creates an array of 3 LAB colors at tetradic hues from the key.
 ---The hues are 120, 180 and 300 degrees away.
----@param o Lab origin color
+---@param o Lab key color
 ---@return Lab[]
 ---@nodiscard
 function Lab.harmonyTetradic(o)
@@ -330,9 +334,9 @@ function Lab.harmonyTetradic(o)
     }
 end
 
----Creates an array of 2 LAB colors at triadic hues from the source.
+---Creates an array of 2 LAB colors at triadic hues from the key.
 ---The hues are positive and negative 120 degrees away.
----@param o Lab origin color
+---@param o Lab key color
 ---@return Lab[]
 ---@nodiscard
 function Lab.harmonyTriadic(o)
@@ -354,9 +358,9 @@ function Lab.harmonyTriadic(o)
     }
 end
 
----Inserts a color  into a table so as to maintain sorted order. Biases
----toward the right insertion point. Returns true if the unique color
----was inserted.
+---Inserts a color into a table so as to maintain sorted order.
+---Biases toward the right insertion point.
+---Returns true if the unique color was inserted.
 ---@param arr Lab[] colors array
 ---@param elm Lab color
 ---@param compare? fun(a: Lab, b: Lab): boolean comparator
