@@ -38,10 +38,9 @@ local defaults <const> = {
     -- only work when mouse button is up. That means separate
     -- functions would need to be made for scroll.
     lchTosRgb = ColorUtilities.srLchTosRgbInternal,
+    labTosRgb = ColorUtilities.srLab2TosRgb,
     sRgbToLch = ColorUtilities.sRgbToSrLchInternal,
     sRgbToLab = ColorUtilities.sRgbToSrLab2Internal,
-    labToLch = Lab.toLch,
-    lchToLab = Lab.fromLch,
     harmonyType = "SHADING",
     barWidth = 240 // screenScale,
     barHeight = 16 // screenScale,
@@ -53,7 +52,7 @@ local defaults <const> = {
     hueSpreadShd = 0.66666666666667,
     hueSpreadLgt = 0.33333333333333,
     chromaSpreadShd = 5.0,
-    chromaSpreadLgt = 15.0,
+    chromaSpreadLgt = 12.5,
     lightSpread = 33.33,
     hYellow = 0.30922841685655,
     hViolet = 0.80922841685655,
@@ -786,48 +785,22 @@ dlg:canvas {
         local c <const> = active.c
         local h <const> = active.h
         local a <const> = active.a
+        local labKey <const> = Lab.fromLch(l, c, h, 1.0, 0.5)
 
-        -- TODO: Implement Lab harmony methods, then use those instead of
-        -- all this mess.
-
-        -- RYB wheel color theory based on the idea that
-        -- 180 degrees from key color is also opposite light,
-        -- e.g., dark violet is opposite bright yellow.
-        -- (120.0 / 180.0) * l + (060.0 / 180.0) * (100.0 - l)
-        -- (060.0 / 180.0) * l + (120.0 / 180.0) * (100.0 - l)
-        -- (150.0 / 180.0) * l + (030.0 / 180.0) * (100.0 - l)
-        -- (030.0 / 180.0) * l + (150.0 / 180.0) * (100.0 - l)
-        ---@type { l: number, c: number, h: number, a: number }[]
-        local swatches <const> = {}
+        ---@type Lab[]
+        local swatches = {}
         if harmonyType == "ANALOGOUS" then
-            local lAna <const> = (l + l + 50.0) / 3.0
-            local h30 <const> = 0.08333333333333
-            swatches[1] = { l = lAna, c = c, h = (h + h30) % 1.0, a = a }
-            swatches[2] = { l = lAna, c = c, h = (h - h30) % 1.0, a = a }
+            swatches = Lab.harmonyAnalogous(labKey)
         elseif harmonyType == "COMPLEMENT" then
-            swatches[1] = { l = 100.0 - l, c = c, h = (h + 0.5) % 1.0, a = a }
+            swatches = Lab.harmonyComplement(labKey)
         elseif harmonyType == "SPLIT" then
-            local lSpl <const> = (250.0 - (l + l)) / 3.0
-            local h150 <const> = 0.41666666666667
-            swatches[1] = { l = lSpl, c = c, h = (h + h150) % 1.0, a = a }
-            swatches[2] = { l = lSpl, c = c, h = (h - h150) % 1.0, a = a }
+            swatches = Lab.harmonySplit(labKey)
         elseif harmonyType == "SQUARE" then
-            swatches[1] = { l = 50.0, c = c, h = (h + 0.25) % 1.0, a = a }
-            swatches[2] = { l = 100.0 - l, c = c, h = (h + 0.5) % 1.0, a = a }
-            swatches[3] = { l = 50.0, c = c, h = (h - 0.25) % 1.0, a = a }
+            swatches = Lab.harmonySquare(labKey)
         elseif harmonyType == "TETRADIC" then
-            local lTri <const> = (200.0 - l) / 3.0
-            local lTet <const> = (100.0 + l) / 3.0
-            local h120 <const> = 0.33333333333333
-            local h60 <const> = 0.16666666666667
-            swatches[1] = { l = lTri, c = c, h = (h + h120) % 1.0, a = a }
-            swatches[2] = { l = 100.0 - l, c = c, h = (h + 0.5) % 1.0, a = a }
-            swatches[3] = { l = lTet, c = c, h = (h - h60) % 1.0, a = a }
+            swatches = Lab.harmonyTetradic(labKey)
         elseif harmonyType == "TRIADIC" then
-            local lTri <const> = (200.0 - l) / 3.0
-            local h120 <const> = 0.33333333333333
-            swatches[1] = { l = lTri, c = c, h = (h + h120) % 1.0, a = a }
-            swatches[2] = { l = lTri, c = c, h = (h - h120) % 1.0, a = a }
+            swatches = Lab.harmonyTetradic(labKey)
         else
             -- Unpack shading specific defaults.
             local shadeCount <const> = defaults.shadeCount
@@ -856,9 +829,8 @@ dlg:canvas {
             local lgtCrm <const> = (1.0 - toLgtFac) * c
                 + toLgtFac * minChromaLgt
 
-            local labShd <const> = defaults.lchToLab(minLight, shdCrm, shdHue, 1.0, 0.5)
-            local labKey <const> = defaults.lchToLab(l, c, h, 1.0, 0.5)
-            local labLgt <const> = defaults.lchToLab(maxLight, lgtCrm, lgtHue, 1.0, 0.5)
+            local labShd <const> = Lab.fromLch(minLight, shdCrm, shdHue, 1.0, 0.5)
+            local labLgt <const> = Lab.fromLch(maxLight, lgtCrm, lgtHue, 1.0, 0.5)
 
             local pt0 <const> = Vec3.new(labShd.a, labShd.b, labShd.l)
             local pt1 <const> = Vec3.new(labKey.a, labKey.b, labKey.l)
@@ -871,19 +843,16 @@ dlg:canvas {
             kn0:mirrorHandlesForward()
             kn1:mirrorHandlesBackward()
 
-            local eval <const> = Curve3.eval
-            local labToLch <const> = defaults.labToLch
-            local labnew <const> = Lab.new
             local curve <const> = Curve3.new(false, { kn0, kn1 }, "Shades")
-            local toFac = 1.0
-            if shadeCount > 1 then
-                toFac = 1.0 / (shadeCount - 1.0)
-            end
+            local toFac <const> = shadeCount > 1
+                and 1.0 / (shadeCount - 1.0)
+                or 1.0
+
             local i = 0
             while i < shadeCount do
-                local v <const> = eval(curve, i * toFac)
+                local v <const> = Curve3.eval(curve, i * toFac)
                 i = i + 1
-                swatches[i] = labToLch(labnew(v.z, v.x, v.y, a))
+                swatches[i] = Lab.new(v.z, v.x, v.y, a)
             end
         end
         active.swatches = swatches
@@ -903,7 +872,7 @@ dlg:canvas {
         local hsw <const> = barHeight
         local swatchRect <const> = Rectangle(0, 0, wsw, hsw)
 
-        local lchTosRgb <const> = defaults.lchTosRgb
+        local labTosRgb <const> = defaults.labTosRgb
         local isInGamut <const> = Rgb.rgbIsInGamut
         local clrToAseColor <const> = AseUtilities.clrToAseColor
 
@@ -912,7 +881,7 @@ dlg:canvas {
             swatchRect.x = j * wsw
             j = j + 1
             local swatch <const> = swatches[j]
-            local srgb <const> = lchTosRgb(swatch.l, swatch.c, swatch.h, 1.0)
+            local srgb <const> = labTosRgb(swatch)
             if isInGamut(srgb, inGamutEps) then
                 ctx.color = clrToAseColor(srgb)
                 ctx:fillRect(swatchRect)
@@ -935,8 +904,7 @@ dlg:canvas {
 
         local swatch <const> = swatches[1 + idx]
         if event.shiftKey then
-            local srgb <const> = defaults.lchTosRgb(
-                swatch.l, swatch.c, swatch.h, active.a)
+            local srgb <const> = defaults.labTosRgb(swatch)
             local aseColor <const> = AseUtilities.clrToAseColor(srgb)
             if event.button == MouseButton.RIGHT
                 or event.ctrlKey then
@@ -947,9 +915,10 @@ dlg:canvas {
                 app.fgColor = aseColor
             end
         else
-            active.l = swatch.l
-            active.c = swatch.c
-            active.h = swatch.h
+            local swatchLch <const> = Lab.toLch(swatch)
+            active.l = swatchLch.l
+            active.c = swatchLch.c
+            active.h = swatchLch.h
             updateHexCode(dlg, active.l, active.c, active.h)
             dlg:repaint()
         end

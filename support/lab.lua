@@ -235,122 +235,122 @@ end
 
 ---Creates an array of 2 LAB colors at analogous hues from the source.
 ---The hues are positive and negative 30 degrees away.
----@param c Lab origin color
+---@param o Lab origin color
 ---@return Lab[]
 ---@nodiscard
-function Lab.harmonyAnalogous(c)
-    local lAna <const> = (c.l * 2.0 + 50.0) / 3.0
+function Lab.harmonyAnalogous(o)
+    local lAna <const> = (o.l * 2.0 + 50.0) / 3.0
 
     local cos30 <const> = 0.86602540378444
     local sin30 <const> = 0.5
-    local a30 <const> = cos30 * c.a - sin30 * c.b
-    local b30 <const> = cos30 * c.b + sin30 * c.a
+    local a30 <const> = cos30 * o.a - sin30 * o.b
+    local b30 <const> = cos30 * o.b + sin30 * o.a
 
     local cos330 <const> = 0.86602540378444
     local sin330 <const> = -0.5
-    local a330 <const> = cos330 * c.a - sin330 * c.b
-    local b330 <const> = cos330 * c.b + sin330 * c.a
+    local a330 <const> = cos330 * o.a - sin330 * o.b
+    local b330 <const> = cos330 * o.b + sin330 * o.a
 
     return {
-        Lab.new(lAna, a30, b30, c.alpha),
-        Lab.new(lAna, a330, b330, c.alpha)
+        Lab.new(lAna, a30, b30, o.alpha),
+        Lab.new(lAna, a330, b330, o.alpha)
     }
 end
 
 ---Creates an array of 1 LAB color complementary to the source.
 ---The hue is 180 degrees away, or the negation of the source a and b.
----@param c Lab origin color
+---@param o Lab origin color
 ---@return Lab[]
 ---@nodiscard
-function Lab.harmonyComplement(c)
-    return { Lab.new(100.0 - c.l, -c.a, -c.b, c.alpha) }
+function Lab.harmonyComplement(o)
+    return { Lab.new(100.0 - o.l, -o.a, -o.b, o.alpha) }
 end
 
 ---Creates an array of 2 LAB colors at split hues from the source.
 ---The hues are 150 and 210 degrees away.
----@param c Lab origin color
+---@param o Lab origin color
 ---@return Lab[]
 ---@nodiscard
-function Lab.harmonySplit(c)
-    local lSpl <const> = (250.0 - c.l * 2.0) / 3.0
+function Lab.harmonySplit(o)
+    local lSpl <const> = (250.0 - o.l * 2.0) / 3.0
 
     local cos150 <const> = -0.86602540378444
     local sin150 <const> = 0.5
-    local a150 <const> = cos150 * c.a - sin150 * c.b
-    local b150 <const> = cos150 * c.b + sin150 * c.a
+    local a150 <const> = cos150 * o.a - sin150 * o.b
+    local b150 <const> = cos150 * o.b + sin150 * o.a
 
     local cos210 <const> = -0.86602540378444
     local sin210 <const> = -0.5
-    local a210 <const> = cos210 * c.a - sin210 * c.b
-    local b210 <const> = cos210 * c.b + sin210 * c.a
+    local a210 <const> = cos210 * o.a - sin210 * o.b
+    local b210 <const> = cos210 * o.b + sin210 * o.a
 
     return {
-        Lab.new(lSpl, a150, b150, c.alpha),
-        Lab.new(lSpl, a210, b210, c.alpha)
+        Lab.new(lSpl, a150, b150, o.alpha),
+        Lab.new(lSpl, a210, b210, o.alpha)
     }
 end
 
 ---Creates an array of 3 LAB colors at square hues from the source.
 ---The hues are 90, 180 and 270 degrees away.
----@param c Lab origin color
+---@param o Lab origin color
 ---@return Lab[]
 ---@nodiscard
-function Lab.harmonySquare(c)
+function Lab.harmonySquare(o)
     return {
-        Lab.new(50.0, -c.b, c.a, c.alpha),
-        Lab.new(100.0 - c.l, -c.a, -c.b, c.alpha),
-        Lab.new(50.0, c.b, -c.a, c.alpha),
+        Lab.new(50.0, -o.b, o.a, o.alpha),
+        Lab.new(100.0 - o.l, -o.a, -o.b, o.alpha),
+        Lab.new(50.0, o.b, -o.a, o.alpha),
     }
 end
 
 ---Creates an array of 3 LAB colors at tetradic hues from the source.
 ---The hues are 120, 180 and 300 degrees away.
----@param c Lab origin color
+---@param o Lab origin color
 ---@return Lab[]
 ---@nodiscard
-function Lab.harmonyTetradic(c)
-    local lTri <const> = (200.0 - c.l) / 3.0
-    local lCmp <const> = 100.0 - c.l
-    local lTet <const> = (100.0 + c.l) / 3.0
+function Lab.harmonyTetradic(o)
+    local lTri <const> = (200.0 - o.l) / 3.0
+    local lCmp <const> = 100.0 - o.l
+    local lTet <const> = (100.0 + o.l) / 3.0
 
     local cos120 <const> = -0.5
     local sin120 <const> = 0.86602540378444
-    local a120 <const> = cos120 * c.a - sin120 * c.b
-    local b120 <const> = cos120 * c.b + sin120 * c.a
+    local a120 <const> = cos120 * o.a - sin120 * o.b
+    local b120 <const> = cos120 * o.b + sin120 * o.a
 
     local cos300 <const> = 0.5
     local sin300 <const> = -0.86602540378444
-    local a300 <const> = cos300 * c.a - sin300 * c.b
-    local b300 <const> = cos300 * c.b + sin300 * c.a
+    local a300 <const> = cos300 * o.a - sin300 * o.b
+    local b300 <const> = cos300 * o.b + sin300 * o.a
 
     return {
-        Lab.new(lTri, a120, b120, c.alpha),
-        Lab.new(lCmp, -c.a, -c.b, c.alpha),
-        Lab.new(lTet, a300, b300, c.alpha),
+        Lab.new(lTri, a120, b120, o.alpha),
+        Lab.new(lCmp, -o.a, -o.b, o.alpha),
+        Lab.new(lTet, a300, b300, o.alpha),
     }
 end
 
 ---Creates an array of 2 LAB colors at triadic hues from the source.
 ---The hues are positive and negative 120 degrees away.
----@param c Lab origin color
+---@param o Lab origin color
 ---@return Lab[]
 ---@nodiscard
-function Lab.harmonyTriadic(c)
-    local lTri <const> = (200.0 - c.l) / 3.0
+function Lab.harmonyTriadic(o)
+    local lTri <const> = (200.0 - o.l) / 3.0
 
     local cos120 <const> = -0.5
     local sin120 <const> = 0.86602540378444
-    local a120 <const> = cos120 * c.a - sin120 * c.b
-    local b120 <const> = cos120 * c.b + sin120 * c.a
+    local a120 <const> = cos120 * o.a - sin120 * o.b
+    local b120 <const> = cos120 * o.b + sin120 * o.a
 
     local cos240 <const> = -0.5
     local sin240 <const> = -0.86602540378444
-    local a240 <const> = cos240 * c.a - sin240 * c.b
-    local b240 <const> = cos240 * c.b + sin240 * c.a
+    local a240 <const> = cos240 * o.a - sin240 * o.b
+    local b240 <const> = cos240 * o.b + sin240 * o.a
 
     return {
-        Lab.new(lTri, a120, b120, c.alpha),
-        Lab.new(lTri, a240, b240, c.alpha),
+        Lab.new(lTri, a120, b120, o.alpha),
+        Lab.new(lTri, a240, b240, o.alpha),
     }
 end
 
