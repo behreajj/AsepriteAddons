@@ -633,7 +633,7 @@ dlg:button {
             local uuidCand <const> = Uuid(uStr)
             local notValid = true
             local i = 0
-            while i < 8 do
+            while i < 16 do
                 i = i + 1
                 notValid = notValid and uuidCand[i] == 0
             end
