@@ -237,6 +237,7 @@ end
 ---The hues are positive and negative 30 degrees away.
 ---@param c Lab origin color
 ---@return Lab[]
+---@nodiscard
 function Lab.harmonyAnalogous(c)
     local lAna <const> = (c.l * 2.0 + 50.0) / 3.0
 
@@ -260,6 +261,7 @@ end
 ---The hue is 180 degrees away, or the negation of the source a and b.
 ---@param c Lab origin color
 ---@return Lab[]
+---@nodiscard
 function Lab.harmonyComplement(c)
     return { Lab.new(100.0 - c.l, -c.a, -c.b, c.alpha) }
 end
@@ -268,6 +270,7 @@ end
 ---The hues are 150 and 210 degrees away.
 ---@param c Lab origin color
 ---@return Lab[]
+---@nodiscard
 function Lab.harmonySplit(c)
     local lSpl <const> = (250.0 - c.l * 2.0) / 3.0
 
@@ -291,6 +294,7 @@ end
 ---The hues are 90, 180 and 270 degrees away.
 ---@param c Lab origin color
 ---@return Lab[]
+---@nodiscard
 function Lab.harmonySquare(c)
     return {
         Lab.new(50.0, -c.b, c.a, c.alpha),
@@ -303,6 +307,7 @@ end
 ---The hues are 120, 180 and 300 degrees away.
 ---@param c Lab origin color
 ---@return Lab[]
+---@nodiscard
 function Lab.harmonyTetradic(c)
     local lTri <const> = (200.0 - c.l) / 3.0
     local lCmp <const> = 100.0 - c.l
@@ -329,6 +334,7 @@ end
 ---The hues are positive and negative 120 degrees away.
 ---@param c Lab origin color
 ---@return Lab[]
+---@nodiscard
 function Lab.harmonyTriadic(c)
     local lTri <const> = (200.0 - c.l) / 3.0
 
