@@ -496,7 +496,7 @@ dlg:canvas {
             local h0 <const> = toHex(labTosRgb(labnew(50.0, aAdj, b, 1.0)))
             bytes[1 + i] = strpack("<I4", h0)
 
-            local h1 <const> = toHex(labTosRgb(labnew(50.0, bAdj, b + bAdj, 1.0)))
+            local h1 <const> = toHex(labTosRgb(labnew(50.0, aAdj, b + bAdj, 1.0)))
             bytes[barWidth + 1 + i] = strpack("<I4", h1)
             i = i + 1
         end
