@@ -800,7 +800,7 @@ dlg:canvas {
         elseif harmonyType == "TETRADIC" then
             swatches = Lab.harmonyTetradic(labKey)
         elseif harmonyType == "TRIADIC" then
-            swatches = Lab.harmonyTetradic(labKey)
+            swatches = Lab.harmonyTriadic(labKey)
         else
             -- Unpack shading specific defaults.
             local shadeCount <const> = defaults.shadeCount
