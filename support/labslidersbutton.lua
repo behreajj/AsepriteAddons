@@ -71,6 +71,8 @@ function LabSliderButtons.dialogWidgets(
         textDisplay = textDisplayInitial,
     }
 
+    -- region Child Dialog
+
     local dlgChild <const> = Dialog {
         title = "LCH Color Picker",
         parent = dlgParent
@@ -86,6 +88,8 @@ function LabSliderButtons.dialogWidgets(
             dlgChild:close()
         end
     }
+
+    -- endregion
 
     dlgParent:canvas {
         id = "labColorButton",
@@ -117,31 +121,10 @@ function LabSliderButtons.dialogWidgets(
 
             ctx.color = AseUtilities.hexToAseColor(abgr32Opaque)
             ctx:fillRect(Rectangle(0, 0, wCanvas, hCanvas))
-            ctx.color = Color { r = 0, g = 0, b = 0, alpha = 255 }
+            ctx.color = Color { r = 24, g = 24, b = 24, alpha = 255 }
             ctx:fillRect(Rectangle(0, hCanvas - hABar, wCanvas, hABar))
-            ctx.color = Color { r = 255, g = 255, b = 255, alpha = 255 }
+            ctx.color = Color { r = 255, g = 245, b = 215, alpha = 255 }
             ctx:fillRect(Rectangle(0, hCanvas - hABar, wABar, hABar))
-
-            -- local bkgChecker = AseUtilities.checkerImage(
-            --     wCanvas, hCanvas,
-            --     LabSliderButtons.CHECKER_WIDTH,
-            --     LabSliderButtons.CHECKER_HEIGHT,
-            --     LabSliderButtons.CHECKER_COLOR_A,
-            --     LabSliderButtons.CHECKER_COLOR_B)
-
-            -- local colorFill <const> = Image(bkgChecker.spec)
-            -- colorFill:clear(abgr32)
-            -- colorFill:clear(
-            --     Rectangle(0, 0, wCanvas, hCanvas - 8),
-            --     abgr32Opaque)
-
-            -- ctx:drawImage(bkgChecker,
-            --     Rectangle(0, 0, wCanvas, hCanvas),
-            --     Rectangle(0, 0, wCanvas, hCanvas))
-
-            -- ctx:drawImage(colorFill,
-            --     Rectangle(0, 0, wCanvas, hCanvas),
-            --     Rectangle(0, 0, wCanvas, hCanvas))
 
             -- Flip text colors for bright colors.
             local textColor = LabSliderButtons.TEXT_COLOR
