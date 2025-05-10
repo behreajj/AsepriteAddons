@@ -258,33 +258,11 @@ end
 ---@return Lab
 ---@nodiscard
 function Lab.mix(o, d, step)
-    -- Arbitrary scalar to compensate for the fact that black Lab colors become
-    -- brighter RGB colors due to clipping of out of gamut.
-    -- Multiplying the fudge by the step made the gradient appear worse.
-    -- This can lead to discontinuities when black is the middle color
-    -- of a multi-key gradient.
-
-    local oIsBlack <const> = o.l < 0.000001
-    local dIsBlack <const> = d.l < 0.000001
-
-    local oVerif = o
-    local dVerif = d
-    if oIsBlack and dIsBlack then
-        oVerif = Lab.new(0.0, 0.0, 0.0, o.alpha)
-        dVerif = Lab.new(0.0, 0.0, 0.0, d.alpha)
-    elseif oIsBlack then
-        local lFac <const> = d.l * 0.01
-        -- local fudge <const> = 1.0 - math.sqrt(1.0 - lFac * lFac) -- circ in
-        local fudge <const> = lFac * lFac * (3.0 - 2.0 * lFac) -- smooth step
-        oVerif = Lab.new(0.0, d.a * fudge, d.b * fudge, o.alpha)
-    elseif dIsBlack then
-        local lFac <const> = o.l * 0.01
-        -- local fudge <const> = 1.0 - math.sqrt(1.0 - lFac * lFac) -- circ in
-        local fudge <const> = lFac * lFac * (3.0 - 2.0 * lFac)
-        dVerif = Lab.new(0.0, o.a * fudge, o.b * fudge, d.alpha)
-    end
-
-    return Lab.mixInternal(oVerif, dVerif, step)
+    -- Tried to compensate for problems with black ramps by assigning
+    -- the black color the a and b components of the other multiplied by
+    -- the lightness of the other and/or an arbitrary scale.
+    -- 8ee1a6d1f0babedd110c48b5d7d37b155153d69c
+    return Lab.mixInternal(o, d, step)
 end
 
 ---Mixes two colors by a step. The mix is unclamped.
