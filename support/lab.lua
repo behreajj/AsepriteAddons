@@ -376,8 +376,6 @@ function Lab.insortRight(arr, elm, compare)
 end
 
 ---Mixes two colors by a step. The mix is unclamped.
----Compensates for either origin or destination being black
----in SR LAB 2 mixing.
 ---@param o Lab origin
 ---@param d Lab destination
 ---@param step? number step
@@ -410,8 +408,9 @@ function Lab.mixInternal(o, d, step)
         u * o.alpha + t * d.alpha)
 end
 
----Mixes two colors by a step using polar coordinates. The mix is unclamped.
+---Mixes two colors by a step using polar coordinates.
 ---If either color is gray, then defaults to linear mix.
+---The mix is unclamped.
 ---@param o Lab origin
 ---@param d Lab destination
 ---@param step number step
@@ -463,8 +462,9 @@ function Lab.random(lMin, lMax)
         1.0)
 end
 
----Converts from a color to a 64 bit hexadecimal integer. Channels are packed in
----0xTTTTLLLLAAAABBB order. Ensures that color values are valid.
+---Converts from a color to a 64 bit hexadecimal integer.
+---Channels are packed in 0xTTTTLLLLAAAABBB order.
+---Ensures that color values are valid.
 ---@param o Lab color
 ---@return integer
 ---@nodiscard

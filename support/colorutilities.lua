@@ -46,8 +46,8 @@ function ColorUtilities.lRgbToSrLab2Internal(c)
         c.a)
 end
 
----Converts an origin and destination color from sRGB to SR LAB 2, mixes the
----colors in LAB, then converts them back to sRGB.
+---Converts an origin and destination color from sRGB to SR LAB 2,
+---mixes the colors in LAB, then converts them back to sRGB.
 ---@param o Rgb origin
 ---@param d Rgb destination
 ---@param step? number step
@@ -60,8 +60,8 @@ function ColorUtilities.mixSrLab2(o, d, step)
     return ColorUtilities.mixSrLab2Internal(o, d, t)
 end
 
----Converts an origin and destination color from sRGB to SR LAB 2, mixes the
----colors in LAB, then converts them back to sRGB.
+---Converts an origin and destination color from sRGB to SR LAB 2,
+---mixes the colors in LAB, then converts them back to sRGB.
 ---@param o Rgb origin
 ---@param d Rgb destination
 ---@param step number step
@@ -75,8 +75,8 @@ function ColorUtilities.mixSrLab2Internal(o, d, step)
             step))
 end
 
----Converts an origin and destination color from sRGB to SR LCH, mixes the
----colors in LCH, then converts them back to sRGB.
+---Converts an origin and destination color from sRGB to SR LCH,
+---mixes the colors in LCH, then converts them back to sRGB.
 ---@param o Rgb origin
 ---@param d Rgb destination
 ---@param step number step
@@ -114,8 +114,8 @@ function ColorUtilities.mixSrLch(o, d, step, hueFunc)
     return ColorUtilities.mixSrLchInternal(o, d, t, f)
 end
 
----Converts an origin and destination color from sRGB to SR LCH, mixes the
----colors in LCH, then converts them back to sRGB.
+---Converts an origin and destination color from sRGB to SR LCH,
+---mixes the colors in LCH, then converts them back to sRGB.
 ---@param o Rgb origin
 ---@param d Rgb destination
 ---@param step number step
@@ -132,9 +132,10 @@ function ColorUtilities.mixSrLchInternal(o, d, step, hueFunc)
 end
 
 ---Converts a color from SR LAB 2 to linear RGB. See Jan Behrens,
----https://www.magnetkern.de/srlab2.html . The a and b components are unbounded
----but for sRGB, [-111.0, 111.0] suffice. For light, the expected range is
----[0.0, 100.0]. The alpha channel is unaffected by the transform.
+---https://www.magnetkern.de/srlab2.html . The a and b components
+---are unbounded but for sRGB, [-111.0, 111.0] suffice. For light,
+---the expected range is [0.0, 100.0]. The alpha channel is
+---unaffected by the transform.
 ---@param lab Lab lab color
 ---@return Rgb
 ---@nodiscard
