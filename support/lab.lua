@@ -261,7 +261,8 @@ function Lab.mix(o, d, step)
     -- Arbitrary scalar to compensate for the fact that black Lab colors become
     -- brighter RGB colors due to clipping of out of gamut.
     -- Multiplying the fudge by the step made the gradient appear worse.
-    -- Smooth stepping the and cubing the fudge were also unsatisfying.
+    -- This can lead to discontinuities when black is the middle color
+    -- of a multi-key gradient.
 
     local oIsBlack <const> = o.l < 0.000001
     local dIsBlack <const> = d.l < 0.000001
@@ -273,11 +274,13 @@ function Lab.mix(o, d, step)
         dVerif = Lab.new(0.0, 0.0, 0.0, d.alpha)
     elseif oIsBlack then
         local lFac <const> = d.l * 0.01
-        local fudge <const> = lFac * lFac
+        -- local fudge <const> = 1.0 - math.sqrt(1.0 - lFac * lFac) -- circ in
+        local fudge <const> = lFac * lFac * (3.0 - 2.0 * lFac) -- smooth step
         oVerif = Lab.new(0.0, d.a * fudge, d.b * fudge, o.alpha)
     elseif dIsBlack then
         local lFac <const> = o.l * 0.01
-        local fudge <const> = lFac * lFac
+        -- local fudge <const> = 1.0 - math.sqrt(1.0 - lFac * lFac) -- circ in
+        local fudge <const> = lFac * lFac * (3.0 - 2.0 * lFac)
         dVerif = Lab.new(0.0, o.a * fudge, o.b * fudge, d.alpha)
     end
 
