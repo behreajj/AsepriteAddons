@@ -54,6 +54,7 @@ local defaults <const> = {
     chromaSpreadShd = 5.0,
     chromaSpreadLgt = 12.5,
     lightSpread = 33.33,
+    -- TODO: Make these consistent with Lab constants?
     hYellow = 0.30922841685655,
     hViolet = 0.80922841685655,
     lIncrScale = 5,
@@ -852,7 +853,7 @@ dlg:canvas {
             while i < shadeCount do
                 local v <const> = Curve3.eval(curve, i * toFac)
                 i = i + 1
-                swatches[i] = Lab.new(v.z, v.x, v.y, a)
+                swatches[i] = Lab.new(v.z, v.x, v.y, 1.0)
             end
         end
         active.swatches = swatches
@@ -905,6 +906,7 @@ dlg:canvas {
         local swatch <const> = swatches[1 + idx]
         if event.shiftKey then
             local srgb <const> = defaults.labTosRgb(swatch)
+            srgb.a = active.a
             local aseColor <const> = AseUtilities.clrToAseColor(srgb)
             if event.button == MouseButton.RIGHT
                 or event.ctrlKey then
