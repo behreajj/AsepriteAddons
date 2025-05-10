@@ -233,8 +233,124 @@ function Lab.fromLchInternal(l, c, h, alpha)
         alpha or 1.0)
 end
 
----Inserts a color  into a table so as to maintain sorted order. Biases toward
----the right insertion point. Returns true if the unique color was inserted.
+---Creates an array of 2 LAB colors at analogous hues from the source.
+---The hues are positive and negative 30 degrees away.
+---@param c Lab origin color
+---@return Lab[]
+function Lab.harmonyAnalogous(c)
+    local lAna <const> = (c.l * 2.0 + 50.0) / 3.0
+
+    local cos30 <const> = 0.86602540378444
+    local sin30 <const> = 0.5
+    local a30 <const> = cos30 * c.a - sin30 * c.b
+    local b30 <const> = cos30 * c.b + sin30 * c.a
+
+    local cos330 <const> = 0.86602540378444
+    local sin330 <const> = -0.5
+    local a330 <const> = cos330 * c.a - sin330 * c.b
+    local b330 <const> = cos330 * c.b + sin330 * c.a
+
+    return {
+        Lab.new(lAna, a30, b30, c.alpha),
+        Lab.new(lAna, a330, b330, c.alpha)
+    }
+end
+
+---Creates an array of 1 LAB color complementary to the source.
+---The hue is 180 degrees away, or the negation of the source a and b.
+---@param c Lab origin color
+---@return Lab[]
+function Lab.harmonyComplement(c)
+    return { Lab.new(100.0 - c.l, -c.a, -c.b, c.alpha) }
+end
+
+---Creates an array of 2 LAB colors at split hues from the source.
+---The hues are 150 and 210 degrees away.
+---@param c Lab origin color
+---@return Lab[]
+function Lab.harmonySplit(c)
+    local lSpl <const> = (250.0 - c.l * 2.0) / 3.0
+
+    local cos150 <const> = -0.86602540378444
+    local sin150 <const> = 0.5
+    local a150 <const> = cos150 * c.a - sin150 * c.b
+    local b150 <const> = cos150 * c.b + sin150 * c.a
+
+    local cos210 <const> = -0.86602540378444
+    local sin210 <const> = -0.5
+    local a210 <const> = cos210 * c.a - sin210 * c.b
+    local b210 <const> = cos210 * c.b + sin210 * c.a
+
+    return {
+        Lab.new(lSpl, a150, b150, c.alpha),
+        Lab.new(lSpl, a210, b210, c.alpha)
+    }
+end
+
+---Creates an array of 3 LAB colors at square hues from the source.
+---The hues are 90, 180 and 270 degrees away.
+---@param c Lab origin color
+---@return Lab[]
+function Lab.harmonySquare(c)
+    return {
+        Lab.new(50.0, -c.b, c.a, c.alpha),
+        Lab.new(100.0 - c.l, -c.a, -c.b, c.alpha),
+        Lab.new(50.0, c.b, -c.a, c.alpha),
+    }
+end
+
+---Creates an array of 3 LAB colors at tetradic hues from the source.
+---The hues are 120, 180 and 300 degrees away.
+---@param c Lab origin color
+---@return Lab[]
+function Lab.harmonyTetradic(c)
+    local lTri <const> = (200.0 - c.l) / 3.0
+    local lCmp <const> = 100.0 - c.l
+    local lTet <const> = (100.0 + c.l) / 3.0
+
+    local cos120 <const> = -0.5
+    local sin120 <const> = 0.86602540378444
+    local a120 <const> = cos120 * c.a - sin120 * c.b
+    local b120 <const> = cos120 * c.b + sin120 * c.a
+
+    local cos300 <const> = 0.5
+    local sin300 <const> = -0.86602540378444
+    local a300 <const> = cos300 * c.a - sin300 * c.b
+    local b300 <const> = cos300 * c.b + sin300 * c.a
+
+    return {
+        Lab.new(lTri, a120, b120, c.alpha),
+        Lab.new(lCmp, -c.a, -c.b, c.alpha),
+        Lab.new(lTet, a300, b300, c.alpha),
+    }
+end
+
+---Creates an array of 2 LAB colors at triadic hues from the source.
+---The hues are positive and negative 120 degrees away.
+---@param c Lab origin color
+---@return Lab[]
+function Lab.harmonyTriadic(c)
+    local lTri <const> = (200.0 - c.l) / 3.0
+
+    local cos120 <const> = -0.5
+    local sin120 <const> = 0.86602540378444
+    local a120 <const> = cos120 * c.a - sin120 * c.b
+    local b120 <const> = cos120 * c.b + sin120 * c.a
+
+    local cos240 <const> = -0.5
+    local sin240 <const> = -0.86602540378444
+    local a240 <const> = cos240 * c.a - sin240 * c.b
+    local b240 <const> = cos240 * c.b + sin240 * c.a
+
+    return {
+        Lab.new(lTri, a120, b120, c.alpha),
+        Lab.new(lTri, a240, b240, c.alpha),
+    }
+end
+
+---Inserts a color  into a table so as to maintain sorted order. Biases
+---toward the right insertion point. Returns true if the unique color
+---was inserted.
 ---@param arr Lab[] colors array
 ---@param elm Lab color
 ---@param compare? fun(a: Lab, b: Lab): boolean comparator
@@ -258,9 +374,12 @@ end
 ---@return Lab
 ---@nodiscard
 function Lab.mix(o, d, step)
-    -- Tried to compensate for problems with black ramps by assigning
-    -- the black color the a and b components of the other multiplied by
-    -- the lightness of the other and/or an arbitrary scale.
+    -- Tried to compensate for problems with black ramps by
+    -- assigning the black color the a and b components of
+    -- the other multiplied by the lightness of the other
+    -- and/or an arbitrary scale. Resulted in discontinuities
+    -- when black was a middle key because pure black was
+    -- never reached.
     -- 8ee1a6d1f0babedd110c48b5d7d37b155153d69c
     return Lab.mixInternal(o, d, step)
 end

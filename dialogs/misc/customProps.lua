@@ -26,6 +26,10 @@ local dataTypes <const> = {
 }
 
 local defaults <const> = {
+    -- TODO: Include a rename button, which sets the current property value
+    -- to a new name, then sets the current property key to nil. Problem is
+    -- that you'd need another string entry so you can rename "x" to "y".
+
     target = "CEL",
     dataType = "STRING",
     propName = "property",
@@ -477,6 +481,7 @@ dlg:button {
         dlg:modify { id = "uuidValue", visible = false }
         dlg:modify { id = "genUuidButton", visible = false }
 
+        -- It is possible for the key to be an empty string, "".
         local query <const> = properties[1][propName]
         local typeQuery <const> = type(query)
         if typeQuery == "boolean" then
