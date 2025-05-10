@@ -426,7 +426,7 @@ dlg:canvas {
         while i < barWidth do
             local xFac <const> = i * xToFac
             local a <const> = (1.0 - xFac) * visMin + xFac * visMax
-            local h0 <const> = toHex(labTosRgb(labnew(50.0, a, bAdj, 1.0)))
+            local h0 <const> = toHex(labTosRgb(labnew(50.0, a, 0.0, 1.0)))
             bytes[1 + i] = strpack("<I4", h0)
 
             local h1 <const> = toHex(labTosRgb(labnew(50.0, a + aAdj, bAdj, 1.0)))
@@ -493,7 +493,7 @@ dlg:canvas {
         while i < barWidth do
             local xFac <const> = i * xToFac
             local b <const> = (1.0 - xFac) * visMin + xFac * visMax
-            local h0 <const> = toHex(labTosRgb(labnew(50.0, aAdj, b, 1.0)))
+            local h0 <const> = toHex(labTosRgb(labnew(50.0, 0.0, b, 1.0)))
             bytes[1 + i] = strpack("<I4", h0)
 
             local h1 <const> = toHex(labTosRgb(labnew(50.0, aAdj, b + bAdj, 1.0)))
