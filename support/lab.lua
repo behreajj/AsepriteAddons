@@ -30,10 +30,10 @@ Lab.SR_B_MAX = 95.18662
 Lab.SR_B_MIN = -110.8078
 
 ---Arbitrary hue assigned to lighter grays in SR LCH conversion functions.
-Lab.SR_HUE_LIGHT = 0.306391
+Lab.SR_HUE_LIGHT = 0.30922841685655
 
 ---Arbitrary hue assigned to darker grays in SR LCH conversion functions.
-Lab.SR_HUE_SHADOW = 0.874676
+Lab.SR_HUE_SHADOW = 0.80922841685655
 
 ---Maximum chroma of a color in SR LCH that is in gamut in standard RGB.
 Lab.SR_MAX_CHROMA = 119.07602046756

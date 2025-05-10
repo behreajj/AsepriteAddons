@@ -54,9 +54,6 @@ local defaults <const> = {
     chromaSpreadShd = 5.0,
     chromaSpreadLgt = 12.5,
     lightSpread = 33.33,
-    -- TODO: Make these consistent with Lab constants?
-    hYellow = 0.30922841685655,
-    hViolet = 0.80922841685655,
     lIncrScale = 5,
     cIncrScale = 10,
     hIncrScale = 15,
@@ -810,8 +807,8 @@ dlg:canvas {
             local chromaSpreadShd <const> = defaults.chromaSpreadShd
             local chromaSpreadLgt <const> = defaults.chromaSpreadLgt
             local lightSpread <const> = defaults.lightSpread
-            local hYellow <const> = defaults.hYellow
-            local hViolet <const> = defaults.hViolet
+            local hYellow <const> = Lab.SR_HUE_LIGHT
+            local hViolet <const> = Lab.SR_HUE_SHADOW
 
             local minLight <const> = math.max(0.0, l - lightSpread)
             local maxLight <const> = math.min(100.0, l + lightSpread)
