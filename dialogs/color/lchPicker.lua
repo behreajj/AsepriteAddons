@@ -354,7 +354,6 @@ dlg:canvas {
             math.floor(c + 0.5),
             math.floor(h * 360.0 + 0.5),
             math.floor(a * 255.0 + 0.5))
-        local strMeasure <const> = ctx:measureText(strDisplay)
 
         -- Flip text colors for bright colors.
         if l < 54.0 then
@@ -362,15 +361,19 @@ dlg:canvas {
         end
 
         local wBarCenter <const> = barWidth * 0.5
+        local hBarCenter <const> = barHeight * 0.5
+        local strMeasure <const> = ctx:measureText(strDisplay)
         local wStrHalf <const> = strMeasure.width * 0.5
+        local hStrHalf <const> = strMeasure.height * 0.5
         local xTextCenter <const> = math.floor(wBarCenter - wStrHalf)
+        local yTextCenter <const> = math.floor(hBarCenter - hStrHalf)
 
         -- Use Aseprite color as an intermediary so as
         -- to support all color modes.
         ctx.color = AseUtilities.hexToAseColor(textShadow)
-        ctx:fillText(strDisplay, xTextCenter + 1, 2)
+        ctx:fillText(strDisplay, xTextCenter + 1, yTextCenter + 1)
         ctx.color = AseUtilities.hexToAseColor(textColor)
-        ctx:fillText(strDisplay, xTextCenter, 1)
+        ctx:fillText(strDisplay, xTextCenter, yTextCenter)
     end,
     onmouseup = function(event)
         local button <const> = event.button
