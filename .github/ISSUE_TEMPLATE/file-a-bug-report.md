@@ -8,10 +8,10 @@ assignees: ''
 ---
 
 **Operating System**
-For example, Windows 10.
+For example, Windows 11.
 
 **Aseprite version**
-The minimum supported version is 1.3.10.
+The minimum supported version is 1.3.14.
 
 **Sprite color mode**
 For example, RGB, indexed or grayscale.
