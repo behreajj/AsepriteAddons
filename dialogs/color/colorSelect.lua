@@ -244,7 +244,8 @@ dlg:check {
     visible = (defaults.uiMode == "COLOR"
             or defaults.uiMode == "CURSOR"
             or defaults.uiMode == "COORD")
-        and defaults.tolerance > 0
+        and defaults.tolerance > 0,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -266,6 +267,7 @@ dlg:check {
     text = "L",
     selected = defaults.useLight,
     visible = defaults.uiMode == "CRITERIA",
+    hexpand = false,
     onclick = function()
         local args <const> = dlg.data
         local state <const> = args.useLight --[[@as boolean]]
@@ -279,6 +281,7 @@ dlg:check {
     text = "C",
     selected = defaults.usec,
     visible = defaults.uiMode == "CRITERIA",
+    hexpand = false,
     onclick = function()
         local args <const> = dlg.data
         local state <const> = args.usec --[[@as boolean]]
@@ -292,6 +295,7 @@ dlg:check {
     text = "H",
     selected = defaults.useh,
     visible = defaults.uiMode == "CRITERIA",
+    hexpand = false,
     onclick = function()
         local args <const> = dlg.data
         local state <const> = args.useh --[[@as boolean]]
@@ -307,6 +311,7 @@ dlg:check {
     text = "Alpha",
     selected = defaults.useAlpha,
     visible = defaults.uiMode == "CRITERIA",
+    hexpand = false,
     onclick = function()
         local args <const> = dlg.data
         local state <const> = args.useAlpha --[[@as boolean]]

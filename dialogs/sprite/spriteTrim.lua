@@ -379,6 +379,7 @@ dlg:check {
     text = "&Locked",
     selected = defaults.includeLocked,
     focus = false,
+    hexpand = false,
 }
 
 dlg:check {
@@ -386,6 +387,7 @@ dlg:check {
     text = "&Hidden",
     selected = defaults.includeHidden,
     focus = false,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -395,7 +397,8 @@ dlg:check {
     label = "Cull: ",
     text = "&Frames",
     focus = false,
-    selected = defaults.trimFrames
+    selected = defaults.trimFrames,
+    hexpand = false,
 }
 
 dlg:button {

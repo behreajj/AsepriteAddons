@@ -141,7 +141,8 @@ dlg:check {
     text = "&Locked",
     selected = defaults.includeLocked,
     visible = defaults.majorTarget ~= "TILE_SETS"
-        and defaults.majorTarget ~= "SELECTION"
+        and defaults.majorTarget ~= "SELECTION",
+    hexpand = false,
 }
 
 dlg:check {
@@ -149,7 +150,8 @@ dlg:check {
     text = "&Hidden",
     selected = defaults.includeHidden,
     visible = defaults.majorTarget ~= "TILE_SETS"
-        and defaults.majorTarget ~= "SELECTION"
+        and defaults.majorTarget ~= "SELECTION",
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -200,7 +202,8 @@ dlg:check {
     selected = defaults.ignoreAlpha,
     visible = defaults.majorTarget ~= "TILE_SET"
         and defaults.majorTarget ~= "TILE_SETS"
-        and defaults.tolerance > 0
+        and defaults.tolerance > 0,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -210,7 +213,8 @@ dlg:check {
     label = "Swap:",
     text = "Colo&rs",
     selected = defaults.switchColors,
-    visible = defaults.tolerance <= 0
+    visible = defaults.tolerance <= 0,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -221,7 +225,8 @@ dlg:check {
     text = "Layer Ed&ges",
     selected = defaults.useTrim,
     visible = true,
-    focus = false
+    focus = false,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }

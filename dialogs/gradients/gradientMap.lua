@@ -43,7 +43,8 @@ dlg:check {
     label = "Normalize:",
     text = "Stretch Contrast",
     selected = defaults.normalize,
-    visible = defaults.channel ~= "CHROMA"
+    visible = defaults.channel ~= "CHROMA",
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -52,7 +53,8 @@ dlg:check {
     id = "printElapsed",
     label = "Print:",
     text = "Diagnostic",
-    selected = defaults.printElapsed
+    selected = defaults.printElapsed,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }

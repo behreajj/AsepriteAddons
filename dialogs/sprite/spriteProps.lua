@@ -357,6 +357,7 @@ dlg:check {
     text = "Layers",
     selected = useLayerUuidsOld,
     focus = false,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }

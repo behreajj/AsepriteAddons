@@ -41,7 +41,8 @@ dlg:newrow { always = false }
 dlg:check {
     id = "fillBase",
     label = "Fill Base:",
-    selected = defaults.fillBase
+    selected = defaults.fillBase,
+    hexpand = false,
 }
 
 dlg:separator {

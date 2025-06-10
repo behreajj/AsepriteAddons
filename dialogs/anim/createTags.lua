@@ -157,7 +157,8 @@ dlg:check {
     id = "deleteExisting",
     label = "Replace:",
     text = "E&xisting",
-    selected = defaults.deleteExisting
+    selected = defaults.deleteExisting,
+    hexpand = false,
 }
 
 dlg:button {

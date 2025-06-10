@@ -342,6 +342,7 @@ dlg:check {
     text = "C&els",
     selected = defaults.useTint,
     visible = defaults.fillOpt ~= "EMPTY",
+    hexpand = false,
     onclick = function()
         local args <const> = dlg.data
         local useTint <const> = args.useTint --[[@as boolean]]
@@ -364,7 +365,8 @@ dlg:check {
     id = "matchTime",
     label = "Match:",
     text = "&Time",
-    selected = defaults.matchTime
+    selected = defaults.matchTime,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -375,7 +377,8 @@ dlg:check {
     text = "&Frames",
     selected = defaults.isLoop,
     visible = defaults.frameTarget == "ALL"
-        and defaults.fillOpt == "CROSS_FADE"
+        and defaults.fillOpt == "CROSS_FADE",
+    hexpand = false,
 }
 
 dlg:newrow { always = false }

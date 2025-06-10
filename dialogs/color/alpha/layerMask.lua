@@ -25,7 +25,8 @@ dlg:check {
     id = "trimCels",
     label = "Trim:",
     text = "Layer Ed&ges",
-    selected = defaults.trimCels
+    selected = defaults.trimCels,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }

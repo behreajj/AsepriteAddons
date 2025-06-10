@@ -162,7 +162,8 @@ dlg:check {
     id = "uniquesOnly",
     label = "Filter:",
     text = "Uniques",
-    selected = defaults.uniquesOnly
+    selected = defaults.uniquesOnly,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -186,19 +187,22 @@ dlg:check {
     id = "idxDisplay",
     label = "Display:",
     text = "&Index",
-    selected = defaults.idxDisplay
+    selected = defaults.idxDisplay,
+    hexpand = false,
 }
 
 dlg:check {
     id = "hexDisplay",
     text = "He&x",
-    selected = defaults.hexDisplay
+    selected = defaults.hexDisplay,
+    hexpand = false,
 }
 
 dlg:check {
     id = "alphaDisplay",
     text = "Al&pha",
-    selected = defaults.alphaDisplay
+    selected = defaults.alphaDisplay,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -206,19 +210,22 @@ dlg:newrow { always = false }
 dlg:check {
     id = "rgbDisplay",
     text = "&RGB",
-    selected = defaults.rgbDisplay
+    selected = defaults.rgbDisplay,
+    hexpand = false,
 }
 
 dlg:check {
     id = "labDisplay",
     text = "&LAB",
-    selected = defaults.labDisplay
+    selected = defaults.labDisplay,
+    hexpand = false,
 }
 
 dlg:check {
     id = "lchDisplay",
     text = "LC&H",
     selected = defaults.lchDisplay,
+    hexpand = false,
     onclick = function()
         -- dlg:modify {
         --     id = "grayHue",

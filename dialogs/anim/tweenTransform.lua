@@ -516,7 +516,8 @@ dlg:check {
     label = "Add:",
     text = "Before",
     selected = defaults.usePreIncr,
-    visible = defaults.mode == "ADD"
+    visible = defaults.mode == "ADD",
+    hexpand = false,
 }
 
 dlg:newrow { always = false }

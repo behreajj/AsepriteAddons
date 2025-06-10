@@ -103,6 +103,7 @@ dlg:check {
     label = "Stroke:",
     text = "Enable",
     selected = defaults.useStroke,
+    hexpand = false,
     onclick = function()
         local args <const> = dlg.data
         local useStroke <const> = args.useStroke --[[@as boolean]]
@@ -132,6 +133,7 @@ dlg:check {
     label = "Fill:",
     text = "Enable",
     selected = defaults.useFill,
+    hexpand = false,
     onclick = function()
         local args <const> = dlg.data
         local useFill <const> = args.useFill --[[@as boolean]]
@@ -154,7 +156,8 @@ dlg:check {
     id = "useAntialias",
     label = "Antialias:",
     text = "Enable",
-    selected = defaults.useAntialias
+    selected = defaults.useAntialias,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }

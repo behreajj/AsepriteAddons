@@ -154,7 +154,8 @@ dlg:check {
     text = "Relative",
     selected = defaults.useRelative,
     visible = defaults.channel == "A"
-        or defaults.channel == "B"
+        or defaults.channel == "B",
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -201,7 +202,8 @@ dlg:check {
     label = "Print:",
     text = "Diagnostic",
     selected = defaults.printElapsed,
-    visible = false
+    visible = false,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }

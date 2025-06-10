@@ -403,6 +403,7 @@ dlg:check {
     text = "&Sheet",
     selected = defaults.useSheet,
     visible = true,
+    hexpand = false,
     onclick = function()
         local args <const> = dlg.data
         local frameTarget <const> = args.frameTarget --[[@as string]]
@@ -433,7 +434,8 @@ dlg:check {
     visible = defaults.useSheet
         and (defaults.frameTarget == "TAGS"
             or defaults.frameTarget == "RANGE"
-            or defaults.frameTarget == "MANUAL")
+            or defaults.frameTarget == "MANUAL"),
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -463,7 +465,8 @@ dlg:check {
     label = "Apply:",
     text = "Pi&xel Aspect",
     selected = defaults.usePixelAspect,
-    visible = true
+    visible = true,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -474,6 +477,7 @@ dlg:check {
     text = "&Power of 2",
     selected = defaults.toPow2,
     visible = true,
+    hexpand = false,
     onclick = function()
         local args <const> = dlg.data
         local toPow2 <const> = args.toPow2 --[[@as boolean]]
@@ -490,7 +494,8 @@ dlg:check {
     id = "potUniform",
     text = "&Uniform",
     selected = defaults.potUniform,
-    visible = defaults.toPow2
+    visible = defaults.toPow2,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -514,6 +519,7 @@ dlg:check {
     label = "Save:",
     text = "&JSON",
     selected = defaults.saveJson,
+    hexpand = false,
     onclick = function()
         local args <const> = dlg.data
         local enabled <const> = args.saveJson --[[@as boolean]]

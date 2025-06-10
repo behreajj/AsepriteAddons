@@ -164,7 +164,8 @@ dlg:check {
     label = "Trim:",
     text = "Layer Ed&ges",
     selected = defaults.trimCels,
-    visible = false
+    visible = false,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }

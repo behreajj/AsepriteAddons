@@ -101,7 +101,8 @@ dlg:newrow { always = false }
 dlg:check {
     id = "useLoop",
     label = "Loop:",
-    selected = defaults.useLoop
+    selected = defaults.useLoop,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -167,6 +168,7 @@ dlg:check {
     id = "useTint",
     label = "Tint:",
     selected = defaults.useTint,
+    hexpand = false,
     onclick = function()
         local args <const> = dlg.data
         local md <const> = args.directions --[[@as string]]
@@ -196,7 +198,8 @@ dlg:check {
     label = "Preserve:",
     text = "Light",
     selected = defaults.preserveLight,
-    visible = defaults.useTint
+    visible = defaults.useTint,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -206,7 +209,8 @@ dlg:check {
     label = "Mix:",
     selected = defaults.mixTint,
     visible = defaults.useTint
-        and defaults.direcions == "BOTH"
+        and defaults.direcions == "BOTH",
+    hexpand = false,
 }
 
 dlg:newrow { always = false }

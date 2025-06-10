@@ -163,6 +163,7 @@ dlg:check {
     label = "Folder:",
     text = "Se&quence",
     selected = defaults.asSeq,
+    hexpand = false,
     onclick = function()
         local args <const> = dlg.data
         local state <const> = args.asSeq --[[@as boolean]]
@@ -181,6 +182,7 @@ dlg:check {
     text = "&Bkg",
     selected = defaults.removeBkg,
     visible = true,
+    hexpand = false,
 }
 
 dlg:check {
@@ -188,6 +190,7 @@ dlg:check {
     text = "&Trim",
     selected = defaults.trimCels,
     visible = true,
+    hexpand = false,
 }
 
 dlg:check {
@@ -195,6 +198,7 @@ dlg:check {
     text = "&Alpha",
     selected = defaults.fixZeroAlpha,
     visible = true,
+    hexpand = false,
 }
 
 dlg:separator {
@@ -231,7 +235,8 @@ dlg:check {
     id = "uniquesOnly",
     label = "Uniques Only:",
     focus = false,
-    selected = defaults.uniquesOnly
+    selected = defaults.uniquesOnly,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -239,7 +244,8 @@ dlg:newrow { always = false }
 dlg:check {
     id = "prependMask",
     label = "Prepend Mask:",
-    selected = defaults.prependMask
+    selected = defaults.prependMask,
+    hexpand = false,
 }
 
 dlg:separator { id = "noteSeparate" }

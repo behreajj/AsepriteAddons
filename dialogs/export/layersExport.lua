@@ -54,13 +54,15 @@ dlg:check {
     id = "includeLocked",
     label = "Include:",
     text = "&Locked",
-    selected = defaults.includeLocked
+    selected = defaults.includeLocked,
+    hexpand = false,
 }
 
 dlg:check {
     id = "includeHidden",
     text = "&Hidden",
-    selected = defaults.includeHidden
+    selected = defaults.includeHidden,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -68,13 +70,15 @@ dlg:newrow { always = false }
 dlg:check {
     id = "includeTiles",
     text = "&Tiles",
-    selected = defaults.includeTiles
+    selected = defaults.includeTiles,
+    hexpand = false,
 }
 
 dlg:check {
     id = "includeBkg",
     text = "&Background",
-    selected = defaults.includeBkg
+    selected = defaults.includeBkg,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -151,7 +155,8 @@ dlg:check {
     label = "Bake:",
     text = "Op&acity",
     selected = defaults.bakeOpacity,
-    visible = true
+    visible = true,
+    hexpand = false,
 }
 
 dlg:check {
@@ -159,7 +164,8 @@ dlg:check {
     label = "Flatten:",
     text = "&Groups",
     selected = defaults.flatGroups,
-    visible = defaults.layerTarget ~= "RANGE"
+    visible = defaults.layerTarget ~= "RANGE",
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -169,7 +175,8 @@ dlg:check {
     label = "Apply:",
     text = "Pi&xel Aspect",
     selected = defaults.usePixelAspect,
-    visible = true
+    visible = true,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -180,6 +187,7 @@ dlg:check {
     text = "&Power of 2",
     selected = defaults.toPow2,
     visible = true,
+    hexpand = false,
     onclick = function()
         local args <const> = dlg.data
         local state <const> = args.toPow2 --[[@as boolean]]
@@ -191,7 +199,8 @@ dlg:check {
     id = "potUniform",
     text = "&Uniform",
     selected = defaults.potUniform,
-    visible = defaults.toPow2
+    visible = defaults.toPow2,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -215,6 +224,7 @@ dlg:check {
     label = "Save:",
     text = "&JSON",
     selected = defaults.saveJson,
+    hexpand = false,
     onclick = function()
         local args <const> = dlg.data
         local enabled <const> = args.saveJson --[[@as boolean]]

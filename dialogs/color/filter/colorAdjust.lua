@@ -562,7 +562,8 @@ dlg:check {
     id = "printElapsed",
     label = "Print:",
     text = "Diagnostic",
-    selected = defaults.printElapsed
+    selected = defaults.printElapsed,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }

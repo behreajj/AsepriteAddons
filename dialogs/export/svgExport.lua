@@ -548,6 +548,7 @@ dlg:check {
     label = "Flatten:",
     text = "&Sprite",
     selected = defaults.flattenImage,
+    hexpand = false,
     onclick = function()
         local args <const> = dlg.data
         local flat <const> = args.flattenImage --[[@as boolean]]
@@ -631,7 +632,8 @@ dlg:check {
     label = "Loop:",
     text = "&Infinite",
     selected = defaults.useLoop,
-    visible = defaults.flattenImage
+    visible = defaults.flattenImage,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -641,14 +643,16 @@ dlg:check {
     label = "Include:",
     text = "&Locked",
     selected = defaults.includeLocked,
-    visible = not defaults.flattenImage
+    visible = not defaults.flattenImage,
+    hexpand = false,
 }
 
 dlg:check {
     id = "includeHidden",
     text = "&Hidden",
     selected = defaults.includeHidden,
-    visible = not defaults.flattenImage
+    visible = not defaults.flattenImage,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -657,14 +661,16 @@ dlg:check {
     id = "includeTiles",
     text = "&Tiles",
     selected = defaults.includeTiles,
-    visible = not defaults.flattenImage
+    visible = not defaults.flattenImage,
+    hexpand = false,
 }
 
 dlg:check {
     id = "includeBkg",
     text = "&Background",
     selected = defaults.includeBkg,
-    visible = not defaults.flattenImage
+    visible = not defaults.flattenImage,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -758,7 +764,8 @@ dlg:check {
     id = "usePixelAspect",
     label = "Apply:",
     text = "Pi&xel Aspect",
-    selected = defaults.usePixelAspect
+    selected = defaults.usePixelAspect,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -767,7 +774,8 @@ dlg:check {
     id = "useChecker",
     label = "Background:",
     text = "Chec&ker",
-    selected = defaults.useChecker
+    selected = defaults.useChecker,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -778,7 +786,8 @@ dlg:check {
     text = "L&abels",
     selected = defaults.useLabels,
     visible = defaults.flattenImage
-        and defaults.frameTarget == "ACTIVE"
+        and defaults.frameTarget == "ACTIVE",
+    hexpand = false,
 }
 
 dlg:newrow { always = false }

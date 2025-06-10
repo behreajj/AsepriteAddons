@@ -54,7 +54,8 @@ dlg:newrow { always = false }
 dlg:check {
     id = "isCyclic",
     label = "Cyclic:",
-    selected = defaults.isCyclic
+    selected = defaults.isCyclic,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }

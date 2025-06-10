@@ -51,7 +51,8 @@ dlg:newrow { always = false }
 dlg:check {
     id = "useAseGpl",
     label = "Aseprite GPL:",
-    selected = defaults.useAseGpl
+    selected = defaults.useAseGpl,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -59,7 +60,8 @@ dlg:newrow { always = false }
 dlg:check {
     id = "allPalettes",
     label = "All Palettes:",
-    selected = defaults.allPalettes
+    selected = defaults.allPalettes,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }

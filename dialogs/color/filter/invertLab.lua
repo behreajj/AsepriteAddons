@@ -73,12 +73,14 @@ dlg:check {
     id = "ignoreSrcMask",
     text = "Ignore Mask",
     selected = defaults.ignoreSrcMask,
+    hexpand = false,
 }
 
 dlg:check {
     id = "fixZeroAlpha",
     text = "Fix Zero",
     selected = defaults.fixZeroAlpha,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -89,7 +91,8 @@ dlg:check {
     text = "Layer Ed&ges",
     selected = defaults.useTrim,
     visible = true,
-    focus = false
+    focus = false,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }

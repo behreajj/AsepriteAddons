@@ -284,7 +284,8 @@ dlg:check {
     label = "Apply:",
     text = "Pi&xel Aspect",
     selected = defaults.usePixelAspect,
-    visible = true
+    visible = true,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -295,6 +296,7 @@ dlg:check {
     text = "&Power of 2",
     selected = defaults.toPow2,
     visible = true,
+    hexpand = false,
     onclick = function()
         local args <const> = dlg.data
         local state <const> = args.toPow2 --[[@as boolean]]
@@ -306,7 +308,8 @@ dlg:check {
     id = "potUniform",
     text = "&Uniform",
     selected = defaults.potUniform,
-    visible = defaults.toPow2
+    visible = defaults.toPow2,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -394,6 +397,7 @@ dlg:check {
     text = "&Tilemaps",
     selected = defaults.includeMaps,
     visible = defaults.metaData ~= "NONE",
+    hexpand = false,
     onclick = function()
         local args <const> = dlg.data
         local metaData <const> = args.metaData --[[@as string]]
@@ -412,7 +416,8 @@ dlg:check {
     text = "&Infinite",
     selected = defaults.tmxInfinite,
     visible = defaults.metaData == "TILED"
-        and defaults.includeMaps
+        and defaults.includeMaps,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }

@@ -101,13 +101,15 @@ dlg:check {
     id = "includeLocked",
     label = "Include:",
     text = "&Locked",
-    selected = defaults.includeLocked
+    selected = defaults.includeLocked,
+    hexpand = false,
 }
 
 dlg:check {
     id = "includeHidden",
     text = "&Hidden",
-    selected = defaults.includeHidden
+    selected = defaults.includeHidden,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -115,13 +117,15 @@ dlg:newrow { always = false }
 dlg:check {
     id = "includeTiles",
     text = "&Tiles",
-    selected = defaults.includeTiles
+    selected = defaults.includeTiles,
+    hexpand = false,
 }
 
 dlg:check {
     id = "includeBkg",
     text = "&Background",
-    selected = defaults.includeBkg
+    selected = defaults.includeBkg,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -130,19 +134,22 @@ dlg:check {
     id = "removeNonActive",
     text = "&Inactive",
     selected = defaults.removeNonActive,
-    visible = false
+    visible = false,
+    hexpand = false,
 }
 
 dlg:check {
     id = "removeTools",
     text = "Tool&s",
-    selected = defaults.removeTools
+    selected = defaults.removeTools,
+    hexpand = false,
 }
 
 dlg:check {
     id = "absOpaque",
     text = "&Mask",
-    selected = defaults.absOpaque
+    selected = defaults.absOpaque,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -227,7 +234,8 @@ dlg:check {
     text = "&Premultiply",
     selected = defaults.usePremul,
     visible = defaults.removeImage ~= "NONE"
-        or defaults.removeTiles ~= "NONE"
+        or defaults.removeTiles ~= "NONE",
+    hexpand = false,
 }
 
 dlg:newrow { always = false }

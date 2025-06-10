@@ -52,7 +52,8 @@ dlg:check {
     id = "stretchContrast",
     label = "Normalize:",
     text = "&Stretch Contrast",
-    selected = defaults.stretchContrast
+    selected = defaults.stretchContrast,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -61,19 +62,22 @@ dlg:check {
     id = "xFlip",
     label = "Flip:",
     text = "&X",
-    selected = defaults.xFlip
+    selected = defaults.xFlip,
+    hexpand = false,
 }
 
 dlg:check {
     id = "yFlip",
     text = "&Y",
-    selected = defaults.yFlip
+    selected = defaults.yFlip,
+    hexpand = false,
 }
 
 dlg:check {
     id = "zFlip",
     text = "&Z",
-    selected = defaults.zFlip
+    selected = defaults.zFlip,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -82,13 +86,15 @@ dlg:check {
     id = "showFlatMap",
     label = "Show:",
     text = "&Flat",
-    selected = defaults.showFlatMap
+    selected = defaults.showFlatMap,
+    hexpand = false,
 }
 
 dlg:check {
     id = "showGrayMap",
     text = "&Height",
-    selected = defaults.showGrayMap
+    selected = defaults.showGrayMap,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -96,7 +102,8 @@ dlg:newrow { always = false }
 dlg:check {
     id = "preserveAlpha",
     label = "Keep Alpha:",
-    selected = defaults.preserveAlpha
+    selected = defaults.preserveAlpha,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }

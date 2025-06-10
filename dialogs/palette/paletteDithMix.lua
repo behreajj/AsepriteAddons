@@ -123,6 +123,7 @@ dlg:check {
     text = "Complement",
     selected = defaults.useComplHl,
     focus = false,
+    hexpand = false,
     onclick = function()
         local args <const> = dlg.data
         local useComplHl <const> = args.useComplHl --[[@as boolean]]
@@ -136,6 +137,7 @@ dlg:check {
     text = "Contrast",
     selected = defaults.useContrastHl,
     focus = false,
+    hexpand = false,
     onclick = function()
         local args <const> = dlg.data
         local useComplHl <const> = args.useComplHl --[[@as boolean]]

@@ -281,7 +281,8 @@ dlg:check {
     id = "prependMask",
     label = "Prepend Mask:",
     selected = defaults.prependMask,
-    visible = true
+    visible = true,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }

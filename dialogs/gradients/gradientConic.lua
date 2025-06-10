@@ -19,7 +19,8 @@ local gradient <const> = GradientUtilities.dialogWidgets(dlg, true)
 dlg:check {
     id = "isCyclic",
     label = "Cyclic:",
-    selected = defaults.isCyclic
+    selected = defaults.isCyclic,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -54,7 +55,8 @@ dlg:newrow { always = false }
 dlg:check {
     id = "cw",
     label = "Flip Y:",
-    selected = defaults.cw
+    selected = defaults.cw,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }

@@ -83,7 +83,8 @@ dlg:newrow { always = false }
 dlg:check {
     id = "uniquesOnly",
     label = "Uniques Only:",
-    selected = defaults.uniquesOnly
+    selected = defaults.uniquesOnly,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -91,7 +92,8 @@ dlg:newrow { always = false }
 dlg:check {
     id = "prependMask",
     label = "Prepend Mask:",
-    selected = defaults.prependMask
+    selected = defaults.prependMask,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -100,6 +102,7 @@ dlg:check {
     id = "useSort",
     label = "Sort:",
     selected = defaults.useSort,
+    hexpand = false,
     onclick = function()
         local args <const> = dlg.data
         local useSort <const> = args.useSort --[[@as boolean]]

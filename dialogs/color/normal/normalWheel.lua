@@ -77,7 +77,8 @@ dlg:check {
     label = "Swatches:",
     text = "&Uniform",
     selected = defaults.uniformRings,
-    visible = defaults.rings > 0
+    visible = defaults.rings > 0,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -86,19 +87,22 @@ dlg:check {
     id = "xFlip",
     label = "Flip:",
     text = "&X",
-    selected = defaults.xFlip
+    selected = defaults.xFlip,
+    hexpand = false,
 }
 
 dlg:check {
     id = "yFlip",
     text = "&Y",
-    selected = defaults.yFlip
+    selected = defaults.yFlip,
+    hexpand = false,
 }
 
 dlg:check {
     id = "zFlip",
     text = "&Z",
-    selected = defaults.zFlip
+    selected = defaults.zFlip,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -108,6 +112,7 @@ dlg:check {
     label = "Plot:",
     text = "&Palette",
     selected = defaults.plotPalette,
+    hexpand = false,
     onclick = function()
         local args <const> = dlg.data
         local usePlot <const> = args.plotPalette --[[@as boolean]]
@@ -129,6 +134,7 @@ dlg:check {
     selected = defaults.correctPalette,
     visible = defaults.plotPalette
         and defaults.palType ~= "DEFAULT",
+    hexpand = false,
 }
 
 dlg:newrow { always = false }

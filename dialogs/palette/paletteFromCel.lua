@@ -86,6 +86,7 @@ dlg:check {
     id = "prependMask",
     label = "Prepend Mask:",
     selected = defaults.prependMask,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -94,6 +95,7 @@ dlg:check {
     id = "removeAlpha",
     label = "Opaque Colors:",
     selected = defaults.removeAlpha,
+    hexpand = false,
     onclick = function()
         local args <const> = dlg.data
         local clamp <const> = args.clampTo256 --[[@as boolean]]
@@ -130,6 +132,7 @@ dlg:check {
     label = "Octree:",
     text = "At Threshold",
     selected = defaults.clampTo256,
+    hexpand = false,
     onclick = function()
         local args <const> = dlg.data
         local clamp <const> = args.clampTo256 --[[@as boolean]]
@@ -220,7 +223,8 @@ dlg:check {
     label = "Print:",
     text = "Diagnostic",
     selected = defaults.printElapsed,
-    visible = defaults.clampTo256
+    visible = defaults.clampTo256,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }

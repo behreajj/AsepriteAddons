@@ -105,6 +105,7 @@ dlg:check {
     label = "Plot:",
     text = "Palette",
     selected = defaults.plotPalette,
+    hexpand = false,
     onclick = function()
         local args <const> = dlg.data
         local usePlot <const> = args.plotPalette --[[@as boolean]]

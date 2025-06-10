@@ -162,7 +162,8 @@ dlg:check {
     label = "Bias:",
     text = "&Shadows",
     selected = defaults.lShadows,
-    visible = defaults.channel == "LIGHT"
+    visible = defaults.channel == "LIGHT",
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -171,7 +172,8 @@ dlg:check {
     id = "lMidtones",
     text = "&Midtones",
     selected = defaults.lMidtones,
-    visible = defaults.channel == "LIGHT"
+    visible = defaults.channel == "LIGHT",
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -180,7 +182,8 @@ dlg:check {
     id = "lHighlights",
     text = "&Highlights",
     selected = defaults.lHighlights,
-    visible = defaults.channel == "LIGHT"
+    visible = defaults.channel == "LIGHT",
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -190,7 +193,8 @@ dlg:check {
     label = "Bias:",
     text = "&Greens",
     selected = defaults.aGreens,
-    visible = defaults.channel == "A"
+    visible = defaults.channel == "A",
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -199,7 +203,8 @@ dlg:check {
     id = "aMagentas",
     text = "&Reds",
     selected = defaults.aMagentas,
-    visible = defaults.channel == "A"
+    visible = defaults.channel == "A",
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -209,7 +214,8 @@ dlg:check {
     label = "Bias:",
     text = "&Blues",
     selected = defaults.bBlues,
-    visible = defaults.channel == "B"
+    visible = defaults.channel == "B",
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -218,7 +224,8 @@ dlg:check {
     id = "bYellows",
     text = "&Yellows",
     selected = defaults.bYellows,
-    visible = defaults.channel == "B"
+    visible = defaults.channel == "B",
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -227,7 +234,8 @@ dlg:check {
     id = "cGray",
     text = "G&ray",
     selected = defaults.cGray,
-    visible = defaults.channel == "CHROMA"
+    visible = defaults.channel == "CHROMA",
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -236,7 +244,8 @@ dlg:check {
     id = "cMiddle",
     text = "Mi&ddle",
     selected = defaults.cMiddle,
-    visible = defaults.channel == "CHROMA"
+    visible = defaults.channel == "CHROMA",
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -245,7 +254,8 @@ dlg:check {
     id = "cVivid",
     text = "&Vivid",
     selected = defaults.cVivid,
-    visible = defaults.channel == "CHROMA"
+    visible = defaults.channel == "CHROMA",
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -310,12 +320,13 @@ dlg:color {
 dlg:newrow { always = false }
 
 dlg:check {
-    id       = "useInvert",
-    label    = "Invert:",
-    text     = "&Factor",
+    id = "useInvert",
+    label = "Invert:",
+    text = "&Factor",
     selected = defaults.useInvert,
-    visible  = defaults.channel == "DIST",
-    focus    = false,
+    visible = defaults.channel == "DIST",
+    focus = false,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -326,6 +337,7 @@ dlg:check {
     text = "Source",
     selected = defaults.useSrcClr,
     focus = true,
+    hexpand = false,
     onclick = function()
         local args <const> = dlg.data
         local useSrcClr <const> = args.useSrcClr --[[@as boolean]]
@@ -347,7 +359,8 @@ dlg:check {
     id = "trimCels",
     label = "Trim:",
     text = "Layer Ed&ges",
-    selected = defaults.trimCels
+    selected = defaults.trimCels,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }

@@ -773,6 +773,7 @@ dlg:check {
     label = "Lock:",
     text = "&Aspect",
     selected = defaults.lockAspect,
+    hexpand = false,
     onclick = function()
         local args <const> = dlg.data
         local lockAspect <const> = args.lockAspect --[[@as boolean]]

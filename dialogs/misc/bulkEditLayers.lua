@@ -188,7 +188,8 @@ dlg:check {
     id = "reverse",
     label = "Order:",
     text = "&Reverse",
-    selected = defaults.reverse
+    selected = defaults.reverse,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }

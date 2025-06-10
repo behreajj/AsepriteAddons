@@ -96,6 +96,7 @@ dlg:check {
     id = "animate",
     label = "Animate:",
     selected = defaults.animate,
+    hexpand = false,
     onclick = function()
         local args <const> = dlg.data
         local animate <const> = args.animate --[[@as boolean]]
@@ -198,7 +199,8 @@ dlg:check {
     label = "Print:",
     text = "Diagnostic",
     selected = defaults.printElapsed,
-    visible = defaults.msgSrc == "FILE"
+    visible = defaults.msgSrc == "FILE",
+    hexpand = false,
 }
 
 dlg:button {

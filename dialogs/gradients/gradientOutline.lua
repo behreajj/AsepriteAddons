@@ -53,6 +53,7 @@ dlg:check {
     label = "Alpha:",
     text = "Auto Fade",
     selected = defaults.alphaFade,
+    hexpand = false,
     onclick = function()
         local args <const> = dlg.data
         local alphaFade <const> = args.alphaFade --[[@as boolean]]
@@ -72,7 +73,8 @@ dlg:check {
     id = "reverseFade",
     text = "Reverse",
     selected = defaults.reverseFade,
-    visible = defaults.alphaFade
+    visible = defaults.alphaFade,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -114,52 +116,61 @@ dlg:newrow { always = false }
 
 dlg:check {
     id = "m00",
-    selected = defaults.m00
+    selected = defaults.m00,
+    hexpand = false,
 }
 
 dlg:check {
     id = "m01",
-    selected = defaults.m01
+    selected = defaults.m01,
+    hexpand = false,
 }
 
 dlg:check {
     id = "m02",
-    selected = defaults.m02
+    selected = defaults.m02,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
 
 dlg:check {
     id = "m10",
-    selected = defaults.m10
+    selected = defaults.m10,
+    hexpand = false,
 }
 
 dlg:check {
     id = "m11",
     enabled = false,
-    selected = false
+    selected = false,
+    hexpand = false,
 }
 
 dlg:check {
     id = "m12",
-    selected = defaults.m12
+    selected = defaults.m12,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
 
 dlg:check {
     id = "m20",
-    selected = defaults.m20
+    selected = defaults.m20,
+    hexpand = false,
 }
 
 dlg:check {
     id = "m21",
-    selected = defaults.m21
+    selected = defaults.m21,
+    hexpand = false,
 }
 
 dlg:check {
     id = "m22",
-    selected = defaults.m22
+    selected = defaults.m22,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }

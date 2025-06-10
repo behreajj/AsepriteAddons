@@ -45,6 +45,7 @@ dlg:check {
     id = "useNew",
     label = "New Sprite:",
     selected = defaults.useNew,
+    hexpand = false,
     onclick = function()
         local args <const> = dlg.data
         local useNew <const> = args.useNew --[[@as boolean]]
@@ -59,7 +60,8 @@ dlg:newrow { always = false }
 dlg:check {
     id = "uniquesOnly",
     label = "Uniques Only:",
-    selected = defaults.uniquesOnly
+    selected = defaults.uniquesOnly,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -67,7 +69,8 @@ dlg:newrow { always = false }
 dlg:check {
     id = "prependMask",
     label = "Prepend Mask:",
-    selected = defaults.prependMask
+    selected = defaults.prependMask,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -77,7 +80,8 @@ dlg:check {
     label = "Indices:",
     text = "&Keep",
     selected = defaults.keepIndices,
-    visible = not defaults.useNew
+    visible = not defaults.useNew,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -123,6 +127,7 @@ dlg:check {
     label = "Display:",
     text = "Separator",
     selected = setBoxSep,
+    hexpand = false,
     onclick = function()
         local args <const> = dlg.data
         local useSep <const> = args.useSeparator --[[@as boolean]]

@@ -685,13 +685,15 @@ dlg:check {
     id = "includeLocked",
     label = "Include:",
     text = "&Locked",
-    selected = defaults.includeLocked
+    selected = defaults.includeLocked,
+    hexpand = false,
 }
 
 dlg:check {
     id = "includeHidden",
     text = "&Hidden",
-    selected = defaults.includeHidden
+    selected = defaults.includeHidden,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -699,13 +701,15 @@ dlg:newrow { always = false }
 dlg:check {
     id = "includeTiles",
     text = "&Tiles",
-    selected = defaults.includeTiles
+    selected = defaults.includeTiles,
+    hexpand = false,
 }
 
 dlg:check {
     id = "includeBkg",
     text = "&Background",
-    selected = defaults.includeBkg
+    selected = defaults.includeBkg,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -823,7 +827,8 @@ dlg:check {
     id = "sortCels",
     label = "Sort:",
     text = "Position",
-    selected = defaults.sortCels
+    selected = defaults.sortCels,
+    hexpand = false,
 }
 
 dlg:separator { id = "distrSep", text = "Stack" }

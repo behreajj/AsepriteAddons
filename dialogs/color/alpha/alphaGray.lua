@@ -51,7 +51,8 @@ dlg:check {
     text = "&Mask",
     selected = defaults.absOpaque,
     focus = false,
-    visible = defaults.mode == "ALPHA_TO_GRAY"
+    visible = defaults.mode == "ALPHA_TO_GRAY",
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -87,7 +88,8 @@ dlg:check {
     id = "trimCels",
     label = "Trim:",
     text = "Layer Ed&ges",
-    selected = defaults.trimCels
+    selected = defaults.trimCels,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }

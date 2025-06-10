@@ -694,7 +694,8 @@ dlg:check {
     label = "Edit:",
     text = "In &Place",
     selected = defaults.inPlace,
-    visible = defaults.target == "TILES"
+    visible = defaults.target == "TILES",
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -809,21 +810,24 @@ dlg:check {
     label = "Flips:",
     text = "&X",
     selected = defaults.useXFlip,
-    visible = defaults.target ~= "TILES"
+    visible = defaults.target ~= "TILES",
+    hexpand = false,
 }
 
 dlg:check {
     id = "useYFlip",
     text = "&Y",
     selected = defaults.useYFlip,
-    visible = defaults.target ~= "TILES"
+    visible = defaults.target ~= "TILES",
+    hexpand = false,
 }
 
 dlg:check {
     id = "useDFlip",
     text = "&D",
     selected = defaults.useDFlip,
-    visible = defaults.target ~= "TILES"
+    visible = defaults.target ~= "TILES",
+    hexpand = false,
 }
 
 dlg:newrow { always = false }

@@ -33,7 +33,8 @@ dlg:check {
     text = "Palette",
     selected = defaults.genPalette,
     visible = defaults.target ~= "PALETTE",
-    focus = false
+    focus = false,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }

@@ -345,7 +345,8 @@ dlg:check {
     selected = defaults.boolValue,
     text = "&True",
     visible = defaults.dataType == "BOOLEAN",
-    focus = false
+    focus = false,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }

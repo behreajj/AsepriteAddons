@@ -85,7 +85,8 @@ dlg:check {
     label = "Indices:",
     text = "&Keep",
     selected = defaults.keepIndices,
-    visible = not defaults.useNew
+    visible = not defaults.useNew,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -93,7 +94,8 @@ dlg:newrow { always = false }
 dlg:check {
     id = "uniquesOnly",
     label = "Uniques Only:",
-    selected = defaults.uniquesOnly
+    selected = defaults.uniquesOnly,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -102,6 +104,7 @@ dlg:check {
     id = "prependMask",
     label = "Prepend Mask:",
     selected = defaults.prependMask,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }

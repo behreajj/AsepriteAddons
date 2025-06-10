@@ -91,14 +91,16 @@ dlg:check {
     label = "Labels:",
     text = "Co&lumns",
     selected = defaults.useColLabel,
-    focus = false
+    focus = false,
+    hexpand = false,
 }
 
 dlg:check {
     id = "useRowLabel",
     text = "&Rows",
     selected = defaults.useRowLabel,
-    focus = false
+    focus = false,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -107,14 +109,16 @@ dlg:check {
     id = "useFilename",
     text = "Filena&me",
     selected = defaults.useFilename,
-    focus = false
+    focus = false,
+    hexpand = false,
 }
 
 dlg:check {
     id = "usePlainText",
     text = "&UTF8",
     selected = defaults.usePlainText,
-    focus = false
+    focus = false,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
