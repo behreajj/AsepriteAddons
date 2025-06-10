@@ -2,11 +2,6 @@ dofile("../../support/aseutilities.lua")
 dofile("../../support/octree.lua")
 
 local areaTargets <const> = { "ACTIVE", "SELECTION" }
-local colorSpaces <const> = {
-    "LINEAR_RGB",
-    "S_RGB",
-    "SR_LAB_2"
-}
 local palTargets <const> = { "ACTIVE", "FILE" }
 
 local defaults <const> = {
@@ -29,104 +24,7 @@ local defaults <const> = {
     prependMask = true,
     palTarget = "ACTIVE",
     paletteIndex = 1,
-    clrSpacePreset = "LINEAR_RGB",
-    pullFocus = false
 }
-
----@param preset string
----@param arr table
-local function sortByPreset(preset, arr)
-    if preset == "CIE_XYZ" then
-        -- Y corresponds to perceived brightness.
-        table.sort(arr, function(a, b) return a.y < b.y end)
-    elseif preset == "LINEAR_RGB"
-        or preset == "S_RGB" then
-        -- Average brightness is good enough.
-        table.sort(arr, function(a, b)
-            return ((a.x + a.y + a.z) / 3.0)
-                < ((b.x + b.y + b.z) / 3.0)
-        end)
-    else
-        -- In CIE LAB, L is assigned to z. Default
-        -- Vec3 comparator prioritizes the last
-        -- component (z).
-        table.sort(arr)
-    end
-end
-
----@param preset string
----@return Bounds3
-local function boundsFromPreset(preset)
-    if preset == "CIE_LAB"
-        or preset == "SR_LAB_2" then
-        return Bounds3.lab()
-    else
-        return Bounds3.unitCubeUnsigned()
-    end
-end
-
----@param clr Clr
----@return Vec3
-local function clrToVec3lRgb(clr)
-    local lin <const> = Clr.sRgbTolRgbInternal(clr)
-    return Vec3.new(lin.r, lin.g, lin.b)
-end
-
----@param clr Clr
----@return Vec3
-local function clrToVec3sRgb(clr)
-    return Vec3.new(clr.r, clr.g, clr.b)
-end
-
----@param clr Clr
----@return Vec3
-local function clrToVec3SrLab2(clr)
-    local lab <const> = Clr.sRgbToSrLab2(clr)
-    return Vec3.new(lab.a, lab.b, lab.l)
-end
-
----@param preset string
----@return fun(clr: Clr): Vec3
-local function clrToV3FuncFromPreset(preset)
-    if preset == "LINEAR_RGB" then
-        return clrToVec3lRgb
-    elseif preset == "SR_LAB_2" then
-        return clrToVec3SrLab2
-    else
-        return clrToVec3sRgb
-    end
-end
-
----@param v3 Vec3
----@return Clr
-local function vec3ToClrlRgb(v3)
-    local lin <const> = Clr.new(v3.x, v3.y, v3.z, 1.0)
-    return Clr.lRgbTosRgbInternal(lin)
-end
-
----@param v3 Vec3
----@return Clr
-local function vec3ToClrsRgb(v3)
-    return Clr.new(v3.x, v3.y, v3.z, 1.0)
-end
-
----@param v3 Vec3
----@return Clr
-local function vec3ToClrSrLab2(v3)
-    return Clr.srLab2TosRgb(v3.z, v3.x, v3.y, 1.0)
-end
-
----@param preset string
----@return fun(v3: Vec3): Clr
-local function v3ToClrFuncFromPreset(preset)
-    if preset == "LINEAR_RGB" then
-        return vec3ToClrlRgb
-    elseif preset == "SR_LAB_2" then
-        return vec3ToClrSrLab2
-    else
-        return vec3ToClrsRgb
-    end
-end
 
 local dlg <const> = Dialog { title = "Palette From Cel" }
 
@@ -176,6 +74,8 @@ dlg:newrow { always = false }
 dlg:file {
     id = "filepath",
     filetypes = AseUtilities.FILE_FORMATS_PAL,
+    filename = "*.gpl",
+    basepath = app.fs.userDocsPath,
     save = true,
     visible = defaults.palTarget == "FILE"
 }
@@ -240,7 +140,6 @@ dlg:check {
         dlg:modify { id = "octThreshold", visible = clamp }
         dlg:modify { id = "octCapacity", visible = clamp }
         dlg:modify { id = "refineCapacity", visible = clamp and (octCap > 8) }
-        dlg:modify { id = "clrSpacePreset", visible = clamp }
         dlg:modify { id = "printElapsed", visible = clamp }
         dlg:modify {
             id = "alphaWarn",
@@ -295,7 +194,7 @@ dlg:slider {
             visible = (octCap >= defaults.showRefineAt)
         }
 
-        local r = (1 << octCap) // 2
+        local r = (1 << octCap) // 2 --[[@as integer]]
         dlg:modify { id = "refineCapacity", min = -r }
         dlg:modify { id = "refineCapacity", max = r }
     end
@@ -312,16 +211,6 @@ dlg:slider {
     visible = defaults.clampTo256
         and (defaults.octCapacityBits
             >= defaults.showRefineAt)
-}
-
-dlg:newrow { always = false }
-
-dlg:combobox {
-    id = "clrSpacePreset",
-    label = "Color Space:",
-    option = defaults.clrSpacePreset,
-    options = colorSpaces,
-    visible = defaults.clampTo256
 }
 
 dlg:newrow { always = false }
@@ -385,7 +274,7 @@ dlg:button {
                 }
                 return
             end
-            srcImg, xtl, ytl = AseUtilities.imageFromSel(
+            srcImg, xtl, ytl = AseUtilities.selToImage(
                 mask, activeSprite, srcFrame.frameNumber)
         else
             -- Default to active layer.
@@ -407,17 +296,17 @@ dlg:button {
             end
 
             if srcLayer.isGroup then
-                local includeLocked <const> = true
-                local includeHidden <const> = false
-                local includeTiles <const> = true
-                local includeBkg <const> = true
-                local boundingRect = Rectangle()
-                srcImg, boundingRect = AseUtilities.flattenGroup(
+                local isValid <const>,
+                flatImg <const>,
+                xTlFlat <const>,
+                yTlFlat <const> = AseUtilities.flatToImage(
                     srcLayer, srcFrame,
                     colorMode, colorSpace, alphaIndex,
-                    includeLocked, includeHidden, includeTiles, includeBkg)
-                xtl = boundingRect.x
-                ytl = boundingRect.y
+                    true, false, true, true)
+
+                srcImg = flatImg
+                xtl = xTlFlat
+                ytl = yTlFlat
             else
                 local srcCel <const> = srcLayer:cel(srcFrame)
                 if not srcCel then
@@ -485,7 +374,7 @@ dlg:button {
         elseif colorMode == ColorMode.GRAY then
             local i = 0
             while i < areaSrcImg do
-                local i2 <const> = i * 2
+                local i2 <const> = i + i
                 local av16 <const> = strunpack("<I2", strsub(
                     srcBytes, 1 + i2, 2 + i2))
                 local a8 <const> = av16 >> 0x08 & 0xff
@@ -540,21 +429,17 @@ dlg:button {
         local octCapacity <const> = refineCap + (1 << octCapBits)
         local lenHexes = oldLenHexes
         if clampTo256 and lenHexes > ocThreshold then
-            local clrSpacePreset <const> = args.clrSpacePreset
-                or defaults.clrSpacePreset --[[@as string]]
-
             -- Cache methods to local.
-            local fromHex <const> = Clr.fromHexAbgr32
-            local toHex <const> = Clr.toHex
+            local fromHex <const> = Rgb.fromHexAbgr32
+            local toHex <const> = Rgb.toHex
             local octins <const> = Octree.insert
-            local clrV3Func <const> = clrToV3FuncFromPreset(clrSpacePreset)
-            local v3ClrFunc <const> = v3ToClrFuncFromPreset(clrSpacePreset)
+            local labTosRgb <const> = ColorUtilities.srLab2TosRgb
+            local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
 
             -- Subdivide once so that there are at least 8 colors
             -- returned in cases where an input palette count
             -- is barely over threshold, e.g., 380 over 255.
-            local bounds <const> = boundsFromPreset(clrSpacePreset)
-            local octree <const> = Octree.new(bounds, octCapacity, 1)
+            local octree <const> = Octree.new(BoundsLab.srLab2(), octCapacity, 1)
             Octree.subdivide(octree, 1, octCapacity)
 
             -- This shouldn't need to check for transparent
@@ -562,14 +447,13 @@ dlg:button {
             local i = 0
             while i < lenHexes do
                 i = i + 1
-                local clr <const> = fromHex(hexes[i])
-                octins(octree, clrV3Func(clr))
+                octins(octree, sRgbToLab(fromHex(hexes[i])))
             end
 
             Octree.cull(octree)
 
             local centers <const> = Octree.centersMean(octree, {})
-            sortByPreset(clrSpacePreset, centers)
+            table.sort(centers)
 
             lenCenters = #centers
             ---@type integer[]
@@ -577,8 +461,7 @@ dlg:button {
             local j = 0
             while j < lenCenters do
                 j = j + 1
-                local srgb <const> = v3ClrFunc(centers[j])
-                centerHexes[j] = toHex(srgb)
+                centerHexes[j] = toHex(labTosRgb(centers[j]))
             end
 
             hexes = centerHexes

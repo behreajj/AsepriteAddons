@@ -1,6 +1,5 @@
 dofile("../../support/aseutilities.lua")
 
-
 ---@param sprites Sprite[]
 ---@param hexes integer[]
 ---@param keepIndices boolean
@@ -50,7 +49,6 @@ local defaults <const> = {
     prependMask = true,
     startIndex = 0,
     count = 256,
-    pullFocus = false
 }
 
 local dlg <const> = Dialog { title = "Share Palette" }
@@ -75,7 +73,8 @@ dlg:newrow { always = false }
 dlg:file {
     id = "palFile",
     filetypes = AseUtilities.FILE_FORMATS_PAL,
-    open = true,
+    filename = "*.*",
+    basepath = app.fs.joinPath(app.fs.userConfigPath, "palettes"),
     visible = false
 }
 
@@ -132,7 +131,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "confirm",
     text = "&OK",
-    focus = defaults.pullFocus,
+    focus = false,
     onclick = function()
         local openSprites <const> = app.sprites
         local lenOpenSprites <const> = #openSprites
@@ -154,7 +153,8 @@ dlg:button {
 
         local appTool <const> = app.tool
         if appTool then
-            if appTool.id == "slice" then
+            if appTool.id == "slice"
+                or appTool.id == "text" then
                 app.tool = "hand"
             end
         end

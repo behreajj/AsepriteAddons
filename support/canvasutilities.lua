@@ -1,4 +1,4 @@
-dofile("./clr.lua")
+dofile("./colorutilities.lua")
 dofile("./utilities.lua")
 
 CanvasUtilities = {}
@@ -60,7 +60,7 @@ end
 ---@param radius number radius
 ---@param x number x origin
 ---@param y number y origin
----@param rotation number? rotation
+---@param rotation? number rotation
 function CanvasUtilities.drawPolygon(
     context, sides, radius, x, y, rotation)
     local aVrf <const> = rotation or 0.0
@@ -92,7 +92,7 @@ end
 ---@param barWidth integer bar width
 ---@param barHeight integer bar height
 ---@param fillColor Color fill color
----@param triSize number? triangle size
+---@param triSize? number triangle size
 function CanvasUtilities.drawSliderReticle(
     context, fac,
     barWidth, barHeight,
@@ -124,20 +124,20 @@ end
 ---@param label string canvas label
 ---@param width integer canvas width
 ---@param height integer canvas height
----@param isVisible boolean? is visible
----@param visNumbers boolean? visible numbers
----@param visButtons boolean? visible buttons
----@param visFuncs boolean? visible functions
----@param allowApMove boolean? allow anchor points
----@param gridCount integer? grid count
----@param cp0xDef number? x control point 0 default
----@param cp0yDef number? y control point 0 default
----@param cp1xDef number? x control point 1 default
----@param cp1yDef number? y control point 1 default
----@param curveColor Color? curve color
----@param gridColor Color? grid color
----@param cp0Color Color? control point 0 color
----@param cp1Color Color? control point 1 color
+---@param isVisible? boolean is visible
+---@param visNumbers? boolean visible numbers
+---@param visButtons? boolean visible buttons
+---@param visFuncs? boolean visible functions
+---@param allowApMove? boolean allow anchor points
+---@param gridCount? integer grid count
+---@param cp0xDef? number x control point 0 default
+---@param cp0yDef? number y control point 0 default
+---@param cp1xDef? number x control point 1 default
+---@param cp1yDef? number y control point 1 default
+---@param curveColor? Color curve color
+---@param gridColor? Color grid color
+---@param cp0Color? Color control point 0 color
+---@param cp1Color? Color control point 1 color
 ---@return Dialog
 function CanvasUtilities.graphBezier(
     dialog, id, label, width, height,
@@ -327,6 +327,8 @@ function CanvasUtilities.graphBezier(
         height = hVrf,
         visible = isVisVrf,
         autoscaling = false,
+        hexpand = false,
+        vexpand = false,
         onpaint = function(event)
             local context <const> = event.context
 
@@ -351,9 +353,6 @@ function CanvasUtilities.graphBezier(
             local xbr <const> = wVrf - 1
             local ybr <const> = hVrf - 1
 
-            -- TODO: Seems wasteful to import Utilities file
-            -- just to use round function... At the very least
-            -- use the Curve2 class if you've got it.
             local ap0xPx <const> = Utilities.round(ap0x * xbr)
             local ap0yPx <const> = ybr - Utilities.round(ap0y * ybr)
             local cp0xPx <const> = Utilities.round(cp0x * xbr)
@@ -625,15 +624,15 @@ end
 ---@param label string canvas label
 ---@param width integer canvas width
 ---@param height integer canvas height
----@param isVisible boolean? is visible
----@param visSlide boolean? visible sliders
----@param gridCount integer? grid count
----@param lineColor Color? line color
----@param gridColor Color? grid color
----@param xOrig integer? x origin
----@param yOrig integer? y origin
----@param xDest integer? x destination
----@param yDest integer? y destination
+---@param isVisible? boolean is visible
+---@param visSlide? boolean visible sliders
+---@param gridCount? integer grid count
+---@param lineColor? Color line color
+---@param gridColor? Color grid color
+---@param xOrig? integer x origin
+---@param yOrig? integer y origin
+---@param xDest? integer x destination
+---@param yDest? integer y destination
 ---@return Dialog
 function CanvasUtilities.graphLine(
     dialog, id, label, width, height,
@@ -667,6 +666,8 @@ function CanvasUtilities.graphLine(
         height = hVrf,
         visible = isVisVrf,
         autoscaling = false,
+        hexpand = false,
+        vexpand = false,
         onpaint = function(event)
             local context <const> = event.context
 
@@ -889,18 +890,18 @@ end
 ---@param label string canvas label
 ---@param width integer canvas weight
 ---@param height integer canvas height
----@param isVisible boolean? is visible
----@param lDef number? lightness default
----@param cDef number? chroma default
----@param hDef number? hue default
----@param aDef number? alpha default
+---@param isVisible? boolean is visible
+---@param lDef? number lightness default
+---@param cDef? number chroma default
+---@param hDef? number hue default
+---@param aDef? number alpha default
 ---@return Dialog
 function CanvasUtilities.spectrum(
     dialog, id, label, width, height,
     isVisible, lDef, cDef, hDef, aDef)
     local aDefVrf <const> = aDef or 1.0
     local hDefVrf <const> = hDef or 0.0
-    local cDefVrf <const> = cDef or (Clr.SR_LCH_MAX_CHROMA * 0.5)
+    local cDefVrf <const> = cDef or (Lab.SR_MAX_CHROMA * 0.5)
     local lDefVrf <const> = lDef or 50.0
 
     local isVisVrf = false
@@ -917,7 +918,7 @@ function CanvasUtilities.spectrum(
     local xToAlph01 <const> = 1.0 / (wVrf - 1.0)
     local xToAlpha255 <const> = 255.0 / (wVrf - 1.0)
     local yToLgt <const> = 100.0 / (spectrumHeight - 1.0)
-    local xToChr <const> = Clr.SR_LCH_MAX_CHROMA / (wVrf - 1.0)
+    local xToChr <const> = Lab.SR_MAX_CHROMA / (wVrf - 1.0)
     local xToHue <const> = 1.0 / wVrf
 
     local inSpectrum = false
@@ -955,7 +956,7 @@ function CanvasUtilities.spectrum(
             inChrBar = true
 
             local sMouse <const> = math.min(math.max(
-                xMouse * xToChr, 0.0), Clr.SR_LCH_MAX_CHROMA)
+                xMouse * xToChr, 0.0), Lab.SR_MAX_CHROMA)
             dialog:modify {
                 id = "spectrumChroma",
                 text = string.format("%.5f", sMouse)
@@ -986,6 +987,8 @@ function CanvasUtilities.spectrum(
         height = hVrf,
         visible = isVisVrf,
         autoscaling = false,
+        hexpand = false,
+        vexpand = false,
         onpaint = function(event)
             local context <const> = event.context
             context.blendMode = BlendMode.SRC
@@ -999,8 +1002,8 @@ function CanvasUtilities.spectrum(
 
             local floor <const> = math.floor
             local strpack <const> = string.pack
-            local lchTosRgb <const> = Clr.srLchTosRgb
-            local toHex <const> = Clr.toHex
+            local lchTosRgb <const> = ColorUtilities.srLchTosRgbInternal
+            local toHex <const> = Rgb.toHex
 
             ---@type string[]
             local byteArr <const> = {}

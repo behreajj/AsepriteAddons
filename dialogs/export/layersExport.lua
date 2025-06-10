@@ -10,7 +10,7 @@ local defaults <const> = {
     -- layers will save with transparency where there shouldn't be.
 
     -- "TAG" and "TAGS" frame targets are not supported because they would
-    -- require extra data to be written to the json data.
+    -- require extra data to be written to the json export.
     layerTarget = "ALL",
     includeLocked = true,
     includeHidden = false,
@@ -28,7 +28,9 @@ local defaults <const> = {
     toPow2 = false,
     potUniform = false,
     saveJson = false,
-    boundsFormat = "TOP_LEFT"
+    boundsFormat = "TOP_LEFT",
+    uuidPreset = "STRING",
+    uuidIndex = nil,
 }
 
 local dlg <const> = Dialog { title = "Export Layers" }
@@ -128,7 +130,7 @@ dlg:slider {
     id = "scale",
     label = "Scale:",
     min = 1,
-    max = 10,
+    max = AseUtilities.UPSCALE_LIMIT,
     value = defaults.scale
 }
 
@@ -198,6 +200,10 @@ dlg:file {
     id = "filename",
     label = "File:",
     filetypes = AseUtilities.FILE_FORMATS_SAVE,
+    filename = string.format("*.%s",
+        app.preferences.export_file.image_default_extension),
+    basepath = app.fs.userDocsPath,
+    title = "Export Layers",
     save = true,
     focus = true
 }
@@ -333,7 +339,6 @@ dlg:button {
             end
         end
 
-        -- TODO: Replace these usages with app.fs.joinPath
         local pathSep = app.fs.pathSeparator
         pathSep = string.gsub(pathSep, "\\", "\\\\")
 
@@ -530,12 +535,15 @@ dlg:button {
                 local celData = nil
                 local celOpacity = 255
                 local zIndex = 0
-                local layerOpacity = 255
-                local layerBlendMode = blendModeNormal
+                local layerOpacity = chosenLayer.opacity or 255
+                local layerBlendMode = chosenLayer.blendMode
+                    or blendModeNormal
 
                 if chosenLayer.isGroup then
-                    -- print("Layer is a group")
-                    image, bounds = AseUtilities.flattenGroup(
+                    local isValid <const>,
+                    flatImg <const>,
+                    xTlFlat <const>,
+                    yTlFlat <const> = AseUtilities.flatToImage(
                         chosenLayer, frIdx,
                         spriteColorMode,
                         spriteColorSpace,
@@ -544,10 +552,14 @@ dlg:button {
                         includeHidden,
                         includeTiles,
                         includeBkg)
-                else
-                    layerOpacity = chosenLayer.opacity
-                    layerBlendMode = chosenLayer.blendMode
 
+                    if isValid then
+                        image = flatImg
+                        bounds = Rectangle(
+                            xTlFlat, yTlFlat,
+                            flatImg.width, flatImg.height)
+                    end
+                else
                     local cel <const> = chosenLayer:cel(frIdx)
                     if cel then
                         -- print("Cel was found.")
@@ -696,6 +708,10 @@ dlg:button {
         end                 -- End loop through chosen frames.
 
         if saveJson then
+            -- Unpack UUID formatting options.
+            local uuidPreset <const> = defaults.uuidPreset
+            local uuidIndex <const> = defaults.uuidIndex
+
             -- Cache Json methods.
             local celToJson <const> = JsonUtilities.celToJson
             local frameToJson <const> = JsonUtilities.frameToJson
@@ -708,8 +724,8 @@ dlg:button {
             while k < lenCelPackets do
                 k = k + 1
                 local cel <const> = celPackets[k]
-                celStrs[k] = celToJson(
-                    cel, cel.fileName, boundsFormat)
+                celStrs[k] = celToJson(cel, cel.fileName, boundsFormat,
+                    uuidPreset, uuidIndex)
             end
 
             local m = 0
@@ -723,7 +739,8 @@ dlg:button {
             ---@type string[]
             local layerStrs <const> = {}
             for _, layer in pairs(layerPackets) do
-                layerStrs[#layerStrs + 1] = layerToJson(layer)
+                layerStrs[#layerStrs + 1] = layerToJson(layer,
+                    uuidPreset, uuidIndex)
             end
 
             local jsonFormat <const> = table.concat({
@@ -744,7 +761,7 @@ dlg:button {
                 table.concat(celStrs, ","),
                 table.concat(frameStrs, ","),
                 table.concat(layerStrs, ","),
-                JsonUtilities.spriteToJson(activeSprite),
+                JsonUtilities.spriteToJson(activeSprite, uuidPreset, uuidIndex),
                 JsonUtilities.versionToJson()
             )
 

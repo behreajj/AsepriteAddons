@@ -22,10 +22,10 @@ setmetatable(Vec4, {
 })
 
 ---Constructs a new vector from four numbers.
----@param x number? x component
----@param y number? y component
----@param z number? z component
----@param w number? w component
+---@param x? number x component
+---@param y? number y component
+---@param z? number z component
+---@param w? number w component
 ---@return Vec4
 ---@nodiscard
 function Vec4.new(x, y, z, w)
@@ -146,7 +146,7 @@ end
 ---Evaluates whether two vectors are, within a tolerance, approximately equal.
 ---@param a Vec4 left operand
 ---@param b Vec4 right operand
----@param tol number? tolerance
+---@param tol? number tolerance
 ---@return boolean
 ---@nodiscard
 function Vec4.approx(a, b, tol)
@@ -193,37 +193,16 @@ end
 ---@return Vec4
 ---@nodiscard
 function Vec4.copySign(a, b)
-    local cx, cy, cz, cw = 0.0, 0.0, 0.0, 0.0
-
     local axAbs <const> = math.abs(a.x)
-    if b.x < -0.0 then
-        cx = -axAbs
-    elseif b.x > 0.0 then
-        cx = axAbs
-    end
-
     local ayAbs <const> = math.abs(a.y)
-    if b.y < -0.0 then
-        cy = -ayAbs
-    elseif b.y > 0.0 then
-        cy = ayAbs
-    end
-
     local azAbs <const> = math.abs(a.z)
-    if b.z < -0.0 then
-        cz = -azAbs
-    elseif b.z > 0.0 then
-        cz = azAbs
-    end
-
     local awAbs <const> = math.abs(a.w)
-    if b.w < -0.0 then
-        cw = -awAbs
-    elseif b.w > 0.0 then
-        cw = awAbs
-    end
 
-    return Vec4.new(cx, cy, cz, cw)
+    return Vec4.new(
+        b.x < -0.0 and -axAbs or b.x > 0.0 and axAbs or 0.0,
+        b.y < -0.0 and -ayAbs or b.y > 0.0 and ayAbs or 0.0,
+        b.z < -0.0 and -azAbs or b.z > 0.0 and azAbs or 0.0,
+        b.w < -0.0 and -awAbs or b.w > 0.0 and awAbs or 0.0)
 end
 
 ---Divides the left vector by the right, component-wise.
@@ -403,7 +382,7 @@ end
 ---Mixes two vectors together by a step.
 ---@param a Vec4 origin
 ---@param b Vec4 destination
----@param t number? step
+---@param t? number step
 ---@return Vec4
 ---@nodiscard
 function Vec4.mixNum(a, b, t)
@@ -497,8 +476,8 @@ end
 
 ---Creates a random point in Cartesian space given a lower and an upper bound.
 ---If lower and upper bounds are not given, defaults to [-1.0, 1.0].
----@param lb Vec4? lower bound
----@param ub Vec4? upper bound
+---@param lb? Vec4 lower bound
+---@param ub? Vec4 upper bound
 ---@return Vec4
 ---@nodiscard
 function Vec4.randomCartesian(lb, ub)

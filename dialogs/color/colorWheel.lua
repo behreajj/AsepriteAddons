@@ -1,4 +1,4 @@
-dofile("../../support/aseutilities.lua")
+dofile("../../support/shapeutilities.lua")
 
 local paletteTypes <const> = { "ACTIVE", "DEFAULT", "FILE" }
 
@@ -17,8 +17,8 @@ local defaults <const> = {
     palCount = 256,
     strokeSize = 6,
     fillSize = 5,
-    pullFocus = true,
-    gamutTol = 0.001
+    gamutTol = 0.001,
+    strokeWeight = 1,
 }
 
 local dlg <const> = Dialog { title = "Lch Color Wheel" }
@@ -133,7 +133,8 @@ dlg:newrow { always = false }
 dlg:file {
     id = "palFile",
     filetypes = AseUtilities.FILE_FORMATS_PAL,
-    open = true,
+    filename = "*.*",
+    basepath = app.fs.joinPath(app.fs.userConfigPath, "palettes"),
     visible = defaults.plotPalette
         and defaults.palType == "FILE"
 }
@@ -165,7 +166,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "ok",
     text = "&OK",
-    focus = defaults.pullFocus,
+    focus = true,
     onclick = function()
         -- Cache methods.
         local atan2 <const> = math.atan
@@ -176,14 +177,10 @@ dlg:button {
         local strpack <const> = string.pack
         local tconcat <const> = table.concat
 
-        local fromHex <const> = Clr.fromHexAbgr32
-        local labTosRgba <const> = Clr.srLab2TosRgb
-        local lchTosRgba <const> = Clr.srLchTosRgb
-        local rgbIsInGamut <const> = Clr.rgbIsInGamut
-        local sRgbaToLab <const> = Clr.sRgbToSrLab2
-
-        local drawCircleFill <const> = AseUtilities.drawCircleFill
-        local setPixels <const> = AseUtilities.setPixels
+        local fromHex <const> = Rgb.fromHexAbgr32
+        local lchTosRgb <const> = ColorUtilities.srLchTosRgbInternal
+        local rgbIsInGamut <const> = Rgb.rgbIsInGamut
+        local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
 
         -- Unpack arguments.
         local args <const> = dlg.data
@@ -239,7 +236,7 @@ dlg:button {
         -- Quantization calculations.
         local quantAzims <const> = sectorCount > 0
         local quantRad <const> = ringCount > 0
-        local maxChroma <const> = Clr.SR_LCH_MAX_CHROMA
+        local maxChroma <const> = Lab.SR_MAX_CHROMA
         local gamutTol <const> = defaults.gamutTol
 
         -- Depending on case, may be hue, radians or degrees.
@@ -252,7 +249,8 @@ dlg:button {
 
         -- Create sprite.
         local spec <const> = AseUtilities.createSpec(size, size)
-        local sprite <const> = AseUtilities.createSprite(spec, "LCH Wheel")
+        local sprite <const> = AseUtilities.createSprite(
+            spec, "LCH Wheel", false)
 
         local reqFrames <const> = args.frames
             or defaults.frames --[[@as integer]]
@@ -295,9 +293,9 @@ dlg:button {
                         h = floor(0.5 + h * azimAlpha) * azimBeta
                     end
 
-                    srgb = lchTosRgba(light, c, h, 1.0)
+                    srgb = lchTosRgb(light, c, h, 1.0)
                 else
-                    srgb = labTosRgba(light, 0.0, 0.0, 1.0)
+                    srgb = lchTosRgb(light, 0.0, 0.0, 1.0)
                 end
 
                 local r8 <const> = floor(min(max(srgb.r, 0.0), 1.0) * 255 + 0.5)
@@ -353,6 +351,7 @@ dlg:button {
 
         if plotPalette then
             -- Unpack arguments.
+            local strokeWeight = defaults.strokeWeight
             local strokeSize <const> = args.strokeSize
                 or defaults.strokeSize --[[@as integer]]
             local fillSize <const> = args.fillSize
@@ -383,7 +382,7 @@ dlg:button {
                 local yi = center
                 local stroke = 0x0
                 if hexSrgb & 0xff000000 ~= 0 then
-                    local lab <const> = sRgbaToLab(fromHex(hexSrgb))
+                    local lab <const> = sRgbToLab(fromHex(hexSrgb))
 
                     -- From [0.0, chroma] to [0.0, 1.0]
                     local xNrm <const> = lab.a * invMaxChroma + 0.5
@@ -426,46 +425,33 @@ dlg:button {
 
             local wPlot <const> = (xMax - xMin) + stroke2 - 1
             local hPlot <const> = (yMax - yMin) + stroke2 - 1
-            local plotSpec <const> = AseUtilities.createSpec(
+
+            local plotImage <const> = Image(AseUtilities.createSpec(
                 wPlot, hPlot,
                 spec.colorMode,
                 spec.colorSpace,
-                spec.transparentColor)
-            local plotImage <const> = Image(plotSpec)
-            local plotPos <const> = Point(xOff, yOff)
+                spec.transparentColor))
 
-            ---@type integer[]
-            local plotPixels <const> = {}
-            local lenPixels <const> = wPlot * hPlot * 4
-            local g = 0
-            while g < lenPixels do
-                g = g + 1
-                plotPixels[g] = 0
-            end
+            local plotCtx <const> = plotImage.context
+            if not plotCtx then return end
+            plotCtx.antialias = false
+            plotCtx.blendMode = BlendMode.NORMAL
+            local drawEllipse <const> = ShapeUtilities.drawEllipse
+            local hexToColor <const> = AseUtilities.hexToAseColor
 
             local k = 0
             while k < lenHexesSrgb do
                 k = k + 1
                 local hexSrgb <const> = hexesSrgb[k]
-                if (hexSrgb & 0xff000000) ~= 0 then
-                    local xi <const> = xs[k] - xOff
-                    local yi <const> = ys[k] - yOff
-                    local hexProfile <const> = hexesProfile[k]
-                    local strokeColor <const> = strokes[k]
-                    drawCircleFill(plotPixels, wPlot, xi, yi, strokeSize,
-                        strokeColor & 0xff,
-                        (strokeColor >> 0x08) & 0xff,
-                        (strokeColor >> 0x10) & 0xff,
-                        255)
-                    drawCircleFill(plotPixels, wPlot, xi, yi, fillSize,
-                        hexProfile & 0xff,
-                        (hexProfile >> 0x08) & 0xff,
-                        (hexProfile >> 0x10) & 0xff,
-                        255)
-                end
+                local xc <const> = xs[k] - xOff
+                local yc <const> = ys[k] - yOff
+                drawEllipse(plotCtx,
+                    xc, yc, fillSize, fillSize,
+                    true, hexToColor(hexSrgb),
+                    true, hexToColor(strokes[k]), strokeWeight,
+                    false)
             end
 
-            setPixels(plotImage, plotPixels)
             local plotPalLayer <const> = sprite:newLayer()
             plotPalLayer.name = "Palette"
 
@@ -474,7 +460,7 @@ dlg:button {
                     sprite,
                     1, reqFrames,
                     plotPalLayer.stackIndex, 1,
-                    plotImage, plotPos, 0x0)
+                    plotImage, Point(xOff, yOff), 0x0)
             end)
 
             -- This needs to be done at the very end because

@@ -50,7 +50,7 @@ local fileName <const> = sprite.filename
 
 local dlg <const> = Dialog {
     title = string.format(
-        "Properties (v %s)",
+        "Properties (v %s) ",
         tostring(app.version))
 }
 
@@ -135,12 +135,23 @@ end
 if #csName > 0 then
     dlg:label {
         id = "clrSpaceLabel",
-        label = "Color Space:",
+        label = "Profile:",
         text = csName
     }
 
     dlg:newrow { always = false }
 end
+
+local alphaIndex <const> = spec.transparentColor
+local alphaIdxStr <const> = string.format("%d", alphaIndex)
+
+dlg:label {
+    id = "maskIdxLabel",
+    label = "Mask Index:",
+    text = alphaIdxStr
+}
+
+dlg:newrow { always = false }
 
 if colorMode == ColorMode.INDEXED then
     local pals <const> = sprite.palettes
@@ -178,17 +189,6 @@ if colorMode == ColorMode.INDEXED then
 
     dlg:newrow { always = false }
 
-    local alphaIndex <const> = spec.transparentColor
-    local alphaIdxStr <const> = string.format("%d", alphaIndex)
-
-    dlg:label {
-        id = "maskIdxLabel",
-        label = "Mask Index:",
-        text = alphaIdxStr
-    }
-
-    dlg:newrow { always = false }
-
     local alphaIndexIsValid <const> = alphaIndex >= 0
         and alphaIndex < lenPal
     if alphaIndexIsValid then
@@ -215,7 +215,8 @@ if colorMode == ColorMode.INDEXED then
             dlg:newrow { always = false }
         end
 
-        local maskNonZero <const> = maskColorRef.rgbaPixel ~= 0
+        local maskNonZero <const> = AseUtilities.aseColorToHex(
+            maskColorRef, ColorMode.RGB)
         if maskNonZero then
             dlg:label {
                 id = "maskWarningRgb",
@@ -233,8 +234,19 @@ if colorMode == ColorMode.INDEXED then
         }
 
         dlg:newrow { always = false }
-    end
-end
+    end -- End valid alpha index check.
+else
+    local alphaIndexIsInvalid <const> = alphaIndex ~= 0
+    if alphaIndexIsInvalid then
+        dlg:label {
+            id = "maskWarningRgb",
+            label = "Warning:",
+            text = defaults.maskWarningRgb
+        }
+
+        dlg:newrow { always = false }
+    end -- End valid alpha index check.
+end     -- End color mode check.
 
 local width <const> = spec.width
 local height <const> = spec.height
@@ -300,8 +312,11 @@ if lenFrObjs > 1 then
         i = i + 1
         durSum = durSum + frObjs[i].duration
     end
-    local durStr <const> = string.format("%d ms",
-        math.floor(durSum * 1000.0 + 0.5))
+
+    local durStr <const> = string.format(
+        "%d ms (%.2f avg fps)",
+        math.floor(durSum * 1000.0 + 0.5),
+        durSum > 0.0 and lenFrObjs / durSum or 0)
 
     dlg:label {
         id = "durationLabel",
@@ -325,6 +340,7 @@ dlg:color {
 dlg:newrow { always = false }
 
 local userDataOld <const> = sprite.data
+local useLayerUuidsOld <const> = sprite.useLayerUuids
 
 dlg:entry {
     id = "sprUserData",
@@ -335,9 +351,19 @@ dlg:entry {
 
 dlg:newrow { always = false }
 
+dlg:check {
+    id = "useLayerUuids",
+    label = "UUID:",
+    text = "Layers",
+    selected = useLayerUuidsOld,
+    focus = false,
+}
+
+dlg:newrow { always = false }
+
 dlg:slider {
     id = "aPxRatio",
-    label = "Pixel Aspect:",
+    label = "Pixel:",
     min = defaults.minPxRatio,
     max = defaults.maxPxRatio,
     value = pixelWidth,
@@ -422,61 +448,65 @@ dlg:button {
     text = "&OK",
     focus = false,
     onclick = function()
-        if sprite and app.site.sprite == sprite then
-            local args <const> = dlg.data
-            local sprColor <const> = args.sprTabColor --[[@as Color]]
-            local userDataNew <const> = args.sprUserData --[[@as string]]
-
-            local xGridNew <const> = args.xGrid --[[@as integer]]
-            local yGridNew <const> = args.yGrid --[[@as integer]]
-
-            local wGridNew = args.wGrid --[[@as integer]]
-            local hGridNew = args.hGrid --[[@as integer]]
-            wGridNew = math.max(1, math.abs(wGridNew))
-            hGridNew = math.max(1, math.abs(hGridNew))
-
-            local aPxRatio = pixelWidth
-            local bPxRatio = pixelHeight
-            if allowPxRatio then
-                aPxRatio = args.aPxRatio --[[@as integer]]
-                bPxRatio = args.bPxRatio --[[@as integer]]
-                aPxRatio, bPxRatio = Utilities.reduceRatio(
-                    aPxRatio, bPxRatio)
-            end
-
-            app.transaction("Set Sprite Props", function()
-                sprite.gridBounds = Rectangle(
-                    xGridNew, yGridNew,
-                    wGridNew, hGridNew)
-                sprite.color = AseUtilities.aseColorCopy(sprColor, "")
-                sprite.data = userDataNew
-                sprite.pixelRatio = Size(aPxRatio, bPxRatio)
-            end)
-
-            if appPrefs then
-                local docPrefs <const> = appPrefs.document(sprite)
-                if docPrefs then
-                    local bgPref <const> = docPrefs.bg
-                    if bgPref then
-                        local bkg1 <const> = args.bkg1 --[[@as Color]]
-                        local bkg2 <const> = args.bkg2 --[[@as Color]]
-
-                        bgPref.type = 5
-                        bgPref.size = Size(wGridNew, hGridNew)
-                        bgPref.color1 = AseUtilities.aseColorCopy(bkg1, "")
-                        bgPref.color2 = AseUtilities.aseColorCopy(bkg2, "")
-                    end
-                end
-            end
-
-            app.refresh()
-            dlg:close()
-        else
+        if sprite == nil or app.site.sprite ~= sprite then
             app.alert {
                 title = "Error",
                 text = "Sprite is no longer active."
             }
+            dlg:close()
+            return
         end
+
+        local args <const> = dlg.data
+        local sprColor <const> = args.sprTabColor --[[@as Color]]
+        local userDataNew <const> = args.sprUserData --[[@as string]]
+        local useLayerUuidsNew <const> = args.useLayerUuids --[[@as boolean]]
+
+        local xGridNew <const> = args.xGrid --[[@as integer]]
+        local yGridNew <const> = args.yGrid --[[@as integer]]
+
+        local wGridNew = args.wGrid --[[@as integer]]
+        local hGridNew = args.hGrid --[[@as integer]]
+        wGridNew = math.max(1, math.abs(wGridNew))
+        hGridNew = math.max(1, math.abs(hGridNew))
+
+        local aPxRatio = pixelWidth
+        local bPxRatio = pixelHeight
+        if allowPxRatio then
+            aPxRatio = args.aPxRatio --[[@as integer]]
+            bPxRatio = args.bPxRatio --[[@as integer]]
+            aPxRatio, bPxRatio = Utilities.reduceRatio(
+                aPxRatio, bPxRatio)
+        end
+
+        app.transaction("Set Sprite Props", function()
+            sprite.gridBounds = Rectangle(
+                xGridNew, yGridNew,
+                wGridNew, hGridNew)
+            sprite.color = AseUtilities.aseColorCopy(sprColor, "")
+            sprite.data = userDataNew
+            sprite.pixelRatio = Size(aPxRatio, bPxRatio)
+            sprite.useLayerUuids = useLayerUuidsNew
+        end)
+
+        if appPrefs then
+            local docPrefs <const> = appPrefs.document(sprite)
+            if docPrefs then
+                local bgPref <const> = docPrefs.bg
+                if bgPref then
+                    local bkg1 <const> = args.bkg1 --[[@as Color]]
+                    local bkg2 <const> = args.bkg2 --[[@as Color]]
+
+                    bgPref.type = 5
+                    bgPref.size = Size(wGridNew, hGridNew)
+                    bgPref.color1 = AseUtilities.aseColorCopy(bkg1, "")
+                    bgPref.color2 = AseUtilities.aseColorCopy(bkg2, "")
+                end
+            end
+        end
+
+        app.refresh()
+        dlg:close()
     end
 }
 
@@ -494,5 +524,6 @@ dlg:button {
 -- Dialog bounds cannot be realigned because of this.
 dlg:show {
     autoscrollbars = true,
+    hand = true,
     wait = true
 }

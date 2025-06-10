@@ -6,7 +6,6 @@ local referToOptions <const> = { "CELS", "SELECTION", "SPRITE", "SYMMETRY" }
 local inOutOptions <const> = { "INSIDE", "OUTSIDE" }
 
 local defaults <const> = {
-    -- Refer to Inkscape for UI/UX.
     layerTarget = "ALL",
     includeLocked = false,
     includeHidden = false,
@@ -480,7 +479,11 @@ local function alignCels(dialog, preset)
         local symPrefs <const> = docPrefs.symmetry
         local symMode <const> = symPrefs.mode --[[@as integer]]
 
-        if symMode == 1 or symMode == 3 then
+        -- https://github.com/aseprite/aseprite/blob/main/data/pref.xml#L506
+        -- Horizontal is 1, vertical is 2, both are 3.
+        -- Right diagonal is 4, left diagonal is 8, both are 12.
+        -- All perpendiculars and diagonals are 15.
+        if (symMode & 1) ~= 0 then
             local xAxis <const> = symPrefs.x_axis --[[@as number]]
             xMinRef = math.floor(xAxis)
             xMaxRef = math.ceil(xAxis)
@@ -490,7 +493,7 @@ local function alignCels(dialog, preset)
             end
         end
 
-        if symMode == 2 or symMode == 3 then
+        if (symMode & 2) ~= 0 then
             local yAxis <const> = symPrefs.y_axis --[[@as number]]
             yMinRef = math.floor(yAxis)
             yMaxRef = math.ceil(yAxis)

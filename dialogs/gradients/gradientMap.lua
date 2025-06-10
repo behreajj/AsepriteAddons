@@ -1,9 +1,11 @@
 dofile("../../support/gradientutilities.lua")
 
 local targets <const> = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
+local channels <const> = { "LIGHTNESS", "CHROMA" }
 
 local defaults <const> = {
     target = "ACTIVE",
+    channel = "LIGHTNESS",
     normalize = false,
     printElapsed = false,
 }
@@ -21,11 +23,27 @@ dlg:combobox {
 
 dlg:newrow { always = false }
 
+dlg:combobox {
+    id = "channel",
+    label = "Channel:",
+    option = defaults.channel,
+    options = channels,
+    onchange = function()
+        local args <const> = dlg.data
+        local channel <const> = args.channel --[[@as string]]
+        local useChroma <const> = channel == "CHROMA"
+        dlg:modify { id = "useNormalize", visible = not useChroma }
+    end
+}
+
+dlg:newrow { always = false }
+
 dlg:check {
     id = "useNormalize",
     label = "Normalize:",
     text = "Stretch Contrast",
-    selected = defaults.normalize
+    selected = defaults.normalize,
+    visible = defaults.channel ~= "CHROMA"
 }
 
 dlg:newrow { always = false }
@@ -69,9 +87,13 @@ dlg:button {
 
         -- Unpack arguments.
         local args <const> = dlg.data
-        local target <const> = args.target or defaults.target --[[@as string]]
-        local stylePreset <const> = args.stylePreset --[[@as string]]
+        local target <const> = args.target
+            or defaults.target --[[@as string]]
+        local channel <const> = args.channel
+            or defaults.channel --[[@as string]]
         local useNormalize <const> = args.useNormalize --[[@as boolean]]
+
+        local stylePreset <const> = args.stylePreset --[[@as string]]
         local clrSpacePreset <const> = args.clrSpacePreset --[[@as string]]
         local huePreset <const> = args.huePreset --[[@as string]]
         local levels <const> = args.quantize --[[@as integer]]
@@ -85,25 +107,18 @@ dlg:button {
                 isSelect and "ALL" or target))
         local lenFrIdcs <const> = #frIdcs
 
-        -- If isSelect is true, then a new layer will be created.
         local srcLayer = site.layer --[[@as Layer]]
+        local removeSrcLayer = false
 
         if isSelect then
             AseUtilities.filterCels(activeSprite, srcLayer, frIdcs, "SELECTION")
             srcLayer = activeSprite.layers[#activeSprite.layers]
+            removeSrcLayer = true
         else
             if not srcLayer then
                 app.alert {
                     title = "Error",
                     text = "There is no active layer."
-                }
-                return
-            end
-
-            if srcLayer.isGroup then
-                app.alert {
-                    title = "Error",
-                    text = "Group layers are not supported."
                 }
                 return
             end
@@ -114,6 +129,14 @@ dlg:button {
                     text = "Reference layers are not supported."
                 }
                 return
+            end
+
+            if srcLayer.isGroup then
+                app.transaction("Flatten Group", function()
+                    srcLayer = AseUtilities.flattenGroup(
+                        activeSprite, srcLayer, frIdcs)
+                    removeSrcLayer = true
+                end)
             end
         end
 
@@ -126,14 +149,15 @@ dlg:button {
 
         -- Cache global methods to local.
         local abs <const> = math.abs
+        local sqrt <const> = math.sqrt
         local strfmt <const> = string.format
         local strpack <const> = string.pack
         local strunpack <const> = string.unpack
         local strsub <const> = string.sub
         local tconcat <const> = table.concat
-        local fromHex <const> = Clr.fromHexAbgr32
-        local toHex <const> = Clr.toHex
-        local sRgbToLab <const> = Clr.sRgbToSrLab2Internal
+        local fromHex <const> = Rgb.fromHexAbgr32
+        local toHex <const> = Rgb.toHex
+        local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
         local quantize <const> = Utilities.quantizeUnsigned
         local tilesToImage <const> = AseUtilities.tileMapToImage
         local transact <const> = app.transaction
@@ -141,7 +165,7 @@ dlg:button {
         local useMixed <const> = stylePreset == "MIXED"
         local mixFunc <const> = GradientUtilities.clrSpcFuncFromPreset(
             clrSpacePreset, huePreset)
-        local dither <const> = GradientUtilities.ditherFromPreset(
+        local dither <const> = GradientUtilities.ditherFuncFromPreset(
             stylePreset, bayerIndex, ditherPath)
         local cgmix <const> = ClrGradient.eval
 
@@ -156,14 +180,14 @@ dlg:button {
                 trgLayer.name = trgLayer.name
                     .. " " .. clrSpacePreset
             end
-            if useNormalize then
-                trgLayer.name = trgLayer.name .. " Contrast"
-            end
         end)
 
         -- Account for linked cels which may have the same image.
         ---@type table<integer, Image>
         local premadeTrgImgs <const> = {}
+        local useChroma <const> = channel == "CHROMA"
+        local useNormVerif <const> = useNormalize
+            or useChroma
 
         -- Used in naming transactions by frame.
         local docPrefs <const> = app.preferences.document(activeSprite)
@@ -193,8 +217,8 @@ dlg:button {
 
                     ---@type table<integer, number>
                     local lumDict <const> = {}
-                    local minLum = 1.0
-                    local maxLum = 0.0
+                    local zMin = 2147483647
+                    local zMax = -2147483648
 
                     local srcBytes <const> = srcImg.bytes
                     local srcSpec <const> = srcImg.spec
@@ -217,12 +241,13 @@ dlg:button {
                             -- minimum and maximum lightness.
                             if (abgr32 & 0xff000000) ~= 0 then
                                 local c <const> = fromHex(abgr32)
-                                -- Cheaper method:
-                                -- local lum <const> = 0.3 * c.r + 0.59 * c.g + 0.11 * c.b
-                                local lum <const> = sRgbToLab(c).l * 0.01
-                                if lum < minLum then minLum = lum end
-                                if lum > maxLum then maxLum = lum end
-                                lumDict[abgr32] = lum
+                                local lab <const> = sRgbToLab(c)
+                                local z <const> = useChroma
+                                    and sqrt(lab.a * lab.a + lab.b * lab.b)
+                                    or lab.l * 0.01
+                                if z < zMin then zMin = z end
+                                if z > zMax then zMax = z end
+                                lumDict[abgr32] = z
                             else
                                 lumDict[abgr32] = 0.0
                             end
@@ -233,12 +258,12 @@ dlg:button {
                     -- Normalize range if requested.
                     -- A color disc with uniform perceptual luminance
                     -- generated by Okhsl has a range of about 0.069.
-                    local rangeLum <const> = abs(maxLum - minLum)
-                    if useNormalize and rangeLum > 0.07 then
-                        local invRangeLum <const> = 1.0 / rangeLum
-                        for abgr32, lum in pairs(lumDict) do
+                    local zRange <const> = abs(zMax - zMin)
+                    if useNormVerif and zRange > 0.07 then
+                        local invRange <const> = 1.0 / zRange
+                        for abgr32, z in pairs(lumDict) do
                             if (abgr32 & 0xff000000) ~= 0 then
-                                lumDict[abgr32] = (lum - minLum) * invRangeLum
+                                lumDict[abgr32] = (z - zMin) * invRange
                             else
                                 lumDict[abgr32] = 0.0
                             end
@@ -313,7 +338,7 @@ dlg:button {
             end -- End cel exists check.
         end     -- End frames loop.
 
-        if isSelect then
+        if removeSrcLayer then
             app.transaction("Delete Layer", function()
                 activeSprite:deleteLayer(srcLayer)
             end)
@@ -337,7 +362,6 @@ dlg:button {
         end
     end
 }
-
 
 dlg:button {
     id = "cancel",

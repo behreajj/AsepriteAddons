@@ -132,7 +132,7 @@ end
 ---@param xRef number reference x
 ---@param yRef number reference y
 ---@param zRef number reference z
----@param handedness string? handedness
+---@param handedness? string handedness
 ---@return Mat4
 ---@nodiscard
 function Mat4.camera(
@@ -159,11 +159,9 @@ function Mat4.camera(
     local yfv <const> = yFocus or 0.0
     local zfv <const> = zFocus or 0.0
 
-    -- Find k by subtracting
-    -- location from focus.
-    local kx = xLoc - xfv
-    local ky = yLoc - yfv
-    local kz = zLoc - zfv
+    -- Find k as difference in
+    -- location and focus.
+    local kx, ky, kz = xLoc - xfv, yLoc - yfv, zLoc - zfv
 
     -- Normalize k.
     local kmSq <const> = kx * kx + ky * ky + kz * kz
@@ -181,13 +179,8 @@ function Mat4.camera(
         return Mat4.fromTranslation(xLoc, yLoc, zLoc)
     end
 
-    local ix = 1.0
-    local iy = 0.0
-    local iz = 0.0
-
-    local jx = 0.0
-    local jy = 1.0
-    local jz = 0.0
+    local ix, iy, iz = 1.0, 0.0, 0.0
+    local jx, jy, jz = 0.0, 1.0, 0.0
 
     if hval == "LEFT" then
         -- Cross k with ref to get i.
@@ -258,14 +251,12 @@ end
 ---@param xLoc number location x
 ---@param yLoc number location y
 ---@param zLoc number location z
----@param handedness string? handedness
+---@param handedness? string handedness
 ---@return Mat4
 ---@nodiscard
 function Mat4.cameraIsometric(xLoc, yLoc, zLoc, handedness)
     local hVal = "RIGHT"
-    local xVal = 0.0
-    local yVal = 0.0
-    local zVal = 0.0
+    local xVal, yVal, zVal = 0.0, 0.0, 0.0
     if handedness and handedness == "LEFT" then
         hVal = handedness
         xVal = xLoc or 1.0
@@ -304,14 +295,12 @@ end
 ---@param xLoc number location x
 ---@param yLoc number location y
 ---@param zLoc number location z
----@param handedness string? handedness
+---@param handedness? string handedness
 ---@return Mat4
 ---@nodiscard
 function Mat4.cameraDimetric(xLoc, yLoc, zLoc, handedness)
     local hVal = "RIGHT"
-    local xVal = 0.0
-    local yVal = 0.0
-    local zVal = 0.0
+    local xVal, yVal, zVal = 0.0, 0.0, 0.0
     if handedness and handedness == "LEFT" then
         hVal = handedness
         xVal = xLoc or 1.0
@@ -368,29 +357,29 @@ end
 ---@nodiscard
 function Mat4.determinant(m)
     return m.m00 * (m.m11 * m.m22 * m.m33 +
-        m.m12 * m.m23 * m.m31 +
-        m.m13 * m.m21 * m.m32 -
-        m.m13 * m.m22 * m.m31 -
-        m.m11 * m.m23 * m.m32 -
-        m.m12 * m.m21 * m.m33) -
+            m.m12 * m.m23 * m.m31 +
+            m.m13 * m.m21 * m.m32 -
+            m.m13 * m.m22 * m.m31 -
+            m.m11 * m.m23 * m.m32 -
+            m.m12 * m.m21 * m.m33) -
         m.m01 * (m.m10 * m.m22 * m.m33 +
-        m.m12 * m.m23 * m.m30 +
-        m.m13 * m.m20 * m.m32 -
-        m.m13 * m.m22 * m.m30 -
-        m.m10 * m.m23 * m.m32 -
-        m.m12 * m.m20 * m.m33) +
+            m.m12 * m.m23 * m.m30 +
+            m.m13 * m.m20 * m.m32 -
+            m.m13 * m.m22 * m.m30 -
+            m.m10 * m.m23 * m.m32 -
+            m.m12 * m.m20 * m.m33) +
         m.m02 * (m.m10 * m.m21 * m.m33 +
-        m.m11 * m.m23 * m.m30 +
-        m.m13 * m.m20 * m.m31 -
-        m.m13 * m.m21 * m.m30 -
-        m.m10 * m.m23 * m.m31 -
-        m.m11 * m.m20 * m.m33) -
+            m.m11 * m.m23 * m.m30 +
+            m.m13 * m.m20 * m.m31 -
+            m.m13 * m.m21 * m.m30 -
+            m.m10 * m.m23 * m.m31 -
+            m.m11 * m.m20 * m.m33) -
         m.m03 * (m.m10 * m.m21 * m.m32 +
-        m.m11 * m.m22 * m.m30 +
-        m.m12 * m.m20 * m.m31 -
-        m.m12 * m.m21 * m.m30 -
-        m.m10 * m.m22 * m.m31 -
-        m.m11 * m.m20 * m.m32)
+            m.m11 * m.m22 * m.m30 +
+            m.m12 * m.m20 * m.m31 -
+            m.m12 * m.m21 * m.m30 -
+            m.m10 * m.m22 * m.m31 -
+            m.m11 * m.m20 * m.m32)
 end
 
 ---Constructs a rotation matrix from an angle in radians around an arbitrary
@@ -591,13 +580,9 @@ function Mat4.orthographic(left, right, bottom, top, near, far)
     local h <const> = top - bottom
     local d <const> = fVal - nVal
 
-    local wInv = 1.0
-    local hInv = 1.0
-    local dInv = 1.0
-
-    if w ~= 0.0 then wInv = 1.0 / w end
-    if h ~= 0.0 then hInv = 1.0 / h end
-    if d ~= 0.0 then dInv = 1.0 / d end
+    local wInv <const> = w ~= 0.0 and 1.0 / w or 1.0
+    local hInv <const> = h ~= 0.0 and 1.0 / h or 1.0
+    local dInv <const> = d ~= 0.0 and 1.0 / d or 1.0
 
     return Mat4.new(
         wInv + wInv, 0.0, 0.0, wInv * (left + right),

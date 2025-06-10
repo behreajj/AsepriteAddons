@@ -78,7 +78,8 @@ dlg:file {
     id = "importFilepath",
     label = "File:",
     filetypes = importFileExts,
-    open = true,
+    filename = "*.*",
+    basepath = app.fs.userDocsPath,
     focus = false,
     visible = defaults.inputType == "FILE"
 }
@@ -137,6 +138,8 @@ dlg:newrow { always = false }
 dlg:file {
     id = "exportFilepath",
     filetypes = exportFileExts,
+    filename = "*.*",
+    basepath = app.fs.userDocsPath,
     save = true,
     focus = false,
     visible = defaults.outputType == "FILE"

@@ -8,10 +8,10 @@ local defaults <const> = {
     resolution = 16,
     angle = 90,
     scale = 32,
-    useStroke = true,
+    useStroke = false,
     strokeWeight = 1,
-    useFill = false,
-    pullFocus = false
+    useFill = true,
+    useAntialias = false,
 }
 
 local dlg <const> = Dialog { title = "Polygon" }
@@ -20,8 +20,9 @@ dlg:slider {
     id = "sides",
     label = "Sides:",
     min = 3,
-    max = 16,
-    value = defaults.sides
+    max = 32,
+    value = defaults.sides,
+    focus = true
 }
 
 dlg:newrow { always = false }
@@ -117,11 +118,8 @@ dlg:check {
     onclick = function()
         local args <const> = dlg.data
         local useStroke <const> = args.useStroke --[[@as boolean]]
-        local useFill <const> = args.useFill --[[@as boolean]]
         dlg:modify { id = "strokeWeight", visible = useStroke }
         dlg:modify { id = "strokeClr", visible = useStroke }
-        dlg:modify { id = "useFill", visible = useStroke }
-        dlg:modify { id = "fillClr", visible = useStroke and useFill }
     end
 }
 
@@ -135,7 +133,7 @@ dlg:slider {
 
 dlg:color {
     id = "strokeClr",
-    color = app.preferences.color_bar.fg_color --[[@as Color]],
+    color = app.preferences.color_bar.bg_color --[[@as Color]],
     visible = defaults.useStroke
 }
 
@@ -146,8 +144,6 @@ dlg:check {
     label = "Fill:",
     text = "Enable",
     selected = defaults.useFill,
-    visible = defaults.useStroke,
-    -- enabled = false,
     onclick = function()
         local args <const> = dlg.data
         local useFill <const> = args.useFill --[[@as boolean]]
@@ -160,10 +156,17 @@ dlg:check {
 
 dlg:color {
     id = "fillClr",
-    color = app.preferences.color_bar.bg_color --[[@as Color]],
-    -- enabled = false,
+    color = app.preferences.color_bar.fg_color --[[@as Color]],
     visible = defaults.useFill
-        and defaults.useStroke
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "useAntialias",
+    label = "Antialias:",
+    text = "Enable",
+    selected = defaults.useAntialias
 }
 
 dlg:newrow { always = false }
@@ -171,7 +174,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "confirm",
     text = "&OK",
-    focus = defaults.pullFocus,
+    focus = false,
     onclick = function()
         local site <const> = app.site
         local sprite <const> = site.sprite
@@ -209,17 +212,17 @@ dlg:button {
         local strokeColor <const> = args.strokeClr --[[@as Color]]
         local useFill <const> = args.useFill --[[@as boolean]]
         local fillColor <const> = args.fillClr --[[@as Color]]
+        local useAntialias <const> = args.useAntialias --[[@as boolean]]
 
         -- Create transform matrix.
         local t <const> = Mat3.fromTranslation(xOrig, yOrig)
 
-        local a = degrees * 0.017453292519943
         local query <const> = AseUtilities.DIMETRIC_ANGLES[degrees]
-        if query then a = query end
+        local a <const> = query
+            or (0.017453292519943 * degrees)
         local r <const> = Mat3.fromRotZ(a)
 
-        local sclVerif = scale
-        if sclVerif < 2.0 then sclVerif = 2.0 end
+        local sclVerif <const> = math.max(2.0, scale)
         local s <const> = Mat3.fromScale(sclVerif, -sclVerif)
 
         local mat <const> = Mat3.mul(Mat3.mul(t, s), r)
@@ -231,12 +234,76 @@ dlg:button {
         local layer <const> = sprite:newLayer()
         layer.name = mesh.name
 
-        ShapeUtilities.drawMesh2(sprite,
-            mesh, useFill, fillColor,
-            useStroke, strokeColor,
-            Brush { size = strokeWeight },
-            frame, layer)
+        local useTrim <const> = true
+        ShapeUtilities.drawMesh2(sprite, mesh, useFill, fillColor,
+            useStroke, strokeColor, strokeWeight, frame, layer,
+            useAntialias, useTrim)
 
+        app.refresh()
+    end
+}
+
+dlg:button {
+    id = "brush",
+    text = "&BRUSH",
+    focus = false,
+    onclick = function()
+        local args <const> = dlg.data
+        local sectors <const> = args.sides or defaults.sides --[[@as integer]]
+        local skip <const> = args.skip or defaults.skip --[[@as integer]]
+        local pick <const> = args.pick or defaults.pick --[[@as integer]]
+        local inset <const> = args.inset or defaults.inset --[[@as integer]]
+
+        local degrees <const> = args.angle or defaults.angle --[[@as integer]]
+        local scale <const> = args.scale or defaults.scale --[[@as number]]
+
+        local useStroke <const> = args.useStroke --[[@as boolean]]
+        local strokeWeight <const> = args.strokeWeight
+            or defaults.strokeWeight --[[@as integer]]
+        local strokeColor <const> = args.strokeClr --[[@as Color]]
+        local useFill <const> = args.useFill --[[@as boolean]]
+        local fillColor <const> = args.fillClr --[[@as Color]]
+        local useAntialias <const> = args.useAntialias --[[@as boolean]]
+
+        local r <const> = Mat3.fromRotZ(degrees * 0.017453292519943)
+        local sclVerif <const> = math.max(2.0, scale)
+        local s <const> = Mat3.fromScale(sclVerif, -sclVerif)
+
+        -- The brush image size must account for the stroke, and to center
+        -- the mesh within the image, the translation must use image size.
+        -- Fudge factor needed for, e.g., triangle corners.
+        local wImage <const> = math.ceil(sclVerif + strokeWeight + 5)
+        local hImage <const> = math.ceil(sclVerif + strokeWeight + 5)
+        local t <const> = Mat3.fromTranslation(
+            wImage * 0.5, hImage * 0.5)
+
+        local mat <const> = Mat3.mul(Mat3.mul(t, s), r)
+        local mesh <const> = Mesh2.star(
+            sectors, skip, pick, inset * 0.01)
+        Utilities.mulMat3Mesh2(mat, mesh)
+
+        local alphaIndex = 0
+        local colorMode = ColorMode.RGB
+        local colorSpace = ColorSpace { sRGB = false }
+        local activeSprite <const> = app.sprite
+        if activeSprite then
+            local activeSpec <const> = activeSprite.spec
+            alphaIndex = activeSpec.transparentColor
+            colorMode = activeSpec.colorMode
+            colorSpace = activeSpec.colorSpace
+        end
+
+        local refSpec <const> = AseUtilities.createSpec(
+            wImage, hImage, colorMode, colorSpace, alphaIndex)
+        local trimmed <const>,
+        _ <const>,
+        _ <const> = ShapeUtilities.rasterizeMesh2(
+            mesh, refSpec,
+            useFill, fillColor,
+            useStroke, strokeColor, strokeWeight,
+            useAntialias, true)
+
+        AseUtilities.setBrush(AseUtilities.imageToBrush(trimmed))
         app.refresh()
     end
 }

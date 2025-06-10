@@ -6,6 +6,8 @@ local interTypes <const> = { "HORIZONTAL", "VERTICAL" }
 local waveTypes <const> = { "BILINEAR", "GERSTNER", "INTERLACED", "RADIAL" }
 
 local defaults <const> = {
+    -- TODO: Instead of displacing whole pixels, allow displacement
+    -- by Lab color channel. See "chroma warp" effect.
     target = "ACTIVE",
     frameCount = 8,
     fps = 24,
@@ -485,8 +487,6 @@ dlg:button {
         -- Flatten sprite to images, associate with a factor
         -- and an angle theta.
 
-        -- TODO: Destructure this to an array of
-        -- durations, images, factors, thetas?
         ---@type {duration: number, image: Image, fac: number, theta: number}[]
         local packets <const> = {}
         if isActive then
@@ -1001,11 +1001,10 @@ dlg:button {
             while i < lenFlat do
                 local x <const> = i % wSrc
                 local y <const> = i // wSrc
-                local xp, yp = eval(x, y, theta, fac)
-                xp = round(xp)
-                yp = round(yp)
+                local xp <const>, yp <const> = eval(x, y, theta, fac)
                 i = i + 1
-                byteArr[i] = getPixel(srcBytes, xp, yp, wSrc, hSrc, srcBpp, pxAlpha)
+                byteArr[i] = getPixel(srcBytes, round(xp), round(yp),
+                    wSrc, hSrc, srcBpp, pxAlpha)
             end
 
             local trgImg <const> = Image(srcSpec)

@@ -16,6 +16,35 @@ setmetatable(Utilities, {
     end
 })
 
+---Bayer dithering matrices, in 2^1, 2^2, 2^3 or 2x2, 4x4, 8x8. For matrix
+---generators, see https://codegolf.stackexchange.com/q/259633 and
+---https://www.shadertoy.com/view/XtV3RG . More than 2 ^ 4 is overkill for
+---8-bit color. The largest element is rows * columns - 1. These are normalized
+---in a non-standard way for the sake of consistency with custom dithers.
+---@type number[][]
+Utilities.BAYER_MATRICES = {
+    {
+        0.125, 0.625,
+        0.875, 0.375
+    },
+    {
+        0.03125, 0.53125, 0.15625, 0.65625,
+        0.78125, 0.28125, 0.90625, 0.40625,
+        0.21875, 0.71875, 0.09375, 0.59375,
+        0.96875, 0.46875, 0.84375, 0.34375
+    },
+    {
+        0.007813, 0.507813, 0.132813, 0.632813, 0.039063, 0.539063, 0.164063, 0.664063,
+        0.757813, 0.257813, 0.882813, 0.382813, 0.789063, 0.289063, 0.914063, 0.414063,
+        0.195313, 0.695313, 0.070313, 0.570313, 0.226563, 0.726563, 0.101563, 0.601563,
+        0.945313, 0.445313, 0.820313, 0.320313, 0.976563, 0.476563, 0.851563, 0.351563,
+        0.054688, 0.554688, 0.179688, 0.679688, 0.023438, 0.523438, 0.148438, 0.648438,
+        0.804688, 0.304688, 0.929688, 0.429688, 0.773438, 0.273438, 0.898438, 0.398438,
+        0.242188, 0.742188, 0.117188, 0.617188, 0.210938, 0.710938, 0.085938, 0.585938,
+        0.992188, 0.492188, 0.867188, 0.367188, 0.960938, 0.460938, 0.835938, 0.335938
+    }
+}
+
 ---Houses utility methods not included in Lua.
 ---@return table
 function Utilities.new()
@@ -23,8 +52,9 @@ function Utilities.new()
     return inst
 end
 
----Bisects an array of elements to find the appropriate index. Biases towards
----the right insert point. Should be used with sorted arrays.
+---Bisects an array of elements to find the appropriate index.
+---Biases towards the right insert point. Should be used with
+---sorted arrays.
 ---@generic T array type
 ---@generic U element type
 ---@param arr T[] array
@@ -48,8 +78,9 @@ function Utilities.bisectRight(arr, elm, compare)
     return 1 + low
 end
 
----Concatenates an array of bytes into a string. Performs no validation on
----array elements; they are assumed to be in [0, 255].
+---Concatenates an array of bytes into a string. Performs no
+---validation on array elements. They are assumed to be in
+---[0, 255].
 ---@param source integer[]
 ---@return string
 ---@nodiscard
@@ -97,6 +128,38 @@ function Utilities.checker(
         i = i + 1
     end
     return table.concat(checkered)
+end
+
+---Sets all colors in an image's bytes to zero if they have
+---zero alpha. Assumes that the image has been verified to
+---not be a tile map or indexed map and that alpha is the
+---most significant byte.
+---@param source string source bytes
+---@param bpp integer bits per pixel
+---@return string
+function Utilities.correctZeroAlpha(source, bpp)
+    ---@type string[]
+    local corrected <const> = {}
+    local fmtStr <const> = "<I" .. bpp
+    local tMask <const> = 0xff << (8 * (bpp - 1))
+    local len <const> = #source // bpp
+
+    local strpack <const> = string.pack
+    local strsub <const> = string.sub
+    local strunpack <const> = string.unpack
+
+    local i = 0
+    while i < len do
+        local ibpp = i * bpp
+        local srcPixel <const> = strunpack(fmtStr, strsub(
+            source, 1 + ibpp, bpp + ibpp))
+        local trgPixel <const> = (srcPixel & tMask ~= 0)
+            and srcPixel or 0
+        i = i + 1
+        corrected[i] = strpack(fmtStr, trgPixel)
+    end
+
+    return table.concat(corrected)
 end
 
 ---Converts a dictionary to a sorted set. If a comparator is not provided,
@@ -162,7 +225,7 @@ function Utilities.flipPixelsAll(source, w, h, bpp)
     while i < len do
         local y <const> = i // w
         local x <const> = i % w
-        -- You could multiply wn1 * h before the loop then just x * h within?
+        -- You could multiply wn1 * h before the loop then just x * h within.
         local j <const> = 1 + (wn1 - x) * h + hn1 - y
         local ibpp <const> = i * bpp
         transposed[j] = strsub(source, 1 + ibpp, bpp + ibpp)
@@ -215,7 +278,7 @@ function Utilities.flipPixelsY(source, w, h, bpp)
     while i < len do
         local y <const> = i // w
         local x <const> = i % w
-        -- You could multiply hn1 * w before the loop then just y * w within?
+        -- You could multiply hn1 * w before the loop then just y * w within.
         local j <const> = 1 + (hn1 - y) * w + x
         local ibpp <const> = i * bpp
         flipped[j] = strsub(source, 1 + ibpp, bpp + ibpp)
@@ -311,8 +374,8 @@ end
 ---Generates a random number with normal distribution. Based on the Box-Muller
 ---transform as described here:
 ---https://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform .
----@param sigma number? scalar
----@param mu number? offset
+---@param sigma? number scalar
+---@param mu? number offset
 ---@return number
 ---@nodiscard
 function Utilities.gaussian(sigma, mu)
@@ -374,16 +437,16 @@ end
 
 ---Unclamped linear interpolation from an origin angle to a destination by a
 ---factor in [0.0, 1.0]. The range defaults to 360.0 for degrees, but can be
----math.pi * 2.0 for radians. Uses the counter-clockwise angular direction.
----@param origin number origin angle
+---tau for radians. Uses the counter-clockwise angular direction.
+---@param orig number origin angle
 ---@param dest number destination angle
 ---@param t number factor
----@param range number? range
+---@param range? number range
 ---@return number
 ---@nodiscard
-function Utilities.lerpAngleCcw(origin, dest, t, range)
+function Utilities.lerpAngleCcw(orig, dest, t, range)
     local valRange <const> = range or 360.0
-    local o <const> = origin % valRange
+    local o <const> = orig % valRange
     local d <const> = dest % valRange
     local diff <const> = d - o
     if diff == 0.0 then return o end
@@ -398,16 +461,16 @@ end
 
 ---Unclamped linear interpolation from an origin angle to a destination by a
 ---factor in [0.0, 1.0]. The range defaults to 360.0 for degrees, but can be
----math.pi * 2.0 for radians. Uses the clockwise angular direction.
----@param origin number origin angle
+---tau for radians. Uses the clockwise angular direction.
+---@param orig number origin angle
 ---@param dest number destination angle
 ---@param t number factor
----@param range number? range
+---@param range? number range
 ---@return number
 ---@nodiscard
-function Utilities.lerpAngleCw(origin, dest, t, range)
+function Utilities.lerpAngleCw(orig, dest, t, range)
     local valRange <const> = range or 360.0
-    local o <const> = origin % valRange
+    local o <const> = orig % valRange
     local d <const> = dest % valRange
     local diff <const> = d - o
     if diff == 0.0 then return d end
@@ -422,17 +485,17 @@ end
 
 ---Unclamped linear interpolation from an origin angle to a destination by a
 ---factor in [0.0, 1.0]. The range defaults to 360.0 for degrees, but can be
----math.pi * 2.0 for radians. Uses the furthest angular direction.
----@param origin number origin angle
+---tau for radians. Uses the furthest angular direction.
+---@param orig number origin angle
 ---@param dest number destination angle
 ---@param t number factor
----@param range number? range
+---@param range? number range
 ---@return number
 ---@nodiscard
-function Utilities.lerpAngleFar(origin, dest, t, range)
+function Utilities.lerpAngleFar(orig, dest, t, range)
     local valRange <const> = range or 360.0
     local halfRange <const> = valRange * 0.5
-    local o <const> = origin % valRange
+    local o <const> = orig % valRange
     local d <const> = dest % valRange
     local diff <const> = d - o
     local u <const> = 1.0 - t
@@ -448,16 +511,16 @@ end
 
 ---Unclamped linear interpolation from an origin angle to a destination by a
 ---factor in [0.0, 1.0]. The range defaults to 360.0 for degrees, but can be
----math.pi * 2.0 for radians. Uses the nearest angular direction.
----@param origin number origin angle
+---tau for radians. Uses the nearest angular direction.
+---@param orig number origin angle
 ---@param dest number destination angle
 ---@param t number factor
----@param range number? range
+---@param range? number range
 ---@return number
 ---@nodiscard
-function Utilities.lerpAngleNear(origin, dest, t, range)
+function Utilities.lerpAngleNear(orig, dest, t, range)
     local valRange <const> = range or 360.0
-    local o <const> = origin % valRange
+    local o <const> = orig % valRange
     local d <const> = dest % valRange
     local diff <const> = d - o
     if diff == 0.0 then return o end
@@ -471,6 +534,32 @@ function Utilities.lerpAngleNear(origin, dest, t, range)
     else
         return u * o + t * d
     end
+end
+
+---Multiplies a matrix with a Curve2. Changes the curve in place.
+---@param a Mat3 matrix
+---@param b Curve2 curve
+---@return Curve2
+function Utilities.mulMat3Curve2(a, b)
+    local kns <const> = b.knots
+    local knsLen <const> = #kns
+    local i = 0
+    while i < knsLen do
+        i = i + 1
+        Utilities.mulMat3Knot2(a, kns[i])
+    end
+    return b
+end
+
+---Multiplies a matrix with a Knot2. Changes the knot in place.
+---@param a Mat3 matrix
+---@param b Knot2 knot
+---@return Knot2
+function Utilities.mulMat3Knot2(a, b)
+    b.co = Utilities.mulMat3Point2(a, b.co)
+    b.fh = Utilities.mulMat3Point2(a, b.fh)
+    b.rh = Utilities.mulMat3Point2(a, b.rh)
+    return b
 end
 
 ---Multiplies a Mat3 with a Mesh2. Changes the mesh in place.
@@ -553,8 +642,8 @@ end
 ---Returns an array of arrays. Inner arrays can hold duplicate frame indices,
 ---as the user may intend for the same frame to appear in multiple groups.
 ---@param s string range string
----@param maxIdx integer? maximum index
----@param offset integer? offset
+---@param maxIdx? integer maximum index
+---@param offset? integer offset
 ---@return integer[][]
 ---@nodiscard
 function Utilities.parseRangeStringOverlap(s, maxIdx, offset)
@@ -650,8 +739,8 @@ end
 ---
 ---Returns an ordered set of integers.
 ---@param s string range string
----@param maxIdx integer? maximum index
----@param offset integer? offset
+---@param maxIdx? integer maximum index
+---@param offset? integer offset
 ---@return integer[]
 ---@nodiscard
 function Utilities.parseRangeStringUnique(s, maxIdx, offset)
@@ -1088,7 +1177,7 @@ end
 
 ---Skews an image's bytes by a tangent on the x axis.
 ---The angle is given as a pre calculated tangent.
----Returns the byte string, the width and height of the rotated image.
+---Returns the byte string, the width and height of the skewed image.
 ---@param source string source bytes
 ---@param wSrc integer source image width
 ---@param hSrc integer source image height
@@ -1134,7 +1223,7 @@ end
 ---Skews an image's bytes horizontally by an integer rise. The run specifies
 ---the number of pixels to skip on the y axis for each rise. Assumes both rise
 ---and run are non zero.
----Returns the byte string, the width and height of the rotated image.
+---Returns the byte string, the width and height of the skewed image.
 ---@param source string source bytes
 ---@param wSrc integer source image width
 ---@param hSrc integer source image height
@@ -1178,7 +1267,7 @@ end
 
 ---Skews an image's bytes by a tangent on the y axis.
 ---The angle is given as a pre calculated tangent.
----Returns the byte string, the width and height of the rotated image.
+---Returns the byte string, the width and height of the skewed image.
 ---@param source string source bytes
 ---@param wSrc integer source image width
 ---@param hSrc integer source image height
@@ -1224,7 +1313,7 @@ end
 ---Skews an image's bytes vertically by an integer rise. The run specifies
 ---the number of pixels to skip on the x axis for each rise. Assumes both rise
 ---and run are non zero.
----Returns the byte string, the width and height of the rotated image.
+---Returns the byte string, the width and height of the skewed image.
 ---@param source string source bytes
 ---@param wSrc integer source image width
 ---@param hSrc integer source image height

@@ -6,8 +6,7 @@ local defaults <const> = {
     frameTarget = "ALL",
     rangeStr = "",
     strExample = "4,6:9,13",
-    isCyclic = false,
-    pullFocus = true
+    isCyclic = false
 }
 
 local dlg <const> = Dialog { title = "Time Gradient" }
@@ -63,7 +62,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "confirm",
     text = "&OK",
-    focus = defaults.pullFocus,
+    focus = true,
     onclick = function()
         local activeSprite = app.site.sprite
         if not activeSprite then
@@ -105,7 +104,7 @@ dlg:button {
         local useMixed <const> = stylePreset == "MIXED"
         local mixFunc <const> = GradientUtilities.clrSpcFuncFromPreset(
             clrSpacePreset, huePreset)
-        local toHex <const> = Clr.toHex
+        local toHex <const> = Rgb.toHex
 
         -- Frames are potentially discontinuous, but for now assume
         -- that, if so, user intended them to be that way?
@@ -166,7 +165,7 @@ dlg:button {
                 trgImages[i] = trgImage
             end
         else
-            local dither <const> = GradientUtilities.ditherFromPreset(
+            local dither <const> = GradientUtilities.ditherFuncFromPreset(
                 stylePreset, bayerIndex, ditherPath)
             local tconcat <const> = table.concat
             local strpack <const> = string.pack

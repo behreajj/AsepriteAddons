@@ -1,4 +1,4 @@
-dofile("../../support/aseutilities.lua")
+dofile("../../support/shapeutilities.lua")
 dofile("../../support/octree.lua")
 
 local palTypes <const> = { "ACTIVE", "FILE" }
@@ -33,9 +33,8 @@ local defaults <const> = {
     maxSwatchSize = 10,
     swatchAlpha = 217,
     bkgColor = 0xff101010,
-    frames = 16,
+    frames = 32,
     fps = 24,
-    pullFocus = false
 }
 
 local dlg <const> = Dialog { title = "Palette Coverage" }
@@ -60,7 +59,8 @@ dlg:newrow { always = false }
 dlg:file {
     id = "palFile",
     filetypes = AseUtilities.FILE_FORMATS_PAL,
-    open = true,
+    filename = "*.*",
+    basepath = app.fs.joinPath(app.fs.userConfigPath, "palettes"),
     visible = defaults.palType == "FILE"
 }
 
@@ -198,7 +198,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "confirm",
     text = "&OK",
-    focus = defaults.pullFocus,
+    focus = false,
     onclick = function()
         local args <const> = dlg.data
 
@@ -267,31 +267,22 @@ dlg:button {
         local cos <const> = math.cos
         local sin <const> = math.sin
         local floor <const> = math.floor
-        local sRgbToLab <const> = Clr.sRgbToSrLab2
-        local fromHex <const> = Clr.fromHexAbgr32
+        local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
+        local fromHex <const> = Rgb.fromHexAbgr32
         local rotax <const> = Vec3.rotateInternal
-        local v3hash <const> = Vec3.hashCode
-        local v3new <const> = Vec3.new
+        local labHash <const> = Lab.toHexWrap64
+        local distFunc <const> = Lab.distCylindrical
         local octins <const> = Octree.insert
         local search <const> = Octree.queryInternal
-        local distFunc <const> = function(a, b)
-            local da <const> = b.x - a.x
-            local db <const> = b.y - a.y
-            return math.sqrt(da * da + db * db)
-                + math.abs(b.z - a.z)
-        end
         local screen <const> = Utilities.toScreen
-        local drawCirc <const> = AseUtilities.drawCircleFill
-        local getPixels <const> = AseUtilities.getPixels
-        local setPixels <const> = AseUtilities.setPixels
+        local drawEllipse <const> = ShapeUtilities.drawEllipse
         local tablesort <const> = table.sort
 
         -- Create Octree.
         local octCapacity = args.octCapacity
             or defaults.octCapacityBits --[[@as integer]]
         octCapacity = 1 << octCapacity
-        local bounds <const> = Bounds3.lab()
-        local octree <const> = Octree.new(bounds, octCapacity, 1)
+        local octree <const> = Octree.new(BoundsLab.srLab2(), octCapacity, 1)
 
         -- Unpack unique colors to data.
         local uniqueHexesSrgbLen <const> = #uniqueHexesSrgb
@@ -303,9 +294,8 @@ dlg:button {
             local hexSrgb <const> = uniqueHexesSrgb[i]
             local srgb <const> = fromHex(hexSrgb)
             local lab <const> = sRgbToLab(srgb)
-            local point <const> = Vec3.new(lab.a, lab.b, lab.l)
-            ptHexDict[v3hash(point)] = uniqueHexesProfile[i]
-            octins(octree, point)
+            ptHexDict[labHash(lab)] = uniqueHexesProfile[i]
+            octins(octree, lab)
         end
 
         Octree.cull(octree)
@@ -332,7 +322,7 @@ dlg:button {
             Vec3.new(lbx, lby, lbz),
             Vec3.new(ubx, uby, ubz))
 
-        local gridClrs <const> = Clr.gridsRgb(
+        local gridClrs <const> = Rgb.gridsRgb(
             cols, rows, layersCube,
             swatchAlpha01)
 
@@ -349,12 +339,10 @@ dlg:button {
             j = j + 1
             local srcClr <const> = gridClrs[j]
             local srcLab <const> = sRgbToLab(srcClr)
-            local srcLabPt <const> = v3new(
-                srcLab.a, srcLab.b, srcLab.l)
 
-            local nearPoint <const>, _ <const> = search(octree, srcLabPt, queryRad, distFunc)
+            local nearPoint <const>, _ <const> = search(octree, srcLab, queryRad, distFunc)
             if nearPoint then
-                local ptHash <const> = v3hash(nearPoint)
+                local ptHash <const> = labHash(nearPoint)
                 local abgr32 <const> = ptHexDict[ptHash]
                 replaceRgbs[1 + j4] = abgr32 & 0xff
                 replaceRgbs[2 + j4] = (abgr32 >> 0x08) & 0xff
@@ -379,10 +367,12 @@ dlg:button {
             axis = Vec3.forward()
         end
 
-        -- TODO: Check if you can reuse sprite spec
+        -- Create sprite.
+        local coverSpec <const> = AseUtilities.createSpec(512, 512)
         local coverSprite <const> = AseUtilities.createSprite(
-            AseUtilities.createSpec(512, 512),
-            "Palette Coverage")
+            coverSpec,
+            "Palette Coverage",
+            false)
 
         -- Add requested number of frames.
         local oldFrameLen <const> = #coverSprite.frames
@@ -468,24 +458,29 @@ dlg:button {
             pts2d[h] = frame2d
         end
 
-        -- Create layer.
-        local layer <const> = coverSprite.layers[#coverSprite.layers]
-        layer.name = string.format("Palette Coverage %s", projPreset)
+        local bkgLayer <const> = coverSprite.layers[1]
+        local plotLayer <const> = coverSprite:newLayer()
+
+        app.transaction("Set Layer Props", function()
+            bkgLayer.name = "Background"
+            plotLayer.name = string.format("Palette Coverage %s", projPreset)
+        end)
+
+        -- Create background image once, then clone.
+        local bkgImg <const> = Image(coverSpec)
+        local bkgColor <const> = args.bkgColor --[[@as Color]]
+        local bkgHex <const> = AseUtilities.aseColorToHex(
+            bkgColor, ColorMode.RGB)
+        bkgImg:clear(bkgHex)
 
         local zDiff = zMin - zMax
         local zDenom = 1.0
         if zDiff ~= 0.0 then zDenom = 1.0 / zDiff end
 
-        -- Create background image once, then clone.
-        local bkgImg <const> = Image(width, height)
-        local bkgColor <const> = args.bkgColor --[[@as Color]]
-        local bkgHex <const> = AseUtilities.aseColorToHex(bkgColor, ColorMode.RGB)
-        bkgImg:clear(bkgHex)
-        local bkgPixels <const> = getPixels(bkgImg)
-        local lenBkgPixels <const> = #bkgPixels
-
+        local strokeColor <const> = Color { r = 0, g = 0, b = 0, a = 0 }
         local fps <const> = args.fps or defaults.fps --[[@as integer]]
         local duration <const> = 1.0 / math.max(1, fps)
+
         app.transaction("Palette Coverage", function()
             local m = 0
             while m < reqFrames do
@@ -494,40 +489,48 @@ dlg:button {
                 local frame <const> = coverSprite.frames[m]
                 frame.duration = duration
 
-                ---@type integer[]
-                local imgPixels <const> = {}
-                local o = 0
-                while o < lenBkgPixels do
-                    o = o + 1
-                    imgPixels[o] = bkgPixels[o]
-                end
+                local plotImg <const> = Image(coverSpec)
 
-                local n = 0
-                while n < gridLen do
-                    n = n + 1
-                    local packet <const> = frame2d[n]
-                    local screenPoint <const> = packet.point
+                local plotCtx <const> = plotImg.context
+                if plotCtx then
+                    plotCtx.antialias = false
+                    plotCtx.blendMode = BlendMode.NORMAL
 
-                    -- Remap z to swatch size based on min and max.
-                    local scl <const> = minSwatchSize + swatchDiff
-                        * ((screenPoint.z - zMax) * zDenom)
+                    local n = 0
+                    while n < gridLen do
+                        n = n + 1
+                        local packet <const> = frame2d[n]
+                        local screenPoint <const> = packet.point
 
-                    drawCirc(
-                        imgPixels, width,
-                        floor(0.5 + screenPoint.x),
-                        floor(0.5 + screenPoint.y),
-                        floor(0.5 + scl),
-                        packet.r, packet.g, packet.b, packet.a)
-                end
+                        -- Remap z to swatch size based on min and max.
+                        local scl <const> = minSwatchSize + swatchDiff
+                            * ((screenPoint.z - zMax) * zDenom)
+                        local scli <const> = math.floor(scl)
 
-                local img <const> = Image(width, height)
-                setPixels(img, imgPixels)
-                coverSprite:newCel(layer, frame, img)
-            end
-        end)
+                        local fillColor <const> = Color {
+                            r = packet.r,
+                            g = packet.g,
+                            b = packet.b,
+                            a = packet.a
+                        }
+
+                        drawEllipse(plotCtx,
+                            floor(0.5 + screenPoint.x),
+                            floor(0.5 + screenPoint.y),
+                            scli, scli,
+                            true, fillColor,
+                            false, strokeColor, 0,
+                            false)
+                    end -- End grid loop.
+                    coverSprite:newCel(plotLayer, frame, plotImg)
+                end     -- End context exists.
+                coverSprite:newCel(bkgLayer, frame, bkgImg)
+            end         -- End frames loop.
+        end)            -- End transaction.
 
         app.sprite = coverSprite
         app.frame = coverSprite.frames[1]
+        app.layer = plotLayer
 
         -- Create and set the coverage palette.
         -- Wait to do this until the end, so we have greater

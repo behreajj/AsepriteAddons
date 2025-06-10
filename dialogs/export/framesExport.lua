@@ -36,7 +36,9 @@ local defaults <const> = {
     toPow2 = false,
     potUniform = false,
     saveJson = false,
-    boundsFormat = "TOP_LEFT"
+    boundsFormat = "TOP_LEFT",
+    uuidPreset = "STRING",
+    uuidIndex = nil,
 }
 
 local sheetFormat <const> = table.concat({
@@ -157,10 +159,16 @@ local function saveSheet(
         end
     end
 
+    -- Validate that alpha index is within palette length.
+    local alphaIndexVerif = spriteSpec.transparentColor
+    if alphaIndexVerif >= #compPalette then
+        alphaIndexVerif = 0
+    end
+
     -- Create composite image.
     local sheetSpec <const> = AseUtilities.createSpec(
         wSheet, hSheet, spriteSpec.colorMode,
-        spriteSpec.colorSpace, spriteSpec.transparentColor)
+        spriteSpec.colorSpace, alphaIndexVerif)
     local compImg <const> = Image(sheetSpec)
     local blendModeSrc <const> = BlendMode.SRC
 
@@ -362,7 +370,7 @@ dlg:slider {
     id = "scale",
     label = "Scale:",
     min = 1,
-    max = 10,
+    max = AseUtilities.UPSCALE_LIMIT,
     value = defaults.scale
 }
 
@@ -491,6 +499,10 @@ dlg:file {
     id = "filename",
     label = "File:",
     filetypes = AseUtilities.FILE_FORMATS_SAVE,
+    filename = string.format("*.%s",
+        app.preferences.export_file.image_default_extension),
+    basepath = app.fs.userDocsPath,
+    title = "Export Frames",
     save = true,
     focus = true
 }
@@ -635,7 +647,6 @@ dlg:button {
             end
         end
 
-        -- TODO: Replace these usages with app.fs.joinPath
         local pathSep = app.fs.pathSeparator
         pathSep = string.gsub(pathSep, "\\", "\\\\")
 
@@ -885,6 +896,10 @@ dlg:button {
         end         -- End use batches check.
 
         if saveJson then
+            -- Unpack UUID formatting options.
+            local uuidPreset <const> = defaults.uuidPreset
+            local uuidIndex <const> = defaults.uuidIndex
+
             -- Cache Json methods.
             local celToJson <const> = JsonUtilities.celToJson
             local frameToJson <const> = JsonUtilities.frameToJson
@@ -911,8 +926,8 @@ dlg:button {
                 local packet <const> = pckUnqArr[m]
                 local cel <const> = packet.cel
                 local frame <const> = packet.frame
-                celStrs[m] = celToJson(
-                    cel, cel.fileName, boundsFormat)
+                celStrs[m] = celToJson(cel, cel.fileName, boundsFormat,
+                    uuidPreset, uuidIndex)
                 frameStrs[m] = frameToJson(frame)
             end
 
@@ -923,7 +938,7 @@ dlg:button {
                 k = k + 1
                 local tag <const> = tags[k]
                 local fileName <const> = tagFileNames[k]
-                tagStrs[k] = tagToJson(tag, fileName)
+                tagStrs[k] = tagToJson(tag, fileName, uuidPreset, uuidIndex)
             end
 
             ---@type string[]
@@ -960,7 +975,7 @@ dlg:button {
                 table.concat(sheetStrArr, ","),
                 table.concat(celStrs, ","),
                 table.concat(frameStrs, ","),
-                JsonUtilities.spriteToJson(activeSprite),
+                JsonUtilities.spriteToJson(activeSprite, uuidPreset, uuidIndex),
                 table.concat(tagStrs, ","),
                 JsonUtilities.versionToJson())
 

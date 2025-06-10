@@ -631,15 +631,6 @@ dlg:button {
             return
         end
 
-        local srcFrame <const> = site.frame
-        if not srcFrame then
-            app.alert {
-                title = "Error",
-                text = "There is no active frame."
-            }
-            return
-        end
-
         local frObjs <const> = activeSprite.frames
         local lenFrames <const> = #frObjs
         if lenFrames <= 1 then
@@ -667,99 +658,144 @@ dlg:button {
             return
         end
 
+        local srcFrIdcs <const> = Utilities.flatArr2(
+            AseUtilities.getFrames(activeSprite, "RANGE"))
+        local lenSrcFrIdcs <const> = #srcFrIdcs
+
+        if lenSrcFrIdcs <= 0 then
+            app.alert {
+                title = "Error",
+                text = "There are no selected frames."
+            }
+            return
+        end
+
+        -- Cache global methods to local.
+        local flatToImg <const> = AseUtilities.flatToImage
+        local trimImageAlpha <const> = AseUtilities.trimImageAlpha
+        local tileMapToImage <const> = AseUtilities.tileMapToImage
+        local resize <const> = AseUtilities.resizeImageNearest
+        local floor <const> = math.floor
+        local max <const> = math.max
+        local eval <const> = Curve2.eval
+        local transact <const> = app.transaction
+        local round <const> = Utilities.round
+        local strfmt <const> = string.format
+        local strpack <const> = string.pack
+        local strsub <const> = string.sub
+
+        ---@type Image[]
+        local srcImgs <const> = {}
+        ---@type integer[]
+        local xTlsSrc <const> = {}
+        ---@type integer[]
+        local yTlsSrc <const> = {}
+
+        local lenSrcImgs = 0
+
         local spriteSpec <const> = activeSprite.spec
         local colorMode <const> = spriteSpec.colorMode
         local colorSpace <const> = spriteSpec.colorSpace
         local alphaIndex <const> = spriteSpec.transparentColor
 
-        local srcImg = nil
-        local tlxSrc = 0
-        local tlySrc = 0
-        if srcLayer.isGroup then
-            local flatImg <const>,
-            flatRect <const> = AseUtilities.flattenGroup(
-                srcLayer, srcFrame, colorMode, colorSpace, alphaIndex,
-                true, false, true, true)
-            srcImg = flatImg
-            tlxSrc = flatRect.x
-            tlySrc = flatRect.y
-        else
-            local srcCel <const> = srcLayer:cel(srcFrame)
-            if srcCel then
-                local celPos <const> = srcCel.position
-                tlxSrc = celPos.x
-                tlySrc = celPos.y
+        local srcLayerIsBkg <const> = srcLayer.isBackground
+        local srcLayerIsGroup <const> = srcLayer.isGroup
+        local srcLayerIsTileMap <const> = srcLayer.isTilemap
 
-                local celImg <const> = srcCel.image
-                if srcLayer.isTilemap then
-                    local tileSet <const> = srcLayer.tileset
-                    srcImg = AseUtilities.tileMapToImage(
-                        celImg, tileSet, colorMode)
-                else
-                    srcImg = celImg
-                end
-            end
-        end
-
-        if not srcImg then
-            app.alert {
-                title = "Error",
-                text = "There is no source image."
-            }
-            return
-        end
-
-        if srcImg:isEmpty() then
-            app.alert {
-                title = "Error",
-                text = "Source image is empty."
-            }
-            return
-        end
-
-        if srcLayer.isBackground then
-            app.command.SwitchColors()
-            local aseBkg <const> = app.fgColor
-            local bkgHex <const> = AseUtilities.aseColorToHex(aseBkg, colorMode)
-            app.command.SwitchColors()
-
-            local srcBytes <const> = srcImg.bytes
-            local srcArea <const> = srcImg.width * srcImg.height
-            local srcBpp <const> = srcImg.bytesPerPixel
-            local imgFmt <const> = "<I" .. srcBpp
-            local bkgHexPacked <const> = string.pack(imgFmt, bkgHex)
-            local alphaIdxPacked <const> = string.pack(imgFmt, alphaIndex)
-            local strsub <const> = string.sub
-
-            ---@type string[]
-            local trgByteArr <const> = {}
-
-            local i = 0
-            while i < srcArea do
-                local ibpp <const> = i * srcBpp
-                local srcHexPacked <const> = strsub(srcBytes, 1 + ibpp,
-                    srcBpp + ibpp)
-                local trgHexPacked = srcHexPacked
-                if srcHexPacked == bkgHexPacked then
-                    trgHexPacked = alphaIdxPacked
-                end
-                i = i + 1
-                trgByteArr[i] = trgHexPacked
-            end
-
-            local cleared <const> = Image(srcImg.spec)
-            cleared.bytes = table.concat(trgByteArr)
-            srcImg = cleared
-        end
+        app.command.SwitchColors()
+        local aseBkg <const> = app.fgColor
+        local bkgHex <const> = AseUtilities.aseColorToHex(aseBkg, colorMode)
+        app.command.SwitchColors()
 
         local trimCel <const> = true
-        if trimCel then
-            local trimmed <const>,
-            tlxTrm <const>,
-            tlyTrm <const> = AseUtilities.trimImageAlpha(srcImg, 0, alphaIndex)
-            srcImg = trimmed
-            tlxSrc = tlxSrc + tlxTrm
-            tlySrc = tlySrc + tlyTrm
+
+        local h = 0
+        while h < lenSrcFrIdcs do
+            h = h + 1
+            local srcFrIdx <const> = srcFrIdcs[h]
+
+            if srcLayerIsGroup then
+                local isValid <const>,
+                flatImg <const>,
+                xTlFlat <const>,
+                yTlFlat <const> = flatToImg(
+                    srcLayer, srcFrIdx, colorMode,
+                    colorSpace, alphaIndex,
+                    true, false, true, true)
+
+                if isValid then
+                    lenSrcImgs = lenSrcImgs + 1
+                    srcImgs[lenSrcImgs] = flatImg
+                    xTlsSrc[lenSrcImgs] = xTlFlat
+                    yTlsSrc[lenSrcImgs] = yTlFlat
+                end
+            else
+                local srcCel <const> = srcLayer:cel(srcFrIdx)
+                if srcCel then
+                    local celPos <const> = srcCel.position
+                    local xTlSrc = celPos.x
+                    local yTlSrc = celPos.y
+
+                    local celImg <const> = srcCel.image
+                    local srcImg = celImg
+                    if srcLayerIsTileMap then
+                        local tileSet <const> = srcLayer.tileset
+                        srcImg = tileMapToImage(
+                            celImg, tileSet, colorMode)
+                    elseif srcLayerIsBkg then
+                        local srcBytes <const> = srcImg.bytes
+                        local srcSpec <const> = srcImg.spec
+                        local srcArea <const> = srcSpec.width * srcSpec.height
+                        local srcBpp <const> = srcImg.bytesPerPixel
+                        local imgFmt <const> = "<I" .. srcBpp
+
+                        local bkgHexPacked <const> = strpack(imgFmt, bkgHex)
+                        local alphaIdxPacked <const> = strpack(imgFmt, alphaIndex)
+
+                        ---@type string[]
+                        local trgByteArr <const> = {}
+                        local i = 0
+                        while i < srcArea do
+                            local ibpp <const> = i * srcBpp
+                            local srcHexPacked <const> = strsub(srcBytes, 1 + ibpp,
+                                srcBpp + ibpp)
+                            local trgHexPacked = srcHexPacked
+                            if srcHexPacked == bkgHexPacked then
+                                trgHexPacked = alphaIdxPacked
+                            end
+                            i = i + 1
+                            trgByteArr[i] = trgHexPacked
+                        end -- End clear pixels loop.
+
+                        local cleared <const> = Image(srcSpec)
+                        cleared.bytes = table.concat(trgByteArr)
+                        srcImg = cleared
+                    end -- End layer type check.
+
+                    if trimCel then
+                        local trimmed <const>,
+                        xTlTrim <const>,
+                        yTlTrim <const> = trimImageAlpha(srcImg, 0, alphaIndex)
+
+                        srcImg = trimmed
+                        xTlSrc = xTlSrc + xTlTrim
+                        yTlSrc = yTlSrc + yTlTrim
+                    end
+
+                    lenSrcImgs = lenSrcImgs + 1
+                    srcImgs[lenSrcImgs] = srcImg
+                    xTlsSrc[lenSrcImgs] = xTlSrc
+                    yTlsSrc[lenSrcImgs] = yTlSrc
+                end -- End source cel exists.
+            end     -- End source layer is group.
+        end         -- End source frames loop.
+
+        if lenSrcImgs <= 0 then
+            app.alert {
+                title = "Error",
+                text = "There are no source images."
+            }
+            return
         end
 
         local args <const> = dlg.data
@@ -839,9 +875,8 @@ dlg:button {
         -- Create new layer.
         local trgLayer <const> = activeSprite:newLayer()
         app.transaction("Set Layer Props", function()
-            trgLayer.name = string.format("Tween %s At %d From %d To %d",
+            trgLayer.name = string.format("Tween %s From %d To %d",
                 srcLayer.name,
-                srcFrame.frameNumber + frameUiOffset,
                 frIdxOrigVerif + frameUiOffset,
                 frIdxDestVerif + frameUiOffset)
             trgLayer.parent = srcLayer.parent
@@ -849,14 +884,6 @@ dlg:button {
             trgLayer.blendMode = srcLayer.blendMode
                 or BlendMode.NORMAL
         end)
-
-        -- Cache methods used in loop.
-        local resize <const> = AseUtilities.resizeImageNearest
-        local floor <const> = math.floor
-        local max <const> = math.max
-        local eval <const> = Curve2.eval
-        local transact <const> = app.transaction
-        local round <const> = Utilities.round
 
         local rotateImage = AseUtilities.rotateImageZ
         local axis <const> = args.axis
@@ -878,25 +905,25 @@ dlg:button {
                 or defaults.wIncr --[[@as integer]]
             local hIncr <const> = args.hIncr
                 or defaults.hIncr --[[@as integer]]
-
-            local currDeg = 0
-            local wCurr = srcImg.width
-            local hCurr = srcImg.height
-            local xCurr = tlxSrc + wCurr * 0.5
-            local yCurr = tlySrc + hCurr * 0.5
-
             local usePreIncr = args.usePreIncr --[[@as boolean]]
-            if usePreIncr then
-                xCurr = xCurr + xIncr
-                yCurr = yCurr - yIncr
-                currDeg = currDeg + rotIncrDeg
-                wCurr = max(1, wCurr + wIncr)
-                hCurr = max(1, hCurr + hIncr)
-            end
 
             local j = 0
             while j < countFrames do
+                local srcIdx <const> = 1 + j % lenSrcImgs
+                local srcImg <const> = srcImgs[srcIdx]
+                local xTlSrc <const> = xTlsSrc[srcIdx]
+                local yTlSrc <const> = yTlsSrc[srcIdx]
+                local wSrc <const> = srcImg.width
+                local hSrc <const> = srcImg.height
+
                 local frIdx <const> = frIdxOrigVerif + j
+
+                local step <const> = usePreIncr and j + 1 or j
+                local currDeg <const> = step * rotIncrDeg
+                local wCurr <const> = wSrc + step * wIncr
+                local hCurr <const> = hSrc + step * hIncr
+                local xCurr <const> = xTlSrc + wSrc * 0.5 + step * xIncr
+                local yCurr <const> = yTlSrc + hSrc * 0.5 - step * yIncr
 
                 local trgImg = resize(srcImg, wCurr, hCurr)
                 trgImg = rotateImage(trgImg, currDeg)
@@ -904,17 +931,14 @@ dlg:button {
                     floor(xCurr - trgImg.width * 0.5),
                     floor(yCurr - trgImg.height * 0.5))
 
-                transact("Anim Cel", function()
-                    activeSprite:newCel(
-                        trgLayer, frIdx, trgImg, trgPoint)
-                end)
+                transact(
+                    strfmt("Anim Cel %d", frameUiOffset + frIdx),
+                    function()
+                        activeSprite:newCel(
+                            trgLayer, frIdx, trgImg, trgPoint)
+                    end)
 
                 j = j + 1
-                xCurr = xCurr + xIncr
-                yCurr = yCurr - yIncr
-                currDeg = currDeg + rotIncrDeg
-                wCurr = max(1, wCurr + wIncr)
-                hCurr = max(1, hCurr + hIncr)
             end -- End of frames loop.
         else
             ---@type number[]
@@ -926,12 +950,12 @@ dlg:button {
                 local timeStamps <const> = {}
                 local totalDuration = 0
 
-                local h = 0
-                while h < countFrames do
-                    local frObj <const> = frObjs[frIdxOrigVerif + h]
-                    timeStamps[1 + h] = totalDuration
+                local i = 0
+                while i < countFrames do
+                    local frObj <const> = frObjs[frIdxOrigVerif + i]
+                    timeStamps[1 + i] = totalDuration
                     totalDuration = totalDuration + frObj.duration
-                    h = h + 1
+                    i = i + 1
                 end
 
                 local timeToFac = 0.0
@@ -940,10 +964,10 @@ dlg:button {
                     timeToFac = 1.0 / finalDuration
                 end
 
-                local i = 0
-                while i < countFrames do
-                    i = i + 1
-                    factors[i] = timeStamps[i] * timeToFac
+                local j = 0
+                while j < countFrames do
+                    j = j + 1
+                    factors[j] = timeStamps[j] * timeToFac
                 end
             else
                 -- Default to using frames.
@@ -998,28 +1022,35 @@ dlg:button {
             pxwDest = math.max(1.0, math.abs(pxwDest))
             pxhDest = math.max(1.0, math.abs(pxhDest))
 
+            prcwOrig = 0.01 * math.abs(prcwOrig)
+            prchOrig = 0.01 * math.abs(prchOrig)
+            prcwDest = 0.01 * math.abs(prcwDest)
+            prchDest = 0.01 * math.abs(prchDest)
+
             local unitType <const> = args.units
                 or defaults.units --[[@as string]]
-            if unitType == "PERCENT" then
-                local pxwSrc <const> = srcImg.width
-                local pxhSrc <const> = srcImg.height
-
-                prcwOrig = 0.01 * math.abs(prcwOrig)
-                prchOrig = 0.01 * math.abs(prchOrig)
-                pxwOrig = math.max(1.0, pxwSrc * prcwOrig)
-                pxhOrig = math.max(1.0, pxhSrc * prchOrig)
-
-                prcwDest = 0.01 * math.abs(prcwDest)
-                prchDest = 0.01 * math.abs(prchDest)
-                pxwDest = math.max(1.0, pxwSrc * prcwDest)
-                pxhDest = math.max(1.0, pxhSrc * prchDest)
-            end
+            local unitIsPercent <const> = unitType == "PERCENT"
 
             local j = 0
             while j < countFrames do
+                local srcIdx <const> = 1 + j % lenSrcImgs
+                local srcImg <const> = srcImgs[srcIdx]
+
+                if unitIsPercent then
+                    local pxwSrc <const> = srcImg.width
+                    local pxhSrc <const> = srcImg.height
+
+                    pxwOrig = max(1.0, pxwSrc * prcwOrig)
+                    pxhOrig = max(1.0, pxhSrc * prchOrig)
+
+                    pxwDest = max(1.0, pxwSrc * prcwDest)
+                    pxhDest = max(1.0, pxhSrc * prchDest)
+                end
+
                 local frIdx <const> = frIdxOrigVerif + j
                 local fac <const> = factors[1 + j]
                 local t = eval(curve, fac).x
+
                 -- Can go out of bounds with 0.0 and 1.0 as boundaries
                 -- with ease types like circ in and out.
                 if fac > 0.000001 and fac < 0.999999 then
@@ -1053,10 +1084,12 @@ dlg:button {
                 local ytlInt <const> = round(ytl)
                 local trgPoint <const> = Point(xtlInt, ytlInt)
 
-                transact("Anim Cel", function()
-                    activeSprite:newCel(
-                        trgLayer, frIdx, trgImg, trgPoint)
-                end)
+                transact(
+                    strfmt("Anim Cel %d", frameUiOffset + frIdx),
+                    function()
+                        activeSprite:newCel(
+                            trgLayer, frIdx, trgImg, trgPoint)
+                    end)
 
                 j = j + 1
             end -- End of frames loop.

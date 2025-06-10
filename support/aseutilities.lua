@@ -1,5 +1,5 @@
 dofile("./utilities.lua")
-dofile("./clr.lua")
+dofile("./colorutilities.lua")
 
 AseUtilities = {}
 AseUtilities.__index = AseUtilities
@@ -20,18 +20,18 @@ AseUtilities.DEFAULT_PAL_ARR = {
     0x00000000, -- Mask
     0xff000000, -- Black
     0xffffffff, -- White
-    0xff3a3adc,
-    0xff2a7af2,
-    0xff14aefe,
-    0xff19ddfd,
-    0xff1ddbca,
-    0xff3cc286,
-    0xff699d03,
-    0xff968e00,
-    0xff9c7300,
-    0xff9c5a02,
-    0xff793162,
-    0xff581b99
+    0xff3a3adc, -- Red
+    0xff2a7af2, -- Orange
+    0xff14aefe, -- Orange yellow
+    0xff19ddfd, -- Yellow
+    0xff35d1a9, -- Green yellow
+    0xff52c654, -- Light green
+    0xff6eba00, -- Green
+    0xff8fa300, -- Seafoam
+    0xffa28100, -- Teal
+    0xff9c5a02, -- Blue
+    0xff793162, -- Purple
+    0xff581b99, -- Red purple
 }
 
 ---Angles in degrees which are remapped to permutations of atan(1,2), atan(1,3).
@@ -87,6 +87,7 @@ AseUtilities.FILE_FORMATS_PAL = {
 }
 
 ---Table of file extensions supported for save file dialogs.
+---Purposefully excludes jpeg and jpg extensions.
 AseUtilities.FILE_FORMATS_SAVE = {
     "aseprite", "bmp", "flc", "fli",
     "gif", "pcc", "pcx",
@@ -105,10 +106,10 @@ AseUtilities.GRAY_COUNT = 32
 AseUtilities.LAYER_COUNT_LIMIT = 96
 
 ---Camera projections.
-AseUtilities.PROJECTIONS = {
-    "ORTHO",
-    "PERSPECTIVE"
-}
+AseUtilities.PROJECTIONS = { "ORTHO", "PERSPECTIVE" }
+
+---Maximum scalar an image can be scaled up on export.
+AseUtilities.UPSCALE_LIMIT = 16
 
 ---Houses utility methods for scripting Aseprite add-ons.
 ---@return table
@@ -125,7 +126,6 @@ end
 ---@return Layer[]
 function AseUtilities.appendGroups(
     layer, array, includeLocked, includeHidden)
-    -- TODO: Option to include or exclude collapsed?
     if layer.isGroup
         and (includeLocked or layer.isEditable)
         and (includeHidden or layer.isVisible) then
@@ -219,18 +219,18 @@ function AseUtilities.aseColorCopy(aseColor, flag)
     end
 end
 
----Converts an Aseprite Color object to a Clr. Both Aseprite Color and Clr
+---Converts an Aseprite Color object to an Rgb object. Both objects
 ---allow arguments to exceed the expected ranges, [0, 255] and [0.0, 1.0],
 ---respectively.
----@param aseColor Color aseprite color
----@return Clr
+---@param o Color aseprite color
+---@return Rgb
 ---@nodiscard
-function AseUtilities.aseColorToClr(aseColor)
-    return Clr.new(
-        aseColor.red / 255.0,
-        aseColor.green / 255.0,
-        aseColor.blue / 255.0,
-        aseColor.alpha / 255.0)
+function AseUtilities.aseColorToRgb(o)
+    return Rgb.new(
+        o.red / 255.0,
+        o.green / 255.0,
+        o.blue / 255.0,
+        o.alpha / 255.0)
 end
 
 ---Converts an Aseprite color object to an integer. The meaning of the integer
@@ -288,9 +288,9 @@ end
 ---Aseprite does not support color management for palettes.
 ---@param palType string enumeration
 ---@param filePath string file path
----@param startIndex integer? start index
----@param count integer? count of colors to sample
----@param correctZeroAlpha boolean? alpha correction flag
+---@param startIndex? integer start index
+---@param count? integer count of colors to sample
+---@param correctZeroAlpha? boolean alpha correction flag
 ---@return integer[]
 ---@return integer[]
 function AseUtilities.asePaletteLoad(
@@ -306,7 +306,7 @@ function AseUtilities.asePaletteLoad(
             if isFile then
                 -- Loading an .aseprite file with multiple palettes will
                 -- register only the first palette. Also may be problems with
-                -- color profiles being ignored?
+                -- color profiles being ignored.
                 local palFile <const> = Palette { fromFile = filePath }
                 if palFile then
                     local cntVrf <const> = count or 256
@@ -392,8 +392,8 @@ end
 ---palette is nil, returns a default table. Assumes palette is in sRGB. The
 ---start index defaults to 0. The count defaults to 256.
 ---@param pal Palette aseprite palette
----@param startIndex integer? start index
----@param count integer? sample count
+---@param startIndex? integer start index
+---@param count? integer sample count
 ---@return integer[]
 ---@nodiscard
 function AseUtilities.asePaletteToHexArr(pal, startIndex, count)
@@ -469,10 +469,10 @@ end
 
 ---Finds the average color of a selection in a sprite. If there is no selection,
 ---tries getting the color at the editor mouse position. Calculates the average
----in the SR LAB 2 color space.
+---in the SR LAB 2 color space. Excludes colors with zero alpha.
 ---@param sprite Sprite
 ---@param frame Frame|integer
----@return { l: number, a: number, b: number, alpha: number }
+---@return Lab
 ---@nodiscard
 function AseUtilities.averageColor(sprite, frame)
     local sprSpec <const> = sprite.spec
@@ -485,7 +485,7 @@ function AseUtilities.averageColor(sprite, frame)
 
     local flat = nil
     if isValid then
-        flat, _, _ = AseUtilities.imageFromSel(
+        flat, _, _ = AseUtilities.selToImage(
             sel, sprite, frame)
     else
         local x <const>, y <const> = AseUtilities.getMouse()
@@ -539,7 +539,7 @@ function AseUtilities.averageColor(sprite, frame)
     elseif colorMode == ColorMode.GRAY then
         local i = 0
         while i < areaFlat do
-            local i2 <const> = i * 2
+            local i2 <const> = i + i
             local av16 <const> = strunpack("<I2", strsub(
                 flatBytes, 1 + i2, 2 + i2))
             local a8 <const> = av16 >> 0x08 & 0xff
@@ -569,8 +569,8 @@ function AseUtilities.averageColor(sprite, frame)
     local lSum, aSum, bSum, alphaSum = 0.0, 0.0, 0.0, 0.0
     local count = 0
 
-    local fromHex <const> = Clr.fromHexAbgr32
-    local sRgbToLab <const> = Clr.sRgbToSrLab2
+    local fromHex <const> = Rgb.fromHexAbgr32
+    local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2
     for hex, tally in pairs(hd) do
         local lab <const> = sRgbToLab(fromHex(hex))
         lSum = lSum + lab.l * tally
@@ -612,7 +612,7 @@ function AseUtilities.averageNormal(sprite, frame)
 
     local flat = nil
     if isValid then
-        flat, _, _ = AseUtilities.imageFromSel(
+        flat, _, _ = AseUtilities.selToImage(
             sel, sprite, frame)
     else
         local x <const>, y <const> = AseUtilities.getMouse()
@@ -702,7 +702,7 @@ end
 ---and converted. Otherwise, returns false. Ignores linked cels. Always sets
 ---the new layer to stack index 1, parented to the sprite.
 ---@param sprite Sprite sprite
----@param overrideLock boolean? ignore layer lock
+---@param overrideLock? boolean ignore layer lock
 ---@returns boolean
 function AseUtilities.bkgToLayer(sprite, overrideLock)
     local bkgLayer <const> = sprite.backgroundLayer
@@ -747,12 +747,12 @@ end
 ---corner. Does not support tile maps or images with mismatched color modes.
 ---@param under Image under image
 ---@param over Image overlay image
----@param uxCel integer? under cel top left corner x
----@param uyCel integer? under cel top left corner y
----@param oxCel integer? overlay cel top left corner x
----@param oyCel integer? overlay cel top left corner y
----@param mask Selection? selection
----@param cumulative boolean? under ignore mask
+---@param uxCel? integer under cel top left corner x
+---@param uyCel? integer under cel top left corner y
+---@param oxCel? integer overlay cel top left corner x
+---@param oyCel? integer overlay cel top left corner y
+---@param mask? Selection selection
+---@param cumulative? boolean under ignore mask
 ---@returns Image
 ---@returns integer
 ---@returns integer
@@ -1078,11 +1078,23 @@ end
 ---@param format ColorMode format constant
 function AseUtilities.changePixelFormat(format)
     if format == ColorMode.INDEXED then
-        app.command.ChangePixelFormat { format = "indexed" }
+        app.command.ChangePixelFormat {
+            ui = false,
+            format = "indexed",
+            fitCriteria = "cielab",
+            rgbmap = "octree"
+        }
     elseif format == ColorMode.GRAY then
-        app.command.ChangePixelFormat { format = "gray" }
+        app.command.ChangePixelFormat {
+            ui = false,
+            format = "gray",
+            toGray = "luma"
+        }
     elseif format == ColorMode.RGB then
-        app.command.ChangePixelFormat { format = "rgb" }
+        app.command.ChangePixelFormat {
+            ui = false,
+            format = "rgb"
+        }
     end
 end
 
@@ -1113,20 +1125,38 @@ function AseUtilities.checkerImage(
     return trgImg
 end
 
----Converts a Clr to an Aseprite Color. Assumes that source and target are in
----sRGB. Clamps the Clr's channels to [0.0, 1.0] before they are converted.
+---Converts an Rgb to an Aseprite Color. Assumes that source and target are in
+---sRGB. Clamps the Rgb's channels to [0.0, 1.0] before they are converted.
 ---Beware that this could return (255, 0, 0, 0) or (0, 255, 0, 0), which may be
 ---visually indistinguishable from - and confused with - an alpha mask.
----@param clr Clr clr
+---@param o Rgb color
 ---@return Color
 ---@nodiscard
-function AseUtilities.clrToAseColor(clr)
+function AseUtilities.rgbToAseColor(o)
     return Color {
-        r = math.floor(math.min(math.max(clr.r, 0.0), 1.0) * 255.0 + 0.5),
-        g = math.floor(math.min(math.max(clr.g, 0.0), 1.0) * 255.0 + 0.5),
-        b = math.floor(math.min(math.max(clr.b, 0.0), 1.0) * 255.0 + 0.5),
-        a = math.floor(math.min(math.max(clr.a, 0.0), 1.0) * 255.0 + 0.5)
+        r = math.floor(math.min(math.max(o.r, 0.0), 1.0) * 255.0 + 0.5),
+        g = math.floor(math.min(math.max(o.g, 0.0), 1.0) * 255.0 + 0.5),
+        b = math.floor(math.min(math.max(o.b, 0.0), 1.0) * 255.0 + 0.5),
+        a = math.floor(math.min(math.max(o.a, 0.0), 1.0) * 255.0 + 0.5)
     }
+end
+
+---Sets all colors in an image to zero if they have zero alpha.
+---If the image is an index or tile map, then returns the source
+---by value, unchanged.
+---@param source Image source image
+---@return Image
+function AseUtilities.correctZeroAlpha(source)
+    local srcSpec <const> = source.spec
+    local cmSrc <const> = srcSpec.colorMode
+    if cmSrc == ColorMode.INDEXED
+        or cmSrc == ColorMode.TILEMAP then
+        return source
+    end
+    local target <const> = Image(srcSpec)
+    target.bytes = Utilities.correctZeroAlpha(
+        source.bytes, source.bytesPerPixel)
+    return target
 end
 
 ---Creates new cels in a sprite. Prompts users to confirm if requested count
@@ -1140,8 +1170,8 @@ end
 ---@param lyrStrtIdx integer layer start index
 ---@param lyrCount integer layer count
 ---@param image Image cel image
----@param position Point? cel position
----@param guiClr integer? hexadecimal color
+---@param position? Point cel position
+---@param guiClr? integer hexadecimal color
 ---@return Cel[]
 function AseUtilities.createCels(
     sprite, frStrtIdx, frCount, lyrStrtIdx,
@@ -1316,85 +1346,6 @@ function AseUtilities.createFrames(sprite, count, duration)
     return frames
 end
 
----Creates new layers in a sprite. Prompts user to confirm if requested count
----exceeds a limit. Wraps the process in an app.transaction. To assign a GUI
--- color, use a hexadecimal integer as an argument. Returns a table of layers.
----@param sprite Sprite sprite
----@param count integer number of layers to create
----@param blendMode BlendMode? blend mode
----@param opacity integer? layer opacity
----@param guiClr integer? rgba color
----@return Layer[]
-function AseUtilities.createLayers(
-    sprite, count, blendMode, opacity, guiClr)
-    if not sprite then
-        app.alert {
-            title = "Error",
-            text = "Sprite could not be found."
-        }
-        return {}
-    end
-
-    if count < 1 then return {} end
-    if count > AseUtilities.LAYER_COUNT_LIMIT then
-        local response <const> = app.alert {
-            title = "Warning",
-            text = {
-                string.format(
-                    "This script will create %d layers,",
-                    count),
-                string.format(
-                    "%d beyond the limit of %d.",
-                    count - AseUtilities.LAYER_COUNT_LIMIT,
-                    AseUtilities.LAYER_COUNT_LIMIT),
-                "Do you wish to proceed?"
-            },
-            buttons = { "&YES", "&NO" }
-        }
-
-        if response == 2 then
-            return {}
-        end
-    end
-
-    local opacVrf = opacity or 255
-    if opacVrf < 0 then opacVrf = 0 end
-    if opacVrf > 255 then opacVrf = 255 end
-    local bmVrf = blendMode or BlendMode.NORMAL
-    local countVrf = count or 1
-    if countVrf < 1 then countVrf = 1 end
-
-    ---@type Layer[]
-    local layers <const> = {}
-    local oldLayerCount <const> = #sprite.layers
-    app.transaction("New Layers", function()
-        local i = 0
-        while i < countVrf do
-            i = i + 1
-            local layer <const> = sprite:newLayer()
-            layer.blendMode = bmVrf
-            layer.opacity = opacVrf
-            layer.name = string.format(
-                "Layer %d",
-                oldLayerCount + i)
-            layers[i] = layer
-        end
-    end)
-
-    if guiClr and guiClr ~= 0x0 then
-        local aseColor <const> = AseUtilities.hexToAseColor(guiClr)
-        app.transaction("Layer Colors", function()
-            local i = 0
-            while i < countVrf do
-                i = i + 1
-                layers[i].color = aseColor
-            end
-        end)
-    end
-
-    return layers
-end
-
 ---Creates a new ImageSpec. Width and height will be clamped to [1, 32767].
 ---If they are not defined, they default to new file preferences. The color
 ---mode defaults to RGB. The transparent color defaults to zero. If a color
@@ -1454,14 +1405,16 @@ end
 ---The file name argument is not validated by the method.
 ---@param spec ImageSpec specification
 ---@param fileName? string file name
+---@param showLayerEdges? boolean show layer edges, or cel bounds
 ---@return Sprite
 ---@nodiscard
-function AseUtilities.createSprite(spec, fileName)
+function AseUtilities.createSprite(spec, fileName, showLayerEdges)
     -- Do not allow slices UI interface to be active.
     local appPrefs <const> = app.preferences
     local appTool <const> = app.tool
     if appTool then
-        if appTool.id == "slice" then
+        if appTool.id == "slice"
+            or appTool.id == "text" then
             app.tool = "hand"
         end
 
@@ -1498,7 +1451,7 @@ function AseUtilities.createSprite(spec, fileName)
             local onionSkinPrefs <const> = docPrefs.onionskin
             if onionSkinPrefs then
                 onionSkinPrefs.loop_tag = false
-            end
+            end -- Onion skin preferences exists.
 
             -- Default overlay_size is 5.
             local thumbPrefs <const> = docPrefs.thumbnails
@@ -1506,56 +1459,18 @@ function AseUtilities.createSprite(spec, fileName)
                 thumbPrefs.enabled = true
                 thumbPrefs.zoom = 1
                 thumbPrefs.overlay_enabled = true
-            end
-        end
-    end
+            end -- Thumb preferences exists.
+
+            if showLayerEdges then
+                local showPrefs <const> = docPrefs.show
+                if showPrefs then
+                    showPrefs.layer_edges = true
+                end -- Show preferences exists.
+            end     -- Show layer edges.
+        end         -- Doc preferences exists.
+    end             -- App preferences exists.
 
     return sprite
-end
-
----Draws a filled circle. Uses the Aseprite Image instance method drawPixel.
----This means that the pixel changes will not be tracked as a transaction.
----@param pixels integer[] pixels
----@param wImage integer image width
----@param xc integer center x
----@param yc integer center y
----@param r integer radius
----@param rFill integer fill red
----@param gFill integer fill red
----@param bFill integer fill red
----@param aFill integer fill red
----@return integer[]
-function AseUtilities.drawCircleFill(
-    pixels, wImage, xc, yc, r,
-    rFill, gFill, bFill, aFill)
-    local blend <const> = AseUtilities.blendRgba
-    local rsq <const> = r * r
-    local r2 <const> = r + r
-    local lenn1 <const> = r2 * r2 - 1
-    local i = -1
-    while i < lenn1 do
-        i = i + 1
-        local x <const> = (i % r2) - r
-        local y <const> = (i // r2) - r
-        if (x * x + y * y) < rsq then
-            local xMark <const> = xc + x
-            local yMark <const> = yc + y
-            local j4 <const> = 4 * (yMark * wImage + xMark)
-
-            local rTrg <const>,
-            gTrg <const>,
-            bTrg <const>,
-            aTrg <const> = blend(pixels[1 + j4], pixels[2 + j4],
-                pixels[3 + j4], pixels[4 + j4], rFill, gFill, bFill, aFill)
-
-            pixels[1 + j4] = rTrg
-            pixels[2 + j4] = gTrg
-            pixels[3 + j4] = bTrg
-            pixels[4 + j4] = aTrg
-        end
-    end
-
-    return pixels
 end
 
 ---Blits input image onto another that is the next power of 2 in dimension. The
@@ -1576,8 +1491,7 @@ function AseUtilities.expandImageToPow2(img, nonUniform)
         wDest = Utilities.nextPowerOf2(wOrig)
         hDest = Utilities.nextPowerOf2(hOrig)
     else
-        wDest = Utilities.nextPowerOf2(
-            math.max(wOrig, hOrig))
+        wDest = Utilities.nextPowerOf2(math.max(wOrig, hOrig))
         hDest = wDest
     end
 
@@ -1602,7 +1516,7 @@ end
 ---provided criteria. The target is a string constant that could be "ALL",
 ---"ACTIVE", "RANGE" or "SELECTION".
 ---
----The selection option will create a new layer and cel.
+---The selection preset creates a transaction.
 ---@param sprite Sprite active sprite
 ---@param layer Layer|nil active layer
 ---@param frames Frame[]|integer[] frames
@@ -1629,7 +1543,7 @@ function AseUtilities.filterCels(
         local trgCels <const> = {}
         local lenTrgCels = 0
         local sel <const>, _ <const> = AseUtilities.getSelection(sprite)
-        local imageFromSel <const> = AseUtilities.imageFromSel
+        local imageFromSel <const> = AseUtilities.selToImage
 
         app.transaction("Selection Layer", function()
             local srcLayer <const> = sprite:newLayer()
@@ -1686,8 +1600,6 @@ end
 function AseUtilities.filterLayers(
     sprite, layer, target,
     includeLocked, includeHidden, includeTiles, includeBkg)
-    -- TODO: Are there other, older dialogs where this can be used?
-
     if target == "ALL" then
         return AseUtilities.getLayerHierarchy(sprite,
             includeLocked, includeHidden, includeTiles, includeBkg)
@@ -1741,159 +1653,320 @@ function AseUtilities.filterLayers(
     end
 end
 
----Flattens a group layer to a composite image. Does not verify that a layer is
----a group. Child layers are filtered according to the provided criteria.
----Returns an image and a cel bounds. If no composite could be made, returns a
----1 by 1 image and a rectangle in the top left corner.
----@param group Layer group layer
----@param frame Frame|integer frame
----@param sprClrMode ColorMode|integer sprite color mode
----@param colorSpace? ColorSpace color space
----@param alphaIndex? integer alpha mask index
+---Creates a composite image from a group at a given frame.
+---Generates multiple transactions: new layer, new cel,
+---setting layer properties.
+---Does not remove source layer from sprite.
+---@param sprite Sprite sprite
+---@param activeLayer Layer group layer
+---@param frames Frame[]|integer[] frames
 ---@param includeLocked? boolean include locked layers
 ---@param includeHidden? boolean include hidden layers
 ---@param includeTiles? boolean include tile maps
 ---@param includeBkg? boolean include backgrounds
----@return Image
----@return Rectangle
+---@return Layer flattened
 function AseUtilities.flattenGroup(
-    group, frame, sprClrMode,
-    colorSpace, alphaIndex,
-    includeLocked, includeHidden,
-    includeTiles, includeBkg)
-    local aiVerif = 0
-    if alphaIndex then aiVerif = alphaIndex end
+    sprite, activeLayer, frames,
+    includeLocked, includeHidden, includeTiles, includeBkg)
+    -- The default policy for visibility is tricky. If false, then a single
+    -- active, invisible parent layer will yield an empty result, even when
+    -- other filters may have set it to hidden. If true, then children may
+    -- appear in result even when they've been hidden by the user.
+    local ilVerif = true
+    local ihVerif = false
+    local itVerif = true
+    local ibVerif = true
 
-    local leaves <const> = AseUtilities.appendLeaves(
-        group, {},
-        includeLocked, includeHidden,
-        includeTiles, includeBkg)
-    local lenLeaves <const> = #leaves
+    if includeLocked ~= nil then ilVerif = includeLocked end
+    if includeHidden ~= nil then ihVerif = includeHidden end
+    if includeTiles ~= nil then itVerif = includeTiles end
+    if includeBkg ~= nil then ibVerif = includeBkg end
 
-    local packets <const> = {}
-    local lenPackets = 0
+    local flattened <const> = sprite:newLayer()
 
-    local isIndexed <const> = sprClrMode == ColorMode.INDEXED
-    local tilesToImage <const> = AseUtilities.tileMapToImage
-    local blendImage <const> = AseUtilities.blendImage
-    local xTlGroup = 2147483647
-    local yTlGroup = 2147483647
-    local xBrGroup = -2147483648
-    local yBrGroup = -2147483648
+    local spriteSpec <const> = sprite.spec
+    local colorMode <const> = spriteSpec.colorMode
+    local colorSpace <const> = spriteSpec.colorSpace
+    local alphaIndex <const> = spriteSpec.transparentColor
 
-    local image = nil
-    local bounds = nil
+    local flatToImg <const> = AseUtilities.flatToImage
+    local lenFrames <const> = #frames
+    local i = 0
+    while i < lenFrames do
+        i = i + 1
+        local frame <const> = frames[i]
+        local isValid <const>,
+        flatImg <const>,
+        xTl <const>,
+        yTl <const> = flatToImg(
+            activeLayer, frame,
+            colorMode, colorSpace, alphaIndex,
+            ilVerif, ihVerif, itVerif, ibVerif)
+        if isValid then
+            sprite:newCel(
+                flattened, frame, flatImg,
+                Point(xTl, yTl))
+        end
+    end
+
+    local layerName = "Flattened"
+    if activeLayer.name and #activeLayer.name > 0 then
+        local srcName <const> = activeLayer.name
+        if srcName ~= "Group" then
+            layerName = Utilities.validateFilename(srcName)
+        end
+    end
+    flattened.name = layerName
+
+    flattened.blendMode = activeLayer.blendMode or BlendMode.NORMAL
+    flattened.color = AseUtilities.aseColorCopy(activeLayer.color, "")
+    flattened.data = activeLayer.data
+    flattened.opacity = activeLayer.opacity or 255
+    flattened.parent = activeLayer.parent
+    flattened.stackIndex = activeLayer.stackIndex
+
+    flattened.isContinuous = activeLayer.isContinuous
+    flattened.isEditable = activeLayer.isEditable
+    flattened.isVisible = activeLayer.isVisible
+
+    return flattened
+end
+
+---Flattens a sprite to one layer. Hidden layers do not contribute to the
+---composite. Layers other than the flattened layer, including reference
+---and hidden layers, are deleted.
+---@param sprite Sprite the sprite
+---@return Layer flattened
+function AseUtilities.flattenSprite(sprite)
+    local spriteSpec <const> = sprite.spec
+    local colorMode <const> = spriteSpec.colorMode
+    local colorSpace <const> = spriteSpec.colorSpace
+    local alphaIndex <const> = spriteSpec.transparentColor
+
+    local frObjs <const> = sprite.frames
+    local lenFrObjs <const> = #frObjs
+    local flatToImg <const> = AseUtilities.flatToImage
+
+    local flattened <const> = sprite:newLayer()
+    flattened.name = "Flattened"
 
     local i = 0
-    while i < lenLeaves do
+    while i < lenFrObjs do
         i = i + 1
-        local leafLayer <const> = leaves[i]
-        local leafCel <const> = leafLayer:cel(frame)
-        if leafCel then
-            local leafImage = leafCel.image
-            if leafLayer.isTilemap then
-                local tileSet <const> = leafLayer.tileset
-                leafImage = tilesToImage(leafImage, tileSet, sprClrMode)
-            end
-
-            -- An Image:isEmpty check could be used here, but
-            -- it was avoided to not incur performance cost.
-            -- Calculate manually. Do not use cel bounds.
-            local leafPos <const> = leafCel.position
-            local xTlCel <const> = leafPos.x
-            local yTlCel <const> = leafPos.y
-            local xBrCel <const> = xTlCel + leafImage.width - 1
-            local yBrCel <const> = yTlCel + leafImage.height - 1
-
-            if xTlCel < xTlGroup then xTlGroup = xTlCel end
-            if yTlCel < yTlGroup then yTlGroup = yTlCel end
-            if xBrCel > xBrGroup then xBrGroup = xBrCel end
-            if yBrCel > yBrGroup then yBrGroup = yBrCel end
-
-            local zIndex <const> = leafCel.zIndex
-            local order <const> = (i - 1) + zIndex
-
-            lenPackets = lenPackets + 1
-            packets[lenPackets] = {
-                blendMode = leafLayer.blendMode,
-                image = leafImage,
-                opacityCel = leafCel.opacity,
-                opacityLayer = leafLayer.opacity,
-                order = order,
-                xtl = xTlCel,
-                ytl = yTlCel,
-                zIndex = zIndex
-            }
+        local frObj <const> = frObjs[i]
+        local isValid <const>,
+        flatImg <const>,
+        xTl <const>,
+        yTl <const> = flatToImg(
+            sprite, frObj,
+            colorMode, colorSpace, alphaIndex,
+            true, false, true, true)
+        if isValid then
+            sprite:newCel(
+                flattened, frObj, flatImg,
+                Point(xTl, yTl))
         end
     end
 
-    --https://github.com/aseprite/aseprite/blob/main/docs/ase-file-specs.md#note5
-    table.sort(packets, function(a, b)
-        return (a.order < b.order)
-            or ((a.order == b.order)
-                and (a.zIndex < b.zIndex))
-    end)
-
-    local wGroup <const> = 1 + xBrGroup - xTlGroup
-    local hGroup <const> = 1 + yBrGroup - yTlGroup
-    if wGroup > 0 and hGroup > 0 then
-        bounds = Rectangle(xTlGroup, yTlGroup, wGroup, hGroup)
-
-        local compSpec <const> = ImageSpec {
-            width = wGroup,
-            height = hGroup,
-            colorMode = sprClrMode,
-            transparentColor = aiVerif
-        }
-        if colorSpace then compSpec.colorSpace = colorSpace end
-        image = Image(compSpec)
-
-        local floor <const> = math.floor
-
-        local j = 0
-        while j < lenPackets do
-            j = j + 1
-            local packet <const> = packets[j]
-            local leafBlendMode <const> = packet.blendMode --[[@as BlendMode]]
-            local leafImage <const> = packet.image --[[@as Image]]
-            local leafCelOpacity <const> = packet.opacityCel --[[@as integer]]
-            local leafLayerOpacity <const> = packet.opacityLayer --[[@as integer]]
-            local xTlLeaf <const> = packet.xtl --[[@as integer]]
-            local yTlLeaf <const> = packet.ytl --[[@as integer]]
-
-            local celOpac01 <const> = leafCelOpacity / 255.0
-            local layerOpac01 <const> = leafLayerOpacity / 255.0
-            local leafOpac01 <const> = celOpac01 * layerOpac01
-            local leafOpacity <const> = floor(leafOpac01 * 255.0 + 0.5)
-
-            local compPos <const> = Point(
-                xTlLeaf - xTlGroup,
-                yTlLeaf - yTlGroup)
-
-            if isIndexed then
-                image = blendImage(image, leafImage,
-                    0, 0, compPos.x, compPos.y)
-            else
-                image:drawImage(
-                    leafImage, compPos,
-                    leafOpacity, leafBlendMode)
-            end
-        end
+    local topLayers <const> = sprite.layers
+    local lenTopLayers <const> = #topLayers
+    local j = lenTopLayers
+    while j > 1 do
+        j = j - 1
+        sprite:deleteLayer(topLayers[j])
     end
 
-    if (not image) or (not bounds) then
-        bounds = Rectangle(0, 0, 1, 1)
-        local invalSpec <const> = ImageSpec {
-            width = 1,
-            height = 1,
-            colorMode = sprClrMode,
-            transparentColor = aiVerif
-        }
-        if colorSpace then invalSpec.colorSpace = colorSpace end
-        image = Image(invalSpec)
+    return flattened
+end
+
+---Creates a composite image from a group at a given frame. Tile map images are
+---converted to images with the provided color mode.
+---@param parent Layer|Sprite parent, group layer or sprite
+---@param frame Frame|integer frame
+---@param colorMode ColorMode sprite color mode
+---@param colorSpace ColorSpace color space
+---@param alphaIndex integer alpha mask index
+---@param includeLocked? boolean include locked layers
+---@param includeHidden? boolean include hidden layers
+---@param includeTiles? boolean include tile maps
+---@param includeBkg? boolean include backgrounds
+---@param wDefault? integer invalid image width
+---@param hDefault? integer invalid image height
+---@return boolean isValid
+---@return Image image
+---@return integer xTl
+---@return integer yTl
+---@return integer celOpacity
+---@return integer zIndex
+function AseUtilities.flatToImage(
+    parent, frame, colorMode, colorSpace, alphaIndex,
+    includeLocked, includeHidden, includeTiles, includeBkg,
+    wDefault, hDefault)
+    local isValid = false
+    local image = nil
+    local xTl = 0
+    local yTl = 0
+    local celOpacity = 255
+    local zIndex = 0
+
+    ---@diagnostic disable-next-line: undefined-field
+    local isSprite <const> = parent.__name == "doc::Sprite"
+    local layer <const> = parent --[[@as Layer]]
+
+    if isSprite or ((includeLocked or layer.isEditable)
+            and (includeHidden or layer.isVisible)) then
+        if isSprite or layer.isGroup then
+            local children <const> = parent.layers
+            if children then
+                local lenChildren <const> = #children
+
+                local flatToImg <const> = AseUtilities.flatToImage
+                local blendImage <const> = AseUtilities.blendImage
+                local floor <const> = math.floor
+
+                ---@type table[]
+                local packets <const> = {}
+                local lenPackets = 0
+
+                local xTlGroup = 2147483647
+                local yTlGroup = 2147483647
+                local xBrGroup = -2147483648
+                local yBrGroup = -2147483648
+
+                local i = 0
+                while i < lenChildren do
+                    i = i + 1
+
+                    local child <const> = children[i]
+                    local blendModeChild <const> = child.blendMode
+                        or BlendMode.NORMAL
+                    local layerOpacityChild <const> = child.opacity
+                        or 255
+
+                    local isValidChild <const>,
+                    imageChild <const>,
+                    xTlChild <const>,
+                    yTlChild <const>,
+                    celOpacityChild <const>,
+                    zIndexChild <const> = flatToImg(child,
+                        frame, colorMode, colorSpace, alphaIndex,
+                        includeLocked, includeHidden, includeTiles, includeBkg,
+                        wDefault, hDefault)
+
+                    if isValidChild then
+                        isValid = true
+
+                        local order <const> = (i - 1) + zIndex
+
+                        local xBrChild <const> = xTlChild
+                            + imageChild.width - 1
+                        local yBrChild <const> = yTlChild
+                            + imageChild.height - 1
+
+                        if xTlChild < xTlGroup then xTlGroup = xTlChild end
+                        if yTlChild < yTlGroup then yTlGroup = yTlChild end
+                        if xBrChild > xBrGroup then xBrGroup = xBrChild end
+                        if yBrChild > yBrGroup then yBrGroup = yBrChild end
+
+                        lenPackets = lenPackets + 1
+                        packets[lenPackets] = {
+                            blendMode = blendModeChild,
+                            celOpacity = celOpacityChild,
+                            image = imageChild,
+                            layerOpacity = layerOpacityChild,
+                            order = order,
+                            xTl = xTlChild,
+                            yTl = yTlChild,
+                            zIndex = zIndexChild,
+                        }
+                    end -- End child is valid.
+                end     -- End children loop.
+
+                -- Composite order here does not match Aseprite, but for now
+                -- their composite is borked anyway.
+
+                -- https://github.com/aseprite/aseprite/blob/main/docs/ase-file-specs.md#note5
+                table.sort(packets, function(a, b)
+                    return (a.order < b.order)
+                        or ((a.order == b.order)
+                            and (a.zIndex < b.zIndex))
+                end)
+
+                local wGroup <const> = 1 + xBrGroup - xTlGroup
+                local hGroup <const> = 1 + yBrGroup - yTlGroup
+
+                if isValid and wGroup > 0 and hGroup > 0 then
+                    local compSpec <const> = ImageSpec {
+                        width = wGroup,
+                        height = hGroup,
+                        colorMode = colorMode,
+                        transparentColor = alphaIndex
+                    }
+                    compSpec.colorSpace = colorSpace
+
+                    image = Image(compSpec)
+                    xTl = xTlGroup
+                    yTl = yTlGroup
+
+                    local isIndexed <const> = colorMode == ColorMode.INDEXED
+
+                    local j = 0
+                    while j < lenPackets do
+                        j = j + 1
+                        local packet <const> = packets[j]
+                        local imageChild <const> = packet.image --[[@as Image]]
+                        local xTlChild <const> = packet.xTl --[[@as integer]]
+                        local yTlChild <const> = packet.yTl --[[@as integer]]
+
+                        local xBlit <const> = xTlChild - xTlGroup
+                        local yBlit <const> = yTlChild - yTlGroup
+
+                        if isIndexed then
+                            image = blendImage(image, imageChild,
+                                0, 0, xBlit, yBlit)
+                        else
+                            local blendModeChild <const> = packet.blendMode --[[@as BlendMode]]
+                            local layerOpacityChild <const> = packet.layerOpacity --[[@as integer]]
+                            local celOpacityChild <const> = packet.celOpacity --[[@as integer]]
+
+                            local opacityChild <const> = floor(
+                                (layerOpacityChild * celOpacityChild) / 255.0 + 0.5)
+                            image:drawImage(imageChild, Point(xBlit, yBlit),
+                                opacityChild, blendModeChild)
+                        end -- End color mode is indexed.
+                    end     -- End packets loop.
+                end         -- End group width and height valid.
+            end             -- End child layers exist.
+        elseif (not layer.isReference)
+            and (includeTiles or (not layer.isTilemap))
+            and (includeBkg or (not layer.isBackground)) then
+            local cel <const> = layer:cel(frame)
+            if cel then
+                isValid = true
+
+                image = cel.image
+                if layer.isTilemap then
+                    image = AseUtilities.tileMapToImage(
+                        image, layer.tileset, colorMode)
+                end
+
+                local celPos <const> = cel.position
+                xTl = celPos.x
+                yTl = celPos.y
+
+                celOpacity = cel.opacity
+                zIndex = cel.zIndex
+            end -- End cel exists.
+        end     -- End layer is group or is not ref.
+    end         -- End layer is visible.
+
+    if not image then
+        image = Image(AseUtilities.createSpec(
+            wDefault, hDefault,
+            colorMode, colorSpace, alphaIndex))
     end
 
-    return image, bounds
+    return isValid, image, xTl, yTl, celOpacity, zIndex
 end
 
 ---Returns a copy of the source image that has been flipped and transposed.
@@ -1963,30 +2036,31 @@ function AseUtilities.frameObjsToIdcs(frObjs)
 end
 
 ---Gets the sprite's background checker width, height and colors from
----from preferences. Colors are retrieved by reference.
+---from preferences. Colors are retrieved by reference. The zoom boolean
+---applies to reference layers and to the old render engine.
 ---@param sprite Sprite sprite
 ---@return integer wCheck
 ---@return integer hCheck
 ---@return Color aAse
 ---@return Color bAse
+---@return boolean zoom
 ---@nodiscard
 function AseUtilities.getBkgChecker(sprite)
     local wCheck, hCheck = 8, 8
-    local aAse = Color { r = 128, g = 128, b = 128, a = 255 }
-    local bAse = Color { r = 202, g = 202, b = 202, a = 255 }
+    local aAse, bAse = Color { r = 128, g = 128, b = 128, a = 255 },
+        Color { r = 202, g = 202, b = 202, a = 255 }
+    local zoom = false
 
     local appPrefs <const> = app.preferences
-    if not appPrefs then return wCheck, hCheck, aAse, bAse end
+    if not appPrefs then return wCheck, hCheck, aAse, bAse, zoom end
 
     local docPrefs <const> = appPrefs.document(sprite)
-    if not docPrefs then return wCheck, hCheck, aAse, bAse end
+    if not docPrefs then return wCheck, hCheck, aAse, bAse, zoom end
 
     local bgPref <const> = docPrefs.bg
-    if not bgPref then return wCheck, hCheck, aAse, bAse end
+    if not bgPref then return wCheck, hCheck, aAse, bAse, zoom end
 
     -- https://github.com/aseprite/aseprite/blob/main/data/pref.xml#L521
-    -- TODO: zoom field is relevant for the old render engine. See
-    -- app.preferences.experimental.new_render_engine , a boolean.
     local typePref <const> = bgPref.type --[[@as integer]]
     if typePref == 0 then
         wCheck, hCheck = 16, 16
@@ -2012,7 +2086,9 @@ function AseUtilities.getBkgChecker(sprite)
     local bgPrefColor2 <const> = bgPref.color2 --[[@as Color]]
     if bgPrefColor2 then bAse = bgPrefColor2 end
 
-    return wCheck, hCheck, aAse, bAse
+    if bgPref.zoom then zoom = true end
+
+    return wCheck, hCheck, aAse, bAse, zoom
 end
 
 ---Gets an array of arrays of frame indices from a sprite according to a string.
@@ -2033,9 +2109,9 @@ end
 ---returned. The batched flag will break the return array into sequences.
 ---@param sprite Sprite sprite
 ---@param target string preset
----@param batch boolean? batch
----@param mnStr string? manual
----@param tags Tag[]? tags
+---@param batch? boolean batch
+---@param mnStr? string manual
+---@param tags? Tag[] tags
 ---@return integer[][]
 ---@nodiscard
 function AseUtilities.getFrames(sprite, target, batch, mnStr, tags)
@@ -2166,8 +2242,6 @@ end
 ---@return integer
 ---@nodiscard
 function AseUtilities.getMouse()
-    -- TODO: Return tiledMode integer third?
-
     -- With View Tiled Mode, the sprite position shifts to
     -- the top left corner tile, not the center tile.
     -- See https://github.com/aseprite/aseprite/issues/4659 .
@@ -2176,7 +2250,6 @@ function AseUtilities.getMouse()
     if not editor then return -1, -1 end
 
     local sprite <const> = editor.sprite
-    local mouse <const> = editor.spritePos
 
     local tiledMode = 0
     local appPrefs <const> = app.preferences
@@ -2193,6 +2266,7 @@ function AseUtilities.getMouse()
         end
     end
 
+    local mouse <const> = editor.spritePos
     local xMouse = mouse.x
     local yMouse = mouse.y
     if tiledMode == 3 then
@@ -2236,7 +2310,7 @@ end
 ---@param image Image
 ---@return integer[]
 ---@nodiscard
-function AseUtilities.getPixels(image)
+function AseUtilities.getBytes(image)
     return Utilities.stringToByteArr(image.bytes)
 end
 
@@ -2369,7 +2443,7 @@ end
 ---For best results, prior to use, trim images of excess alpha and filter out
 ---empty images.
 ---@param source Image source image
----@param sizeThresh integer? size threshold
+---@param sizeThresh? integer size threshold
 function AseUtilities.hashImage(source, sizeThresh)
     -- Aseprite uses city hash, but only returns a 32 bit integer:
     -- https://github.com/aseprite/aseprite/blob/main/src/doc/primitives.cpp#L545
@@ -2384,8 +2458,7 @@ function AseUtilities.hashImage(source, sizeThresh)
             local alphaIndex <const> = srcSpec.transparentColor
             local alphaIndexVerif <const> = (cmSrc ~= ColorMode.INDEXED
                     or (alphaIndex >= 0 and alphaIndex < 256))
-                and alphaIndex
-                or 0
+                and alphaIndex or 0
             bytes = Utilities.resizePixelsNearest(bytes, wSrc, hSrc,
                 sizeThresh, sizeThresh, source.bytesPerPixel, alphaIndexVerif)
         end
@@ -2449,79 +2522,93 @@ function AseUtilities.hideSource(sprite, layer, frames, preset)
     return false
 end
 
----Creates an image from the flattened sprite that is contained by the
----selection mask.
----@param sel Selection selection mask
----@param sprite Sprite sprite
----@param frame Frame|integer frame index
----@return Image
----@return integer xtl
----@return integer ytl
-function AseUtilities.imageFromSel(sel, sprite, frame)
-    local selBounds <const> = sel.bounds
-    local xSel <const> = selBounds.x
-    local ySel <const> = selBounds.y
-    local wSel <const> = math.max(1, math.abs(selBounds.width))
-    local hSel <const> = math.max(1, math.abs(selBounds.height))
+---Creates a brush from an image.
+---
+---The image's center is assigned from a preset string: "TOP_LEFT",
+---"TOP_CENTER", "TOP_RIGHT", "CENTER_LEFT", "CENTER", "CENTER_RIGHT",
+---"BOTTOM_LEFT", "BOTTOM_CENTER" and "BOTTOM_RIGHT". The image's center
+---is the assumed default.
+---
+---Accepts the image color mode as is. Quality of brush appearance will vary
+---across sprites depending on color mode compatibility.
+---@param image Image image
+---@param centerPreset? string center preset
+---@param pattern? BrushPattern brush pattern
+---@param xPattern? integer pattern origin x
+---@param yPattern? integer pattern origin y
+---@return Brush
+function AseUtilities.imageToBrush(
+    image, centerPreset, pattern, xPattern, yPattern)
+    -- There are cases where it'd be better to convert to RGB color mode image
+    -- and let the brush be reinterpreted dynamically as the active sprite
+    -- color mode changes. However, when the indexed sprite transparent color
+    -- is not clear black, and the palette contains no clear black, then an RGB
+    -- brush has incorrect transparency.
 
-    local spriteSpec <const> = sprite.spec
-    local colorMode <const> = spriteSpec.colorMode
-    local alphaIndex <const> = spriteSpec.transparentColor
+    if image:isEmpty() then
+        -- Brush GUI does not properly update on assignment, so in case a blank
+        -- image is passed (due to an empty selection in brushFromMask), this
+        -- should return similar as the active brush. Better to get from
+        -- preferences than from app.brush fields.
 
-    local imageSpec <const> = ImageSpec {
-        width = wSel,
-        height = hSel,
-        colorMode = colorMode,
-        transparentColor = alphaIndex
-    }
-    imageSpec.colorSpace = spriteSpec.colorSpace
-    local image <const> = Image(imageSpec)
-    image:drawSprite(sprite, frame, Point(-xSel, -ySel))
+        local angle = 0
+        local size = 1
+        local type = BrushType.CIRCLE
 
-    local validAlpha <const> = colorMode ~= ColorMode.INDEXED
-        or (alphaIndex >= 0 and alphaIndex < 256)
-    if validAlpha then
-        local areaSel <const> = wSel * hSel
-        local srcBytes <const> = image.bytes
-        ---@type string[]
-        local trgBytesArr <const> = {}
+        -- https://github.com/aseprite/aseprite/blob/main/data/pref.xml#L467
+        local appPrefs <const> = app.preferences
+        if appPrefs then
+            local tool <const> = app.tool
+            local toolPrefs <const> = appPrefs.tool(tool)
+            if toolPrefs then
+                local brushPrefs <const> = toolPrefs.brush
+                if brushPrefs then
+                    angle = brushPrefs.angle or 0
+                    size = brushPrefs.size or 1
+                    if brushPrefs.type ~= BrushType.IMAGE then
+                        type = brushPrefs.type or BrushType.CIRCLE
+                    end -- Brush type is not image.
+                end     -- Brush prefs exists.
+            end         -- Tool prefs exists.
+        end             -- App prefs exists.
 
-        if colorMode == ColorMode.INDEXED then
-            local strbyte <const> = string.byte
-            local strchar <const> = string.char
-            local i = 0
-            while i < areaSel do
-                local c8 = alphaIndex
-                if sel:contains(xSel + i % wSel, ySel + i // wSel) then
-                    -- As a precaution, you may want to also check that the
-                    -- color in the palette at an index does not have 0 alpha.
-                    c8 = strbyte(srcBytes, 1 + i)
-                end
-
-                i = i + 1
-                trgBytesArr[i] = strchar(c8)
-            end
-        else
-            local bpp <const> = image.bytesPerPixel
-            local alphaPacked <const> = string.pack("<I" .. bpp, 0)
-            local strsub <const> = string.sub
-
-            local i = 0
-            while i < areaSel do
-                local cStr = alphaPacked
-                if sel:contains(xSel + i % wSel, ySel + i // wSel) then
-                    local iBpp <const> = i * bpp
-                    cStr = strsub(srcBytes, 1 + iBpp, bpp + iBpp)
-                end
-                i = i + 1
-                trgBytesArr[i] = cStr
-            end
-        end
-
-        image.bytes = table.concat(trgBytesArr)
+        return Brush { angle = angle, size = size, type = type }
     end
 
-    return image, xSel, ySel
+    local yPtVerif <const> = yPattern or 0
+    local xPtVerif <const> = xPattern or 0
+    local brushPatternVerif <const> = pattern or BrushPattern.NONE
+
+    local wImage <const> = image.width
+    local hImage <const> = image.height
+    local xCenter, yCenter = wImage // 2, hImage // 2
+    if centerPreset == "TOP_LEFT" then
+        xCenter, yCenter = 0, 0
+    elseif centerPreset == "TOP_CENTER" then
+        xCenter, yCenter = wImage // 2, 0
+    elseif centerPreset == "TOP_RIGHT" then
+        xCenter, yCenter = wImage - 1, 0
+    elseif centerPreset == "CENTER_LEFT" then
+        xCenter, yCenter = 0, hImage // 2
+    elseif centerPreset == "CENTER" then
+        xCenter, yCenter = wImage // 2, hImage // 2
+    elseif centerPreset == "CENTER_RIGHT" then
+        xCenter, yCenter = wImage - 1, hImage // 2
+    elseif centerPreset == "BOTTOM_LEFT" then
+        xCenter, yCenter = 0, hImage - 1
+    elseif centerPreset == "BOTTOM_CENTER" then
+        xCenter, yCenter = wImage // 2, hImage - 1
+    elseif centerPreset == "BOTTOM_RIGHT" then
+        xCenter, yCenter = wImage - 1, hImage - 1
+    end
+
+    return Brush {
+        type = BrushType.IMAGE,
+        image = image,
+        center = Point(xCenter, yCenter),
+        pattern = brushPatternVerif,
+        patternOrigin = Point(xPtVerif, yPtVerif)
+    }
 end
 
 ---Adds padding around the edges of an image. Does not check if image is a tile
@@ -2918,6 +3005,251 @@ function AseUtilities.rotateImageZInternal(source, cosa, sina)
     return target
 end
 
+---Selects non-transparent pixels of a cel's image. Intersects the selection
+---with the sprite bounds, if provided, for cases where cel may be partially
+---outside the canvas edges.
+---@param cel Cel cel
+---@param spriteBounds? Rectangle sprite bounds
+---@return Selection
+---@nodiscard
+function AseUtilities.selectCel(cel, spriteBounds)
+    local celPos <const> = cel.position
+    return AseUtilities.selectImage(cel.image, celPos.x, celPos.y,
+        cel.layer.tileset, spriteBounds)
+end
+
+---Selects non-transparent pixels of an image. Intersects the selection with
+---the sprite bounds, if provided, for cases where cel may be partially outside
+---the canvas edges. Ignores tile flips and rotations. For indexed color mode,
+---ignores the palette color's alpha channel.
+---@param image Image source image
+---@param xtl integer cel position x
+---@param ytl integer cel position y
+---@param tileSet? Tileset tile set
+---@param spriteBounds? Rectangle sprite bounds
+---@return Selection
+---@nodiscard
+function AseUtilities.selectImage(image, xtl, ytl, tileSet, spriteBounds)
+    local bpp <const> = image.bytesPerPixel
+    local bytes <const> = image.bytes
+
+    local celSpec <const> = image.spec
+    local wImage <const> = celSpec.width
+    local hImage <const> = celSpec.height
+    local colorMode <const> = celSpec.colorMode
+    local alphaIndex <const> = celSpec.transparentColor
+
+    -- Beware naming, 'select' is a method built-in to Lua.
+    local pxRect <const> = Rectangle(0, 0, 1, 1)
+    local lenImage <const> = wImage * hImage
+
+    local mask = nil
+    if colorMode == ColorMode.TILEMAP then
+        if tileSet then
+            local tileDim <const> = tileSet.grid.tileSize
+            local wTile <const> = tileDim.width
+            local hTile <const> = tileDim.height
+
+            mask = Selection(Rectangle(xtl, ytl,
+                wTile * wImage, hTile * hImage))
+            pxRect.width = wTile
+            pxRect.height = hTile
+
+            local pxTilei <const> = app.pixelColor.tileI
+            local strsub <const> = string.sub
+            local strunpack <const> = string.unpack
+
+            local i = 0
+            while i < lenImage do
+                local ibpp <const> = i * bpp
+                local str <const> = strsub(bytes, 1 + ibpp, bpp + ibpp)
+                local mapif <const> = strunpack("<I4", str)
+                local idx <const> = pxTilei(mapif)
+                if idx == 0 then
+                    pxRect.x = wTile * (i % wImage) + xtl
+                    pxRect.y = hTile * (i // wImage) + ytl
+                    mask:subtract(pxRect)
+                end
+                i = i + 1
+            end
+        else
+            mask = Selection()
+        end
+    else
+        mask = Selection(Rectangle(xtl, ytl, wImage, hImage))
+        local strbyte <const> = string.byte
+        local i = 0
+        while i < lenImage do
+            if strbyte(bytes, i * bpp + bpp) == alphaIndex then
+                pxRect.x = (i % wImage) + xtl
+                pxRect.y = (i // wImage) + ytl
+                mask:subtract(pxRect)
+            end
+            i = i + 1
+        end
+    end
+
+    if spriteBounds then
+        mask:intersect(spriteBounds)
+    end
+
+    return mask
+end
+
+---Creates an image from the flattened sprite that is contained by the
+---selection mask.
+---@param sel Selection selection mask
+---@param sprite Sprite sprite
+---@param frame Frame|integer frame index
+---@return Image
+---@return integer xtl
+---@return integer ytl
+function AseUtilities.selToImage(sel, sprite, frame)
+    local selBounds <const> = sel.bounds
+    local xSel <const> = selBounds.x
+    local ySel <const> = selBounds.y
+    local wSel <const> = math.max(1, math.abs(selBounds.width))
+    local hSel <const> = math.max(1, math.abs(selBounds.height))
+
+    local spriteSpec <const> = sprite.spec
+    local colorMode <const> = spriteSpec.colorMode
+    local alphaIndex <const> = spriteSpec.transparentColor
+
+    local imageSpec <const> = ImageSpec {
+        width = wSel,
+        height = hSel,
+        colorMode = colorMode,
+        transparentColor = alphaIndex
+    }
+    imageSpec.colorSpace = spriteSpec.colorSpace
+    local image <const> = Image(imageSpec)
+    image:drawSprite(sprite, frame, Point(-xSel, -ySel))
+
+    local validAlpha <const> = colorMode ~= ColorMode.INDEXED
+        or (alphaIndex >= 0 and alphaIndex < 256)
+    if validAlpha then
+        ---@type string[]
+        local trgBytesArr <const> = {}
+        local srcBytes <const> = image.bytes
+        local bpp <const> = image.bytesPerPixel
+        local alphaPacked <const> = string.pack("<I" .. bpp, alphaIndex)
+        local strsub <const> = string.sub
+
+        local areaSel <const> = wSel * hSel
+        local i = 0
+        while i < areaSel do
+            local cStr = alphaPacked
+            if sel:contains(xSel + i % wSel, ySel + i // wSel) then
+                local ibpp <const> = i * bpp
+                cStr = strsub(srcBytes, 1 + ibpp, bpp + ibpp)
+            end
+            i = i + 1
+            trgBytesArr[i] = cStr
+        end
+
+        image.bytes = table.concat(trgBytesArr)
+    end
+
+    return image, xSel, ySel
+end
+
+---Sets a palette in a sprite at a given index to a table of colors represented
+---as hexadecimal integers. The palette index defaults to 1.
+---The keepMaxLen flag is for setting palettes in indexed color mode, where a
+---shorter palette would cause invalid indices in image maps.
+---
+---Creates a transaction.
+---@param arr integer[] color array
+---@param sprite Sprite sprite
+---@param paletteIndex? integer index
+---@param keepMaxLen? boolean keep maximum length
+function AseUtilities.setPalette(arr, sprite, paletteIndex, keepMaxLen)
+    local palIdxVerif = paletteIndex or 1
+    local palettes <const> = sprite.palettes
+    local lenPalettes <const> = #palettes
+    local lenHexArr <const> = #arr
+    -- This should be consistent behavior with getPalette.
+    if palIdxVerif > lenPalettes then palIdxVerif = 1 end
+    local palette <const> = palettes[palIdxVerif]
+    if lenHexArr > 0 then
+        app.transaction("Set Palette", function()
+            local lenNew <const> = keepMaxLen
+                and math.max(lenHexArr, #palette)
+                or lenHexArr
+            palette:resize(lenNew)
+            local i = 0
+            while i < lenHexArr do
+                i = i + 1
+                -- It's not better to pass a hex to setColor.
+                -- Doing so creates the same problems as the Color
+                -- rgbaPixel constructor, where an image's mode
+                -- determines how the integer is interpreted.
+                -- See https://github.com/aseprite/aseprite/
+                -- blob/main/src/app/script/palette_class.cpp#L196 ,
+                -- https://github.com/aseprite/aseprite/blob/
+                -- main/src/app/color_utils.cpp .
+                local aseColor <const> = AseUtilities.hexToAseColor(arr[i])
+                palette:setColor(i - 1, aseColor)
+            end
+        end)
+    else
+        app.transaction("Set Palette", function()
+            palette:resize(1)
+            palette:setColor(0, Color { r = 0, g = 0, b = 0, a = 0 })
+        end)
+    end
+end
+
+---Sets the active brush to a brush object. Sets the active tool to pencil.
+---If the tile map mode is tiles, then calls the toggle command. Resets the
+---pencil's opacity depending on ink type.
+---@param brush Brush brush
+function AseUtilities.setBrush(brush)
+    if app.site.tilemapMode == TilemapMode.TILES then
+        app.command.ToggleTilesMode()
+    end
+
+    local appPrefs <const> = app.preferences
+    if appPrefs then
+        -- Setting the preference for the active brush is more important than
+        -- setting a brush object's pattern property.
+        local brushPrefs <const> = appPrefs.brush
+        if brushPrefs then
+            brushPrefs.pattern = brush.pattern
+        end
+
+        -- The pencil tool opacity is active for custom brushes, regardless
+        -- of the ink. For built-in brushes, this opacity is ignored unless
+        -- the ink type is one that supports opacity.
+        local toolOpacity = 255
+        local oldTool <const> = app.tool
+        local toolPrefs <const> = appPrefs.tool(oldTool)
+        local inkPrefs <const> = toolPrefs.ink --[[@as Ink]]
+        local opacityPrefs <const> = toolPrefs.opacity --[[@as integer]]
+        if opacityPrefs and opacityPrefs > 0
+            and (inkPrefs == Ink.ALPHA_COMPOSITING
+                or inkPrefs == Ink.LOCK_ALPHA) then
+            toolOpacity = opacityPrefs
+        end
+
+        appPrefs.tool("pencil").opacity = toolOpacity
+    end -- End app prefs exists.
+
+    app.tool = "pencil"
+    app.brush = brush
+end
+
+---Sets an image to an array of bytes. No validation is performed on the array
+---elements or length. The length should be width times height times bytes per
+---pixel.
+---@param image Image image
+---@param bytes integer[] bytes array
+---@return Image
+function AseUtilities.setBytes(image, bytes)
+    image.bytes = Utilities.bytesArrToString(bytes)
+    return image
+end
+
 ---Returns a copy of the source image that has been skewed on the x axis by an
 ---angle in degrees. Uses nearest neighbor sampling.
 ---If the angle is 0 degrees, then returns the source image by reference.
@@ -3058,162 +3390,14 @@ function AseUtilities.skewImageY(source, angle)
     return target
 end
 
----Selects non-transparent pixels of a cel's image. Intersects the selection
----with the sprite bounds, if provided, for cases where cel may be partially
----outside the canvas edges.
----@param cel Cel cel
----@param spriteBounds Rectangle? sprite bounds
----@return Selection
----@nodiscard
-function AseUtilities.selectCel(cel, spriteBounds)
-    local celPos <const> = cel.position
-    return AseUtilities.selectImage(cel.image, celPos.x, celPos.y,
-        cel.layer.tileset, spriteBounds)
-end
-
----Selects non-transparent pixels of an image. Intersects the selection with
----the sprite bounds, if provided, for cases where cel may be partially outside
----the canvas edges. Ignores tile flips and rotations. For indexed color mode,
----ignores the palette color's alpha channel.
----@param image Image source image
----@param xtl integer cel position x
----@param ytl integer cel position y
----@param tileSet Tileset? tile set
----@param spriteBounds Rectangle? sprite bounds
----@return Selection
----@nodiscard
-function AseUtilities.selectImage(image, xtl, ytl, tileSet, spriteBounds)
-    local bpp <const> = image.bytesPerPixel
-    local bytes <const> = image.bytes
-
-    local celSpec <const> = image.spec
-    local wImage <const> = celSpec.width
-    local hImage <const> = celSpec.height
-    local colorMode <const> = celSpec.colorMode
-    local alphaIndex <const> = celSpec.transparentColor
-
-    -- Beware naming, 'select' is a method built-in to Lua.
-    local pxRect <const> = Rectangle(0, 0, 1, 1)
-    local lenImage <const> = wImage * hImage
-
-    local mask = nil
-    if colorMode == ColorMode.TILEMAP then
-        if tileSet then
-            local tileDim <const> = tileSet.grid.tileSize
-            local wTile <const> = tileDim.width
-            local hTile <const> = tileDim.height
-
-            mask = Selection(Rectangle(xtl, ytl,
-                wTile * wImage, hTile * hImage))
-            pxRect.width = wTile
-            pxRect.height = hTile
-
-            local pxTilei <const> = app.pixelColor.tileI
-            local strsub <const> = string.sub
-            local strunpack <const> = string.unpack
-
-            local i = 0
-            while i < lenImage do
-                local ibpp <const> = i * bpp
-                local str <const> = strsub(bytes, 1 + ibpp, bpp + ibpp)
-                local mapif <const> = strunpack("<I4", str)
-                local idx <const> = pxTilei(mapif)
-                if idx == 0 then
-                    pxRect.x = wTile * (i % wImage) + xtl
-                    pxRect.y = hTile * (i // wImage) + ytl
-                    mask:subtract(pxRect)
-                end
-                i = i + 1
-            end
-        else
-            mask = Selection()
-        end
-    else
-        mask = Selection(Rectangle(xtl, ytl, wImage, hImage))
-        local strbyte <const> = string.byte
-        local i = 0
-        while i < lenImage do
-            if strbyte(bytes, i * bpp + bpp) == alphaIndex then
-                pxRect.x = (i % wImage) + xtl
-                pxRect.y = (i // wImage) + ytl
-                mask:subtract(pxRect)
-            end
-            i = i + 1
-        end
-    end
-
-    if spriteBounds then
-        mask:intersect(spriteBounds)
-    end
-
-    return mask
-end
-
----Sets a palette in a sprite at a given index to a table of colors represented
----as hexadecimal integers. The palette index defaults to 1.
----The keepMaxLen flag is for setting palettes in indexed color mode, where a
----shorter palette would cause invalid indices in image maps.
----Creates a transaction.
----@param arr integer[] color array
----@param sprite Sprite sprite
----@param paletteIndex integer? index
----@param keepMaxLen boolean? keep maximum length
-function AseUtilities.setPalette(arr, sprite, paletteIndex, keepMaxLen)
-    local palIdxVerif = paletteIndex or 1
-    local palettes <const> = sprite.palettes
-    local lenPalettes <const> = #palettes
-    local lenHexArr <const> = #arr
-    -- This should be consistent behavior with getPalette.
-    if palIdxVerif > lenPalettes then palIdxVerif = 1 end
-    local palette <const> = palettes[palIdxVerif]
-    if lenHexArr > 0 then
-        app.transaction("Set Palette", function()
-            local lenNew <const> = keepMaxLen
-                and math.max(lenHexArr, #palette)
-                or lenHexArr
-            palette:resize(lenNew)
-            local i = 0
-            while i < lenHexArr do
-                i = i + 1
-                -- It's not better to pass a hex to setColor.
-                -- Doing so creates the same problems as the Color
-                -- rgbaPixel constructor, where an image's mode
-                -- determines how the integer is interpreted.
-                -- See https://github.com/aseprite/aseprite/
-                -- blob/main/src/app/script/palette_class.cpp#L196 ,
-                -- https://github.com/aseprite/aseprite/blob/
-                -- main/src/app/color_utils.cpp .
-                local aseColor <const> = AseUtilities.hexToAseColor(arr[i])
-                palette:setColor(i - 1, aseColor)
-            end
-        end)
-    else
-        app.transaction("Set Palette", function()
-            palette:resize(1)
-            palette:setColor(0, Color { r = 0, g = 0, b = 0, a = 0 })
-        end)
-    end
-end
-
----Sets an image to an array of bytes. No validation is performed on the array
----elements or length. The length should be width times height times bytes per
----pixel.
----@param image Image
----@param pixels integer[]
----@return Image
-function AseUtilities.setPixels(image, pixels)
-    image.bytes = Utilities.bytesArrToString(pixels)
-    return image
-end
-
 ---Converts an image from a tile set layer to a regular image. If the Tileset
 ---is nil, returns an image that copies the source's ImageSpec.
 ---@param imgSrc Image source image
 ---@param tileSet Tileset|nil tile set
----@param sprClrMode ColorMode sprite color mode
+---@param colorMode ColorMode sprite color mode
 ---@return Image
 ---@nodiscard
-function AseUtilities.tileMapToImage(imgSrc, tileSet, sprClrMode)
+function AseUtilities.tileMapToImage(imgSrc, tileSet, colorMode)
     local srcSpec <const> = imgSrc.spec
     local wSrc <const> = srcSpec.width
     local hSrc <const> = srcSpec.height
@@ -3224,7 +3408,7 @@ function AseUtilities.tileMapToImage(imgSrc, tileSet, sprClrMode)
         local imageSpec <const> = ImageSpec {
             width = wSrc,
             height = hSrc,
-            colorMode = sprClrMode,
+            colorMode = colorMode,
             transparentColor = alphaIndex,
         }
         imageSpec.colorSpace = colorSpace
@@ -3238,7 +3422,7 @@ function AseUtilities.tileMapToImage(imgSrc, tileSet, sprClrMode)
     local trgSpec <const> = ImageSpec {
         width = wSrc * tileWidth,
         height = hSrc * tileHeight,
-        colorMode = sprClrMode,
+        colorMode = colorMode,
         transparentColor = alphaIndex,
     }
     trgSpec.colorSpace = colorSpace
@@ -3304,7 +3488,7 @@ end
 ---is nil, uses the cel image's alpha mask.
 ---@param cel Cel source cel
 ---@param mask Selection selection
----@param hexDefault integer? default color
+---@param hexDefault? integer default color
 function AseUtilities.trimCelToSelect(cel, mask, hexDefault)
     -- Beware naming, 'select' is a method built-in to Lua.
     local selBounds <const> = mask.bounds
@@ -3346,8 +3530,8 @@ function AseUtilities.trimCelToSelect(cel, mask, hexDefault)
             255, BlendMode.SRC)
 
         local alphaIndexVerif <const> = (colorMode ~= ColorMode.INDEXED
-                or (alphaIndex >= 0 and alphaIndex < 256)) and
-            alphaIndex or 0
+                or (alphaIndex >= 0 and alphaIndex < 256))
+            and alphaIndex or 0
         local hexVerif <const> = hexDefault or alphaIndexVerif
         local trimBytesStr <const> = trimImage.bytes
         local bpp <const> = trimImage.bytesPerPixel
@@ -3426,8 +3610,8 @@ end
 ---@param image Image aseprite image
 ---@param padding integer padding
 ---@param alphaIndex integer alpha mask index
----@param wDefault integer? width default
----@param hDefault integer? height default
+---@param wDefault? integer width default
+---@param hDefault? integer height default
 ---@return Image trimmed
 ---@return integer xShift
 ---@return integer yShift
@@ -3488,8 +3672,8 @@ end
 ---@param alphaIndex integer alpha mask index
 ---@param wTile integer tile width
 ---@param hTile integer tile height
----@param wDefault integer? map width default
----@param hDefault integer? map height default
+---@param wDefault? integer map width default
+---@param hDefault? integer map height default
 ---@return Image trimmed
 ---@return integer xShift
 ---@return integer yShift

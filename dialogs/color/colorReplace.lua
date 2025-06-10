@@ -1,6 +1,7 @@
 dofile("../../support/aseutilities.lua")
 
-local targets <const> = {
+-- The layer target plus tile sets.
+local majorTargets <const> = {
     "ACTIVE",
     "ALL",
     "RANGE",
@@ -9,38 +10,47 @@ local targets <const> = {
     "TILE_SETS"
 }
 
+-- The frame target.
+local minorTargets <const> = {
+    "ACTIVE",
+    "ALL",
+    "RANGE",
+    "TAG"
+}
+
 local defaults <const> = {
-    target = "ACTIVE",
+    majorTarget = "ACTIVE",
+    minorTarget = "ACTIVE",
     includeLocked = false,
     includeHidden = false,
     tolerance = 0,
     switchColors = false,
     ignoreAlpha = false,
-    pullFocus = true
+    useTrim = true,
 }
 
----@param a { l: number, a: number, b: number, alpha: number }
----@param b { l: number, a: number, b: number, alpha: number }
+---@param o Lab
+---@param d Lab
 ---@param alphaScale number
 ---@return number
-local function distSqInclAlpha(a, b, alphaScale)
+local function distSqInclAlpha(o, d, alphaScale)
     -- Scale alpha to be at least somewhat
     -- proportional to other channels.
-    local dt <const> = alphaScale * (b.alpha - a.alpha)
-    local dl <const> = b.l - a.l
-    local da <const> = b.a - a.a
-    local db <const> = b.b - a.b
-    return dt * dt + dl * dl + da * da + db * db
+    local ct <const> = alphaScale * (d.alpha - o.alpha)
+    local cl <const> = d.l - o.l
+    local ca <const> = d.a - o.a
+    local cb <const> = d.b - o.b
+    return ct * ct + cl * cl + ca * ca + cb * cb
 end
 
----@param a { l: number, a: number, b: number, alpha: number }
----@param b { l: number, a: number, b: number, alpha: number }
+---@param o Lab
+---@param d Lab
 ---@return number
-local function distSqNoAlpha(a, b)
-    local dl <const> = b.l - a.l
-    local da <const> = b.a - a.a
-    local db <const> = b.b - a.b
-    return dl * dl + da * da + db * db
+local function distSqNoAlpha(o, d)
+    local cl <const> = d.l - o.l
+    local ca <const> = d.a - o.a
+    local cb <const> = d.b - o.b
+    return cl * cl + ca * ca + cb * cb
 end
 
 ---@param cel Cel
@@ -82,25 +92,45 @@ end
 local dlg <const> = Dialog { title = "Replace Color" }
 
 dlg:combobox {
-    id = "target",
+    id = "majorTarget",
     label = "Target:",
-    option = defaults.target,
-    options = targets,
+    option = defaults.majorTarget,
+    options = majorTargets,
     onchange = function()
         local args <const> = dlg.data
-        local target <const> = args.target --[[@as string]]
+        local majorTarget <const> = args.majorTarget --[[@as string]]
         local tolerance <const> = args.tolerance --[[@as integer]]
 
-        local notTileset <const> = target ~= "TILE_SET"
-        local notTileSets <const> = target ~= "TILE_SETS"
-        local notSel <const> = target ~= "SELECTION"
+        local notTileset <const> = majorTarget ~= "TILE_SET"
+        local notTileSets <const> = majorTarget ~= "TILE_SETS"
+        local notSel <const> = majorTarget ~= "SELECTION"
 
+        dlg:modify { id = "minorTarget", visible = notTileset and notTileSets }
         dlg:modify { id = "includeLocked", visible = notSel and notTileSets }
         dlg:modify { id = "includeHidden", visible = notSel and notTileSets }
         dlg:modify { id = "tolerance", visible = notTileSets and notTileset }
         dlg:modify { id = "ignoreAlpha", visible = notTileSets and notTileset
             and tolerance > 0 }
+
+        if majorTarget == "ALL" then
+            dlg:modify { id = "minorTarget", option = "ALL" }
+        elseif majorTarget == "ACTIVE" then
+            dlg:modify { id = "minorTarget", option = "ACTIVE" }
+        elseif majorTarget == "RANGE" then
+            dlg:modify { id = "minorTarget", option = "RANGE" }
+        end
     end
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "minorTarget",
+    label = "Frames:",
+    option = defaults.minorTarget,
+    options = minorTargets,
+    visible = defaults.majorTarget ~= "TILE_SET"
+        and defaults.majorTarget ~= "TILE_SETS",
 }
 
 dlg:newrow { always = false }
@@ -110,16 +140,16 @@ dlg:check {
     label = "Include:",
     text = "&Locked",
     selected = defaults.includeLocked,
-    visible = defaults.target ~= "TILE_SETS"
-        and defaults.target ~= "SELECTION"
+    visible = defaults.majorTarget ~= "TILE_SETS"
+        and defaults.majorTarget ~= "SELECTION"
 }
 
 dlg:check {
     id = "includeHidden",
     text = "&Hidden",
     selected = defaults.includeHidden,
-    visible = defaults.target ~= "TILE_SETS"
-        and defaults.target ~= "SELECTION"
+    visible = defaults.majorTarget ~= "TILE_SETS"
+        and defaults.majorTarget ~= "SELECTION"
 }
 
 dlg:newrow { always = false }
@@ -146,15 +176,15 @@ dlg:slider {
     min = 0,
     max = 255,
     value = defaults.tolerance,
-    visible = defaults.target ~= "TILE_SET"
-        and defaults.target ~= "TILE_SETS",
+    visible = defaults.majorTarget ~= "TILE_SET"
+        and defaults.majorTarget ~= "TILE_SETS",
     onchange = function()
         local args <const> = dlg.data
-        local target <const> = args.target --[[@as string]]
+        local majorTarget <const> = args.majorTarget --[[@as string]]
         local tolerance <const> = args.tolerance --[[@as integer]]
 
         local tolGtZero <const> = tolerance > 0
-        local noTiles <const> = target ~= "TILE_SET" and target ~= "TILE_SETS"
+        local noTiles <const> = majorTarget ~= "TILE_SET" and majorTarget ~= "TILE_SETS"
 
         dlg:modify { id = "ignoreAlpha", visible = noTiles and tolGtZero }
         dlg:modify { id = "switchColors", visible = (not tolGtZero) }
@@ -168,8 +198,8 @@ dlg:check {
     label = "Ignore:",
     text = "&Alpha",
     selected = defaults.ignoreAlpha,
-    visible = defaults.target ~= "TILE_SET"
-        and defaults.target ~= "TILE_SETS"
+    visible = defaults.majorTarget ~= "TILE_SET"
+        and defaults.majorTarget ~= "TILE_SETS"
         and defaults.tolerance > 0
 }
 
@@ -185,10 +215,21 @@ dlg:check {
 
 dlg:newrow { always = false }
 
+dlg:check {
+    id = "useTrim",
+    label = "Trim:",
+    text = "Layer Ed&ges",
+    selected = defaults.useTrim,
+    visible = true,
+    focus = false
+}
+
+dlg:newrow { always = false }
+
 dlg:button {
     id = "ok",
     text = "&OK",
-    focus = defaults.pullFocus,
+    focus = true,
     onclick = function()
         -- Early returns.
         local site <const> = app.site
@@ -201,8 +242,10 @@ dlg:button {
 
         -- Unpack arguments.
         local args <const> = dlg.data
-        local target <const> = args.target
-            or defaults.target --[[@as string]]
+        local majorTarget <const> = args.majorTarget
+            or defaults.majorTarget --[[@as string]]
+        local minorTarget <const> = args.minorTarget
+            or defaults.minorTarget --[[@as string]]
         local frColor <const> = args.fromColor --[[@as Color]]
         local toColor <const> = args.toColor --[[@as Color]]
         local tolerance <const> = args.tolerance
@@ -210,6 +253,7 @@ dlg:button {
         local includeLocked <const> = args.includeLocked --[[@as boolean]]
         local includeHidden <const> = args.includeHidden --[[@as boolean]]
         local switchColors <const> = args.switchColors --[[@as boolean]]
+        local useTrim <const> = args.useTrim --[[@as boolean]]
         local ignoreAlpha <const> = args.ignoreAlpha --[[@as boolean]]
 
         -- Cache methods used in all versions of replace.
@@ -217,6 +261,7 @@ dlg:button {
         local strsub <const> = string.sub
         local tconcat <const> = table.concat
         local createSpec <const> = AseUtilities.createSpec
+        local trimImageAlpha <const> = AseUtilities.trimImageAlpha
 
         -- Unpack sprite spec.
         local activeSpec <const> = activeSprite.spec
@@ -241,8 +286,8 @@ dlg:button {
             return
         end
 
-        local replaceTileSet <const> = target == "TILE_SET"
-        local replaceAllTiles <const> = target == "TILE_SETS"
+        local replaceTileSet <const> = majorTarget == "TILE_SET"
+        local replaceAllTiles <const> = majorTarget == "TILE_SETS"
         if frInt == toInt
             and (exactSearch
                 or (replaceTileSet or replaceAllTiles)) then
@@ -345,10 +390,9 @@ dlg:button {
 
             local trgFrames <const> = Utilities.flatArr2(
                 AseUtilities.getFrames(
-                    activeSprite, target ~= "SELECTION"
-                    and target or "ALL"))
+                    activeSprite, minorTarget))
             local trgCels <const> = AseUtilities.filterCels(
-                activeSprite, activeLayer, trgFrames, target,
+                activeSprite, activeLayer, trgFrames, majorTarget,
                 includeLocked, includeHidden, false, includeBkg)
             local lenTrgCels <const> = #trgCels
 
@@ -399,13 +443,25 @@ dlg:button {
                             colorMode, colorSpace, alphaIndex)
                         local trgImg <const> = Image(trgSpec)
                         trgImg.bytes = tconcat(trgByteStrs)
-                        cel.image = trgImg
+
+                        if useTrim then
+                            local trimmed <const>,
+                            xtlTrm <const>,
+                            ytlTrm <const> = trimImageAlpha(trgImg, 0, alphaIndex)
+                            cel.image = trimmed
+                            local srcPos <const> = cel.position
+                            cel.position = Point(
+                                srcPos.x + xtlTrm,
+                                srcPos.y + ytlTrm)
+                        else
+                            cel.image = trgImg
+                        end
                     end -- End of cels loop.
                 end)    -- End exact transaction.
             else
                 -- Fuzzy tolerance search.
-                local fromHex <const> = Clr.fromHexAbgr32
-                local sRgbaToLab <const> = Clr.sRgbToSrLab2
+                local fromHex <const> = Rgb.fromHexAbgr32
+                local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
                 local strunpack <const> = string.unpack
                 local distSq <const> = tIgnoreVerif
                     and distSqNoAlpha
@@ -413,7 +469,7 @@ dlg:button {
 
                 local tScl <const> = 100.0
                 local tolsq <const> = tolerance * tolerance
-                local frLab <const> = sRgbaToLab(fromHex(frInt))
+                local frLab <const> = sRgbToLab(fromHex(frInt))
 
                 local zeroLab <const> = { l = 0.0, a = 0.0, b = 0.0, alpha = 0.0 }
                 local useExpand <const> = distSq(frLab, zeroLab, tScl) <= tolsq
@@ -429,10 +485,10 @@ dlg:button {
                         local srcImg = cel.image
                         if useExpand then
                             local exp <const>,
-                            xtl <const>,
-                            ytl <const> = expandCelToCanvas(cel, activeSprite)
+                            xtlExp <const>,
+                            ytlExp <const> = expandCelToCanvas(cel, activeSprite)
                             srcImg = exp
-                            cel.position = Point(xtl, ytl)
+                            cel.position = Point(xtlExp, ytlExp)
                         end
 
                         local srcBytes <const> = srcImg.bytes
@@ -456,7 +512,7 @@ dlg:button {
                                 trgHexInt = dict[srcHexInt]
                             else
                                 local srcClr <const> = fromHex(srcHexInt)
-                                local srcLab <const> = sRgbaToLab(srcClr)
+                                local srcLab <const> = sRgbToLab(srcClr)
                                 if distSq(srcLab, frLab, tScl) <= tolsq then
                                     trgHexInt = toInt
                                 end
@@ -465,11 +521,11 @@ dlg:button {
 
                             j = j + 1
                             if tIgnoreVerif then
-                                trgByteStrs[j] = strpack("I4",
+                                trgByteStrs[j] = strpack("<I4",
                                     (srcHexInt & 0xff000000)
                                     | (trgHexInt & 0x00ffffff))
                             else
-                                trgByteStrs[j] = strpack("I4", trgHexInt)
+                                trgByteStrs[j] = strpack("<I4", trgHexInt)
                             end
                         end
 
@@ -477,7 +533,19 @@ dlg:button {
                             colorMode, colorSpace, alphaIndex)
                         local trgImg <const> = Image(trgSpec)
                         trgImg.bytes = tconcat(trgByteStrs)
-                        cel.image = trgImg
+
+                        if useTrim then
+                            local trimmed <const>,
+                            xtlTrm <const>,
+                            ytlTrm <const> = trimImageAlpha(trgImg, 0, alphaIndex)
+                            cel.image = trimmed
+                            local srcPos <const> = cel.position
+                            cel.position = Point(
+                                srcPos.x + xtlTrm,
+                                srcPos.y + ytlTrm)
+                        else
+                            cel.image = trgImg
+                        end
                     end -- End of cels loop.
                 end)    -- End fuzzy transaction.
             end         -- End of exact vs. tolerance.

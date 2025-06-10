@@ -21,9 +21,9 @@ setmetatable(Vec3, {
 })
 
 ---Constructs a new vector from three numbers.
----@param x number? x component
----@param y number? y component
----@param z number? z component
+---@param x? number x component
+---@param y? number y component
+---@param z? number z component
 ---@return Vec3
 ---@nodiscard
 function Vec3.new(x, y, z)
@@ -139,7 +139,7 @@ end
 ---Evaluates whether two vectors are, within a tolerance, approximately equal.
 ---@param a Vec3 left operand
 ---@param b Vec3 right operand
----@param tol number? tolerance
+---@param tol? number tolerance
 ---@return boolean
 ---@nodiscard
 function Vec3.approx(a, b, tol)
@@ -207,31 +207,6 @@ function Vec3.bezierPoint(ap0, cp0, cp1, ap1, step)
         cp1.z * tsq3u + ap1.z * tcb)
 end
 
----Bisects an array of vectors to find the appropriate insertion point for a
----vector. Biases towards the right insert point. Should be used with sorted
----arrays.
----@param arr Vec3[] vectors array
----@param elm Vec3 vector
----@param compare? fun(a: Vec3, b: Vec3): boolean comparator
----@return integer
----@nodiscard
-function Vec3.bisectRight(arr, elm, compare)
-    local low = 0
-    local high = #arr
-    if high < 1 then return 1 end
-    local f <const> = compare or Vec3.comparator
-    while low < high do
-        local middle <const> = (low + high) // 2
-        local right <const> = arr[1 + middle]
-        if right and f(elm, right) then
-            high = middle
-        else
-            low = middle + 1
-        end
-    end
-    return 1 + low
-end
-
 ---Finds the ceiling of the vector.
 ---@param v Vec3 vector
 ---@return Vec3
@@ -265,30 +240,14 @@ end
 ---@return Vec3
 ---@nodiscard
 function Vec3.copySign(a, b)
-    local cx, cy, cz = 0.0, 0.0, 0.0
-
     local axAbs <const> = math.abs(a.x)
-    if b.x < -0.0 then
-        cx = -axAbs
-    elseif b.x > 0.0 then
-        cx = axAbs
-    end
-
     local ayAbs <const> = math.abs(a.y)
-    if b.y < -0.0 then
-        cy = -ayAbs
-    elseif b.y > 0.0 then
-        cy = ayAbs
-    end
-
     local azAbs <const> = math.abs(a.z)
-    if b.z < -0.0 then
-        cz = -azAbs
-    elseif b.z > 0.0 then
-        cz = azAbs
-    end
 
-    return Vec3.new(cx, cy, cz)
+    return Vec3.new(
+        b.x < -0.0 and -axAbs or b.x > 0.0 and axAbs or 0.0,
+        b.y < -0.0 and -ayAbs or b.y > 0.0 and ayAbs or 0.0,
+        b.z < -0.0 and -azAbs or b.z > 0.0 and azAbs or 0.0)
 end
 
 ---Finds the cross product of two vectors.
@@ -422,7 +381,7 @@ end
 ---poles are upright in a Z-Up coordinate system.
 ---@param azimuth number azimuth, yaw, theta
 ---@param inclination number inclination, pitch, phi
----@param radius number? radius, rho
+---@param radius? number radius, rho
 ---@return Vec3
 ---@nodiscard
 function Vec3.fromSpherical(azimuth, inclination, radius)
@@ -562,22 +521,6 @@ function Vec3.inclinationUnsigned(v)
     return 1.5707963267949
 end
 
----Inserts a vector into a table so as to maintain sorted order. Biases toward
----the right insertion point. Returns true if the unique vector was inserted.
----@param arr Vec3[] vectors array
----@param elm Vec3 vector
----@param compare? fun(a: Vec3, b: Vec3): boolean comparator
----@return boolean
-function Vec3.insortRight(arr, elm, compare)
-    local i <const> = Vec3.bisectRight(arr, elm, compare)
-    local dupe <const> = arr[i - 1]
-    if dupe and Vec3.equals(dupe, elm) then
-        return false
-    end
-    table.insert(arr, i, elm)
-    return true
-end
-
 ---Finds a vector's magnitude, or length.
 ---@param v Vec3 vector
 ---@return number
@@ -639,7 +582,7 @@ end
 ---Mixes two vectors together by a step. The step is a number.
 ---@param a Vec3 origin
 ---@param b Vec3 destination
----@param t number? step
+---@param t? number step
 ---@return Vec3
 ---@nodiscard
 function Vec3.mixNum(a, b, t)
@@ -724,8 +667,8 @@ end
 
 ---Creates a random point in Cartesian space given a lower and an upper bound.
 ---If lower and upper bounds are not given, defaults to [-1.0, 1.0].
----@param lb Vec3? lower bound
----@param ub Vec3? upper bound
+---@param lb? Vec3 lower bound
+---@param ub? Vec3 upper bound
 ---@return Vec3
 ---@nodiscard
 function Vec3.randomCartesian(lb, ub)
@@ -952,8 +895,7 @@ function Vec3.toJson(v)
         v.x, v.y, v.z)
 end
 
----Converts a vector to spherical coordinates. Returns a table with 'radius',
----'azimuth' and 'inclination'.
+---Converts a vector to spherical coordinates.
 ---@param v Vec3 vector
 ---@return { radius: number, azimuth: number, inclination: number }
 ---@nodiscard

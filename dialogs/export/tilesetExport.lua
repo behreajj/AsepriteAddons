@@ -133,13 +133,14 @@ local tsxFormat <const> = table.concat({
 local tsxTileFormat <const> = table.concat({
     "<tile ",
     "id=\"%d\" ",
+    "type=\"%s\" ",
     "probability=\"%.6f\">\n",
     "<properties>\n%s\n</properties>\n",
     "</tile>"
 })
 
 ---@param mapPacket table
----@param idxOffset integer?
+---@param idxOffset? integer
 ---@return string[] csvData
 ---@return integer wMap
 ---@return integer hMap
@@ -154,8 +155,9 @@ local function writeCsv(mapPacket, idxOffset)
 
         local indices <const> = mapPacket.indices
         local flags <const> = mapPacket.flags
-
+        local tconcat <const> = table.concat
         local idxOffVrf <const> = idxOffset or 0
+
         local y = 0
         while y < hMap do
             local yw <const> = y * wMap
@@ -167,16 +169,15 @@ local function writeCsv(mapPacket, idxOffset)
                 local index <const> = indices[flat]
                 local comp = 0
                 if index ~= 0 then
-                    comp = idxOffVrf + index
                     local flag <const> = flags[flat]
-                    comp = flag | comp
+                    comp = flag | (idxOffVrf + index)
                 end
                 x = x + 1
                 colArr[x] = comp
             end
 
             y = y + 1
-            csvData[y] = table.concat(colArr, ",")
+            csvData[y] = tconcat(colArr, ",")
         end
     end
 
@@ -196,8 +197,10 @@ local function writeProps(properties)
     local isFile <const> = app.fs.isFile
 
     for k, v in pairs(properties) do
-        -- Ignore script export ID and tile probability.
-        if k ~= "id" and k ~= "probability" then
+        -- Ignore script export ID, tile class and probability.
+        if k ~= "id"
+            and k ~= "class"
+            and k ~= "probability" then
             local typev <const> = type(v)
             -- Checking typev for nil doesn't seem necessary.
             local tStr = ""
@@ -221,7 +224,6 @@ local function writeProps(properties)
                 tStr = isFile(v) and "file" or "string"
                 vStr = v
             elseif typev == "table" then
-                -- Ideally this would be recursive.
                 tStr = "string"
                 vStr = tconcat(v, ", ")
             end
@@ -251,7 +253,7 @@ dlg:slider {
     id = "scale",
     label = "Scale:",
     min = 1,
-    max = 10,
+    max = AseUtilities.UPSCALE_LIMIT,
     value = defaults.scale
 }
 
@@ -313,6 +315,9 @@ dlg:file {
     id = "filename",
     label = "File:",
     filetypes = tiledImgExts,
+    filename = "*.png",
+    basepath = app.fs.userDocsPath,
+    title = "Export Tile Set",
     save = true,
     focus = true
 }
@@ -521,7 +526,6 @@ dlg:button {
             end
         end
 
-        -- TODO: Replace these usages with app.fs.joinPath
         local pathSep = app.fs.pathSeparator
         pathSep = string.gsub(pathSep, "\\", "\\\\")
 
@@ -550,6 +554,10 @@ dlg:button {
 
         local sheetPalette <const> = AseUtilities.getPalette(
             site.frame, spritePalettes)
+        local alphaIndexVerif = spriteAlphaIndex
+        if alphaIndexVerif >= #sheetPalette then
+            alphaIndexVerif = 0
+        end
 
         ---@type Tileset[]
         local tileSets = {}
@@ -623,16 +631,11 @@ dlg:button {
             while h < lenTileSets do
                 h = h + 1
                 local tileSet <const> = tileSets[h]
-                local tsId = 0
-                local tileSetProps <const> = tileSet.properties
-                if tileSetProps["id"] then
-                    tsId = tileSetProps["id"] --[[@as integer]]
-                else
-                    tsId = rng(minint64, maxint64)
-                    tileSet.properties["id"] = tsId
-                end
-            end
-        end)
+                if tileSet.properties["id"] == nil then
+                    tileSet.properties["id"] = rng(minint64, maxint64)
+                end -- End id property is nil.
+            end     -- End tile sets loop.
+        end)        -- End transaction.
 
         -- For meta data export.
         ---@type table<integer, table>
@@ -694,12 +697,13 @@ dlg:button {
             -- Create composite image.
             local sheetSpec <const> = createSpec(
                 wSheet, hSheet, spriteColorMode, spriteColorSpace,
-                spriteAlphaIndex)
+                alphaIndexVerif)
             local sheetImage <const> = Image(sheetSpec)
 
             -- The first tile in a tile set is empty.
             -- Include this empty tile, and all others, to
             -- maintain indexing with tile maps.
+            local lenTileData = 0
             local k = 0
             while k < lenTileSet do
                 local tile <const> = tileSet:tile(k)
@@ -727,8 +731,15 @@ dlg:button {
                     if props["probability"] then
                         tileChance = props["probability"] --[[@as number]]
                     end
-                    tileData[#tileData + 1] = {
+                    local tileClass = ""
+                    if props["class"] then
+                        tileClass = props["class"] --[[@as string]]
+                    end
+
+                    lenTileData = lenTileData + 1
+                    tileData[lenTileData] = {
                         id = id,
+                        class = tileClass,
                         probability = tileChance,
                         properties = props
                     }
@@ -916,7 +927,7 @@ dlg:button {
             if metaData == "TILED" then
                 local alphaStr = ""
                 if spriteColorMode == ColorMode.INDEXED then
-                    local trColor <const> = sheetPalette:getColor(spriteAlphaIndex)
+                    local trColor <const> = sheetPalette:getColor(alphaIndexVerif)
                     local aTr <const> = trColor.alpha
                     local rTr <const> = trColor.red
                     local gTr <const> = trColor.green
@@ -967,8 +978,8 @@ dlg:button {
                     while j < lenTileData do
                         j = j + 1
                         local td <const> = tileData[j]
-                        tPropStrs[#tPropStrs + 1] = strfmt(
-                            tsxTileFormat, td.id, td.probability,
+                        tPropStrs[j] = strfmt(
+                            tsxTileFormat, td.id, td.class, td.probability,
                             tconcat(writeProps(td.properties), "\n"))
                     end
 

@@ -18,10 +18,13 @@ setmetatable(Curve2, {
 ---closed loop if true. The second parameter should be a table of Knot2s.
 ---@param cl boolean closed loop
 ---@param knots Knot2[] knots
----@param name string? name
+---@param name? string name
 ---@return Curve2
 ---@nodiscard
 function Curve2.new(cl, knots, name)
+    -- Last commit to include hex grid:
+    -- 99d41ea5364585a9126a46efeed1d7fa836f82ec
+
     local inst <const> = setmetatable({}, Curve2)
     inst.closedLoop = cl or false
     inst.knots = knots or {}
@@ -120,8 +123,7 @@ end
 ---@return Vec2
 ---@nodiscard
 function Curve2.evalFirst(curve)
-    local kFirst <const> = curve.knots[1]
-    local coFirst <const> = kFirst.co
+    local coFirst <const> = curve.knots[1].co
     return Vec2.new(coFirst.x, coFirst.y)
 end
 
@@ -130,8 +132,8 @@ end
 ---@return Vec2
 ---@nodiscard
 function Curve2.evalLast(curve)
-    local kLast <const> = curve.knots[#curve.knots]
-    local coLast <const> = kLast.co
+    local kns <const> = curve.knots
+    local coLast <const> = kns[#kns].co
     return Vec2.new(coLast.x, coLast.y)
 end
 
@@ -140,7 +142,7 @@ end
 ---@param curve Curve2 curve
 ---@param totalLength number curve length
 ---@param arcLengths number[] cumulative lengths
----@param sampleCount integer? sample count
+---@param sampleCount? integer sample count
 ---@return Vec2[]
 ---@nodiscard
 function Curve2.paramPoints(

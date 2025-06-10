@@ -8,7 +8,6 @@ local connections <const> = { "DIAMOND", "SQUARE" }
 local defaults <const> = {
     -- Original colorSelect script:
     -- 894bd701787526bae1786364073b8bc263d3a032
-
     uiMode = "COLOR",
     selMode = "INTERSECT",
     sampleMode = "ACTIVE",
@@ -31,7 +30,7 @@ local defaults <const> = {
     connection = "DIAMOND"
 }
 
----@param lab { l: number, a: number, b: number, alpha: number }
+---@param lab Lab
 ---@param mint01 number
 ---@param maxt01 number
 ---@param useLight boolean
@@ -81,28 +80,28 @@ local function critEval(
     return include
 end
 
----@param a { l: number, a: number, b: number, alpha: number }
----@param b { l: number, a: number, b: number, alpha: number }
+---@param o Lab
+---@param d Lab
 ---@param alphaScale number
 ---@return number
-local function distSqInclAlpha(a, b, alphaScale)
+local function distSqInclAlpha(o, d, alphaScale)
     -- Scale alpha to be at least somewhat
     -- proportional to other channels.
-    local dt <const> = alphaScale * (b.alpha - a.alpha)
-    local dl <const> = b.l - a.l
-    local da <const> = b.a - a.a
-    local db <const> = b.b - a.b
-    return dt * dt + dl * dl + da * da + db * db
+    local ct <const> = alphaScale * (d.alpha - o.alpha)
+    local cl <const> = d.l - o.l
+    local ca <const> = d.a - o.a
+    local cb <const> = d.b - o.b
+    return ct * ct + cl * cl + ca * ca + cb * cb
 end
 
----@param a { l: number, a: number, b: number, alpha: number }
----@param b { l: number, a: number, b: number, alpha: number }
+---@param o Lab
+---@param d Lab
 ---@return number
-local function distSqNoAlpha(a, b)
-    local dl <const> = b.l - a.l
-    local da <const> = b.a - a.a
-    local db <const> = b.b - a.b
-    return dl * dl + da * da + db * db
+local function distSqNoAlpha(o, d)
+    local cl <const> = d.l - o.l
+    local ca <const> = d.a - o.a
+    local cb <const> = d.b - o.b
+    return cl * cl + ca * ca + cb * cb
 end
 
 local dlg <const> = Dialog { title = "Select Color" }
@@ -492,15 +491,19 @@ dlg:button {
             end
 
             if activeLayer.isGroup then
-                local flat <const>, rect <const> = AseUtilities.flattenGroup(
-                    activeLayer, activeFrame, colorMode, colorSpace, alphaIndex,
-                    true, true, true, true)
+                local isValid <const>,
+                flatImg <const>,
+                xTlFlat <const>,
+                yTlFlat <const> = AseUtilities.flatToImage(
+                    activeLayer, activeFrame,
+                    colorMode, colorSpace, alphaIndex,
+                    true, false, true, true)
 
-                image = flat
-                xtl = rect.x
-                ytl = rect.y
-                wImage = rect.width
-                hImage = rect.height
+                image = flatImg
+                xtl = xTlFlat
+                ytl = yTlFlat
+                wImage = image.width
+                hImage = image.height
             else
                 local activeCel <const> = activeLayer:cel(activeFrame)
                 if not activeCel then
@@ -563,10 +566,10 @@ dlg:button {
         local cmIsGry <const> = colorMode == ColorMode.GRAY
 
         -- Cache global methods.
-        local fromHex32 <const> = Clr.fromHexAbgr32
-        local fromHex16 <const> = Clr.fromHexAv16
-        local sRgbaToLab <const> = Clr.sRgbToSrLab2
-        local aseColorToClr <const> = AseUtilities.aseColorToClr
+        local fromHex32 <const> = Rgb.fromHexAbgr32
+        local fromHex16 <const> = Rgb.fromHexAv16
+        local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
+        local aseColorToClr <const> = AseUtilities.aseColorToRgb
         local aseColorToHex <const> = AseUtilities.aseColorToHex
         local strunpack <const> = string.unpack
         local strsub <const> = string.sub
@@ -675,14 +678,14 @@ dlg:button {
                             local aseColor <const> = palette:getColor(c)
                             srgb = aseColorToClr(aseColor)
                         else
-                            srgb = Clr.new(0, 0, 0, 0)
+                            srgb = Rgb.new(0, 0, 0, 0)
                         end
                     elseif cmIsGry then
                         srgb = fromHex16(c)
                     else
                         srgb = fromHex32(c)
                     end
-                    local lab <const> = sRgbaToLab(srgb)
+                    local lab <const> = sRgbToLab(srgb)
                     include = critEval(
                         lab, mint01, maxt01,
                         useLight, minLight, maxLight,
@@ -734,10 +737,9 @@ dlg:button {
                     if cmIsIdx then
                         refInt = c
                         if c >= 0 and c < lenPalette then
-                            local aseColor <const> = palette:getColor(c)
-                            refClr = aseColorToClr(aseColor)
+                            refClr = aseColorToClr(palette:getColor(c))
                         else
-                            refClr = Clr.new(0, 0, 0, 0)
+                            refClr = Rgb.new(0.0, 0.0, 0.0, 0.0)
                         end
                     elseif cmIsGry then
                         refInt = c
@@ -762,30 +764,28 @@ dlg:button {
             local useExactSearch <const> = (not uiIsCriteria)
                 and tolerance == 0
             if not useExactSearch then
-                local refLab <const> = sRgbaToLab(refClr)
+                local refLab <const> = sRgbToLab(refClr)
                 local tScl <const> = 100.0
                 local tolsq <const> = tolerance * tolerance
 
                 if colorMode == ColorMode.INDEXED then
                     eval = function(c8)
                         if c8 >= 0 and c8 < lenPalette then
-                            local aseColor <const> = palette:getColor(c8)
-                            local srgb <const> = aseColorToClr(aseColor)
-                            local lab <const> = sRgbaToLab(srgb)
-                            return distSq(lab, refLab, tScl) <= tolsq
+                            return distSq(sRgbToLab(aseColorToClr(
+                                palette:getColor(c8))), refLab, tScl) <= tolsq
                         end
                         return false
                     end
                 elseif colorMode == ColorMode.GRAY then
                     eval = function(c16)
-                        local lab <const> = sRgbaToLab(fromHex16(c16))
-                        return distSq(lab, refLab, tScl) <= tolsq
+                        return distSq(sRgbToLab(fromHex16(c16)),
+                            refLab, tScl) <= tolsq
                     end
                 else
                     -- Default to RGB color mode.
                     eval = function(c32)
-                        local lab <const> = sRgbaToLab(fromHex32(c32))
-                        return distSq(lab, refLab, tScl) <= tolsq
+                        return distSq(sRgbToLab(fromHex32(c32)),
+                            refLab, tScl) <= tolsq
                     end
                 end
             end

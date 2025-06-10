@@ -4,7 +4,6 @@ local frameTargets <const> = { "ACTIVE", "ALL", "TAG" }
 local fillOpts <const> = { "CROSS_FADE", "EMPTY", "SUSTAIN" }
 
 local defaults <const> = {
-    -- TODO: Retain range of layer and frame type.
     frameTarget = "ALL",
     isLoop = false,
     fillOpt = "SUSTAIN",
@@ -34,14 +33,8 @@ end
 ---@param useTint boolean
 ---@param tintColor Color
 local function crossFade(
-    activeSprite,
-    leaf,
-    frIdxNewPrev,
-    frIdxNewNext,
-    frameUiOffset,
-    inbetweens,
-    useTint,
-    tintColor)
+    activeSprite, leaf, frIdxNewPrev, frIdxNewNext,
+    frameUiOffset, inbetweens, useTint, tintColor)
     local celNext <const> = leaf:cel(frIdxNewNext)
     local celPrev <const> = leaf:cel(frIdxNewPrev)
     if (not celNext) and (not celPrev) then return end
@@ -104,8 +97,8 @@ local function crossFade(
     local strpack <const> = string.pack
     local tconcat <const> = table.concat
     local round <const> = Utilities.round
-    local clrnew <const> = Clr.new
-    local mixSrLab2 <const> = Clr.mixSrLab2
+    local clrnew <const> = Rgb.new
+    local mixSrLab2 <const> = ColorUtilities.mixSrLab2
 
     local leafName <const> = leaf.name
     local trName <const> = string.format("Fade from %d to %d on %s",
@@ -173,8 +166,8 @@ local function crossFade(
                 wComp, hComp,
                 colorMode, colorSpace, alphaIndex)
 
-            local bytesPrev <const> = AseUtilities.getPixels(imgPrev)
-            local bytesNext <const> = AseUtilities.getPixels(imgNext)
+            local bytesPrev <const> = AseUtilities.getBytes(imgPrev)
+            local bytesNext <const> = AseUtilities.getBytes(imgNext)
             local packZero <const> = string.pack("B B B B", 0, 0, 0, 0)
 
             app.transaction(trName, function()
@@ -704,7 +697,8 @@ dlg:button {
                         local srcPos <const> = cel.position
                         local srcZIndex <const> = cel.zIndex
 
-                        transact(strfmt("Sustain %d on %s", frIdxOld + frameUiOffset, leafName), function()
+                        transact(strfmt("Sustain %d on %s",
+                            frIdxOld + frameUiOffset, leafName), function()
                             local j = 0
                             while j < inbetweens do
                                 j = j + 1

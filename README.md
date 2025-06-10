@@ -2,8 +2,6 @@
 
 This repository developed out of the Medium article, ["How To Script Aseprite Tools in Lua"](https://behreajj.medium.com/how-to-script-aseprite-tools-in-lua-8f849b08733). Short demonstrations for some the scripts here can be found in this [Youtube playlist](https://www.youtube.com/playlist?list=PLK6A984Cb4MVaYKSGIn9SalpD9EVrfvUi).
 
-*As of Wednesday, November 20, 2024, this repository has a Beta branch. The Beta branch corresponds with Aseprite version 1.3.11-beta1. You will need the beta version of Aseprite to use scripts in that branch. The primary difference between the two branches is how scripts in the dialogs/shape folder work. Primary development of this repository will take place in the Beta branch. The main branch will focus on bug fixes.*
-
 ## Installation
 
 To install, click on the green `Code` button above. Select `Download ZIP` from the pop-up menu. Unzip the file after it has finished downloading. In Aseprite, go to `File > Scripts > Open Scripts Folder`. Copy `commands`, `dialogs` and `support` folders from the unzipped download into the folder that Aseprite has opened. Return to Aseprite, go to `File > Scripts > Rescan Scripts Folder`.
@@ -12,7 +10,7 @@ There is a [known issue](https://community.aseprite.org/t/script-folder-path-can
 
 ## Usage
 
-Aseprite version 1.3.10 is the minimum supported version to run these scripts.
+Aseprite version 1.3.14 is the minimum supported version to run these scripts.
 
 To use, go to `File > Scripts` and choose from entries in the `dialogs` or `commands` folder.
 

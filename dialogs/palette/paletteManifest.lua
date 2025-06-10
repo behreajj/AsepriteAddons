@@ -57,17 +57,17 @@ local function drawCharsHorizShd(
     rFill, gFill, bFill, aFill,
     rShad, gShad, bShad, aShad,
     x, y, gw, gh, scale)
-    local pixels <const> = AseUtilities.getPixels(image)
+    local bytes <const> = AseUtilities.getBytes(image)
     local wImage <const> = image.width
     TextUtilities.drawString(
-        lut, pixels, wImage, chars,
+        lut, bytes, wImage, chars,
         rShad, gShad, bShad, aShad,
         x, y + 1, gw, gh, scale)
     TextUtilities.drawString(
-        lut, pixels, wImage, chars,
+        lut, bytes, wImage, chars,
         rFill, gFill, bFill, aFill,
         x, y, gw, gh, scale)
-    AseUtilities.setPixels(image, pixels)
+    AseUtilities.setBytes(image, bytes)
 end
 
 ---@param image Image
@@ -91,10 +91,11 @@ end
 ---@param aseColor Color
 ---@return Color
 local function invertAseColor(aseColor)
-    local srgb <const> = AseUtilities.aseColorToClr(aseColor)
-    local lab <const> = Clr.sRgbToSrLab2(srgb)
-    local inv <const> = Clr.srLab2TosRgb(100 - lab.l, -lab.a, -lab.b, lab.alpha)
-    return AseUtilities.clrToAseColor(inv)
+    local srgb <const> = AseUtilities.aseColorToRgb(aseColor)
+    local lab <const> = ColorUtilities.sRgbToSrLab2(srgb)
+    local inv <const> = ColorUtilities.srLab2TosRgb(
+        Lab.new(100 - lab.l, -lab.a, -lab.b, lab.alpha))
+    return AseUtilities.rgbToAseColor(inv)
 end
 
 local dlg <const> = Dialog { title = "Palette Manifest" }
@@ -128,7 +129,8 @@ dlg:newrow { always = false }
 dlg:file {
     id = "palFile",
     filetypes = AseUtilities.FILE_FORMATS_PAL,
-    open = true,
+    filename = "*.*",
+    basepath = app.fs.joinPath(app.fs.userConfigPath, "palettes"),
     visible = defaults.palType == "FILE"
 }
 
@@ -379,8 +381,8 @@ dlg:button {
         local round <const> = Utilities.round
         local strfmt <const> = string.format
         local strsub <const> = string.sub
-        local sRgbToLab <const> = Clr.sRgbToSrLab2
-        local labToLch <const> = Clr.srLab2ToSrLch
+        local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
+        local labToLch <const> = Lab.toLch
         local strToChars <const> = Utilities.stringToCharArr
         local hexToAse <const> = AseUtilities.hexToAseColor
 
@@ -458,14 +460,13 @@ dlg:button {
                     -- print(webProfileStr)
                 end
 
-                local clr <const> = Clr.new(
+                local clr <const> = Rgb.new(
                     redSrgb255 / 255.0,
                     greenSrgb255 / 255.0,
                     blueSrgb255 / 255.0,
                     1.0)
                 local lab <const> = sRgbToLab(clr)
-                local lch <const> = labToLch(
-                    lab.l, lab.a, lab.b, 1.0)
+                local lch <const> = labToLch(lab)
 
                 -- Convert values to integers to make them
                 -- easier to sort and to make sorting conform
@@ -825,7 +826,7 @@ dlg:button {
 
         -- Create sprite.
         local manifestSprite <const> = AseUtilities.createSprite(
-            mnfstSpec, mnfstTitle)
+            mnfstSpec, mnfstTitle, false)
 
         app.transaction("Set Grid", function()
             manifestSprite.gridBounds = Rectangle(

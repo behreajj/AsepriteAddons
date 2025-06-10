@@ -8,7 +8,6 @@ local defaults <const> = {
     angle = 90,
     cw = false,
     isCyclic = false,
-    pullFocus = true
 }
 
 local dlg <const> = Dialog { title = "Sweep Gradient" }
@@ -63,7 +62,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "confirm",
     text = "&OK",
-    focus = defaults.pullFocus,
+    focus = true,
     onclick = function()
         local site <const> = app.site
         local activeSprite = site.sprite
@@ -89,7 +88,7 @@ dlg:button {
         local atan2 <const> = math.atan
         local max <const> = math.max
         local strpack <const> = string.pack
-        local toHex <const> = Clr.toHex
+        local toHex <const> = Rgb.toHex
 
         -- Unpack arguments.
         local args <const> = dlg.data
@@ -135,8 +134,9 @@ dlg:button {
         local yOrigSigned <const> = 1.0 - (yOrigNorm + yOrigNorm)
 
         local query <const> = AseUtilities.DIMETRIC_ANGLES[angDegrees]
-        local angRadians = angDegrees * 0.017453292519943
-        if query then angRadians = query end
+        local angRadians <const> = query
+            or (0.017453292519943 * angDegrees)
+
         local cw = 1.0
         if args.cw then cw = -1.0 end
 
@@ -183,7 +183,7 @@ dlg:button {
                 trgByteStr[i] = strpack("<I4", trgAbgr32)
             end
         else
-            local dither <const> = GradientUtilities.ditherFromPreset(
+            local dither <const> = GradientUtilities.ditherFuncFromPreset(
                 stylePreset, bayerIndex, ditherPath)
             local i = 0
             while i < areaSprite do

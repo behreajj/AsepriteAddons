@@ -1,8 +1,3 @@
---[[This could respond to app.preferences.range.opacity being 0 (0 to 255)
-or 1 (0 to 100), some dialogs have wait=true and others wait=false, meaning the
-preference could be changed after the dialog window is opened.
-]]
-
 local aniDirs <const> = {
     "FORWARD",
     "REVERSE",
@@ -24,7 +19,6 @@ local function aniDirToStr(aniDir)
     if aniDir == AniDir.PING_PONG then return "PING_PONG" end
     if aniDir == AniDir.PING_PONG_REVERSE then return "PING_PONG_REVERSE" end
     if aniDir == AniDir.REVERSE then return "REVERSE" end
-
     return "FORWARD"
 end
 
@@ -55,38 +49,58 @@ local site <const> = app.site
 local sprite <const> = site.sprite
 if not sprite then return end
 
-local layer <const> = site.layer or sprite.layers[1]
-local isBkg <const> = layer.isBackground
-local isTilemap <const> = layer.isTilemap
-local isGroup <const> = layer.isGroup
-
-local frame <const> = site.frame or sprite.frames[1]
-local cel <const> = layer:cel(frame)
-local tag <const> = app.tag
-
-local docPrefs <const> = app.preferences.document(sprite)
+local appPrefs <const> = app.preferences
+local docPrefs <const> = appPrefs.document(sprite)
 local tlPrefs <const> = docPrefs.timeline
 local frameUiOffset <const> = tlPrefs.first_frame - 1 --[[@as integer]]
+local useNewBlend <const> = appPrefs.experimental.new_blend or false
+
+local layer <const> = site.layer or sprite.layers[1]
+local isBkg <const> = layer.isBackground
+local isGroup <const> = layer.isGroup
+local isTilemap <const> = layer.isTilemap
+local hasBlend <const> = (not isBkg) and (useNewBlend or (not isGroup))
+
+local frame <const> = site.frame or sprite.frames[1]
+-- local frFmtStr <const> = "Frame %d (%.2f fps)"
+local frFmtStr <const> = "Frame %d"
+local frIdx <const> = frame.frameNumber
+local frIdxUi <const> = frameUiOffset + frIdx
+local dur <const> = frame.duration
+
+local cel <const> = layer:cel(frame)
+local tag <const> = app.tag
 
 local dlg <const> = Dialog { title = "Properties" }
 
 dlg:separator {
     id = "frameSep",
-    text = string.format("Frame %d", frameUiOffset + frame.frameNumber),
+    -- text = string.format(frFmtStr, frIdxUi, dur > 0.0 and 1.0 / dur or 0.0),
+    text = string.format(frFmtStr, frIdxUi),
     focus = false
 }
 
 dlg:number {
     id = "frameDuration",
     label = "Duration:",
-    text = string.format("%d", math.floor(1000.0 * frame.duration + 0.5)),
+    text = string.format("%d", math.floor(1000.0 * dur + 0.5)),
     decimals = 0,
     focus = false,
     onchange = function()
         local args <const> = dlg.data
         local msDur <const> = args.frameDuration --[[@as integer]]
-        frame.duration = math.min(math.max(math.abs(
+        local sDur <const> = math.min(math.max(math.abs(
             msDur) * 0.001, 0.001), 65.535)
+
+        -- The problem with modifying this is when the dialog is too
+        -- big to fit within the app window and has a scrollbar. Modifying
+        -- the widget collapses the dialog's size.
+        -- local fpsApprox <const> = 1.0 / sDur
+        -- dlg:modify {
+        --     id = "frameSep",
+        --     text = string.format(frFmtStr, frIdxUi, fpsApprox) }
+
+        frame.duration = sDur
         app.refresh()
     end
 }
@@ -109,7 +123,7 @@ dlg:entry {
     end
 }
 
-if (not isBkg) and (not isGroup) then
+if hasBlend then
     dlg:newrow { always = false }
 
     -- This cannot have focus because it may not even be created if the layer
@@ -117,11 +131,11 @@ if (not isBkg) and (not isGroup) then
     dlg:combobox {
         id = "layerBlend",
         label = "Blend:",
-        option = blendModeToStr(layer.blendMode),
+        option = blendModeToStr(layer.blendMode or BlendMode.NORMAL),
         options = blendModes,
         focus = false,
         onchange = function()
-            if (not isBkg) and (not isGroup) then
+            if (not isBkg) then
                 local args <const> = dlg.data
                 local blendStr <const> = args.layerBlend --[[@as string]]
                 layer.blendMode = BlendMode[blendStr]
@@ -140,7 +154,7 @@ if (not isBkg) and (not isGroup) then
         value = layer.opacity or 255,
         focus = false,
         onchange = function()
-            if (not isBkg) and (not isGroup) then
+            if (not isBkg) then
                 local args <const> = dlg.data
                 local layerOpacity <const> = args.layerOpacity --[[@as integer]]
                 layer.opacity = layerOpacity
@@ -183,13 +197,15 @@ dlg:entry {
 if isTilemap then
     local tileSet <const> = layer.tileset
     if tileSet then
-        -- TODO: Any way to set the allowed flip flags (X, Y, D)?
+        -- Flip flags seem intended for layer creation, not to be edited in
+        -- an existing tile map, i.e., when to recognize that one tile should
+        -- be created with multiple flags assigned to the map?
 
         local gridSize <const> = tileSet.grid.tileSize
 
         dlg:separator {
             id = "tileSep",
-            text = string.format("Tileset %d x %d (#%d)",
+            text = string.format("Tileset %d x %d (%d Tiles)",
                 gridSize.width, gridSize.height, #tileSet)
         }
 
@@ -435,5 +451,6 @@ dlg:button {
 -- Dialog bounds cannot be realigned because of wait = true.
 dlg:show {
     autoscrollbars = true,
+    hand = true,
     wait = true
 }

@@ -34,7 +34,8 @@ dlg:file {
     id = "filepath",
     label = "Path:",
     filetypes = { "gpl", "pal" },
-    open = true,
+    filename = "*.gpl",
+    basepath = app.fs.joinPath(app.fs.userConfigPath, "palettes"),
     focus = true
 }
 
@@ -220,12 +221,14 @@ dlg:button {
             local lenFileData <const> = #fileData
             -- print(string.format("lenFileData: %d", lenFileData))
 
+            -- YY-CHR generated pal files have no header.
+            -- https://github.com/aseprite/aseprite/issues/1206
             local magicWordRiff <const> = strunpack("<I4",
                 strsub(fileData, 1, 4))
             local magicCheckRiff <const> = strunpack("<I4", "RIFF")
             isValidRiff = magicWordRiff == magicCheckRiff
             -- print(string.format(
-            --     "magicWordRiff: %d, magicCheckRiff: %d %s",
+            --     "magicWordRiff: 0x%08x, magicCheckRiff: 0x%08x %s",
             --     magicWordRiff, magicCheckRiff,
             --     magicWordRiff == magicCheckRiff and "MATCH" or "MISMATCH"))
 
@@ -241,7 +244,7 @@ dlg:button {
             end
             isValidRiff = isValidRiff and magicWordPal == magicCheckPal
             -- print(string.format(
-            --     "i: %d, magicWordPal: %d, magicCheckPal: %d %s",
+            --     "i: %d, magicWordPal: 0x%08x, magicCheckPal: 0x%08x %s",
             --     i, magicWordPal, magicCheckPal,
             --     magicWordPal == magicCheckPal and "MATCH" or "MISMATCH"))
 
@@ -256,7 +259,7 @@ dlg:button {
             end
             isValidRiff = isValidRiff and magicWordData == magicCheckData
             -- print(string.format(
-            --     "i: %d, magicWordData: %d, magicCheckData: %d %s",
+            --     "i: %d, magicWordData: 0x%08x, magicCheckData: 0x%08x %s",
             --     i, magicWordData, magicCheckData,
             --     magicWordData == magicCheckData and "MATCH" or "MISMATCH"))
 
@@ -334,10 +337,7 @@ dlg:button {
                         and jascPalClrCountFound < 1 then
                         jascPalClrCountFound = lineCount
                     else
-                        local a = 255
-                        local b = 0
-                        local g = 0
-                        local r = 0
+                        local r, g, b, a = 0, 0, 0, 255
 
                         ---@type string[]
                         local tokens <const> = {}
@@ -352,6 +352,7 @@ dlg:button {
                                 and lenTokens > 3 then
                                 local aPrs <const> = tonumber(tokens[4], 10)
                                 if aPrs then a = aPrs end
+                                if a < 0 then a = 0 elseif a > 255 then a = 255 end
                             end
 
                             if a > 0 then
@@ -362,14 +363,12 @@ dlg:button {
                                 if bPrs then b = bPrs end
                                 if gPrs then g = gPrs end
                                 if rPrs then r = rPrs end
+
+                                if b < 0 then b = 0 elseif b > 255 then b = 255 end
+                                if g < 0 then g = 0 elseif g > 255 then g = 255 end
+                                if r < 0 then r = 0 elseif r > 255 then r = 255 end
                             end
                         end
-
-                        -- Saturation arithmetic instead of modular.
-                        if a < 0 then a = 0 elseif a > 255 then a = 255 end
-                        if b < 0 then b = 0 elseif b > 255 then b = 255 end
-                        if g < 0 then g = 0 elseif g > 255 then g = 255 end
-                        if r < 0 then r = 0 elseif r > 255 then r = 255 end
 
                         local hex <const> = a << 0x18 | b << 0x10 | g << 0x08 | r
                         lenColors = lenColors + 1
@@ -425,7 +424,7 @@ dlg:button {
             local image <const> = Image(spec)
             image.bytes = table.concat(byteArr)
 
-            activeSprite = AseUtilities.createSprite(spec, "Palette")
+            activeSprite = AseUtilities.createSprite(spec, "Palette", false)
             local layer <const> = activeSprite.layers[1]
             local cel <const> = layer.cels[1]
             cel.image = image

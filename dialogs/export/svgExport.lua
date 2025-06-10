@@ -9,7 +9,9 @@ local frameTargetOptions <const> = {
 }
 
 local defaults <const> = {
-    -- TODO: Option to include metadata?
+    -- Inkscape specific data, like layer UI color?
+
+    -- Include metadata? Might be easier to do now with a child dialog.
     -- https://community.aseprite.org/t/general-exif-or-other-metadata-support/23830
     -- https://svgwg.org/svg2-draft/struct.html#MetadataElement
     flattenImage = true,
@@ -157,6 +159,8 @@ local function imgToSvgStr(
         ---@type table<integer, integer>
         local clrIdxToHex <const> = {}
         local aseColorToHex <const> = AseUtilities.aseColorToHex
+        -- This shouldn't have to be validated, since color is not written
+        -- to a raster image byte buffer.
         local alphaIndex <const> = imgSpec.transparentColor
         local rgbColorMode <const> = ColorMode.RGB
 
@@ -453,6 +457,11 @@ local function layerToSvgStr(
 
         local isGroup <const> = layer.isGroup
         local isTilemap <const> = layer.isTilemap
+        local lyrAlpha <const> = layer.opacity or 255
+        -- feBlend seems more backward compatible, but inline
+        -- CSS style results in shorter code.
+        local bmStr <const> = blendModeToStr(layer.blendMode
+            or BlendMode.NORMAL)
 
         if isGroup then
             ---@type string[]
@@ -472,9 +481,17 @@ local function layerToSvgStr(
                         childStrs)
                 end
 
+                local alphaStr = ""
+                if lyrAlpha < 0xff then
+                    local cmpAlpha <const> = lyrAlpha / 255.0
+                    alphaStr = string.format(
+                        " opacity=\"%.3f\"",
+                        cmpAlpha)
+                end
+
                 local grpStr <const> = string.format(
-                    "<g id=\"%s\"%s>\n%s\n</g>",
-                    layerName, visStr, table.concat(childStrs, "\n"))
+                    "<g id=\"%s\"%s style=\"mix-blend-mode: %s;\"%s>\n%s\n</g>",
+                    layerName, visStr, bmStr, alphaStr, table.concat(childStrs, "\n"))
                 layersStrArr[#layersStrArr + 1] = grpStr
             end
         elseif (not layer.isReference)
@@ -493,7 +510,6 @@ local function layerToSvgStr(
 
                 if not celImg:isEmpty() then
                     -- Layer opacity and cel opacity are compounded.
-                    local lyrAlpha <const> = layer.opacity or 255
                     local celAlpha <const> = cel.opacity
 
                     local alphaStr = ""
@@ -504,11 +520,6 @@ local function layerToSvgStr(
                             " opacity=\"%.3f\"",
                             cmpAlpha)
                     end
-
-                    -- feBlend seems more backward compatible, but inline
-                    -- CSS style results in shorter code.
-                    local bmStr <const> = blendModeToStr(layer.blendMode
-                        or BlendMode.NORMAL)
 
                     local celPos <const> = cel.position
                     local xCel <const> = celPos.x
@@ -671,7 +682,7 @@ dlg:slider {
     id = "scale",
     label = "Scale:",
     min = 1,
-    max = 32,
+    max = AseUtilities.UPSCALE_LIMIT,
     value = defaults.scale
 }
 
@@ -776,8 +787,10 @@ dlg:file {
     id = "filepath",
     label = "Path:",
     filetypes = { "svg" },
+    filename = "*.svg",
+    basepath = app.fs.userDocsPath,
+    title = "Export Svg",
     save = true,
-
     focus = true
 }
 
@@ -885,7 +898,8 @@ dlg:button {
             local wCheck <const>,
             hCheck <const>,
             aAse <const>,
-            bAse <const> = AseUtilities.getBkgChecker(activeSprite)
+            bAse <const>,
+            _ <const> = AseUtilities.getBkgChecker(activeSprite)
 
             local wCheckScaled <const> = wCheck * wPixel
             local hCheckScaled <const> = hCheck * hPixel
@@ -932,14 +946,14 @@ dlg:button {
             and colorMode == ColorMode.INDEXED then
             -- This poses a problem for animation, because the background
             -- color could change per multi-palette sprites.
-            local alphaIdx <const> = activeSpec.transparentColor
+            local alphaIndex <const> = activeSpec.transparentColor
             local palette1 <const> = getPalette(1, activeSprite.palettes)
             local lenPalette1 = #palette1
 
             local bkgHex = 0x0
-            if alphaIdx >= 0 and alphaIdx < lenPalette1 then
+            if alphaIndex >= 0 and alphaIndex < lenPalette1 then
                 bkgHex = AseUtilities.aseColorToHex(
-                    palette1:getColor(alphaIdx), ColorMode.RGB)
+                    palette1:getColor(alphaIndex), ColorMode.RGB)
             end
 
             -- An indexed color mode sprite may contain a background, yet have

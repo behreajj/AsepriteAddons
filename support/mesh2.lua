@@ -17,9 +17,12 @@ setmetatable(Mesh2, {
 ---Constructs a 2D mesh with a variable number of vertices per face.
 ---@param fs integer[][] faces
 ---@param vs Vec2[] coordinates
----@param name string? name
+---@param name? string name
 ---@return Mesh2
 function Mesh2.new(fs, vs, name)
+    -- Last commit to include dimetric grid:
+    -- 00579a9465d6616b29aef45aa668f171f2210431
+
     local inst <const> = setmetatable({}, Mesh2)
     inst.fs = fs or {}
     inst.vs = vs or {}
@@ -38,7 +41,7 @@ end
 ---Insets a face by calculating its center then easing from the face's vertices
 ---toward the center by the factor, in [0.0, 1.0]. The factor defaults to 0.5.
 ---@param faceIndex integer face index
----@param fac number? inset factor
+---@param fac? number inset factor
 ---@return Mesh2
 function Mesh2:insetFace(faceIndex, fac)
     local t <const> = fac or 0.5
@@ -226,7 +229,7 @@ end
 ---@param startWeight number start weight
 ---@param stopWeight number stop weight
 ---@param sectors integer sectors
----@param useQuads boolean? use quads
+---@param useQuads? boolean use quads
 ---@return Mesh2
 function Mesh2.arc(
     startAngle, stopAngle,
@@ -309,148 +312,6 @@ function Mesh2.arc(
     return Mesh2.new(fs, vs, "Arc")
 end
 
----Creates a grid of rectangles.
----@param cols integer columns
----@param rows integer rows
----@return Mesh2
-function Mesh2.gridCartesian(cols, rows)
-    -- Validate inputs.
-    local cVrf = cols or 2
-    if cVrf < 2 then cVrf = 2 end
-    local rVrf = rows or cVrf
-    if rVrf < 2 then rVrf = 2 end
-
-    -- Fence posting problem:
-    -- There is one more edge than cell.
-    local rVal1 <const> = rVrf + 1
-    local cVal1 <const> = cVrf + 1
-
-    ---@type Vec2[]
-    local vs <const> = {}
-    local iToStep <const> = 1.0 / rVrf
-    local jToStep <const> = 1.0 / cVrf
-    local fLen1 <const> = rVal1 * cVal1
-
-    -- Set vertex coordinates.
-    local h = 0
-    while h < fLen1 do
-        local i <const> = h // cVal1
-        local j <const> = h % cVal1
-        h = h + 1
-        vs[h] = Vec2.new(
-            j * jToStep - 0.5,
-            i * iToStep - 0.5)
-    end
-
-    ---@type integer[][]
-    local fs <const> = {}
-    local fLen <const> = rVrf * cVrf
-
-    -- Set face indices.
-    local k = 0
-    while k < fLen do
-        local i <const> = k // cVrf
-        local j <const> = k % cVrf
-
-        local cOff0 <const> = 1 + i * cVal1
-
-        local c00 <const> = cOff0 + j
-        local c10 <const> = c00 + 1
-        local c01 <const> = cOff0 + cVal1 + j
-        local c11 <const> = c01 + 1
-
-        k = k + 1
-        fs[k] = { c00, c10, c11, c01 }
-    end
-
-    return Mesh2.new(fs, vs, "Grid.Cartesian")
-end
-
----Creates a grid of rhombi.
----@param cells integer cell count
----@return Mesh2
-function Mesh2.gridDimetric(cells)
-    local mesh <const> = Mesh2.gridCartesian(cells, cells)
-
-    local vs <const> = mesh.vs
-    local vsLen <const> = #vs
-    local i = 0
-    while i < vsLen do
-        i = i + 1
-        local vSrc <const> = vs[i]
-        vs[i] = Vec2.new(
-            0.5 * vSrc.x - 0.5 * vSrc.y,
-            0.25 * vSrc.x + 0.25 * vSrc.y)
-    end
-
-    mesh.name = "Grid Dimetric"
-    return mesh
-end
-
----Creates a grid of hexagons in rings around a central cell.
----@param rings integer number of rings
----@return Mesh2
-function Mesh2.gridHex(rings)
-    local vRings = 1
-    if rings > 1 then vRings = rings end
-    local vrad <const> = 0.5
-    local extent <const> = vrad * 1.7320508075689
-    local halfExt <const> = extent * 0.5
-    local rad15 <const> = vrad * 1.5
-    local radrt32 <const> = vrad * 0.86602540378444
-    local halfRad <const> = vrad * 0.5
-
-    local iMax <const> = vRings - 1
-    local iMin <const> = -iMax
-
-    ---@type Vec2[]
-    local vs <const> = {}
-    ---@type integer[][]
-    local fs <const> = {}
-
-    local fIdx = 0
-    local vIdx = -5
-    local i = iMin - 1
-    while i < iMax do
-        i = i + 1
-        local jMin = iMin
-        local jMax = iMax
-
-        if i < 0 then jMin = jMin - i end
-        if i > 0 then jMax = jMax - i end
-
-        local iExt <const> = i * extent
-
-        local j = jMin - 1
-        while j < jMax do
-            j = j + 1
-            local x <const> = iExt + j * halfExt
-            local y <const> = j * rad15
-
-            local left <const> = x - radrt32
-            local right <const> = x + radrt32
-            local top <const> = y + halfRad
-            local bottom <const> = y - halfRad
-
-            vIdx = vIdx + 6
-            vs[vIdx] = Vec2.new(x, y + vrad)
-            vs[vIdx + 1] = Vec2.new(left, top)
-            vs[vIdx + 2] = Vec2.new(left, bottom)
-            vs[vIdx + 3] = Vec2.new(x, y - vrad)
-            vs[vIdx + 4] = Vec2.new(right, bottom)
-            vs[vIdx + 5] = Vec2.new(right, top)
-
-            fIdx = fIdx + 1
-            fs[fIdx] = {
-                vIdx, vIdx + 1, vIdx + 2,
-                vIdx + 3, vIdx + 4, vIdx + 5
-            }
-        end
-    end
-
-    return Mesh2.new(fs, vs, "Grid Hexagon")
-end
-
 ---Creates a regular convex polygon
 ---@param sectors integer sides
 ---@return Mesh2
@@ -488,9 +349,9 @@ end
 ---[0.0, 1.0] that is multiplied by the polygon radius. The default is to pick
 ---1, skip 1, and inset by 0.5.
 ---@param sectors integer sides
----@param skip integer? vertices to skip
----@param pick integer? vertices to inset
----@param inset number? percent inset
+---@param skip? integer vertices to skip
+---@param pick? integer vertices to inset
+---@param inset? number percent inset
 ---@return Mesh2
 function Mesh2.star(sectors, skip, pick, inset)
     -- Early return for invalid skip or pick.
@@ -498,23 +359,21 @@ function Mesh2.star(sectors, skip, pick, inset)
     local vPick = 1
     if skip then vSkip = skip end
     if pick then vPick = pick end
-    if vSkip < 1 or vPick < 1 then
+    if vSkip < 1 or vPick < 1
+        or (inset and (inset < 0.000002
+            or inset > 0.999998)) then
         return Mesh2.polygon(sectors)
     end
 
     -- Validate other arguments.
     local vRad <const> = 0.5
-    local vIns = 0.25
-    local vSect = 3
-    if inset then
-        vIns = vRad - vRad * math.min(math.max(
-            inset, 0.000002), 0.999998)
-    end
-    if sectors > 3 then vSect = sectors end
+    local vSect <const> = sectors >= 3 and sectors or 3
+    local vInset <const> = inset or 0.5
 
     local all <const> = vPick + vSkip
     local seg <const> = all * vSect
     local toTheta <const> = 6.2831853071796 / seg
+    local rInset <const> = (1.0 - vInset) * vRad * math.cos(toTheta)
 
     ---@type Vec2[]
     local vs <const> = {}
@@ -529,7 +388,7 @@ function Mesh2.star(sectors, skip, pick, inset)
         -- TODO: Angle offset so that the middle
         -- of an edge lines up with the x axis.
         local theta <const> = i * toTheta
-        local r = vIns
+        local r = rInset
         if (i % all) < vPick then
             r = vRad
         end
@@ -618,8 +477,7 @@ function Mesh2.uniformData(source, target)
         while j < fSrcLen do
             j = j + 1
             k = k + 1
-            local vertSrc <const> = fSrc[j]
-            local vSrc <const> = vsSrc[vertSrc]
+            local vSrc <const> = vsSrc[fSrc[j]]
             local vTrg <const> = Vec2.new(vSrc.x, vSrc.y)
             vsTrg[k] = vTrg
             fTrg[j] = k

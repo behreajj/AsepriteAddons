@@ -17,7 +17,7 @@ setmetatable(Glyph, {
 ---'p', 'q').
 ---@param character string character
 ---@param matrix integer visual matrix
----@param drop integer? drop amount
+---@param drop? integer drop amount
 ---@return Glyph
 ---@nodiscard
 function Glyph.new(character, matrix, drop)

@@ -53,6 +53,7 @@ end
 ---Gets a color key at the index.
 ---@param i integer index
 ---@return ClrKey
+---@nodiscard
 function ClrGradient:getKey(i)
     local j <const> = 1 + (i - 1) % #self.keys
     return self.keys[j]
@@ -60,6 +61,7 @@ end
 
 ---Gets an array of keys from the gradient.
 ---@return ClrKey[]
+---@nodiscard
 function ClrGradient:getKeys()
     ---@type ClrKey[]
     local arr <const> = {}
@@ -73,20 +75,20 @@ function ClrGradient:getKeys()
 end
 
 ---Inserts a color key into the keys array based on the index returned by
----bisectRight. Does not check for duplicates. Returns true if the key was
----successfully inserted.
+---bisectRight. Does not check for duplicates. If the key was successfully
+---inserted, returns the index. Otherwise, returns -1.
 ---@param ck ClrKey color key
----@param tol number? tolerance
----@return boolean
+---@param tol? number tolerance
+---@return integer
 function ClrGradient:insortRight(ck, tol)
     local eps <const> = tol or ClrGradient.TOLERANCE
     local i <const> = ClrGradient.bisectRight(self, ck.step)
     local dupe <const> = self.keys[i - 1]
     if dupe and (math.abs(ck.step - dupe.step) <= eps) then
-        return false
+        return -1
     end
     table.insert(self.keys, i, ck)
-    return true
+    return i
 end
 
 ---Removes a color key at the index if the gradient has more than 2
@@ -160,7 +162,7 @@ end
 ---@param y integer y coordinate
 ---@param cols integer matrix columns
 ---@param rows integer matrix rows
----@return Clr
+---@return Rgb
 ---@nodiscard
 function ClrGradient.dither(
     cg, step, matrix,
@@ -173,11 +175,11 @@ function ClrGradient.dither(
     if range ~= 0.0 then
         local matIdx <const> = 1 + (x % cols) + (y % rows) * cols
         if (t - prStep) / range >= matrix[matIdx] then
-            return nxKey.clr
+            return nxKey.rgb
         end
     end
 
-    return prKey.clr
+    return prKey.rgb
 end
 
 ---Evaluates a color gradient by a step with an easing function. Returns a
@@ -185,9 +187,9 @@ end
 ---destination color and a number as a step. If nil, it defaults to a mix in
 ---standard RGB.
 ---@param cg ClrGradient color gradient
----@param step number? step
----@param easing? fun(o: Clr, d: Clr, t: number): Clr easing function
----@return Clr
+---@param step? number step
+---@param easing? fun(o: Rgb, d: Rgb, t: number): Rgb easing function
+---@return Rgb
 ---@nodiscard
 function ClrGradient.eval(cg, step, easing)
     local prKey <const>, nxKey <const>, t <const> = ClrGradient.findKeys(
@@ -195,18 +197,19 @@ function ClrGradient.eval(cg, step, easing)
     local prStep <const> = prKey.step
     local denom = nxKey.step - prStep
     if denom ~= 0.0 then denom = 1.0 / denom end
-    local f <const> = easing or Clr.mixlRgbaInternal
-    return f(prKey.clr, nxKey.clr,
+    local f <const> = easing or Rgb.mixlRgbaInternal
+    return f(prKey.rgb, nxKey.rgb,
         (t - prStep) * denom)
 end
 
 ---Internal helper to find the previous and next key to ease between at the
 ---local level. Returns the previous key, the next key and the validated step.
 ---@param cg ClrGradient color gradient
----@param step number? step
+---@param step? number step
 ---@return ClrKey
 ---@return ClrKey
 ---@return number
+---@nodiscard
 function ClrGradient.findKeys(cg, step)
     local keys <const> = cg.keys
     local firstKey <const> = keys[1]
@@ -230,7 +233,7 @@ end
 ---@param step number step
 ---@param x integer x coordinate
 ---@param y integer y coordinate
----@return Clr
+---@return Rgb
 ---@nodiscard
 function ClrGradient.noise(cg, step, x, y)
     local prKey <const>, nxKey <const>, t <const> = ClrGradient.findKeys(
@@ -248,17 +251,18 @@ function ClrGradient.noise(cg, step, x, y)
         local ign <const> = math.fmod(52.9829189 * math.fmod(
             0.06711056 * x + 0.00583715 * y, 1.0), 1.0)
         if (t - prStep) / range >= ign then
-            return nxKey.clr
+            return nxKey.rgb
         end
     end
 
-    return prKey.clr
+    return prKey.rgb
 end
 
 ---Returns a new gradient with the colors of the source,
 ---but with opaque alpha.
 ---@param source ClrGradient
 ---@return ClrGradient
+---@nodiscard
 function ClrGradient.opaque(source)
     local srcKeys <const> = source.keys
     local lenSrcKeys <const> = #srcKeys
@@ -268,9 +272,9 @@ function ClrGradient.opaque(source)
     while i < lenSrcKeys do
         i = i + 1
         local srcKey <const> = srcKeys[i]
-        local srcClr <const> = srcKey.clr
+        local srcClr <const> = srcKey.rgb
         local trgKey <const> = ClrKey.new(srcKey.step,
-            Clr.new(srcClr.r, srcClr.g, srcClr.b, 1.0))
+            Rgb.new(srcClr.r, srcClr.g, srcClr.b, 1.0))
         trgKeys[i] = trgKey
     end
 

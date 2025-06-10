@@ -1,13 +1,24 @@
 dofile("../../support/aseutilities.lua")
 
-local targets <const> = { "CURSOR", "FORE_TILE", "BACK_TILE", "TILES", "TILE_MAP" }
 local selModes <const> = { "REPLACE", "ADD", "SUBTRACT", "INTERSECT" }
+local targets <const> = {
+    "CURSOR",
+    "FORE_TILE",
+    "BACK_TILE",
+    "TILES",
+    "TILE_MAP",
+}
 
 local defaults <const> = {
-    -- app.range.tiles now works as a getter.
-
     -- Built-in Image:flip method has not been adopted here due to issues with
     -- undo history.
+
+    -- Cycle tiles commit:
+    -- Would require updating tile maps in a similar way as sort.
+    -- 020929d07fdec98fd5f1db109ef0e10c0f8c176b .
+
+    -- Last commit to have create tile map button:
+    -- 37fd92fe052e425373710fbe73ce4809611bf314 .
 
     -- Tried shifting tile at the mouse cursor with IJKL keys in commit
     -- 3506d221cb6574dadb80c3a568517aa722552f9b .
@@ -15,7 +26,7 @@ local defaults <const> = {
     -- Size of tiles in color bar is determined by
     -- app.preferences.color_bar.tiles_box_size . Without a command, however,
     -- this value can be set, but it won't update until Aseprite is restarted.
-    target = "FORE_TILE",
+    target = "CURSOR",
     useXFlip = false,
     useYFlip = false,
     useDFlip = false,
@@ -23,6 +34,39 @@ local defaults <const> = {
     strExample = "4,6:9,13",
     inPlace = true
 }
+
+---@param sprite Sprite
+---@param tileSet Tileset tile set
+---@return table<integer, Tile> tiles
+---@return integer[] coords
+local function getRangeTiles(sprite, tileSet)
+    ---@type table<integer, Tile>
+    local tiles <const> = {}
+    ---@type integer[]
+    local coords <const> = {}
+
+    local range <const> = app.range
+    if range.sprite ~= sprite then return tiles, coords end
+
+    local rangeTiles <const> = range.tiles
+    local lenRangeTiles <const> = #rangeTiles
+    local lenTileSet <const> = #tileSet
+
+    local j = 0
+    while j < lenRangeTiles do
+        j = j + 1
+        local idx <const> = rangeTiles[j]
+        if idx > 0 and idx < lenTileSet then
+            -- You don't need to worry about tiles containing empty
+            -- images here, as the transformTiles method below will
+            -- ignore empties.
+            tiles[idx] = tileSet:tile(idx)
+        end
+    end
+
+    -- For now, don't bother with getting coords from tile map.
+    return tiles, coords
+end
 
 ---Gets tiles from a tile map that are entirely contained by a selection.
 ---Returns a dictionary where the tile map index serves as the key and the Tile
@@ -34,8 +78,8 @@ local defaults <const> = {
 ---@param tileMap Image tile map, an image
 ---@param tileSet Tileset tile set
 ---@param mask Selection selection mask
----@param xtlCel integer? cel top left corner x
----@param ytlCel integer? cel top left corner y
+---@param xtlCel? integer cel top left corner x
+---@param ytlCel? integer cel top left corner y
 ---@return table<integer, Tile> tiles
 ---@return integer[] coords
 local function getSelectedTiles(
@@ -236,8 +280,8 @@ local function moveMap(xShift, yShift)
         local snap <const> = docPrefs.grid.snap --[[@as boolean]]
         if snap then
             local grid <const> = activeSprite.gridBounds
-            local xGrid <const> = grid.width
-            local yGrid <const> = grid.height
+            local xGrid <const> = math.max(1, math.abs(grid.width))
+            local yGrid <const> = math.max(1, math.abs(grid.height))
             xShScl = xShScl * xGrid
             yShScl = yShScl * yGrid
         end
@@ -559,10 +603,22 @@ local function transformCel(dialog, preset)
     -- conversion to tilemap layer, it may go outside the canvas due to
     -- uniform tile size. This will lead to getSelectedTiles omitting tiles
     -- because tiles must be entirely contained.
-    local selection <const>, _ <const> = AseUtilities.getSelection(activeSprite)
-    local contained <const>, coords <const> = getSelectedTiles(
-        activeCel.image, tileSet, selection,
-        xtlCel, ytlCel)
+    local selection <const>,
+    isValid <const> = AseUtilities.getSelection(activeSprite)
+
+    ---@type table<integer, Tile>
+    local contained = {}
+    ---@type integer[]
+    local coords = {}
+
+    if isValid then
+        contained, coords = getSelectedTiles(
+            activeCel.image, tileSet, selection,
+            xtlCel, ytlCel)
+    else
+        contained, coords = getRangeTiles(
+            activeSprite, tileSet)
+    end
 
     local srcToTrgIdcs <const> = transformTiles(
         preset, contained, inPlace,
@@ -836,10 +892,15 @@ dlg:button {
         elseif target == "CURSOR" then
             local isValid <const>,
             mapIndex <const>,
-            _ <const>,
+            mapFlags <const>,
             _ <const>,
             _ <const> = getIndexAtCursor()
-            if isValid then selIndices[1] = mapIndex else selIndices[1] = 0 end
+            if isValid then
+                selIndices[1] = mapIndex
+                app.fgTile = app.pixelColor.tile(mapIndex, mapFlags)
+            else
+                selIndices[1] = 0
+            end
         else
             -- Default to "TILE_MAP" or "TILES"
             local rangeStr <const> = args.rangeStr
@@ -869,7 +930,9 @@ dlg:button {
         if lenSelIndices <= 0 then return end
 
         -- A tile range appears in the color bar even when app.site tile map
-        -- mode is not tiles.
+        -- mode is not tiles. Could also require that app.site.tilemapMode
+        -- be TilemapMode.TILES, however, the tile range appears in the UI
+        -- even when the mode is inactive.
         if app.range.isEmpty or target == "TILES" then
             app.range.tiles = selIndices
         end
@@ -1022,228 +1085,8 @@ dlg:button {
 dlg:separator { id = "sortSep" }
 
 dlg:button {
-    id = "createButton",
-    label = "Tile Set:",
-    text = "CR&EATE",
-    focus = false,
-    onclick = function()
-        local site <const> = app.site
-        local activeSprite <const> = site.sprite
-        if not activeSprite then return end
-
-        local activeFrame <const> = site.frame
-        if not activeFrame then return end
-
-        local activeLayer <const> = site.layer
-        if not activeLayer then return end
-
-        if activeLayer.isReference then
-            app.alert {
-                title = "Error",
-                text = "Reference layers are not supported."
-            }
-            return
-        end
-
-        if activeLayer.isTilemap then
-            app.alert {
-                title = "Error",
-                text = "Layer is a tile map."
-            }
-            return
-        end
-
-        local spriteSpec <const> = activeSprite.spec
-        local colorMode <const> = spriteSpec.colorMode
-        local colorSpace <const> = spriteSpec.colorSpace
-        local alphaIndex <const> = spriteSpec.transparentColor
-
-        local srcImg = nil
-        local xtl, ytl = 0, 0
-        local layerOpacity, celOpacity = 255, 255
-        local blendMode = BlendMode.NORMAL
-        local zIndex = 0
-        if activeLayer.isGroup then
-            local flat <const>,
-            bounds <const> = AseUtilities.flattenGroup(
-                activeLayer, activeFrame,
-                colorMode, colorSpace, alphaIndex,
-                true, false, true, true)
-            srcImg, xtl, ytl = flat, bounds.x, bounds.y
-        else
-            layerOpacity = activeLayer.opacity or 255
-            blendMode = activeLayer.blendMode or BlendMode.NORMAL
-
-            local cel <const> = activeLayer:cel(activeFrame)
-            if cel then
-                celOpacity = cel.opacity
-                zIndex = cel.zIndex
-
-                local flat <const> = Image(spriteSpec)
-                flat:drawImage(cel.image, cel.position, 255, BlendMode.SRC)
-                srcImg, xtl, ytl = flat, 0, 0
-            else
-                local flat <const> = Image(spriteSpec)
-                flat:drawSprite(activeSprite, activeFrame, Point(0, 0))
-                srcImg, xtl, ytl = flat, 0, 0
-            end
-        end
-
-        if srcImg:isEmpty() then return end
-
-        local wTile, hTile = 8, 8
-        local docPrefs <const> = app.preferences.document(activeSprite)
-        if docPrefs then
-            local gridPrefs <const> = docPrefs.grid
-            if gridPrefs then
-                local gridBounds <const> = gridPrefs.bounds --[[@as Rectangle]]
-                if gridBounds then
-                    wTile = math.min(math.max(gridBounds.width, 2), 256)
-                    hTile = math.min(math.max(gridBounds.height, 2), 256)
-                end
-            end
-        end
-
-        local srcBpp <const> = srcImg.bytesPerPixel
-        local srcBytes <const> = srcImg.bytes
-        local wSrc <const> = srcImg.width
-        local hSrc <const> = srcImg.height
-
-        local wMap <const> = math.max(1, math.ceil(wSrc / wTile))
-        local hMap <const> = math.max(1, math.ceil(hSrc / hTile))
-        local areaMap <const> = wMap * hMap
-        local areaTile <const> = wTile * hTile
-
-        local fmtStr <const> = "<I" .. srcBpp
-        local alphaIndexVerif <const> = (colorMode ~= ColorMode.INDEXED
-                or (alphaIndex >= 0 and alphaIndex < 256))
-            and alphaIndex
-            or 0
-        local alphaIndexPacked <const> = string.pack(fmtStr, alphaIndexVerif)
-
-        -- Cache global methods used in loop.
-        local strpack <const> = string.pack
-        local strsub <const> = string.sub
-        local tconcat <const> = table.concat
-        local fnvHash <const> = Utilities.fnvHash
-
-        ---@type table<integer, string>
-        local tileDict <const> = {}
-        ---@type integer[]
-        local mapHash <const> = {}
-
-        local i = 0
-        while i < areaMap do
-            local xOffset <const> = (i % wMap) * wTile
-            local yOffset <const> = (i // wMap) * hTile
-
-            ---@type string[]
-            local tileStrArr <const> = {}
-
-            local j = 0
-            while j < areaTile do
-                local xSrc <const> = xOffset + j % wTile
-                local ySrc <const> = yOffset + j // wTile
-
-                local hexTile = alphaIndexPacked
-                if ySrc >= 0 and ySrc < hSrc
-                    and xSrc >= 0 and xSrc < wSrc then
-                    local idxbpp <const> = (ySrc * wSrc + xSrc) * srcBpp
-                    hexTile = strsub(srcBytes, 1 + idxbpp, srcBpp + idxbpp)
-                end
-
-                j = j + 1
-                tileStrArr[j] = hexTile
-            end
-
-            local tileStr <const> = tconcat(tileStrArr)
-            local tileHash <const> = fnvHash(tileStr)
-            tileDict[tileHash] = tileStr
-
-            i = i + 1
-            mapHash[i] = tileHash
-        end
-
-        ---@type Image[]
-        local tileImages <const> = {}
-        ---@type table<integer, integer>
-        local hashLookup <const> = {}
-        local lenTileImages = 0
-
-        local tileSpec <const> = AseUtilities.createSpec(
-            wTile, hTile, colorMode, colorSpace, alphaIndex)
-        for hash, byteStr in pairs(tileDict) do
-            local tileImage <const> = Image(tileSpec)
-            tileImage.bytes = byteStr
-            if not tileImage:isEmpty() then
-                lenTileImages = lenTileImages + 1
-                tileImages[lenTileImages] = tileImage
-                hashLookup[hash] = lenTileImages
-            end
-        end
-
-        local tileSet <const> = activeSprite:newTileset(
-            Rectangle(0, 0, wTile, hTile),
-            lenTileImages + 1)
-
-        math.randomseed(os.time())
-        local minint64 <const> = 0x1000000000000000
-        local maxint64 <const> = 0x7fffffffffffffff
-        local tsId <const> = math.random(minint64, maxint64)
-
-        app.transaction("Assign Tileset", function()
-            tileSet.properties["id"] = tsId
-            tileSet.name = string.format("%16x", tsId)
-
-            local k = 0
-            while k < lenTileImages do
-                k = k + 1
-                local tile <const> = tileSet:tile(k)
-                if tile then tile.image = tileImages[k] end
-            end
-        end)
-
-        ---@type string[]
-        local mapBytes <const> = {}
-        local m = 0
-        while m < areaMap do
-            m = m + 1
-            local idx <const> = hashLookup[mapHash[m]] or 0
-            mapBytes[m] = strpack("<I4", idx)
-        end
-
-        local mapImage = Image(AseUtilities.createSpec(
-            wMap, hMap, ColorMode.TILEMAP, colorSpace, 0))
-        mapImage.bytes = table.concat(mapBytes)
-
-        local xTrimmed, yTrimmed = 0, 0
-        mapImage, xTrimmed, yTrimmed = AseUtilities.trimMapAlpha(
-            mapImage, alphaIndexVerif, wTile, hTile, 8, 8)
-        xtl = xtl + xTrimmed
-        ytl = ytl + yTrimmed
-
-        app.command.NewLayer { tilemap = true }
-
-        local tmLayer <const> = app.layer
-        if tmLayer and tmLayer.isTilemap then
-            app.transaction("Create Map Cel", function()
-                tmLayer.tileset = tileSet
-                tmLayer.blendMode = blendMode
-                tmLayer.opacity = layerOpacity
-
-                local tmCel <const> = activeSprite:newCel(
-                    tmLayer, activeFrame, mapImage, Point(xtl, ytl))
-                tmCel.opacity = celOpacity
-                tmCel.zIndex = zIndex
-            end)
-        end
-
-        app.refresh()
-    end
-}
-
-dlg:button {
     id = "mapButton",
+    label = "Tile Set:",
     text = "&MAP",
     focus = false,
     onclick = function()
@@ -1419,12 +1262,12 @@ dlg:button {
         -- nil at its first index. Any other relevant data from a tile would
         -- also be cloned at this stage, e.g., user data.
         ---@type {image: Image, color: Color, data: string}[]
-        local sortedTsPackets = {}
+        local sortedTsPackets <const> = {}
 
         -- Flip the relationship between old (unsorted) and new (sorted)
         -- indices so that other tile maps can easily be updated.
         ---@type integer[]
-        local oldToNew = {}
+        local oldToNew <const> = {}
 
         local i = 0
         while i < lenTileSet do
@@ -1515,6 +1358,18 @@ dlg:button {
     end
 }
 
+dlg:button {
+    id = "unusedRangeButton",
+    text = "UNUSED",
+    focus = false,
+    visible = false,
+    onclick = function()
+        app.command.SelectPaletteColors {
+            modifier = "unused_tiles"
+        }
+    end
+}
+
 dlg:newrow { always = false }
 
 dlg:button {
@@ -1548,6 +1403,7 @@ dlg:button {
                 title = "Error",
                 text = "Tile size is nonuniform."
             }
+            return
         end
 
         -- Cache methods used in a for loop.

@@ -1,10 +1,9 @@
 --[[To download some profiles:
-https://ninedegreesbelow.com/photography/lcms-make-icc-profiles.html
-https://github.com/ellelstone/elles_icc_profiles
+https://www.color.org/chardata/rgb/DisplayP3.xalter
+https://www.color.org/srgbprofiles.xalter
 
 For specific conversions (Adobe RGB, P3)
-https://stackoverflow.com/questions/40017741/
-mathematical-conversion-srgb-and-adobergb
+https://stackoverflow.com/questions/40017741/mathematical-conversion-srgb-and-adobergb
 https://www.w3.org/TR/css-color-4/#color-conversion-code
 ]]
 
@@ -14,7 +13,6 @@ local continuityOps <const> = { "NUMERIC", "VISUAL" }
 local defaults <const> = {
     colorSpaceType = "SRGB",
     continuityOp = "VISUAL",
-    pullFocus = false
 }
 
 local dlg <const> = Dialog { title = "Set Color Profile" }
@@ -39,7 +37,8 @@ dlg:newrow { always = false }
 dlg:file {
     id = "profilePath",
     filetypes = { "icc" },
-    open = true,
+    filename = "*.icc",
+    basepath = app.fs.userDocsPath,
     visible = defaults.colorSpaceType == "FILE"
 }
 
@@ -57,7 +56,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "ok",
     text = "&OK",
-    focus = defaults.pullFocus,
+    focus = false,
     onclick = function()
         local activeSprite <const> = app.site.sprite
         if not activeSprite then
@@ -109,8 +108,10 @@ dlg:button {
         if formerColorSpace == newColorSpace then
             confirm = app.alert {
                 title = "Warning",
-                text = { "The sprite already uses this color profile.",
-                    "Do you wish to proceed anyway?" },
+                text = {
+                    "The sprite already uses this color profile.",
+                    "Do you wish to proceed anyway?"
+                },
                 buttons = { "&YES", "&CANCEL" }
             }
         end

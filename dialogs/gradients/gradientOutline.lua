@@ -15,7 +15,6 @@ local defaults <const> = {
     m20 = false,
     m21 = true,
     m22 = false,
-    pullFocus = true
 }
 
 local dlg <const> = Dialog { title = "Outline Gradient" }
@@ -168,9 +167,8 @@ dlg:newrow { always = false }
 dlg:button {
     id = "ok",
     text = "&OK",
-    focus = defaults.pullFocus,
+    focus = true,
     onclick = function()
-        -- TODO: Expose this option?
         local printElapsed <const> = false
         local startTime <const> = os.clock()
 
@@ -207,18 +205,18 @@ dlg:button {
             return
         end
 
-        if srcLayer.isGroup then
-            app.alert {
-                title = "Error",
-                text = "Group layers are not supported."
-            }
-            return
-        end
-
         if srcLayer.isReference then
             app.alert {
                 title = "Error",
                 text = "Reference layers are not supported."
+            }
+            return
+        end
+
+        if srcLayer.isGroup then
+            app.alert {
+                title = "Error",
+                text = "Group layers are not supported."
             }
             return
         end
@@ -292,9 +290,11 @@ dlg:button {
         -- Cache methods used in loop.
         local quantize <const> = Utilities.quantizeUnsigned
         local cgeval <const> = ClrGradient.eval
-        local toHex <const> = Clr.toHex
-        local blend <const> = Clr.blendInternal
-        local clrNew <const> = Clr.new
+        local toHex <const> = Rgb.toHex
+
+        local labTosRgb <const> = ColorUtilities.srLab2TosRgb
+        local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2
+        local labnew <const> = Lab.new
         local tilesToImage <const> = AseUtilities.tileMapToImage
         local createSpec <const> = AseUtilities.createSpec
         local strfmt <const> = string.format
@@ -304,8 +304,9 @@ dlg:button {
         local tconcat <const> = table.concat
         local transact <const> = app.transaction
 
-        local bkgClr <const> = AseUtilities.aseColorToClr(aseBkgColor)
-        local bkgHex <const> = toHex(bkgClr)
+        local bkgSrgb <const> = AseUtilities.aseColorToRgb(aseBkgColor)
+        local bkgLab <const> = sRgbToLab(bkgSrgb)
+        local bkgHex <const> = toHex(bkgSrgb)
 
         -- Problem where an iteration is lost when a gradient
         -- evaluate returns the background color. This could
@@ -337,8 +338,8 @@ dlg:button {
 
         local itr2 <const> = iterations + iterations
         local alphaIndexVerif <const> = (colorMode ~= ColorMode.INDEXED
-                or (alphaIndex >= 0 and alphaIndex < 256)) and
-            alphaIndex or 0
+                or (alphaIndex >= 0 and alphaIndex < 256))
+            and alphaIndex or 0
 
         -- Convert iterations to a factor given to gradient.
         local toFac <const> = iterations > 1
@@ -364,17 +365,21 @@ dlg:button {
             fac = quantize(fac, levels)
             h = h + 1
 
-            local clr = cgeval(gradient, fac, mixFunc)
-            if alphaFade then
-                local a <const> = (1.0 - fac) * alphaStart
-                    + fac * alphaEnd
-                clr = clrNew(clr.r, clr.g, clr.b, a)
-            end
+            local srgb = cgeval(gradient, fac, mixFunc)
+            local u <const> = alphaFade
+                and (1.0 - fac) * alphaEnd
+                + fac * alphaStart
+                or 1.0 - srgb.a
 
-            -- This needs to be blended whether or not alpha fade is on auto,
-            -- because colors from shades may contain alpha as well.
-            clr = blend(bkgClr, clr)
-            local otlHex <const> = toHex(clr)
+            local lab <const> = sRgbToLab(srgb)
+            local t <const> = 1.0 - u
+            local tuv <const> = t + u * bkgSrgb.a
+            local cl <const> = u * bkgLab.l + t * lab.l
+            local ca <const> = u * bkgLab.a + t * lab.a
+            local cb <const> = u * bkgLab.b + t * lab.b
+
+            srgb = labTosRgb(labnew(cl, ca, cb, tuv))
+            local otlHex <const> = toHex(srgb)
             hexesOutline[h] = otlHex
         end
 
@@ -441,8 +446,6 @@ dlg:button {
                     i = 0
                     while i < areaTrg do
                         local cRead <const> = read[1 + i]
-                        -- TODO: Make this line and the neighbor line below
-                        -- friendlier to any color mode?
                         if (cRead & 0xff000000) == 0x0
                             or cRead == bkgHex then
                             -- Loop through matrix, check neighbors against

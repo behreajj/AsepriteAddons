@@ -5,9 +5,6 @@ local shiftOptions <const> = { "CARDINAL", "DIAGONAL", "DIMETRIC" }
 local selModes <const> = { "REPLACE", "ADD", "SUBTRACT", "INTERSECT" }
 
 local defaults <const> = {
-    -- TODO: Button to select in a circle around the cursor?
-    -- Maybe by brush size? Maybe modify the EXPAND command if there's
-    -- no room for a new button.
     amount = 1,
     shiftOption = "CARDINAL",
     selMode = "REPLACE",
@@ -150,13 +147,14 @@ dlg:slider {
     value = defaults.amount
 }
 
-dlg:separator { id = "extrudeSep", text = "Extrude" }
+-- dlg:separator { id = "extrudeSep", text = "Extrude" }
 
 dlg:combobox {
     id = "shiftOption",
-    label = "Direction:",
+    label = "Grid:",
     option = defaults.shiftOption,
-    options = shiftOptions
+    options = shiftOptions,
+    visible = false
 }
 
 dlg:newrow { always = false }
@@ -165,15 +163,16 @@ dlg:check {
     id = "trimCels",
     label = "Trim:",
     text = "Layer Ed&ges",
-    selected = defaults.trimCels
+    selected = defaults.trimCels,
+    visible = false
 }
 
 dlg:newrow { always = false }
 
 dlg:button {
     id = "wExtrude",
-    label = "Extrude:",
     text = "&W",
+    visible = false,
     focus = false,
     onclick = function()
         local args <const> = dlg.data
@@ -189,6 +188,7 @@ dlg:button {
 dlg:button {
     id = "aExtrude",
     text = "&A",
+    visible = false,
     focus = false,
     onclick = function()
         local args <const> = dlg.data
@@ -204,6 +204,7 @@ dlg:button {
 dlg:button {
     id = "sExtrude",
     text = "&S",
+    visible = false,
     focus = false,
     onclick = function()
         local args <const> = dlg.data
@@ -219,6 +220,7 @@ dlg:button {
 dlg:button {
     id = "dExtrude",
     text = "&D",
+    visible = false,
     focus = false,
     onclick = function()
         local args <const> = dlg.data
@@ -261,7 +263,7 @@ dlg:button {
         local symMode <const> = symPrefs.mode --[[@as integer]]
 
         local w = math.ceil(spec.width * 0.5)
-        if symMode == 1 or symMode == 3 then
+        if (symMode & 1) ~= 0 then
             local xAxis <const> = symPrefs.x_axis --[[@as number]]
             w = math.ceil(xAxis)
         end
@@ -292,7 +294,7 @@ dlg:button {
 
         local x = spec.width // 2
         local w = math.ceil(spec.width * 0.5)
-        if symMode == 1 or symMode == 3 then
+        if (symMode & 1) ~= 0 then
             local xAxis <const> = symPrefs.x_axis --[[@as number]]
             x = math.floor(xAxis)
             w = math.ceil(spec.width - xAxis)
@@ -350,7 +352,7 @@ dlg:button {
         local symMode <const> = symPrefs.mode --[[@as integer]]
 
         local h = math.ceil(spec.height * 0.5)
-        if symMode == 2 or symMode == 3 then
+        if (symMode & 2) ~= 0 then
             local yAxis <const> = symPrefs.y_axis --[[@as number]]
             h = math.ceil(yAxis)
         end
@@ -381,7 +383,7 @@ dlg:button {
 
         local y = spec.height // 2
         local h = math.ceil(spec.height * 0.5)
-        if symMode == 2 or symMode == 3 then
+        if (symMode & 2) ~= 0 then
             local yAxis <const> = symPrefs.y_axis --[[@as number]]
             y = math.floor(yAxis)
             h = math.ceil(spec.height - yAxis)
@@ -389,54 +391,6 @@ dlg:button {
 
         local trgSel <const> = Selection(Rectangle(
             0, y, spec.width, h))
-        updateSel(sprite, trgSel, selMode)
-        app.refresh()
-    end
-}
-
-dlg:button {
-    id = "inCircButton",
-    text = "C&IRCLE",
-    focus = false,
-    visible = false,
-    onclick = function()
-        local site <const> = app.site
-        local sprite <const> = site.sprite
-        if not sprite then return end
-        local spec <const> = sprite.spec
-        local args <const> = dlg.data
-        local selMode <const> = args.selMode
-            or defaults.selMode --[[@as string]]
-
-        local w <const> = spec.width
-        local h <const> = spec.height
-        local short <const> = math.min(w, h)
-        local len <const> = short * short
-
-        local pxRect <const> = Rectangle(0, 0, 1, 1)
-        local xtl <const> = (w == short) and 0 or (w - short) // 2
-        local ytl <const> = (h == short) and 0 or (h - short) // 2
-        local trgSel <const> = Selection(Rectangle(xtl, ytl, short, short))
-
-        local radius <const> = short * 0.5
-        local rsq <const> = radius * radius
-        local cx <const> = w // 2
-        local cy <const> = h // 2
-
-        local i = 0
-        while i < len do
-            local x <const> = xtl + i % short
-            local y <const> = ytl + i // short
-            local dx <const> = x - cx
-            local dy <const> = y - cy
-            if (dx * dx + dy * dy) >= rsq then
-                pxRect.x = x
-                pxRect.y = y
-                trgSel:subtract(pxRect)
-            end
-            i = i + 1
-        end
-
         updateSel(sprite, trgSel, selMode)
         app.refresh()
     end
@@ -503,11 +457,61 @@ dlg:button {
     end
 }
 
+dlg:newrow { always = false }
+
+dlg:button {
+    id = "inCircButton",
+    text = "C&IRCLE",
+    focus = false,
+    visible = true,
+    onclick = function()
+        local site <const> = app.site
+        local sprite <const> = site.sprite
+        if not sprite then return end
+        local spec <const> = sprite.spec
+        local args <const> = dlg.data
+        local selMode <const> = args.selMode
+            or defaults.selMode --[[@as string]]
+
+        local w <const> = spec.width
+        local h <const> = spec.height
+        local short <const> = math.min(w, h)
+        local len <const> = short * short
+
+        local pxRect <const> = Rectangle(0, 0, 1, 1)
+        local xtl <const> = (w == short) and 0 or (w - short) // 2
+        local ytl <const> = (h == short) and 0 or (h - short) // 2
+        local trgSel <const> = Selection(Rectangle(xtl, ytl, short, short))
+
+        local radius <const> = short * 0.5
+        local rsq <const> = radius * radius
+        local cx <const> = w // 2
+        local cy <const> = h // 2
+
+        local i = 0
+        while i < len do
+            local x <const> = xtl + i % short
+            local y <const> = ytl + i // short
+            local dx <const> = x - cx
+            local dy <const> = y - cy
+            if (dx * dx + dy * dy) >= rsq then
+                pxRect.x = x
+                pxRect.y = y
+                trgSel:subtract(pxRect)
+            end
+            i = i + 1
+        end
+
+        updateSel(sprite, trgSel, selMode)
+        app.refresh()
+    end
+}
+
 dlg:button {
     id = "cursorSelectButton",
     text = "C&URSOR",
     focus = false,
-    visible = false,
+    visible = true,
     onclick = function()
         local site <const> = app.site
         local activeSprite <const> = site.sprite
@@ -539,11 +543,68 @@ dlg:button {
             else
                 trgSel:add(Rectangle(xMouse, yMouse, 1, 1))
             end
+        elseif brushType == BrushType.SQUARE then
+            local amount <const> = args.amount
+                or defaults.amount --[[@as integer]]
+            local brushSize <const> = brush.size
+            local brushDegrees <const> = brush.angle
+
+            local rotNeeded <const> = brushSize > 1
+                and brushDegrees % 90 ~= 0
+            local diam <const> = brushSize <= 1
+                and amount * 2
+                or brushSize
+            if rotNeeded then
+                local query <const> = AseUtilities.DIMETRIC_ANGLES[brushDegrees]
+                local brushRadians <const> = query
+                    or (0.017453292519943 * brushDegrees)
+                local cosa <const> = math.cos(brushRadians)
+                local sina <const> = math.sin(brushRadians)
+
+                local absCosa <const> = math.abs(cosa)
+                local absSina <const> = math.abs(sina)
+                local wAabb <const> = math.ceil(
+                    diam * absSina + diam * absCosa)
+                local hAabb <const> = math.ceil(
+                    diam * absSina + diam * absCosa)
+                local areaAabb <const> = wAabb * hAabb
+
+                local radius <const> = diam * 0.5
+                local xCenteri <const> = wAabb * 0.5
+                local yCenteri <const> = hAabb * 0.5
+
+                local pxRect <const> = Rectangle(0, 0, 1, 1)
+                local floor <const> = math.floor
+
+                local i = 0
+                while i < areaAabb do
+                    local x <const> = (i % wAabb) - xCenteri
+                    local y <const> = (i // wAabb) - yCenteri
+                    local xr <const> = -cosa * x + sina * y
+                    local yr <const> = -cosa * y - sina * x
+                    if yr >= -radius and yr <= radius
+                        and xr >= -radius and xr <= radius then
+                        pxRect.x = floor(xMouse + x)
+                        pxRect.y = floor(yMouse + y)
+                        trgSel:add(pxRect)
+                    end
+                    i = i + 1
+                end
+            else
+                trgSel:add(Rectangle(
+                    xMouse - diam // 2,
+                    yMouse - diam // 2,
+                    diam, diam))
+            end
         else
             local amount <const> = args.amount
                 or defaults.amount --[[@as integer]]
-            local area <const> = amount * amount
-            local center <const> = amount * 0.5
+            local brushSize <const> = brush.size
+            local diam <const> = brushSize <= 1
+                and amount * 2
+                or brushSize
+            local area <const> = diam * diam
+            local center <const> = diam * 0.5
             local xtl <const> = xMouse - center
             local ytl <const> = yMouse - center
             local rsq <const> = center * center
@@ -552,8 +613,8 @@ dlg:button {
 
             local i = 0
             while i < area do
-                local x <const> = xtl + i % amount
-                local y <const> = ytl + i // amount
+                local x <const> = xtl + i % diam
+                local y <const> = ytl + i // diam
                 local dx <const> = x - xMouse
                 local dy <const> = y - yMouse
                 if dx * dx + dy * dy < rsq then

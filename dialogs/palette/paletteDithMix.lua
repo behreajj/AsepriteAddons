@@ -10,7 +10,8 @@ local defaults <const> = {
     swatchSize = 8,
     padding = 1,
     border = 3,
-    useHighlight = false,
+    useComplHl = false,
+    useContrastHl = false,
     minHighlight = 15,
     maxHighlight = 50,
     frameWeight = 1,
@@ -22,10 +23,12 @@ local defaults <const> = {
         1.0, 0.0
     },
     mw = 2,
-    mh = 2
+    mh = 2,
+    isComplLEpsilon = 5.0,
+    isComplAbEpsilon = 7.0,
 }
 
-local dlg <const> = Dialog { title = "Palette Dither Mix" }
+local dlg <const> = Dialog { title = "Palette Dither Mix " }
 
 dlg:combobox {
     id = "palType",
@@ -47,7 +50,8 @@ dlg:newrow { always = false }
 dlg:file {
     id = "palFile",
     filetypes = AseUtilities.FILE_FORMATS_PAL,
-    open = true,
+    filename = "*.*",
+    basepath = app.fs.joinPath(app.fs.userConfigPath, "palettes"),
     visible = defaults.palType == "FILE"
 }
 
@@ -74,7 +78,9 @@ dlg:file {
     id = "ditherPath",
     label = "File:",
     filetypes = AseUtilities.FILE_FORMATS_SAVE,
-    open = true,
+    filename = "*.*",
+    basepath = app.fs.userDocsPath,
+
     focus = false,
     visible = defaults.ditherType == "CUSTOM"
 }
@@ -112,16 +118,31 @@ dlg:slider {
 dlg:newrow { always = false }
 
 dlg:check {
-    id = "useHighlight",
+    id = "useComplHl",
     label = "Highlight:",
-    text = "Contrast",
-    selected = defaults.useHighlight,
+    text = "Complement",
+    selected = defaults.useComplHl,
+    focus = false,
     onclick = function()
         local args <const> = dlg.data
-        local useHigh <const> = args.useHighlight --[[@as boolean]]
-        dlg:modify { id = "highColor", visible = useHigh }
-        dlg:modify { id = "minHighlight", visible = useHigh }
-        dlg:modify { id = "maxHighlight", visible = useHigh }
+        local useComplHl <const> = args.useComplHl --[[@as boolean]]
+        local useContrastHl <const> = args.useContrastHl --[[@as boolean]]
+        dlg:modify { id = "highColor", visible = useComplHl or useContrastHl }
+    end
+}
+
+dlg:check {
+    id = "useContrastHl",
+    text = "Contrast",
+    selected = defaults.useContrastHl,
+    focus = false,
+    onclick = function()
+        local args <const> = dlg.data
+        local useComplHl <const> = args.useComplHl --[[@as boolean]]
+        local useContrastHl <const> = args.useContrastHl --[[@as boolean]]
+        dlg:modify { id = "highColor", visible = useComplHl or useContrastHl }
+        dlg:modify { id = "minHighlight", visible = useContrastHl }
+        dlg:modify { id = "maxHighlight", visible = useContrastHl }
     end
 }
 
@@ -130,7 +151,8 @@ dlg:newrow { always = false }
 dlg:color {
     id = "highColor",
     color = AseUtilities.hexToAseColor(defaults.highColor),
-    visible = defaults.useHighlight
+    visible = defaults.useComplHl
+        or defaults.useContrastHl
 }
 
 dlg:newrow { always = false }
@@ -141,7 +163,7 @@ dlg:slider {
     min = 0,
     max = 255,
     value = defaults.minHighlight,
-    visible = defaults.useHighlight
+    visible = defaults.useContrastHl
 }
 
 dlg:slider {
@@ -149,7 +171,7 @@ dlg:slider {
     min = 0,
     max = 255,
     value = defaults.maxHighlight,
-    visible = defaults.useHighlight
+    visible = defaults.useContrastHl
 }
 
 dlg:newrow { always = false }
@@ -165,7 +187,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "confirm",
     text = "&OK",
-    focus = defaults.pullFocus,
+    focus = false,
     onclick = function()
         -- Unpack arguments.
         local args <const> = dlg.data
@@ -180,7 +202,8 @@ dlg:button {
             or defaults.padding --[[@as integer]]
         local border <const> = args.border
             or defaults.border --[[@as integer]]
-        local useHighlight <const> = args.useHighlight --[[@as boolean]]
+        local useComplHl <const> = args.useComplHl --[[@as boolean]]
+        local useContrastHl <const> = args.useContrastHl --[[@as boolean]]
         local minHighlight <const> = args.minHighlight
             or defaults.minHighlight --[[@as integer]]
         local maxHighlight <const> = args.maxHighlight
@@ -191,6 +214,9 @@ dlg:button {
         local matrix = defaults.matrix
         local mw = defaults.mw
         local mh = defaults.mh
+
+        local isComplLEpsilon <const> = defaults.isComplLEpsilon
+        local isComplAbEpsilon <const> = defaults.isComplAbEpsilon
 
         if ditherType == "CUSTOM" then
             local ditherPath <const> = args.ditherPath --[[@as string]]
@@ -242,7 +268,8 @@ dlg:button {
         -- Get palette.
         local startIndex <const> = defaults.startIndex
         local count <const> = defaults.count
-        local hexesProfile <const>, hexesSrgb <const> = AseUtilities.asePaletteLoad(
+        local hexesProfile <const>,
+        hexesSrgb <const> = AseUtilities.asePaletteLoad(
             palType, palFile, startIndex, count)
 
         -- Create profile.
@@ -264,7 +291,22 @@ dlg:button {
             or clrPrf == ColorSpace()
         local paddingGtEq1 <const> = padding >= 1
 
-        ---@type table<integer, { l: number, a: number, b: number, alpha: number }>
+        -- Cache methods used in loop
+        local abs <const> = math.abs
+        local sqrt <const> = math.sqrt
+        local strfmt <const> = string.format
+        local strpack <const> = string.pack
+        local tconcat <const> = table.concat
+        local labTosRgb <const> = ColorUtilities.srLab2TosRgb
+        local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
+        local labnew <const> = Lab.new
+        local fromHex <const> = Rgb.fromHexAbgr32
+        local toHex <const> = Rgb.toHex
+        local toHexWeb <const> = Rgb.toHexWeb
+        local clrToAseColor <const> = AseUtilities.rgbToAseColor
+        local hexToAseColor <const> = AseUtilities.hexToAseColor
+
+        ---@type table<integer, Lab>
         local hexLabDict <const> = {}
 
         ---@type table<integer, string>
@@ -286,10 +328,10 @@ dlg:button {
                 uniqueHexes[lenUniqueHexes] = hexProfile
 
                 local hexSrgb <const> = hexesSrgb[g]
-                local clr <const> = Clr.fromHexAbgr32(hexSrgb)
-                local lab <const> = Clr.sRgbToSrLab2(clr)
+                local clr <const> = fromHex(hexSrgb)
+                local lab <const> = sRgbToLab(clr)
                 hexLabDict[hexProfile] = lab
-                hexWebDict[hexProfile] = Clr.toHexWeb(clr)
+                hexWebDict[hexProfile] = toHexWeb(clr)
             end
             -- end
         end
@@ -301,7 +343,7 @@ dlg:button {
         local spriteSpec <const> = AseUtilities.createSpec(
             spriteSize, spriteSize, ColorMode.RGB, clrPrf, 0)
         local comboSprite <const> = AseUtilities.createSprite(
-            spriteSpec, "Dither Mix")
+            spriteSpec, "Dither Mix", false)
         local firstFrame <const> = comboSprite.frames[1]
 
         app.transaction("Set Grid", function()
@@ -328,7 +370,8 @@ dlg:button {
         local dithersGroup <const> = comboSprite:newGroup()
         local mixesGroup <const> = useMix
             and comboSprite:newGroup() or nil
-        local highsGroup <const> = (useHighlight and paddingGtEq1)
+        local highsGroup <const> = ((useContrastHl or useComplHl)
+                and paddingGtEq1)
             and comboSprite:newGroup() or nil
 
         app.transaction("Set Layer Props", function()
@@ -366,20 +409,9 @@ dlg:button {
             swatchSize, swatchSize, ColorMode.RGB, clrPrf, 0)
         local swatchArea <const> = swatchSize * swatchSize
 
-        -- Cache methods used in loop
-        local abs <const> = math.abs
-        local sqrt <const> = math.sqrt
-        local strfmt <const> = string.format
-        local strpack <const> = string.pack
-        local tconcat <const> = table.concat
-        local srLab2TosRgb <const> = Clr.srLab2TosRgb
-        local toHex <const> = Clr.toHex
-        local clrToAseColor <const> = AseUtilities.clrToAseColor
-        local hexToAseColor <const> = AseUtilities.hexToAseColor
-
         local highlightFrame = nil
         local frameWeight <const> = defaults.frameWeight
-        if useHighlight and paddingGtEq1 then
+        if (useContrastHl or useComplHl) and paddingGtEq1 then
             local highStr <const> = strpack("<I4", highHex)
             local zeroStr <const> = strpack("<I4", 0)
 
@@ -389,7 +421,7 @@ dlg:button {
             highlightFrame = Image(highFrameSpec)
 
             ---@type string[]
-            local highBytes <const> = {}
+            local highlightBytes <const> = {}
             local stripWeight <const> = swatchSize + frameWeight
             local stripArea <const> = frameWeight * stripWeight
 
@@ -404,12 +436,12 @@ dlg:button {
                 local xTop <const> = xh
                 local yTop <const> = yh
                 local idxTop <const> = xTop + yTop * szHigh
-                highBytes[1 + idxTop] = highStr
+                highlightBytes[1 + idxTop] = highStr
 
                 local xBtm <const> = xh + frameWeight
                 local yBtm <const> = yh + stripWeight
                 local idxBtm <const> = xBtm + yBtm * szHigh
-                highBytes[1 + idxBtm] = highStr
+                highlightBytes[1 + idxBtm] = highStr
 
                 -- Vertical.
                 local xv <const> = i % frameWeight
@@ -418,12 +450,12 @@ dlg:button {
                 local xLft <const> = xv
                 local yLft <const> = yv + frameWeight
                 local idxLft <const> = xLft + yLft * szHigh
-                highBytes[1 + idxLft] = highStr
+                highlightBytes[1 + idxLft] = highStr
 
                 local xRgt <const> = xv + stripWeight
                 local yRgt <const> = yv
                 local idxRgt <const> = xRgt + yRgt * szHigh
-                highBytes[1 + idxRgt] = highStr
+                highlightBytes[1 + idxRgt] = highStr
 
                 i = i + 1
             end
@@ -433,12 +465,12 @@ dlg:button {
             while k < swatchArea do
                 local x <const> = frameWeight + k % swatchSize
                 local y <const> = frameWeight + k // swatchSize
-                local idxCenter <const> = x + y * szHigh
-                highBytes[1 + idxCenter] = zeroStr
+                local idxCenter <const> = y * szHigh + x
+                highlightBytes[1 + idxCenter] = zeroStr
                 k = k + 1
             end
 
-            highlightFrame.bytes = tconcat(highBytes)
+            highlightFrame.bytes = tconcat(highlightBytes)
         end
 
         local i = lenUniqueHexes + 1
@@ -502,15 +534,26 @@ dlg:button {
                         end
                         ditherImage.bytes = tconcat(ditherByteArr)
 
-                        -- Display distance as a metric for how high
-                        -- contrast the dither is.
+                        local dl <const> = rowLab.l - colLab.l
                         local da <const> = rowLab.a - colLab.a
                         local db <const> = rowLab.b - colLab.b
+
+                        local bothNonZero <const> = rowLab.alpha > 0.0
+                            and colLab.alpha > 0.0
+                        local fitsCompl <const> = useComplHl
+                            and bothNonZero
+                            and abs(dl) < isComplLEpsilon
+                            and abs(rowLab.a + colLab.a) < isComplAbEpsilon
+                            and abs(rowLab.b + colLab.b) < isComplAbEpsilon
+
+                        -- Distance as a metric for dither contrast.
                         local dist <const> = sqrt(da * da + db * db)
-                            + abs(rowLab.l - colLab.l)
-                        local fitsHigh <const> = useHighlight
+                            + abs(dl)
+                        local fitsHigh <const> = useContrastHl
+                            and bothNonZero
                             and dist >= minHighVrf
                             and dist <= maxHighVrf
+
                         local layerName <const> = strfmt(
                             "Dither %s %s %03d",
                             rowWebStr, colWebStr, dist)
@@ -525,7 +568,7 @@ dlg:button {
                             ditherImage,
                             Point(x, y))
 
-                        if fitsHigh then
+                        if fitsHigh or fitsCompl then
                             ditherCel.color = hexToAseColor(highHex)
 
                             if paddingGtEq1 then
@@ -544,11 +587,11 @@ dlg:button {
                         end
                     elseif useMix and i > j then
                         -- Mix colors.
-                        local srgbMixed <const> = srLab2TosRgb(
+                        local srgbMixed <const> = labTosRgb(labnew(
                             (rowLab.l + colLab.l) * 0.5,
                             (rowLab.a + colLab.a) * 0.5,
                             (rowLab.b + colLab.b) * 0.5,
-                            (rowLab.alpha + colLab.alpha) * 0.5)
+                            (rowLab.alpha + colLab.alpha) * 0.5))
                         local hexMixed <const> = toHex(srgbMixed)
 
                         local mixImage <const> = Image(swatchSpec)
@@ -568,10 +611,10 @@ dlg:button {
                             mixImage,
                             Point(x, y))
                         mixedCel.color = clrToAseColor(srgbMixed)
-                    end
-                end
-            end)
-        end
+                    end -- Dither or mix check.
+                end     -- Right unique hexes loop.
+            end)        -- Create swatches transaction.
+        end             -- Left Unique hexes loop.
 
         AseUtilities.setPalette(hexesProfile, comboSprite, 1)
 

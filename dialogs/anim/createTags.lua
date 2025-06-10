@@ -220,8 +220,8 @@ dlg:button {
         local recolorNew <const> = colorOption == "NEW"
         local recolorAll <const> = colorOption == "ALL"
         repeats = math.abs(repeats)
-        local fromClr <const> = AseUtilities.aseColorToClr(fromColor)
-        local toClr <const> = AseUtilities.aseColorToClr(toColor)
+        local fromClr <const> = AseUtilities.aseColorToRgb(fromColor)
+        local toClr <const> = AseUtilities.aseColorToRgb(toColor)
 
         local aniDirEnum = AniDir.FORWARD
         if aniDirStr == "REVERSE" then
@@ -306,8 +306,8 @@ dlg:button {
         local max <const> = math.max
         local strfmt <const> = string.format
         local hueFunc <const> = GradientUtilities.lerpHueCcw
-        local mixer <const> = Clr.mixSrLch
-        local clrToAse <const> = AseUtilities.clrToAseColor
+        local mixer <const> = ColorUtilities.mixSrLchInternal
+        local clrToAse <const> = AseUtilities.rgbToAseColor
         local transact <const> = app.transaction
 
         local i = 0
@@ -340,7 +340,7 @@ dlg:button {
             end
         end
 
-        -- Because linked cels can extended beyond the tag
+        -- Because linked cels can extend beyond the tag
         -- that contains their frames, and because an empty
         -- cel cannot be colored, propagating tag colors to
         -- cels is not viable.

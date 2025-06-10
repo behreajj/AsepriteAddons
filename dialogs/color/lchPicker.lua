@@ -23,19 +23,24 @@ local harmonyTypes <const> = {
 }
 
 local defaults <const> = {
+    -- TODO: Make LCH sliders into a child dialog that pops up when
+    -- a canvas representing a custom color widget is clicked. That
+    -- way it can be used by color select and replace dialogs. Then
+    -- make this a color wheel picker similar to Okhsl?
+
     -- TODO: Make backgrounds for colors with alpha consistent
     -- with gradient utilities UI.
 
-    -- This does not support scroll wheel because the directionality is
-    -- reversed and because there is too much debugging needed to stop mouse
-    -- down from interfering with scroll wheel, particularly in normal wheel
-    -- picker I.e., scroll wheel should only work when mouse button is up.
-    -- That means separate functions would need to be made for scroll.
-    lchTosRgb = Clr.srLchTosRgb,
-    sRgbToLch = Clr.sRgbToSrLch,
-    sRgbToLab = Clr.sRgbToSrLab2,
-    labToLch = Clr.srLab2ToSrLch,
-    lchToLab = Clr.srLchToSrLab2,
+    -- This does not support scroll wheel because the directionality
+    -- is reversed and because there is too much debugging needed
+    -- to stop mouse down from interfering with scroll wheel,
+    -- particularly in normal wheel picker I.e., scroll wheel should
+    -- only work when mouse button is up. That means separate
+    -- functions would need to be made for scroll.
+    lchTosRgb = ColorUtilities.srLchTosRgbInternal,
+    labTosRgb = ColorUtilities.srLab2TosRgb,
+    sRgbToLch = ColorUtilities.sRgbToSrLchInternal,
+    sRgbToLab = ColorUtilities.sRgbToSrLab2Internal,
     harmonyType = "SHADING",
     barWidth = 240 // screenScale,
     barHeight = 16 // screenScale,
@@ -47,10 +52,8 @@ local defaults <const> = {
     hueSpreadShd = 0.66666666666667,
     hueSpreadLgt = 0.33333333333333,
     chromaSpreadShd = 5.0,
-    chromaSpreadLgt = 15.0,
+    chromaSpreadLgt = 12.5,
     lightSpread = 33.33,
-    hYellow = 0.30922841685655,
-    hViolet = 0.80922841685655,
     lIncrScale = 5,
     cIncrScale = 10,
     hIncrScale = 15,
@@ -76,7 +79,7 @@ local function assignFore()
     if app.site.sprite then
         local srgb <const> = defaults.lchTosRgb(
             active.l, active.c, active.h, active.a)
-        app.fgColor = AseUtilities.clrToAseColor(srgb)
+        app.fgColor = AseUtilities.rgbToAseColor(srgb)
     end
 end
 
@@ -95,7 +98,7 @@ end
 ---@return string
 local function updateHexCode(dialog, l, c, h)
     local srgb <const> = defaults.lchTosRgb(l, c, h, 1.0)
-    local str <const> = Clr.toHexWeb(srgb)
+    local str <const> = Rgb.toHexWeb(srgb)
     dialog:modify { id = "hexCode", text = str }
     return str
 end
@@ -103,7 +106,7 @@ end
 ---@param dialog Dialog
 ---@param aseColor Color
 local function setFromAse(dialog, aseColor)
-    local srgb <const> = AseUtilities.aseColorToClr(aseColor)
+    local srgb <const> = AseUtilities.aseColorToRgb(aseColor)
     local lch <const> = defaults.sRgbToLch(srgb, 0.007072)
     active.l = lch.l
     active.c = lch.c
@@ -122,8 +125,7 @@ local function setFromSelect(dialog, sprite, frIdx)
     local lab <const> = AseUtilities.averageColor(sprite, frIdx)
     if lab.alpha > 0.0 then
         -- Average color uses SR LAB 2.
-        local lch <const> = Clr.srLab2ToSrLch(
-            lab.l, lab.a, lab.b, lab.alpha)
+        local lch <const> = Lab.toLch(lab)
 
         active.l = lch.l
         active.c = lch.c
@@ -135,13 +137,15 @@ local function setFromSelect(dialog, sprite, frIdx)
     end
 end
 
-local dlg <const> = Dialog { title = "LCH Color Picker" }
+local dlg <const> = Dialog { title = "LCH Color Picker " }
 
 ---@param event MouseEvent
 local function setAlphaMouseListen(event)
     if event.button ~= MouseButton.NONE then
         local bw <const> = active.aBarWidth
-        local mx01 <const> = bw > 1 and (event.x / (bw - 1.0)) or 0.0
+        local mx01 <const> = bw > 1
+            and (event.x / (bw - 1.0))
+            or 0.0
         if event.ctrlKey then
             active.a = 1.0
         elseif event.shiftKey then
@@ -163,7 +167,9 @@ end
 local function setLightMouseListen(event)
     if event.button ~= MouseButton.NONE then
         local bw <const> = active.lBarWidth
-        local mx100 <const> = bw > 1 and (100.0 * event.x / (bw - 1.0)) or 0.0
+        local mx100 <const> = bw > 1
+            and (100.0 * event.x / (bw - 1.0))
+            or 0.0
         if event.ctrlKey then
             active.l = 50.0
         elseif event.shiftKey then
@@ -178,6 +184,9 @@ local function setLightMouseListen(event)
             active.l = math.min(math.max(mx100, 0.0), 100.0)
         end
         dlg:repaint()
+
+        -- TODO: This poses the biggest problem for abstracting these methods
+        -- into a CanvasUtilities method.
         updateHexCode(dlg, active.l, active.c, active.h)
     end
 end
@@ -186,7 +195,7 @@ end
 local function setChromaMouseListen(event)
     if event.button ~= MouseButton.NONE then
         local bw <const> = active.cBarWidth
-        local maxChroma <const> = Clr.SR_LCH_MAX_CHROMA + 0.5
+        local maxChroma <const> = Lab.SR_MAX_CHROMA + 0.5
         local mx120 <const> = bw > 1
             and (maxChroma * event.x / (bw - 1.0))
             or 0.0
@@ -194,7 +203,7 @@ local function setChromaMouseListen(event)
             local inGamutEps <const> = defaults.inGamutEps
             local incr <const> = 1.0
 
-            local isInGamut <const> = Clr.rgbIsInGamut
+            local isInGamut <const> = Rgb.rgbIsInGamut
             local lchTosRgb <const> = defaults.lchTosRgb
 
             local l <const> = active.l
@@ -228,7 +237,9 @@ end
 local function setHueMouseListen(event)
     if event.button ~= MouseButton.NONE then
         local bw <const> = active.hBarWidth
-        local mx01 <const> = bw > 1 and (event.x / (bw - 1.0)) or 0.0
+        local mx01 <const> = bw > 1
+            and (event.x / (bw - 1.0))
+            or 0.0
         if event.ctrlKey then
             active.h = 0.0
         elseif event.shiftKey then
@@ -296,7 +307,7 @@ dlg:entry {
         local args <const> = dlg.data
         local hexStr <const> = args.hexCode --[[@as string]]
 
-        local srgb <const> = Clr.fromHexWeb(hexStr)
+        local srgb <const> = Rgb.fromHexWeb(hexStr)
         local lch <const> = defaults.sRgbToLch(srgb)
         active.l = lch.l
         active.c = lch.c
@@ -327,10 +338,10 @@ dlg:canvas {
 
         -- Manual alpha blend with theme bkg.
         local bkgColor <const> = app.theme.color.window_face
-        local bkgClr <const> = AseUtilities.aseColorToClr(bkgColor)
+        local bkgClr <const> = AseUtilities.aseColorToRgb(bkgColor)
         local srgb <const> = defaults.lchTosRgb(l, c, h, 1.0)
-        local alphaMix <const> = Clr.mix(bkgClr, srgb, a)
-        local srgbHex <const> = Clr.toHex(alphaMix)
+        local alphaMix <const> = Rgb.mix(bkgClr, srgb, a)
+        local srgbHex <const> = Rgb.toHex(alphaMix)
 
         -- Fill image with color.
         local ctx <const> = event.context
@@ -352,7 +363,6 @@ dlg:canvas {
             math.floor(c + 0.5),
             math.floor(h * 360.0 + 0.5),
             math.floor(a * 255.0 + 0.5))
-        local strMeasure <const> = ctx:measureText(strDisplay)
 
         -- Flip text colors for bright colors.
         if l < 54.0 then
@@ -360,15 +370,19 @@ dlg:canvas {
         end
 
         local wBarCenter <const> = barWidth * 0.5
+        local hBarCenter <const> = barHeight * 0.5
+        local strMeasure <const> = ctx:measureText(strDisplay)
         local wStrHalf <const> = strMeasure.width * 0.5
+        local hStrHalf <const> = strMeasure.height * 0.5
         local xTextCenter <const> = math.floor(wBarCenter - wStrHalf)
+        local yTextCenter <const> = math.floor(hBarCenter - hStrHalf)
 
         -- Use Aseprite color as an intermediary so as
         -- to support all color modes.
         ctx.color = AseUtilities.hexToAseColor(textShadow)
-        ctx:fillText(strDisplay, xTextCenter + 1, 2)
+        ctx:fillText(strDisplay, xTextCenter + 1, yTextCenter + 1)
         ctx.color = AseUtilities.hexToAseColor(textColor)
-        ctx:fillText(strDisplay, xTextCenter, 1)
+        ctx:fillText(strDisplay, xTextCenter, yTextCenter)
     end,
     onmouseup = function(event)
         local button <const> = event.button
@@ -411,8 +425,9 @@ dlg:canvas {
 
         -- Cache methods.
         local lchTosRgb <const> = defaults.lchTosRgb
-        local isInGamut <const> = Clr.rgbIsInGamut
-        local toHex <const> = Clr.toHex
+        local isInGamut <const> = Rgb.rgbIsInGamut
+        local toHex <const> = Rgb.toHex
+        local strpack <const> = string.pack
 
         local ctx <const> = event.context
         ctx.blendMode = BlendMode.SRC
@@ -422,27 +437,32 @@ dlg:canvas {
         local barHeight <const> = ctx.height
         active.lBarWidth = barWidth
 
-        local xToLight <const> = barWidth > 1 and 100.0 / (barWidth - 1.0) or 0.0
-        local img <const> = Image(barWidth, 1, ColorMode.RGB)
-        local pxItr <const> = img:pixels()
-        for pixel in pxItr do
-            local xLight <const> = pixel.x * xToLight
+        local xToLight <const> = barWidth > 1
+            and 100.0 / (barWidth - 1.0)
+            or 0.0
+
+        ---@type string[]
+        local bytes <const> = {}
+        local i = 0
+        while i < barWidth do
+            local xLight <const> = i * xToLight
             local srgb <const> = lchTosRgb(xLight, c, h, 1.0)
-            if isInGamut(srgb, inGamutEps) then
-                pixel(toHex(srgb))
-            else
-                pixel(bkgHex)
-            end
+            local hex <const> = isInGamut(srgb, inGamutEps)
+                and toHex(srgb)
+                or bkgHex
+            bytes[1 + i] = strpack("<I4", hex)
+            i = i + 1
         end
 
+        local img <const> = Image(barWidth, 1, ColorMode.RGB)
+        img.bytes = table.concat(bytes)
         ctx:drawImage(img,
             Rectangle(0, 0, barWidth, 1),
             Rectangle(0, 0, barWidth, barHeight))
 
-        local fill = Color { r = 0, g = 0, b = 0 }
-        if l < 54.0 then
-            fill = Color { r = 255, g = 255, b = 255 }
-        end
+        local fill <const> = l < 54.0
+            and Color { r = 255, g = 255, b = 255 }
+            or Color { r = 0, g = 0, b = 0 }
         CanvasUtilities.drawSliderReticle(
             ctx, l * 0.01, barWidth, barHeight,
             fill, reticleSize)
@@ -467,7 +487,7 @@ dlg:canvas {
 
         -- Unpack defaults.
         local inGamutEps <const> = defaults.inGamutEps
-        local maxChroma <const> = Clr.SR_LCH_MAX_CHROMA + 0.5
+        local maxChroma <const> = Lab.SR_MAX_CHROMA + 0.5
         local reticleSize <const> = defaults.reticleSize
 
         -- Unpack active.
@@ -477,8 +497,9 @@ dlg:canvas {
 
         -- Cache methods.
         local lchTosRgb <const> = defaults.lchTosRgb
-        local isInGamut <const> = Clr.rgbIsInGamut
-        local toHex <const> = Clr.toHex
+        local isInGamut <const> = Rgb.rgbIsInGamut
+        local toHex <const> = Rgb.toHex
+        local strpack <const> = string.pack
 
         local ctx <const> = event.context
         ctx.blendMode = BlendMode.SRC
@@ -488,27 +509,32 @@ dlg:canvas {
         local barHeight <const> = ctx.height
         active.cBarWidth = barWidth
 
-        local xToChroma <const> = barWidth > 1 and maxChroma / (barWidth - 1.0) or 0.0
-        local img <const> = Image(barWidth, 1, ColorMode.RGB)
-        local pxItr <const> = img:pixels()
-        for pixel in pxItr do
-            local xChroma <const> = pixel.x * xToChroma
+        local xToChroma <const> = barWidth > 1
+            and maxChroma / (barWidth - 1.0)
+            or 0.0
+
+        ---@type string[]
+        local bytes <const> = {}
+        local i = 0
+        while i < barWidth do
+            local xChroma <const> = i * xToChroma
             local srgb <const> = lchTosRgb(l, xChroma, h, 1.0)
-            if isInGamut(srgb, inGamutEps) then
-                pixel(toHex(srgb))
-            else
-                pixel(bkgHex)
-            end
+            local hex <const> = isInGamut(srgb, inGamutEps)
+                and toHex(srgb)
+                or bkgHex
+            bytes[1 + i] = strpack("<I4", hex)
+            i = i + 1
         end
 
+        local img <const> = Image(barWidth, 1, ColorMode.RGB)
+        img.bytes = table.concat(bytes)
         ctx:drawImage(img,
             Rectangle(0, 0, barWidth, 1),
             Rectangle(0, 0, barWidth, barHeight))
 
-        local fill = Color { r = 0, g = 0, b = 0 }
-        if l < 54.0 then
-            fill = Color { r = 255, g = 255, b = 255 }
-        end
+        local fill <const> = l < 54.0
+            and Color { r = 255, g = 255, b = 255 }
+            or Color { r = 0, g = 0, b = 0 }
         CanvasUtilities.drawSliderReticle(
             ctx, c / maxChroma, barWidth, barHeight,
             fill, reticleSize)
@@ -542,8 +568,9 @@ dlg:canvas {
 
         -- Cache methods.
         local lchTosRgb <const> = defaults.lchTosRgb
-        local isInGamut <const> = Clr.rgbIsInGamut
-        local toHex <const> = Clr.toHex
+        local isInGamut <const> = Rgb.rgbIsInGamut
+        local toHex <const> = Rgb.toHex
+        local strpack <const> = string.pack
 
         local ctx <const> = event.context
         ctx.blendMode = BlendMode.SRC
@@ -553,27 +580,32 @@ dlg:canvas {
         local barHeight <const> = ctx.height
         active.hBarWidth = barWidth
 
-        local xToHue <const> = barWidth > 1 and 1.0 / (barWidth - 1.0) or 0.0
-        local img <const> = Image(barWidth, 1, ColorMode.RGB)
-        local pxItr <const> = img:pixels()
-        for pixel in pxItr do
-            local xHue <const> = pixel.x * xToHue
+        local xToHue <const> = barWidth > 1
+            and 1.0 / (barWidth - 1.0)
+            or 0.0
+
+        ---@type string[]
+        local bytes <const> = {}
+        local i = 0
+        while i < barWidth do
+            local xHue <const> = i * xToHue
             local srgb <const> = lchTosRgb(l, c, xHue, 1.0)
-            if isInGamut(srgb, inGamutEps) then
-                pixel(toHex(srgb))
-            else
-                pixel(bkgHex)
-            end
+            local hex <const> = isInGamut(srgb, inGamutEps)
+                and toHex(srgb)
+                or bkgHex
+            bytes[1 + i] = strpack("<I4", hex)
+            i = i + 1
         end
 
+        local img <const> = Image(barWidth, 1, ColorMode.RGB)
+        img.bytes = table.concat(bytes)
         ctx:drawImage(img,
             Rectangle(0, 0, barWidth, 1),
             Rectangle(0, 0, barWidth, barHeight))
 
-        local fill = Color { r = 0, g = 0, b = 0 }
-        if l < 54.0 then
-            fill = Color { r = 255, g = 255, b = 255 }
-        end
+        local fill <const> = l < 54.0
+            and Color { r = 255, g = 255, b = 255 }
+            or Color { r = 0, g = 0, b = 0 }
         CanvasUtilities.drawSliderReticle(
             ctx, h, barWidth, barHeight,
             fill, reticleSize)
@@ -612,14 +644,16 @@ dlg:canvas {
         local a <const> = active.a
 
         local srgb = defaults.lchTosRgb(l, c, h, a)
-        srgb = Clr.clamp01(srgb)
+        srgb = Rgb.clamp01(srgb)
         local rTrg <const> = srgb.r
         local gTrg <const> = srgb.g
         local bTrg <const> = srgb.b
 
         local floor <const> = math.floor
         local strpack <const> = string.pack
-        local xToFac <const> = barWidth > 1 and 1.0 / (barWidth - 1.0) or 0.0
+        local xToFac <const> = barWidth > 1
+            and 1.0 / (barWidth - 1.0)
+            or 0.0
         local img <const> = Image(barWidth, 1, ColorMode.RGB)
 
         ---@type string[]
@@ -642,10 +676,9 @@ dlg:canvas {
             Rectangle(0, 0, barWidth, 1),
             Rectangle(0, 0, barWidth, barHeight))
 
-        local fill = Color { r = 0, g = 0, b = 0 }
-        if l < 54.0 then
-            fill = Color { r = 255, g = 255, b = 255 }
-        end
+        local fill <const> = l < 54.0
+            and Color { r = 255, g = 255, b = 255 }
+            or Color { r = 0, g = 0, b = 0 }
         CanvasUtilities.drawSliderReticle(
             ctx, a, barWidth, barHeight,
             fill, reticleSize)
@@ -690,7 +723,7 @@ dlg:button {
         -- to support all color modes.
         local srgb <const> = defaults.lchTosRgb(
             active.l, active.c, active.h, active.a)
-        local aseColor <const> = AseUtilities.clrToAseColor(srgb)
+        local aseColor <const> = AseUtilities.rgbToAseColor(srgb)
         local hex <const> = AseUtilities.aseColorToHex(aseColor, colorMode)
 
         local sel <const>, _ <const> = AseUtilities.getSelection(sprite)
@@ -702,8 +735,8 @@ dlg:button {
 
         local alphaIndex <const> = sprSpec.transparentColor
         local alphaIndexVerif <const> = (colorMode ~= ColorMode.INDEXED
-                or (alphaIndex >= 0 and alphaIndex < 256)) and
-            alphaIndex or 0
+                or (alphaIndex >= 0 and alphaIndex < 256))
+            and alphaIndex or 0
 
         local selSpec <const> = AseUtilities.createSpec(wSel, hSel,
             colorMode, sprSpec.colorSpace, alphaIndex)
@@ -766,45 +799,22 @@ dlg:canvas {
         local c <const> = active.c
         local h <const> = active.h
         local a <const> = active.a
+        local labKey <const> = Lab.fromLch(l, c, h, 1.0, 0.5)
 
-        -- RYB wheel color theory based on the idea that
-        -- 180 degrees from key color is also opposite light,
-        -- e.g., dark violet is opposite bright yellow.
-        -- (120.0 / 180.0) * l + (060.0 / 180.0) * (100.0 - l)
-        -- (060.0 / 180.0) * l + (120.0 / 180.0) * (100.0 - l)
-        -- (150.0 / 180.0) * l + (030.0 / 180.0) * (100.0 - l)
-        -- (030.0 / 180.0) * l + (150.0 / 180.0) * (100.0 - l)
-        ---@type { l: number, c: number, h: number, a: number }[]
-        local swatches <const> = {}
+        ---@type Lab[]
+        local swatches = {}
         if harmonyType == "ANALOGOUS" then
-            local lAna <const> = (l + l + 50.0) / 3.0
-            local h30 <const> = 0.08333333333333
-            swatches[1] = { l = lAna, c = c, h = (h + h30) % 1.0, a = a }
-            swatches[2] = { l = lAna, c = c, h = (h - h30) % 1.0, a = a }
+            swatches = Lab.harmonyAnalogous(labKey)
         elseif harmonyType == "COMPLEMENT" then
-            swatches[1] = { l = 100.0 - l, c = c, h = (h + 0.5) % 1.0, a = a }
+            swatches = Lab.harmonyComplement(labKey)
         elseif harmonyType == "SPLIT" then
-            local lSpl <const> = (250.0 - (l + l)) / 3.0
-            local h150 <const> = 0.41666666666667
-            swatches[1] = { l = lSpl, c = c, h = (h + h150) % 1.0, a = a }
-            swatches[2] = { l = lSpl, c = c, h = (h - h150) % 1.0, a = a }
+            swatches = Lab.harmonySplit(labKey)
         elseif harmonyType == "SQUARE" then
-            swatches[1] = { l = 50.0, c = c, h = (h + 0.25) % 1.0, a = a }
-            swatches[2] = { l = 100.0 - l, c = c, h = (h + 0.5) % 1.0, a = a }
-            swatches[3] = { l = 50.0, c = c, h = (h - 0.25) % 1.0, a = a }
+            swatches = Lab.harmonySquare(labKey)
         elseif harmonyType == "TETRADIC" then
-            local lTri <const> = (200.0 - l) / 3.0
-            local lTet <const> = (100.0 + l) / 3.0
-            local h120 <const> = 0.33333333333333
-            local h60 <const> = 0.16666666666667
-            swatches[1] = { l = lTri, c = c, h = (h + h120) % 1.0, a = a }
-            swatches[2] = { l = 100.0 - l, c = c, h = (h + 0.5) % 1.0, a = a }
-            swatches[3] = { l = lTet, c = c, h = (h - h60) % 1.0, a = a }
+            swatches = Lab.harmonyTetradic(labKey)
         elseif harmonyType == "TRIADIC" then
-            local lTri <const> = (200.0 - l) / 3.0
-            local h120 <const> = 0.33333333333333
-            swatches[1] = { l = lTri, c = c, h = (h + h120) % 1.0, a = a }
-            swatches[2] = { l = lTri, c = c, h = (h - h120) % 1.0, a = a }
+            swatches = Lab.harmonyTriadic(labKey)
         else
             -- Unpack shading specific defaults.
             local shadeCount <const> = defaults.shadeCount
@@ -813,8 +823,8 @@ dlg:canvas {
             local chromaSpreadShd <const> = defaults.chromaSpreadShd
             local chromaSpreadLgt <const> = defaults.chromaSpreadLgt
             local lightSpread <const> = defaults.lightSpread
-            local hYellow <const> = defaults.hYellow
-            local hViolet <const> = defaults.hViolet
+            local hYellow <const> = Lab.SR_HUE_LIGHT
+            local hViolet <const> = Lab.SR_HUE_SHADOW
 
             local minLight <const> = math.max(0.0, l - lightSpread)
             local maxLight <const> = math.min(100.0, l + lightSpread)
@@ -833,9 +843,8 @@ dlg:canvas {
             local lgtCrm <const> = (1.0 - toLgtFac) * c
                 + toLgtFac * minChromaLgt
 
-            local labShd <const> = defaults.lchToLab(minLight, shdCrm, shdHue, 1.0, 0.5)
-            local labKey <const> = defaults.lchToLab(l, c, h, 1.0, 0.5)
-            local labLgt <const> = defaults.lchToLab(maxLight, lgtCrm, lgtHue, 1.0, 0.5)
+            local labShd <const> = Lab.fromLch(minLight, shdCrm, shdHue, 1.0, 0.5)
+            local labLgt <const> = Lab.fromLch(maxLight, lgtCrm, lgtHue, 1.0, 0.5)
 
             local pt0 <const> = Vec3.new(labShd.a, labShd.b, labShd.l)
             local pt1 <const> = Vec3.new(labKey.a, labKey.b, labKey.l)
@@ -848,18 +857,16 @@ dlg:canvas {
             kn0:mirrorHandlesForward()
             kn1:mirrorHandlesBackward()
 
-            local eval <const> = Curve3.eval
-            local labToLch <const> = defaults.labToLch
             local curve <const> = Curve3.new(false, { kn0, kn1 }, "Shades")
-            local toFac = 1.0
-            if shadeCount > 1 then
-                toFac = 1.0 / (shadeCount - 1.0)
-            end
+            local toFac <const> = shadeCount > 1
+                and 1.0 / (shadeCount - 1.0)
+                or 1.0
+
             local i = 0
             while i < shadeCount do
-                local v <const> = eval(curve, i * toFac)
+                local v <const> = Curve3.eval(curve, i * toFac)
                 i = i + 1
-                swatches[i] = labToLch(v.z, v.x, v.y, a)
+                swatches[i] = Lab.new(v.z, v.x, v.y, 1.0)
             end
         end
         active.swatches = swatches
@@ -879,16 +886,16 @@ dlg:canvas {
         local hsw <const> = barHeight
         local swatchRect <const> = Rectangle(0, 0, wsw, hsw)
 
-        local lchTosRgb <const> = defaults.lchTosRgb
-        local isInGamut <const> = Clr.rgbIsInGamut
-        local clrToAseColor <const> = AseUtilities.clrToAseColor
+        local labTosRgb <const> = defaults.labTosRgb
+        local isInGamut <const> = Rgb.rgbIsInGamut
+        local clrToAseColor <const> = AseUtilities.rgbToAseColor
 
         local j = 0
         while j < lenSwatches do
             swatchRect.x = j * wsw
             j = j + 1
             local swatch <const> = swatches[j]
-            local srgb <const> = lchTosRgb(swatch.l, swatch.c, swatch.h, 1.0)
+            local srgb <const> = labTosRgb(swatch)
             if isInGamut(srgb, inGamutEps) then
                 ctx.color = clrToAseColor(srgb)
                 ctx:fillRect(swatchRect)
@@ -911,9 +918,9 @@ dlg:canvas {
 
         local swatch <const> = swatches[1 + idx]
         if event.shiftKey then
-            local srgb <const> = defaults.lchTosRgb(
-                swatch.l, swatch.c, swatch.h, active.a)
-            local aseColor <const> = AseUtilities.clrToAseColor(srgb)
+            local srgb <const> = defaults.labTosRgb(swatch)
+            srgb.a = active.a
+            local aseColor <const> = AseUtilities.rgbToAseColor(srgb)
             if event.button == MouseButton.RIGHT
                 or event.ctrlKey then
                 app.command.SwitchColors()
@@ -923,9 +930,10 @@ dlg:canvas {
                 app.fgColor = aseColor
             end
         else
-            active.l = swatch.l
-            active.c = swatch.c
-            active.h = swatch.h
+            local swatchLch <const> = Lab.toLch(swatch)
+            active.l = swatchLch.l
+            active.c = swatchLch.c
+            active.h = swatchLch.h
             updateHexCode(dlg, active.l, active.c, active.h)
             dlg:repaint()
         end

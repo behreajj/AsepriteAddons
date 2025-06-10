@@ -15,7 +15,6 @@ local defaults <const> = {
     maxRad = 100,
     distMetric = "EUCLIDEAN",
     minkExp = 2.0,
-    pullFocus = true
 }
 
 ---@param ax number
@@ -157,7 +156,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "confirm",
     text = "&OK",
-    focus = defaults.pullFocus,
+    focus = true,
     onclick = function()
         local site <const> = app.site
         local activeSprite = site.sprite
@@ -183,7 +182,7 @@ dlg:button {
         local max <const> = math.max
         local min <const> = math.min
         local strpack <const> = string.pack
-        local toHex <const> = Clr.toHex
+        local toHex <const> = Rgb.toHex
         local quantize <const> = Utilities.quantizeUnsigned
 
         -- Unpack arguments.
@@ -269,7 +268,7 @@ dlg:button {
                 trgByteStr[i] = strpack("<I4", trgAbgr32)
             end
         else
-            local dither <const> = GradientUtilities.ditherFromPreset(
+            local dither <const> = GradientUtilities.ditherFuncFromPreset(
                 stylePreset, bayerIndex, ditherPath)
             local i = 0
             while i < areaSprite do

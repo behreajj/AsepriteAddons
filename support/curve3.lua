@@ -18,7 +18,7 @@ setmetatable(Curve3, {
 ---closed loop if true. The second parameter should be a table of Knot3s.
 ---@param cl boolean closed loop
 ---@param knots Knot3[] knots
----@param name string? name
+---@param name? string name
 ---@return Curve3
 ---@nodiscard
 function Curve3.new(cl, knots, name)
@@ -81,8 +81,7 @@ end
 ---@return Vec3
 ---@nodiscard
 function Curve3.evalFirst(curve)
-    local kFirst <const> = curve.knots[1]
-    local coFirst <const> = kFirst.co
+    local coFirst <const> = curve.knots[1].co
     return Vec3.new(
         coFirst.x,
         coFirst.y,
@@ -94,8 +93,8 @@ end
 ---@return Vec3
 ---@nodiscard
 function Curve3.evalLast(curve)
-    local kLast <const> = curve.knots[#curve.knots]
-    local coLast <const> = kLast.co
+    local kns <const> = curve.knots
+    local coLast <const> = kns[#kns].co
     return Vec3.new(
         coLast.x,
         coLast.y,
@@ -106,8 +105,8 @@ end
 ---default tightness is 0.0. There must be at least 4 points in the array.
 ---@param closedLoop boolean closed loop flag
 ---@param points Vec3[] array of points
----@param tightness number? curve tightness
----@param name string? curve name
+---@param tightness? number curve tightness
+---@param name? string curve name
 ---@return Curve3
 ---@nodiscard
 function Curve3.fromCatmull(closedLoop, points, tightness, name)
@@ -234,7 +233,7 @@ end
 ---of knots.
 ---@param closedLoop boolean closed loop
 ---@param points Vec3[] points array
----@param name string? curve name
+---@param name? string curve name
 ---@return Curve3
 ---@nodiscard
 function Curve3.fromPoints(closedLoop, points, name)

@@ -36,8 +36,6 @@ local palTypes <const> = { "ACTIVE", "DEFAULT", "FILE" }
 local sizeModes <const> = { "ASPECT", "CUSTOM" }
 
 local defaults <const> = {
-    -- TODO: For width and height number entry, validate them as the user
-    -- enters the inputs. Otherwise wrap around to negative is possible.
     filename = "Sprite",
     sizeMode = "CUSTOM",
     aRatio = 16,
@@ -53,7 +51,6 @@ local defaults <const> = {
     yGrid = 0,
     wGrid = 20,
     hGrid = 20,
-    pullFocus = true,
     maxSize = 32767
 }
 
@@ -261,7 +258,8 @@ dlg:newrow { always = false }
 dlg:file {
     id = "palFile",
     filetypes = AseUtilities.FILE_FORMATS_PAL,
-    open = true,
+    filename = "*.*",
+    basepath = app.fs.joinPath(app.fs.userConfigPath, "palettes"),
     visible = defaults.colorMode ~= "GRAY"
         and defaults.palType == "FILE"
 }
@@ -291,7 +289,7 @@ dlg:newrow { always = false }
 dlg:button {
     id = "confirm",
     text = "&OK",
-    focus = defaults.pullFocus,
+    focus = true,
     onclick = function()
         local args <const> = dlg.data
         local scale = args.aspectScale
@@ -373,10 +371,8 @@ dlg:button {
                 local specChroma <const> = args.spectrumChroma --[[@as number]]
                 local specHue <const> = args.spectrumHue --[[@as number]]
 
-                hexBkg = Clr.toHex(
-                    Clr.srLchTosRgb(
-                        specLight, specChroma, specHue,
-                        specAlpha))
+                hexBkg = Rgb.toHex(ColorUtilities.srLchTosRgb(
+                    specLight, specChroma, specHue, specAlpha))
             end
         end
 
@@ -412,6 +408,7 @@ dlg:button {
         -- Store new dimensions in preferences.
         local autoFit = false
         local appPrefs <const> = app.preferences
+
         if appPrefs then
             local newFilePrefs <const> = appPrefs.new_file
             if newFilePrefs then
@@ -423,7 +420,7 @@ dlg:button {
             if editorPrefs then
                 autoFit = editorPrefs.auto_fit
             end
-        end
+        end -- App preferences exists.
 
         AseUtilities.preserveForeBack()
 
@@ -434,8 +431,9 @@ dlg:button {
         filename = Utilities.validateFilename(filename)
         if #filename < 1 then filename = defaults.filename end
 
-        local spec = AseUtilities.createSpec(width, height)
-        local newSprite <const> = AseUtilities.createSprite(spec, filename)
+        local spec <const> = AseUtilities.createSpec(width, height)
+        local newSprite <const> = AseUtilities.createSprite(
+            spec, filename, false)
         app.sprite = newSprite
 
         -- Only assign palette here if not gray.
@@ -485,6 +483,7 @@ dlg:button {
         end
 
         app.frame = firstFrame
+        app.refresh()
 
         if autoFit then
             app.command.FitScreen()
@@ -497,7 +496,6 @@ dlg:button {
             app.command.ScrollCenter()
         end
 
-        app.refresh()
         dlg:close()
     end
 }

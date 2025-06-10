@@ -6,6 +6,7 @@ local delOptions <const> = { "DELETE_CELS", "DELETE_LAYER", "HIDE", "NONE" }
 
 local abCompOptions <const> = {
     "ADD",
+    "AVERAGE",
     "BLEND",
     "OVER",
     "SUBTRACT",
@@ -27,11 +28,17 @@ local hCompOptions <const> = {
 }
 
 local lCompOptions <const> = {
+    -- Commit with expanded options:
+    -- 67c3b47218af708e478d1b585d9c860148905772
+    -- AB blend for adopt chroma and hue:
+    -- d69312be1d83862f0bb0c938cd78046c81db447b
     "ADD",
+    "AVERAGE",
     "BLEND",
     "DIVIDE",
     "MULTIPLY",
     "OVER",
+    "SCREEN",
     "SUBTRACT",
     "UNDER"
 }
@@ -40,12 +47,12 @@ local tCompOptions <const> = {
     "BLEND",
     "MAX",
     "MIN",
+    "MULTIPLY",
     "OVER",
     "UNDER"
 }
 
 local defaults <const> = {
-    -- TODO: Is this leaking memory somewhere?
     target = "ACTIVE",
     compMode = "LAB",
     lComp = "BLEND",
@@ -71,6 +78,23 @@ local function abCompAdd(ua, ub, oa, ob, ut, ot)
     local utgt0 <const> = ut > 0.0
     local da <const> = utgt0 and ua + oa or oa
     local db <const> = utgt0 and ub + ob or ob
+    return nt * ua + ot * da,
+        nt * ub + ot * db
+end
+
+---@param ua number under a
+---@param ub number under b
+---@param oa number over a
+---@param ob number over b
+---@param ut number under alpha
+---@param ot number over alpha
+---@return number ca
+---@return number cb
+local function abCompAverage(ua, ub, oa, ob, ut, ot)
+    local nt <const> = 1.0 - ot
+    local utgt0 <const> = ut > 0.0
+    local da <const> = utgt0 and (ua + oa) * 0.5 or oa
+    local db <const> = utgt0 and (ub + ob) * 0.5 or ob
     return nt * ua + ot * da,
         nt * ub + ot * db
 end
@@ -188,11 +212,21 @@ end
 ---@param ut number under alpha
 ---@param ot number over alpha
 ---@return number cl
+local function lCompAverage(ul, ol, ut, ot)
+    local dl <const> = ut > 0.0 and (ul + ol) * 0.5 or ol
+    return (1.0 - ot) * ul + ot * dl
+end
+
+---@param ul number under light
+---@param ol number over light
+---@param ut number under alpha
+---@param ot number over alpha
+---@return number cl
 local function lCompDiv(ul, ol, ut, ot)
     local dl <const> = ut > 0.0
         and (ol ~= 0.0
-            and ((ul * 0.01) / (ol * 0.01)) * 100.0
-            or 0.0)
+            and (ul / ol) * 100.0
+            or 100.0)
         or ol
     return (1.0 - ot) * ul + ot * dl
 end
@@ -204,7 +238,7 @@ end
 ---@return number cl
 local function lCompMul(ul, ol, ut, ot)
     local dl <const> = ut > 0.0
-        and ((ul * 0.01) * (ol * 0.01)) * 100.0
+        and (ul * ol) * 0.01
         or ol
     return (1.0 - ot) * ul + ot * dl
 end
@@ -225,6 +259,19 @@ end
 ---@return number cl
 local function lCompOver(ul, ol, ut, ot)
     return ol
+end
+
+---@param ul number under light
+---@param ol number over light
+---@param ut number under alpha
+---@param ot number over alpha
+---@return number cl
+local function lCompScreen(ul, ol, ut, ot)
+    local dl <const> = ut > 0.0
+        and ul + ol - (ul * ol) * 0.01
+        -- and 100.0 - ((100.0 - ul) * (100.0 - ol)) * 0.01
+        or ol
+    return (1.0 - ot) * ul + ot * dl
 end
 
 ---@param ul number under light
@@ -415,18 +462,18 @@ dlg:button {
         local underIndex <const> = overIndex - 1
         local aLayer <const> = parent.layers[underIndex]
 
-        if bLayer.isGroup or aLayer.isGroup then
-            app.alert {
-                title = "Error",
-                text = "Group layers are not supported."
-            }
-            return
-        end
-
         if bLayer.isReference or aLayer.isReference then
             app.alert {
                 title = "Error",
                 text = "Reference layers are not supported."
+            }
+            return
+        end
+
+        if bLayer.isGroup or aLayer.isGroup then
+            app.alert {
+                title = "Error",
+                text = "Group layers are not supported."
             }
             return
         end
@@ -448,11 +495,12 @@ dlg:button {
         local tilesToImage <const> = AseUtilities.tileMapToImage
         local createSpec <const> = AseUtilities.createSpec
 
-        local clrNew <const> = Clr.new
-        local sRgbToSrLab2 <const> = Clr.sRgbToSrLab2
-        local srLab2TosRgb <const> = Clr.srLab2TosRgb
-        local srLab2ToSrLch <const> = Clr.srLab2ToSrLch
-        local srLchToSrLab2 <const> = Clr.srLchToSrLab2
+        local clrNew <const> = Rgb.new
+        local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
+        local labTosRgb <const> = ColorUtilities.srLab2TosRgb
+        local labToLch <const> = Lab.toLch
+        local lchToLab <const> = Lab.fromLch
+        local labnew <const> = Lab.new
 
         -- Unpack arguments.
         local target <const> = args.target
@@ -469,6 +517,7 @@ dlg:button {
         -- print(string.format("alphaComp: %s", alphaComp))
         local useAlphaMax <const> = alphaComp == "MAX"
         local useAlphaMin <const> = alphaComp == "MIN"
+        local useAlphaMul <const> = alphaComp == "MULTIPLY"
         local useAlphaOver <const> = alphaComp == "OVER"
         local useAlphaUnder <const> = alphaComp == "UNDER"
 
@@ -488,12 +537,16 @@ dlg:button {
 
         if lPreset == "ADD" then
             lBlendFunc = lCompAdd
+        elseif lPreset == "AVERAGE" then
+            lBlendFunc = lCompAverage
         elseif lPreset == "DIVIDE" then
             lBlendFunc = lCompDiv
         elseif lPreset == "MULTIPLY" then
             lBlendFunc = lCompMul
         elseif lPreset == "OVER" then
             lBlendFunc = lCompOver
+        elseif lPreset == "SCREEN" then
+            lBlendFunc = lCompScreen
         elseif lPreset == "SUBTRACT" then
             lBlendFunc = lCompSub
         elseif lPreset == "UNDER" then
@@ -518,6 +571,8 @@ dlg:button {
         else
             if abPreset == "ADD" then
                 abBlendFunc = abCompAdd
+            elseif abPreset == "AVERAGE" then
+                abBlendFunc = abCompAverage
             elseif abPreset == "OVER" then
                 abBlendFunc = abCompOver
             elseif abPreset == "SUBTRACT" then
@@ -566,9 +621,9 @@ dlg:button {
             compLayer.parent = parent
         end)
 
-        ---@type table<integer, {l: number, a: number, b: number, alpha: number}>
+        ---@type table<integer, Lab>
         local dict <const> = {}
-        dict[0] = { l = 0.0, a = 0.0, b = 0.0, alpha = 0.0 }
+        dict[0] = labnew(0.0, 0.0, 0.0, 0.0)
 
         local i = 0
         local lenFrames <const> = #frIdcs
@@ -693,7 +748,7 @@ dlg:button {
                         aGreen / 255.0,
                         aBlue / 255.0,
                         1.0)
-                    aLab = sRgbToSrLab2(aClr)
+                    aLab = sRgbToLab(aClr)
                     dict[aInt] = aLab
                 end
 
@@ -708,7 +763,7 @@ dlg:button {
                         bGreen / 255.0,
                         bBlue / 255.0,
                         1.0)
-                    bLab = sRgbToSrLab2(bClr)
+                    bLab = sRgbToLab(bClr)
                     dict[bInt] = bLab
                 end
 
@@ -721,10 +776,12 @@ dlg:button {
                     tuv = t
                 elseif useAlphaUnder then
                     tuv = v
-                elseif useAlphaMin then
-                    tuv = min(t, v)
                 elseif useAlphaMax then
                     tuv = max(t, v)
+                elseif useAlphaMin then
+                    tuv = min(t, v)
+                elseif useAlphaMul then
+                    tuv = t * v
                 end
 
                 -- Timeline overlays display colors that are transparent,
@@ -734,13 +791,11 @@ dlg:button {
                     cl = lBlendFunc(aLab.l, bLab.l, v, t)
 
                     if useLch then
-                        local aLch <const> = srLab2ToSrLch(
-                            aLab.l, aLab.a, aLab.b, 1.0)
-                        local bLch <const> = srLab2ToSrLch(
-                            bLab.l, bLab.a, bLab.b, 1.0)
+                        local aLch <const> = labToLch(aLab)
+                        local bLch <const> = labToLch(bLab)
                         local cc <const> = cBlendFunc(aLch.c, bLch.c, v, t)
                         local ch <const> = hBlendFunc(aLch.h, bLch.h, t)
-                        local cLab <const> = srLchToSrLab2(cl, cc, ch, 1.0)
+                        local cLab <const> = lchToLab(cl, cc, ch, 1.0)
                         ca = cLab.a
                         cb = cLab.b
                     else
@@ -752,7 +807,7 @@ dlg:button {
                     end
                 end
 
-                local cClr <const> = srLab2TosRgb(cl, ca, cb, tuv)
+                local cClr <const> = labTosRgb(labnew(cl, ca, cb, tuv))
                 local cRed <const> = floor(min(max(cClr.r, 0.0), 1.0) * 255.0 + 0.5)
                 local cGreen <const> = floor(min(max(cClr.g, 0.0), 1.0) * 255.0 + 0.5)
                 local cBlue <const> = floor(min(max(cClr.b, 0.0), 1.0) * 255.0 + 0.5)

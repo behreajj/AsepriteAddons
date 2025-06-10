@@ -48,35 +48,6 @@ GradientUtilities.DEFAULT_HUE_EASING = "NEAR"
 ---Default style preset.
 GradientUtilities.DEFAULT_STYLE = "MIXED"
 
----Bayer dithering matrices, in 2^1, 2^2, 2^3 or 2x2, 4x4, 8x8. For matrix
----generators, see https://codegolf.stackexchange.com/q/259633 and
----https://www.shadertoy.com/view/XtV3RG . More than 2^4 is overkill for
----8-bit color. The largest element is rows * columns - 1. These are normalized
----in a non-standard way for the sake of consistency with custom dithers.
----@type number[][]
-GradientUtilities.BAYER_MATRICES = {
-    {
-        0.125, 0.625,
-        0.875, 0.375
-    },
-    {
-        0.03125, 0.53125, 0.15625, 0.65625,
-        0.78125, 0.28125, 0.90625, 0.40625,
-        0.21875, 0.71875, 0.09375, 0.59375,
-        0.96875, 0.46875, 0.84375, 0.34375
-    },
-    {
-        0.007813, 0.507813, 0.132813, 0.632813, 0.039063, 0.539063, 0.164063, 0.664063,
-        0.757813, 0.257813, 0.882813, 0.382813, 0.789063, 0.289063, 0.914063, 0.414063,
-        0.195313, 0.695313, 0.070313, 0.570313, 0.226563, 0.726563, 0.101563, 0.601563,
-        0.945313, 0.445313, 0.820313, 0.320313, 0.976563, 0.476563, 0.851563, 0.351563,
-        0.054688, 0.554688, 0.179688, 0.679688, 0.023438, 0.523438, 0.148438, 0.648438,
-        0.804688, 0.304688, 0.929688, 0.429688, 0.773438, 0.273438, 0.898438, 0.398438,
-        0.242188, 0.742188, 0.117188, 0.617188, 0.210938, 0.710938, 0.085938, 0.585938,
-        0.992188, 0.492188, 0.867188, 0.367188, 0.960938, 0.460938, 0.835938, 0.335938
-    }
-}
-
 --- Maximum width or height for a custom dither image.
 GradientUtilities.DITHER_MAX_SIZE = 64
 
@@ -90,7 +61,7 @@ function GradientUtilities.clearGradient(gr)
     local origKeys <const> = {}
     local sprite <const> = app.sprite
     if sprite then
-        local aseColorToClr <const> = AseUtilities.aseColorToClr
+        local aseColorToClr <const> = AseUtilities.aseColorToRgb
         local lenOrigKeys = 0
 
         local appRange <const> = app.range
@@ -100,7 +71,7 @@ function GradientUtilities.clearGradient(gr)
                 frame, sprite.palettes)
             local lenPalette <const> = #palette
 
-            ---@type Clr[]
+            ---@type Rgb[]
             local validColors <const> = {}
             local lenValidColors = 0
             local rangeClrIdcs <const> = appRange.colors
@@ -108,18 +79,18 @@ function GradientUtilities.clearGradient(gr)
 
             if lenRangeClrIdcs > GradientUtilities.MAX_KEYS then
                 local floor <const> = math.floor
-                local mix <const> = Clr.mixSrLab2Internal
+                local mix <const> = ColorUtilities.mixSrLab2Internal
                 local toFac <const> = 1.0 / (GradientUtilities.MAX_KEYS - 1.0)
 
                 local idxFirst <const> = rangeClrIdcs[1]
                 local clrFirst <const> = (idxFirst >= 0 and idxFirst < lenPalette)
                     and aseColorToClr(palette:getColor(idxFirst))
-                    or Clr.new(0.0, 0.0, 0.0, 1.0)
+                    or Rgb.new(0.0, 0.0, 0.0, 1.0)
 
                 local idxLast <const> = rangeClrIdcs[lenRangeClrIdcs]
                 local clrLast <const> = (idxLast >= 0 and idxLast < lenPalette)
                     and aseColorToClr(palette:getColor(idxLast))
-                    or Clr.new(1.0, 1.0, 1.0, 1.0)
+                    or Rgb.new(1.0, 1.0, 1.0, 1.0)
 
                 local h = 0
                 while h < GradientUtilities.MAX_KEYS do
@@ -179,23 +150,23 @@ function GradientUtilities.clearGradient(gr)
             local bgClr <const> = aseColorToClr(app.fgColor)
             app.command.SwitchColors()
 
-            local fgHex <const> = Clr.toHex(fgClr)
-            local bgHex <const> = Clr.toHex(bgClr)
+            local fgHex <const> = Rgb.toHex(fgClr)
+            local bgHex <const> = Rgb.toHex(bgClr)
             if fgHex == bgHex
                 and fgHex ~= 0x00000000
                 and fgHex ~= 0xff000000
                 and fgHex ~= 0xffffffff then
-                origKeys[1] = ClrKey.new(0.0, Clr.new(0.0, 0.0, 0.0, fgClr.a))
+                origKeys[1] = ClrKey.new(0.0, Rgb.new(0.0, 0.0, 0.0, fgClr.a))
                 origKeys[2] = ClrKey.new(0.5, fgClr)
-                origKeys[3] = ClrKey.new(1.0, Clr.new(1.0, 1.0, 1.0, fgClr.a))
+                origKeys[3] = ClrKey.new(1.0, Rgb.new(1.0, 1.0, 1.0, fgClr.a))
             else
                 origKeys[1] = ClrKey.new(0.0, fgClr)
                 origKeys[2] = ClrKey.new(1.0, bgClr)
             end
         end
     else
-        origKeys[1] = ClrKey.new(0.0, Clr.new(0.0, 0.0, 0.0, 1.0))
-        origKeys[2] = ClrKey.new(1.0, Clr.new(1.0, 1.0, 1.0, 1.0))
+        origKeys[1] = ClrKey.new(0.0, Rgb.new(0.0, 0.0, 0.0, 1.0))
+        origKeys[2] = ClrKey.new(1.0, Rgb.new(1.0, 1.0, 1.0, 1.0))
     end
 
     gr:setKeys(origKeys)
@@ -206,22 +177,22 @@ end
 ---and hue preset.
 ---@param clrSpcPreset string color space preset
 ---@param huePreset string hue preset
----@return fun(o: Clr, d: Clr, t: number): Clr
+---@return fun(o: Rgb, d: Rgb, t: number): Rgb
 ---@nodiscard
 function GradientUtilities.clrSpcFuncFromPreset(clrSpcPreset, huePreset)
     if clrSpcPreset == "LINEAR_RGB" then
-        return Clr.mixsRgbInternal
+        return Rgb.mixsRgbInternal
     elseif clrSpcPreset == "NORMAL_MAP" then
-        return Clr.mixNormal
+        return Rgb.mixNormal
     elseif clrSpcPreset == "SR_LAB_2" then
-        return Clr.mixSrLab2Internal
+        return ColorUtilities.mixSrLab2Internal
     elseif clrSpcPreset == "SR_LCH" then
         local hef <const> = GradientUtilities.hueEasingFuncFromPreset(huePreset)
         return function(o, d, t)
-            return Clr.mixSrLchInternal(o, d, t, hef)
+            return ColorUtilities.mixSrLchInternal(o, d, t, hef)
         end
     else
-        return Clr.mixlRgbaInternal
+        return Rgb.mixlRgbaInternal
     end
 end
 
@@ -262,6 +233,7 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         reticleSize = 10 // screenScale,
         wCheck = 8,
         hCheck = 8,
+        epsilon = 0.025,
     }
 
     ---@param event { context: GraphicsContext }
@@ -293,7 +265,7 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         local strchar <const> = string.char
         local cgmix <const> = ClrGradient.eval
         local quantize <const> = Utilities.quantizeUnsigned
-        local clrToAseColor <const> = AseUtilities.clrToAseColor
+        local clrToAseColor <const> = AseUtilities.rgbToAseColor
 
         local mixFunc <const> = GradientUtilities.clrSpcFuncFromPreset(
             clrSpacePreset, huePreset)
@@ -351,7 +323,7 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
             j = j + 1
             local key <const> = keys[j]
             local keyStep <const> = key.step
-            local keyClr <const> = key.clr
+            local keyClr <const> = key.rgb
 
             local x <const> = floor(keyStep * (wCanvas - 1.0) + 0.5)
 
@@ -373,7 +345,7 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         if grdUtlActive.idxHover ~= -1 then
             local keyHover <const> = gradient:getKey(grdUtlActive.idxHover)
             local stepHover <const> = keyHover.step
-            local clrHover <const> = keyHover.clr
+            local clrHover <const> = keyHover.rgb
             local avgLight <const> = (clrHover.r + clrHover.g + clrHover.b) / 3.0
             local tagColor <const> = avgLight >= 0.5 and aseBlack or aseWhite
             local x <const> = floor(stepHover * (wCanvas - 1.0) + 0.5)
@@ -393,14 +365,11 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
 
     ---@param event MouseEvent
     local function onMouseDownGradient(event)
-        local quantizeUnsigned <const> = Utilities.quantizeUnsigned
-
+        local abs <const> = math.abs
         local wCanvas <const> = grdUtlActive.wCanvas
         local xNorm <const> = wCanvas > 1
             and event.x / (wCanvas - 1.0)
             or 0.0
-        local maxKeys <const> = 3 * GradientUtilities.MAX_KEYS
-        local xq <const> = quantizeUnsigned(xNorm, maxKeys)
 
         local keys <const> = gradient:getKeys()
         local lenKeys <const> = #keys
@@ -409,7 +378,7 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         while grdUtlActive.idxCurrent == -1
             and i < lenKeys do
             i = i + 1
-            if xq == quantizeUnsigned(keys[i].step, maxKeys) then
+            if abs(xNorm - keys[i].step) < grdUtlActive.epsilon then
                 grdUtlActive.idxCurrent = i
             end
         end
@@ -429,13 +398,10 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         if x < 0 then return end
         if x >= wCanvas then return end
 
-        local quantizeUnsigned <const> = Utilities.quantizeUnsigned
-        local maxKeys <const> = 3 * GradientUtilities.MAX_KEYS
-
+        local abs <const> = math.abs
         local xNorm <const> = wCanvas > 1
             and x / (wCanvas - 1.0)
             or 0.0
-        local xq <const> = quantizeUnsigned(xNorm, maxKeys)
 
         local keys <const> = gradient:getKeys()
         local lenKeys <const> = #keys
@@ -445,7 +411,7 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
             local j = 0
             while search and j < lenKeys do
                 j = j + 1
-                if xq == quantizeUnsigned(keys[j].step, maxKeys) then
+                if abs(xNorm - keys[j].step) < grdUtlActive.epsilon then
                     grdUtlActive.idxHover = j
                     search = false
                 end
@@ -461,15 +427,15 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
             while conflictingKeyIndex == -1
                 and i < lenKeys do
                 i = i + 1
-                if xq == quantizeUnsigned(keys[i].step, maxKeys) then
+                if abs(xNorm - keys[i].step) < grdUtlActive.epsilon then
                     conflictingKeyIndex = i
                 end
             end
 
             if conflictingKeyIndex ~= -1 then
-                local temp <const> = keys[conflictingKeyIndex].clr
-                keys[conflictingKeyIndex].clr = keys[grdUtlActive.idxCurrent].clr
-                keys[grdUtlActive.idxCurrent].clr = temp
+                local temp <const> = keys[conflictingKeyIndex].rgb
+                keys[conflictingKeyIndex].rgb = keys[grdUtlActive.idxCurrent].rgb
+                keys[grdUtlActive.idxCurrent].rgb = temp
 
                 grdUtlActive.idxCurrent = conflictingKeyIndex
             end
@@ -499,12 +465,12 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
                     -- Update the active key's color.
                     if event.altKey then
                         app.command.SwitchColors()
-                        local newClr <const> = AseUtilities.aseColorToClr(app.fgColor)
-                        gradient:getKey(grdUtlActive.idxCurrent).clr = newClr
+                        local newClr <const> = AseUtilities.aseColorToRgb(app.fgColor)
+                        gradient:getKey(grdUtlActive.idxCurrent).rgb = newClr
                         app.command.SwitchColors()
                     else
-                        local newClr <const> = AseUtilities.aseColorToClr(app.fgColor)
-                        gradient:getKey(grdUtlActive.idxCurrent).clr = newClr
+                        local newClr <const> = AseUtilities.aseColorToRgb(app.fgColor)
+                        gradient:getKey(grdUtlActive.idxCurrent).rgb = newClr
                     end
                 else
                     -- Add a new key.
@@ -594,13 +560,13 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
                 local hMixFunc <const> = GradientUtilities.hueEasingFuncFromPreset(huePreset)
                 newKeys[1] = ClrKey.new(0.0, cgeval(gradient, 0.0, mixFunc))
                 newKeys[3] = ClrKey.new(1.0, cgeval(gradient, 1.0, mixFunc))
-                newKeys[2] = ClrKey.new(0.5, Clr.mixSrLch(
-                    newKeys[1].clr, newKeys[3].clr, 0.5, hMixFunc))
+                newKeys[2] = ClrKey.new(0.5, ColorUtilities.mixSrLch(
+                    newKeys[1].rgb, newKeys[3].rgb, 0.5, hMixFunc))
             else
                 -- Cache methods used in loop.
                 local floor <const> = math.floor
-                local labTosRgb <const> = Clr.srLab2TosRgb
-                local sRgbToLab <const> = Clr.sRgbToSrLab2
+                local labTosRgb <const> = ColorUtilities.srLab2TosRgb
+                local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2
                 local crveval <const> = Curve3.eval
 
                 ---@type Vec3[]
@@ -641,8 +607,8 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
                     end
                     local point <const> = crveval(curve, iFac)
                     i = i + 1
-                    newKeys[i] = ClrKey.new(iFac, labTosRgb(
-                        point.z, point.x, point.y, alpha))
+                    local lab <const> = Lab.new(point.z, point.x, point.y, alpha)
+                    newKeys[i] = ClrKey.new(iFac, labTosRgb(lab))
                 end
             end
 
@@ -756,7 +722,8 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         id = "ditherPath",
         label = "File:",
         filetypes = AseUtilities.FILE_FORMATS_OPEN,
-        open = true,
+        filename = "*.*",
+        basepath = app.fs.userDocsPath,
         focus = false,
         visible = showStyle
             and GradientUtilities.DEFAULT_STYLE == "DITHER_CUSTOM"
@@ -770,29 +737,49 @@ end
 ---Finds the appropriate color gradient dither from a string preset.
 ---"DITHER_CUSTOM" returns a custom matrix loaded from an image file path.
 ---"DITHER_BAYER" returns a Bayer matrix.
----Defaults to a smooth mix.
+---Defaults to interleaved gradient noise.
 ---@param stylePreset string style preset
----@param bayerIndex integer? Bayer exponent, 2^1
----@param ditherPath string? dither image path
----@return fun(cg: ClrGradient, step: number, x: integer, y: integer): Clr
+---@param bayerIndex? integer Bayer exponent, 2^1
+---@param ditherPath? string dither image path
+---@return fun(cg: ClrGradient, step: number, x: integer, y: integer): Rgb
 ---@nodiscard
-function GradientUtilities.ditherFromPreset(
+function GradientUtilities.ditherFuncFromPreset(
     stylePreset, bayerIndex, ditherPath)
-    if stylePreset == "DITHER_BAYER" then
-        local biVrf <const> = bayerIndex or 2
-        local matrix <const> = GradientUtilities.BAYER_MATRICES[biVrf]
-        local bayerSize <const> = 1 << biVrf
+    if stylePreset == "DITHER_BAYER"
+        or stylePreset == "DITHER_CUSTOM" then
+        local matrix <const>,
+        cols <const>,
+        rows <const> = GradientUtilities.ditherMatrixFromPreset(
+            stylePreset, bayerIndex, ditherPath)
 
         return function(cg, step, x, y)
             return ClrGradient.dither(
                 cg, step, matrix,
-                x, y, bayerSize, bayerSize)
+                x, y, cols, rows)
         end
-    elseif stylePreset == "DITHER_CUSTOM" then
-        local matrix = GradientUtilities.BAYER_MATRICES[2]
-        local c = 4
-        local r = 4
+    else
+        return ClrGradient.noise
+    end
+end
 
+---Finds an ordered dither matrix from a string preset.
+---"DITHER_CUSTOM" returns a custom matrix loaded from an image file path.
+---Defaults to a Bayer matrix.
+---@param stylePreset string style preset
+---@param bayerIndex? integer Bayer exponent, 2^1
+---@param ditherPath? string dither image path
+---@return integer[]
+---@return integer cols
+---@return integer rows
+---@nodiscard
+function GradientUtilities.ditherMatrixFromPreset(
+    stylePreset, bayerIndex, ditherPath)
+    local biVrf <const> = bayerIndex or 2
+    local matrix = Utilities.BAYER_MATRICES[biVrf]
+    local cols = 1 << biVrf
+    local rows = cols
+
+    if stylePreset == "DITHER_CUSTOM" then
         if ditherPath and #ditherPath > 0
             and app.fs.isFile(ditherPath) then
             -- Disable asking about color profiles when loading these images.
@@ -821,18 +808,12 @@ function GradientUtilities.ditherFromPreset(
             end
 
             if image then
-                matrix, c, r = GradientUtilities.imageToMatrix(image)
+                matrix, cols, rows = GradientUtilities.imageToMatrix(image)
             end -- End image exists check.
         end     -- End file path validity check.
+    end         -- End use custom dither.
 
-        return function(cg, step, x, y)
-            return ClrGradient.dither(
-                cg, step, matrix,
-                x, y, c, r)
-        end
-    else
-        return ClrGradient.noise
-    end
+    return matrix, cols, rows
 end
 
 ---Converts an Aseprite image to a dithering matrix. Returns the matrix along
@@ -855,7 +836,7 @@ function GradientUtilities.imageToMatrix(image)
     if width > GradientUtilities.DITHER_MAX_SIZE
         or height > GradientUtilities.DITHER_MAX_SIZE
         or (width < 2 and height < 2) then
-        return GradientUtilities.BAYER_MATRICES[2], 4, 4
+        return Utilities.BAYER_MATRICES[2], 4, 4
     end
 
     ---@type number[]
@@ -870,8 +851,8 @@ function GradientUtilities.imageToMatrix(image)
         -- conversion. To unpack colors to floats, you could try, e.g.,
         -- string.unpack("f", string.pack("i", 0x40490FDB)) to read,
         -- string.unpack("i", string.pack("f", 3.1415927410126)) to write.
-        local sRgbToLab <const> = Clr.sRgbToSrLab2
-        local clrnew <const> = Clr.new
+        local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
+        local clrnew <const> = Rgb.new
 
         local h = 0
         while h < lenMat do
@@ -918,7 +899,7 @@ function GradientUtilities.imageToMatrix(image)
             end
         end
     else
-        return GradientUtilities.BAYER_MATRICES[2], 4, 4
+        return Utilities.BAYER_MATRICES[2], 4, 4
     end
 
     return matrix, width, height

@@ -2,63 +2,17 @@ dofile("../../support/aseutilities.lua")
 dofile("../../support/octree.lua")
 
 local areaTargets <const> = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
-local colorSpaces <const> = { "LINEAR_RGB", "S_RGB", "SR_LAB_2" }
 local palTargets <const> = { "ACTIVE", "FILE" }
 
 local defaults <const> = {
     areaTarget = "ACTIVE",
     palTarget = "ACTIVE",
     cvgLabRad = 175,
-    cvgNormRad = 120,
     octCapacityBits = 4,
     minCapacityBits = 2,
     maxCapacityBits = 16,
     printElapsed = false,
-    clrSpacePreset = "LINEAR_RGB"
 }
-
----@param preset string
----@return Bounds3
-local function boundsFromPreset(preset)
-    if preset == "CIE_LAB"
-        or preset == "SR_LAB_2" then
-        return Bounds3.lab()
-    else
-        return Bounds3.unitCubeUnsigned()
-    end
-end
-
----@param clr Clr
----@return Vec3
-local function clrToVec3lRgb(clr)
-    local lin <const> = Clr.sRgbTolRgbInternal(clr)
-    return Vec3.new(lin.r, lin.g, lin.b)
-end
-
----@param clr Clr
----@return Vec3
-local function clrToVec3sRgb(clr)
-    return Vec3.new(clr.r, clr.g, clr.b)
-end
-
----@param clr Clr
----@return Vec3
-local function clrToVec3SrLab2(clr)
-    local lab <const> = Clr.sRgbToSrLab2(clr)
-    return Vec3.new(lab.a, lab.b, lab.l)
-end
-
----@param preset string
----@return fun(clr: Clr): Vec3
-local function clrToV3FuncFromPreset(preset)
-    if preset == "LINEAR_RGB" then
-        return clrToVec3lRgb
-    elseif preset == "SR_LAB_2" then
-        return clrToVec3SrLab2
-    else
-        return clrToVec3sRgb
-    end
-end
 
 local dlg <const> = Dialog { title = "Palette To Cel" }
 
@@ -91,31 +45,9 @@ dlg:newrow { always = false }
 dlg:file {
     id = "palFile",
     filetypes = AseUtilities.FILE_FORMATS_PAL,
-    open = true,
+    filename = "*.*",
+    basepath = app.fs.joinPath(app.fs.userConfigPath, "palettes"),
     visible = defaults.palTarget == "FILE"
-}
-
-dlg:newrow { always = false }
-
-dlg:combobox {
-    id = "clrSpacePreset",
-    label = "Color Space:",
-    option = defaults.clrSpacePreset,
-    options = colorSpaces,
-    onchange = function()
-        local args <const> = dlg.data
-        local preset <const> = args.clrSpacePreset --[[@as string]]
-        local isLab <const> = preset == "CIE_LAB"
-            or preset == "SR_LAB_2"
-        dlg:modify {
-            id = "cvgLabRad",
-            visible = isLab
-        }
-        dlg:modify {
-            id = "cvgNormRad",
-            visible = not isLab
-        }
-    end
 }
 
 dlg:newrow { always = false }
@@ -126,20 +58,6 @@ dlg:slider {
     min = 25,
     max = 242,
     value = defaults.cvgLabRad,
-    visible = defaults.clrSpacePreset == "CIE_LAB"
-        or defaults.clrSpacePreset == "SR_LAB_2"
-}
-
-dlg:newrow { always = false }
-
-dlg:slider {
-    id = "cvgNormRad",
-    label = "Radius:",
-    min = 5,
-    max = 174,
-    value = defaults.cvgNormRad,
-    visible = defaults.clrSpacePreset ~= "CIE_LAB"
-        and defaults.clrSpacePreset ~= "SR_LAB_2"
 }
 
 dlg:newrow { always = false }
@@ -206,25 +124,18 @@ dlg:button {
                 isSelect and "ALL" or areaTarget))
         local lenFrIdcs <const> = #frIdcs
 
-        -- If isSelect is true, then a new layer will be created.
         local srcLayer = site.layer --[[@as Layer]]
+        local removeSrcLayer = false
 
         if isSelect then
             AseUtilities.filterCels(activeSprite, srcLayer, frIdcs, "SELECTION")
             srcLayer = activeSprite.layers[#activeSprite.layers]
+            removeSrcLayer = true
         else
             if not srcLayer then
                 app.alert {
                     title = "Error",
                     text = "There is no active layer."
-                }
-                return
-            end
-
-            if srcLayer.isGroup then
-                app.alert {
-                    title = "Error",
-                    text = "Group layers are not supported."
                 }
                 return
             end
@@ -235,6 +146,14 @@ dlg:button {
                     text = "Reference layers are not supported."
                 }
                 return
+            end
+
+            if srcLayer.isGroup then
+                app.transaction("Flatten Group", function()
+                    srcLayer = AseUtilities.flattenGroup(
+                        activeSprite, srcLayer, frIdcs)
+                    removeSrcLayer = true
+                end)
             end
         end
 
@@ -253,50 +172,29 @@ dlg:button {
         local tconcat <const> = table.concat
         local transact <const> = app.transaction
         local tilesToImage <const> = AseUtilities.tileMapToImage
-        local fromHex <const> = Clr.fromHexAbgr32
+        local fromHex <const> = Rgb.fromHexAbgr32
         local octInsert <const> = Octree.insert
         local search <const> = Octree.queryInternal
-        local v3Hash <const> = Vec3.hashCode
-
-        -- Select which conversion functions to use.
-        local clrSpacePreset <const> = args.clrSpacePreset
-            or defaults.clrSpacePreset --[[@as string]]
-        local octBounds <const> = boundsFromPreset(clrSpacePreset)
-        local clrV3Func <const> = clrToV3FuncFromPreset(clrSpacePreset)
+        local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
+        local labHash <const> = Lab.toHexWrap64
 
         -- Select query radius according to color space.
-        local cvgRad = 0.0
-        local distFunc = Vec3.distEuclidean
-        if clrSpacePreset == "CIE_LAB"
-            or clrSpacePreset == "SR_LAB_2" then
-            cvgRad = args.cvgLabRad
-                or defaults.cvgLabRad --[[@as number]]
-
-            -- See https://www.wikiwand.com/en/
-            -- Color_difference#/Other_geometric_constructions
-            distFunc = function(a, b)
-                local da <const> = b.x - a.x
-                local db <const> = b.y - a.y
-                return math.sqrt(da * da + db * db)
-                    + math.abs(b.z - a.z)
-            end
-        else
-            cvgRad = args.cvgNormRad
-                or defaults.cvgNormRad --[[@as number]]
-            cvgRad = cvgRad * 0.01
-        end
+        local cvgRad <const> = args.cvgLabRad
+            or defaults.cvgLabRad --[[@as number]]
+        local distFunc <const> = Lab.distCylindrical
 
         local palTarget <const> = args.palTarget
             or defaults.palTarget --[[@as string]]
         local palFile <const> = args.palFile --[[@as string]]
-        local hexesProfile <const>, hexesSrgb <const> = AseUtilities.asePaletteLoad(
+        local hexesProfile <const>,
+        hexesSrgb <const> = AseUtilities.asePaletteLoad(
             palTarget, palFile, 0, 512, true)
         local lenHexesSrgb <const> = #hexesSrgb
 
         local octExpBits <const> = args.octCapacity
             or defaults.octCapacityBits --[[@as integer]]
         local octCapacity = 1 << octExpBits
-        local octree <const> = Octree.new(octBounds, octCapacity, 1)
+        local octree <const> = Octree.new(BoundsLab.srLab2(), octCapacity, 1)
 
         -- Convert source palette colors to points in an octree.
         -- Ignore colors with zero alpha.
@@ -307,8 +205,8 @@ dlg:button {
             h = h + 1
             local hexSrgb <const> = hexesSrgb[h]
             if (hexSrgb & 0xff000000) ~= 0 then
-                local pt <const> = clrV3Func(fromHex(hexSrgb))
-                ptToHexDict[v3Hash(pt)] = hexesProfile[h]
+                local pt <const> = sRgbToLab(fromHex(hexSrgb))
+                ptToHexDict[labHash(pt)] = hexesProfile[h]
                 octInsert(octree, pt)
             end
         end
@@ -321,8 +219,8 @@ dlg:button {
             if #srcLayer.name > 0 then
                 srcLayerName = srcLayer.name
             end
-            trgLayer.name = string.format("%s %s %03d",
-                srcLayerName, clrSpacePreset, lenHexesSrgb)
+            trgLayer.name = string.format("%s %03d",
+                srcLayerName, lenHexesSrgb)
             trgLayer.parent = AseUtilities.getTopVisibleParent(srcLayer)
             trgLayer.opacity = srcLayer.opacity or 255
             trgLayer.blendMode = srcLayer.blendMode
@@ -376,13 +274,13 @@ dlg:button {
                     ---@type string[]
                     local trgBytesArr <const> = {}
                     for srcAbgr32, idcs in pairs(hexesUnique) do
-                        local ptSrc <const> = clrV3Func(fromHex(srcAbgr32))
+                        local ptSrc <const> = sRgbToLab(fromHex(srcAbgr32))
                         local ptTrg <const>, _ <const> = search(
                             octree, ptSrc, cvgRad, distFunc)
 
                         local trgAbgr32 = 0x00000000
                         if ptTrg then
-                            local hsh <const> = v3Hash(ptTrg)
+                            local hsh <const> = labHash(ptTrg)
                             if ptToHexDict[hsh] then
                                 trgAbgr32 = ptToHexDict[hsh]
                             end
@@ -413,7 +311,7 @@ dlg:button {
             end -- End source cel exists.
         end     -- End frames loop.
 
-        if isSelect then
+        if removeSrcLayer then
             app.transaction("Delete Layer", function()
                 activeSprite:deleteLayer(srcLayer)
             end)

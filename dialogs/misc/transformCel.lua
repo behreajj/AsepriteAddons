@@ -7,12 +7,19 @@ local coordSystems <const> = { "CENTER", "TOP_LEFT" }
 local defaults <const> = {
     -- Polar and Cartesian coordinates tried in commit
     -- 650a11ebc57a7e4539b5113297f5e2c404978e02 .
+    --
     -- Flip h and v position tried in commit
     -- f8adad7ce334553e16701cae83cdf5a4657f8c4a .
+    --
     -- Scaling with a pivot tried in commit
     -- 27bacf304eae29d0ecb4c2780ab77b59789af7ff .
+    --
     -- Setting cel position with shrink bounds tried in commit
     -- 67d333c2e9cd9ab2724091d9044cae87117eca8c .
+    --
+    -- Dismiss selection after transformation tried in commit
+    -- 08ac54d4dd95b748dd3277f7cb951e828e1c5bd3 .
+
     target = "ACTIVE",
     xTranslate = 0,
     yTranslate = 0,
@@ -174,10 +181,10 @@ dlg:button {
             local xAxis <const> = symPrefs.x_axis --[[@as number]]
             local yAxis <const> = symPrefs.y_axis --[[@as number]]
 
-            local xCenter <const> = (symMode == 1 or symMode == 3)
+            local xCenter <const> = (symMode & 1) ~= 0
                 and math.floor(xAxis)
                 or activeSprite.width // 2
-            local yCenter <const> = (symMode == 2 or symMode == 3)
+            local yCenter <const> = (symMode & 2) ~= 0
                 and math.floor(yAxis)
                 or activeSprite.height // 2
 
@@ -622,8 +629,8 @@ dlg:button {
             -- Unpack angle.
             degrees = 360 - degrees
             local query <const> = AseUtilities.DIMETRIC_ANGLES[degrees]
-            local radians = degrees * 0.017453292519943
-            if query then radians = query end
+            local radians <const> = query
+                or (0.017453292519943 * degrees)
 
             -- Avoid trigonometric functions in while loop below.
             -- Cache sine and cosine here, then use formula for
