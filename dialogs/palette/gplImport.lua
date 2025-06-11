@@ -68,7 +68,8 @@ dlg:newrow { always = false }
 
 dlg:check {
     id = "prependMask",
-    label = "Prepend Mask:",
+    label = "Mask:",
+    text = "Prepend",
     selected = defaults.prependMask,
     hexpand = false,
 }
