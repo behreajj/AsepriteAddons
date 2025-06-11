@@ -54,6 +54,7 @@ dlg:combobox {
     label = "Mode:",
     option = defaults.cropType,
     options = cropTypes,
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data
         local cropType <const> = args.cropType

@@ -94,7 +94,8 @@ dlg:combobox {
     label = "Mode:",
     option = defaults.paletteMode,
     options = paletteModes,
-    visible = not defaults.useNew
+    visible = not defaults.useNew,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }

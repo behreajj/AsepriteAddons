@@ -34,6 +34,7 @@ dlg:combobox {
     label = "Input:",
     option = defaults.inputType,
     options = inputTypes,
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data
         local inputType <const> = args.inputType --[[@as string]]
@@ -106,7 +107,8 @@ dlg:combobox {
     id = "aniDir",
     label = "Direction:",
     option = defaults.aniDir,
-    options = aniDirs
+    options = aniDirs,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -150,7 +152,8 @@ dlg:combobox {
     id = "colorOption",
     label = "Recolor:",
     option = defaults.colorOption,
-    options = colorOptions
+    options = colorOptions,
+    hexpand = false,
 }
 
 dlg:check {

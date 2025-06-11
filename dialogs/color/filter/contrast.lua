@@ -32,7 +32,8 @@ dlg:combobox {
     label = "Target:",
     focus = false,
     option = defaults.target,
-    options = targets
+    options = targets,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -43,6 +44,7 @@ dlg:combobox {
     focus = false,
     option = defaults.mode,
     options = modes,
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data
         local mode <const> = args.mode --[[@as string]]

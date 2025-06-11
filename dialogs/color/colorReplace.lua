@@ -96,6 +96,7 @@ dlg:combobox {
     label = "Target:",
     option = defaults.majorTarget,
     options = majorTargets,
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data
         local majorTarget <const> = args.majorTarget --[[@as string]]
@@ -131,6 +132,7 @@ dlg:combobox {
     options = minorTargets,
     visible = defaults.majorTarget ~= "TILE_SET"
         and defaults.majorTarget ~= "TILE_SETS",
+    hexpand = false,
 }
 
 dlg:newrow { always = false }

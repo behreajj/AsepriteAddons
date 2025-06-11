@@ -114,6 +114,7 @@ function QuantizeUtilities.dialogWidgets(dlg, isVisible, enableAlpha)
         options = QuantizeUtilities.METHODS,
         focus = false,
         visible = isVisible,
+        hexpand = false,
     }
 
     dlg:newrow { always = false }
@@ -125,6 +126,7 @@ function QuantizeUtilities.dialogWidgets(dlg, isVisible, enableAlpha)
         options = QuantizeUtilities.INPUTS,
         focus = false,
         visible = isVisible,
+        hexpand = false,
         onchange = function()
             local args <const> = dlg.data
 
@@ -350,6 +352,7 @@ function QuantizeUtilities.dialogWidgets(dlg, isVisible, enableAlpha)
         options = QuantizeUtilities.UNITS,
         focus = false,
         visible = isVisible,
+        hexpand = false,
         onchange = function()
             local args <const> = dlg.data
 

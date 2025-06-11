@@ -44,6 +44,7 @@ dlg:combobox {
     label = "Palette:",
     option = defaults.palType,
     options = palTypes,
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data
         local state <const> = args.palType --[[@as string]]
@@ -90,7 +91,8 @@ dlg:combobox {
     id = "projection",
     label = "Projection:",
     option = defaults.projection,
-    options = AseUtilities.PROJECTIONS
+    options = AseUtilities.PROJECTIONS,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }

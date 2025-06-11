@@ -18,6 +18,7 @@ dlg:combobox {
     label = "Frames:",
     option = defaults.frameTarget,
     options = frameTargetOptions,
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data
         local state <const> = args.frameTarget --[[@as string]]

@@ -47,6 +47,7 @@ dlg:combobox {
     label = "Text:",
     option = defaults.msgSrc,
     options = msgSrcs,
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data
         local state <const> = args.msgSrc --[[@as string]]
@@ -158,13 +159,15 @@ dlg:combobox {
     id = "alignHoriz",
     label = "Pivot:",
     option = defaults.alignLine,
-    options = TextUtilities.GLYPH_ALIGN_HORIZ
+    options = TextUtilities.GLYPH_ALIGN_HORIZ,
+    hexpand = false,
 }
 
 dlg:combobox {
     id = "alignVert",
     option = defaults.alignChar,
-    options = TextUtilities.GLYPH_ALIGN_VERT
+    options = TextUtilities.GLYPH_ALIGN_VERT,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }

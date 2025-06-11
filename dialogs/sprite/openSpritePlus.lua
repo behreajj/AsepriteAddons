@@ -211,6 +211,7 @@ dlg:combobox {
     label = "Palette:",
     option = defaults.palType,
     options = paletteTypes,
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data
         local state <const> = args.palType --[[@as string]]

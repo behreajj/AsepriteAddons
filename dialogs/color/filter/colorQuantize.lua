@@ -15,6 +15,7 @@ dlg:combobox {
     label = "Target:",
     option = defaults.target,
     options = targets,
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data
         local target <const> = args.target

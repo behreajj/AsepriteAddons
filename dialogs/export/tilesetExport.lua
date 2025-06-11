@@ -244,7 +244,8 @@ dlg:combobox {
     id = "target",
     label = "Target:",
     option = defaults.target,
-    options = targetOptions
+    options = targetOptions,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -332,6 +333,7 @@ dlg:combobox {
     label = "Data:",
     option = defaults.metaData,
     options = dataOptions,
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data
         local metaData <const> = args.metaData --[[@as string]]
@@ -366,7 +368,8 @@ dlg:combobox {
     label = "Align:",
     option = defaults.tsxAlign,
     options = tsxAligns,
-    visible = defaults.metaData == "TILED"
+    visible = defaults.metaData == "TILED",
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -376,7 +379,8 @@ dlg:combobox {
     label = "Render:",
     option = defaults.tsxRender,
     options = tsxRenders,
-    visible = defaults.metaData == "TILED"
+    visible = defaults.metaData == "TILED",
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -386,7 +390,8 @@ dlg:combobox {
     label = "Fill:",
     option = defaults.tsxFill,
     options = tsxFills,
-    visible = defaults.metaData == "TILED"
+    visible = defaults.metaData == "TILED",
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -428,7 +433,8 @@ dlg:combobox {
     option = defaults.tmxRenderOrder,
     options = tmxRenderOrders,
     visible = defaults.metaData == "TILED"
-        and defaults.includeMaps
+        and defaults.includeMaps,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }

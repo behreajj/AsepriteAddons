@@ -946,6 +946,7 @@ dlg:combobox {
     id = "harmonyType",
     option = defaults.harmonyType,
     options = harmonyTypes,
+    hexpand = false,
     onchange = function()
         dlg:repaint()
     end

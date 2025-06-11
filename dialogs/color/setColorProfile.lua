@@ -22,6 +22,7 @@ dlg:combobox {
     label = "Profile:",
     option = defaults.colorSpaceType,
     options = colorSpaceTypes,
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data
         local state <const> = args.colorSpaceType --[[@as string]]
@@ -48,7 +49,8 @@ dlg:combobox {
     id = "continuity",
     label = "Continuity:",
     option = defaults.continuityOp,
-    options = continuityOps
+    options = continuityOps,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }

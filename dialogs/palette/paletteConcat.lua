@@ -28,6 +28,7 @@ dlg:combobox {
     label = "Palette A:",
     option = defaults.aPalType,
     options = palTypes,
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data
         local aState <const> = args.aPalType --[[@as string]]
@@ -56,6 +57,7 @@ dlg:combobox {
     label = "Palette B:",
     option = defaults.bPalType,
     options = palTypes,
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data
         local bState <const> = args.bPalType --[[@as string]]
@@ -120,7 +122,8 @@ dlg:combobox {
     label = "Criterion:",
     option = defaults.sortPreset,
     options = sortPresets,
-    visible = defaults.useSort
+    visible = defaults.useSort,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -130,7 +133,8 @@ dlg:combobox {
     label = "Order:",
     option = defaults.ascDesc,
     options = sortOrders,
-    visible = defaults.useSort
+    visible = defaults.useSort,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }

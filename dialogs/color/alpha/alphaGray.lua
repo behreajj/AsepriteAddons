@@ -18,7 +18,8 @@ dlg:combobox {
     id = "target",
     label = "Target:",
     option = defaults.target,
-    options = targets
+    options = targets,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -28,6 +29,7 @@ dlg:combobox {
     label = "Mode:",
     option = defaults.mode,
     options = modes,
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data
         local mode <const> = args.mode --[[@as string]]
@@ -64,6 +66,7 @@ dlg:combobox {
     options = rgbOptions,
     focus = false,
     visible = defaults.mode == "GRAY_TO_ALPHA",
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data
         local rgbOption <const> = args.rgbOption --[[@as string]]

@@ -54,6 +54,7 @@ dlg:combobox {
     label = "Target:",
     option = defaults.target,
     options = targets,
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data
         local target <const> = args.target --[[@as string]]
@@ -91,7 +92,8 @@ dlg:combobox {
     id = "edgeType",
     label = "Edges:",
     option = defaults.edgeType,
-    options = edgeTypes
+    options = edgeTypes,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -101,6 +103,7 @@ dlg:combobox {
     label = "Type:",
     option = defaults.waveType,
     options = waveTypes,
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data
         local waveType <const> = args.waveType --[[@as string]]
@@ -247,6 +250,7 @@ dlg:combobox {
     option = defaults.interType,
     options = interTypes,
     visible = defaults.waveType == "INTERLACED",
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data
         local interType <const> = args.interType --[[@as string]]

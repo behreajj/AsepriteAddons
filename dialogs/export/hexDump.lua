@@ -51,6 +51,7 @@ dlg:combobox {
     label = "Input:",
     option = defaults.inputType,
     options = inputTypes,
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data
         local inputType <const> = args.inputType --[[@as string]]
@@ -69,7 +70,8 @@ dlg:combobox {
     option = defaults.rgbaFormat,
     options = rgbaFormats,
     focus = false,
-    visible = defaults.inputType == "PALETTE"
+    visible = defaults.inputType == "PALETTE",
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -129,6 +131,7 @@ dlg:combobox {
     option = defaults.outputType,
     options = outputTypes,
     focus = false,
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data
         local outputType <const> = args.outputType --[[@as string]]

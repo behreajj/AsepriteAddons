@@ -158,7 +158,8 @@ dlg:combobox {
     id = "removeLayer",
     label = "Layers:",
     option = defaults.removeLayer,
-    options = removeLayerOptions
+    options = removeLayerOptions,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -167,7 +168,8 @@ dlg:combobox {
     id = "removeCel",
     label = "Cels:",
     option = defaults.removeCel,
-    options = removeCelOptions
+    options = removeCelOptions,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -176,7 +178,8 @@ dlg:combobox {
     id = "removePalette",
     label = "Palettes:",
     option = defaults.removePalette,
-    options = removePalOptions
+    options = removePalOptions,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -186,6 +189,7 @@ dlg:combobox {
     label = "Images:",
     option = defaults.removeImage,
     options = removeImageOptions,
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data
         local removeImage <const> = args.removeImage --[[@as string]]
@@ -204,6 +208,7 @@ dlg:combobox {
     label = "Tiles:",
     option = defaults.removeTiles,
     options = removeTilesOptions,
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data
         local removeImage <const> = args.removeImage --[[@as string]]

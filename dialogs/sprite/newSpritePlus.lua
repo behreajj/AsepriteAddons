@@ -99,6 +99,7 @@ dlg:combobox {
     label = "Size:",
     option = defaults.sizeMode,
     options = sizeModes,
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data --[[@as integer]]
         local sizeMode <const> = args.sizeMode --[[@as string]]
@@ -180,6 +181,7 @@ dlg:combobox {
     label = "Color Mode:",
     option = defaults.colorMode,
     options = colorModes,
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data
         local state <const> = args.colorMode --[[@as string]]
@@ -246,6 +248,7 @@ dlg:combobox {
     option = defaults.palType,
     options = palTypes,
     visible = defaults.colorMode ~= "GRAY",
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data
         local state <const> = args.palType --[[@as string]]

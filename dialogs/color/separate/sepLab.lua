@@ -102,7 +102,8 @@ dlg:combobox {
     id = "target",
     label = "Target:",
     option = defaults.target,
-    options = targets
+    options = targets,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -111,7 +112,8 @@ dlg:combobox {
     id = "delSrc",
     label = "Source:",
     option = defaults.delSrc,
-    options = delOptions
+    options = delOptions,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -121,6 +123,7 @@ dlg:combobox {
     label = "Criterion:",
     options = channels,
     option = defaults.channel,
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data
         local channel <const> = args.channel --[[@as string]]

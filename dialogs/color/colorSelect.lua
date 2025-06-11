@@ -110,7 +110,8 @@ dlg:combobox {
     id = "selMode",
     label = "Logic:",
     option = defaults.selMode,
-    options = selModes
+    options = selModes,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -119,7 +120,8 @@ dlg:combobox {
     id = "sampleMode",
     label = "Refer To:",
     option = defaults.sampleMode,
-    options = sampleModes
+    options = sampleModes,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -129,6 +131,7 @@ dlg:combobox {
     label = "Mode:",
     option = defaults.uiMode,
     options = uiModes,
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data
         local uiMode <const> = args.uiMode --[[@as string]]
@@ -256,7 +259,8 @@ dlg:combobox {
     option = defaults.connection,
     options = connections,
     visible = defaults.uiMode == "CURSOR"
-        or defaults.uiMode == "COORD"
+        or defaults.uiMode == "COORD",
+    hexpand = false,
 }
 
 dlg:newrow { always = false }

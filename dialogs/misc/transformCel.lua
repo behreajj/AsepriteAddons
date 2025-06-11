@@ -114,7 +114,8 @@ dlg:combobox {
     id = "target",
     label = "Target:",
     option = defaults.target,
-    options = targets
+    options = targets,
+    hexpand = false,
 }
 
 dlg:separator { id = "translateSep" }
@@ -124,7 +125,8 @@ dlg:combobox {
     label = "System:",
     option = defaults.coordSystem,
     options = coordSystems,
-    visible = true
+    visible = true,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -757,6 +759,7 @@ dlg:combobox {
     label = "Units:",
     option = defaults.units,
     options = unitOptions,
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data
         local unitType <const> = args.units --[[@as string]]

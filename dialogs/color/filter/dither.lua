@@ -33,7 +33,8 @@ dlg:combobox {
     id = "areaTarget",
     label = "Target:",
     option = defaults.areaTarget,
-    options = areaTargets
+    options = areaTargets,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -43,6 +44,7 @@ dlg:combobox {
     label = "Alpha:",
     option = defaults.alphaMode,
     options = QuantizeUtilities.ALPHA_MODES,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -52,6 +54,7 @@ dlg:combobox {
     label = "Pattern:",
     option = defaults.ditherPattern,
     options = QuantizeUtilities.DITHER_PATTERNS,
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data
         local ditherPattern <const> = args.ditherPattern
@@ -89,6 +92,7 @@ dlg:combobox {
     label = "Mode:",
     option = defaults.ditherMode,
     options = ditherModes,
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data
         local ditherMode <const> = args.ditherMode --[[@as string]]
@@ -164,7 +168,8 @@ dlg:combobox {
     label = "Evaluate:",
     option = defaults.greyMethod,
     options = greyMethods,
-    visible = defaults.ditherMode == "ONE_BIT"
+    visible = defaults.ditherMode == "ONE_BIT",
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -188,6 +193,7 @@ dlg:combobox {
     label = "Palette:",
     option = defaults.palTarget,
     options = palTargets,
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data
         local palTarget <const> = args.palTarget --[[@as string]]

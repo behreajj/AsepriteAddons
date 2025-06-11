@@ -20,7 +20,8 @@ dlg:combobox {
     id = "areaTarget",
     label = "Target:",
     option = defaults.areaTarget,
-    options = areaTargets
+    options = areaTargets,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -30,6 +31,7 @@ dlg:combobox {
     label = "Palette:",
     option = defaults.palTarget,
     options = palTargets,
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data
         local palTarget <const> = args.palTarget --[[@as string]]

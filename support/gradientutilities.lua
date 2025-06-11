@@ -635,6 +635,7 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         option = GradientUtilities.DEFAULT_STYLE,
         options = GradientUtilities.STYLE_PRESETS,
         visible = showStyle,
+        hexpand = false,
         onchange = function()
             local args <const> = dlg.data
 
@@ -663,6 +664,7 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         options = GradientUtilities.CLR_SPC_PRESETS,
         visible = (not showStyle) or
             GradientUtilities.DEFAULT_STYLE == "MIXED",
+        hexpand = false,
         onchange = function()
             local args <const> = dlg.data
             local style <const> = args.stylePreset --[[@as string]]
@@ -684,6 +686,7 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         visible = ((not showStyle)
                 or GradientUtilities.DEFAULT_STYLE == "MIXED")
             and GradientUtilities.DEFAULT_CLR_SPC == "SR_LCH",
+        hexpand = false,
         onchange = function()
             dlg:repaint()
         end

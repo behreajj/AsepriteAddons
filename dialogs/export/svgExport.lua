@@ -580,6 +580,7 @@ dlg:combobox {
     option = defaults.frameTarget,
     options = frameTargetOptions,
     visible = defaults.flattenImage,
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data
         local flat <const> = args.flattenImage --[[@as boolean]]

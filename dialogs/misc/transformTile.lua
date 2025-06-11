@@ -665,6 +665,7 @@ dlg:combobox {
     label = "Target:",
     option = defaults.target,
     options = targets,
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data
         local target <const> = args.target --[[@as string]]
@@ -800,7 +801,8 @@ dlg:combobox {
     -- option = selModes[1 + app.preferences.selection.mode],
     option = "REPLACE",
     options = selModes,
-    visible = defaults.target ~= "TILES"
+    visible = defaults.target ~= "TILES",
+    hexpand = false,
 }
 
 dlg:newrow { always = false }

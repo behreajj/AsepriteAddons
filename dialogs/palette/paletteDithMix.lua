@@ -35,6 +35,7 @@ dlg:combobox {
     label = "Palette:",
     option = defaults.palType,
     options = palTypes,
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data
         local state <const> = args.palType --[[@as string]]
@@ -62,6 +63,7 @@ dlg:combobox {
     label = "Dither:",
     option = defaults.ditherType,
     options = ditherTypes,
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data
         local state <const> = args.ditherType --[[@as string]]

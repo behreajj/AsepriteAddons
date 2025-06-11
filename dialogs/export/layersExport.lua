@@ -40,6 +40,7 @@ dlg:combobox {
     label = "Layers:",
     option = defaults.layerTarget,
     options = layerTargetOptions,
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data
         local state <const> = args.layerTarget --[[@as string]]
@@ -88,6 +89,7 @@ dlg:combobox {
     label = "Frames:",
     option = defaults.frameTarget,
     options = frameTargetOptions,
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data
         local state <const> = args.frameTarget --[[@as string]]
@@ -125,7 +127,8 @@ dlg:combobox {
     id = "cropType",
     label = "Trim:",
     option = defaults.cropType,
-    options = cropTypes
+    options = cropTypes,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -240,7 +243,8 @@ dlg:combobox {
     label = "Format:",
     option = defaults.boundsFormat,
     options = JsonUtilities.RECT_OPTIONS,
-    visible = defaults.saveJson
+    visible = defaults.saveJson,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }

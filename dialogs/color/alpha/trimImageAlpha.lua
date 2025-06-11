@@ -16,7 +16,8 @@ dlg:combobox {
     id = "target",
     label = "Target:",
     option = defaults.target,
-    options = targets
+    options = targets,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }

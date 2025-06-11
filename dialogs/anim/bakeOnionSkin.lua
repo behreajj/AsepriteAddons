@@ -93,7 +93,8 @@ dlg:combobox {
     id = "target",
     label = "Target:",
     option = defaults.target,
-    options = targets
+    options = targets,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -142,6 +143,7 @@ dlg:combobox {
     label = "Direction:",
     option = defaults.direcions,
     options = directOps,
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data
         local md <const> = args.directions --[[@as string]]

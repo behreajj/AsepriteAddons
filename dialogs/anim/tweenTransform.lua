@@ -195,6 +195,7 @@ dlg:combobox {
     label = "Mode:",
     option = defaults.mode,
     options = modes,
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data
 
@@ -246,7 +247,8 @@ dlg:combobox {
     option = defaults.facType,
     options = facTypes,
     -- visible = defaults.mode == "MIX"
-    visible = false
+    visible = false,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -255,7 +257,8 @@ dlg:combobox {
     id = "axis",
     label = "Axis:",
     option = defaults.axis,
-    options = axes
+    options = axes,
+    hexpand = false,
 }
 
 dlg:combobox {
@@ -263,7 +266,8 @@ dlg:combobox {
     -- label = "Angle:",
     option = defaults.angleType,
     options = angleTypes,
-    visible = defaults.mode == "MIX"
+    visible = defaults.mode == "MIX",
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -274,6 +278,7 @@ dlg:combobox {
     option = defaults.units,
     options = unitOptions,
     visible = defaults.mode == "MIX",
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data
         local unitType <const> = args.units --[[@as string]]

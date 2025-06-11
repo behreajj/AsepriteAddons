@@ -676,7 +676,8 @@ dlg:combobox {
     id = "layerTarget",
     label = "Layers:",
     option = defaults.layerTarget,
-    options = layerTargetOptions
+    options = layerTargetOptions,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -718,7 +719,8 @@ dlg:combobox {
     id = "frameTarget",
     label = "Frames:",
     option = defaults.frameTarget,
-    options = frameTargetOptions
+    options = frameTargetOptions,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -728,6 +730,7 @@ dlg:combobox {
     label = "Anchor:",
     option = defaults.referTo,
     options = referToOptions,
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data
         local referTo <const> = args.referTo --[[@as string]]
@@ -744,7 +747,8 @@ dlg:combobox {
     option = defaults.inOut,
     options = inOutOptions,
     visible = defaults.referTo == "SELECTION"
-        or defaults.referTo == "SYMMETRY"
+        or defaults.referTo == "SYMMETRY",
+    hexpand = false,
 }
 
 dlg:separator { id = "alignSep", text = "Align" }

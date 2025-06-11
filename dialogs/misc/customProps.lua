@@ -294,6 +294,7 @@ dlg:combobox {
     option = defaults.target,
     options = targets,
     focus = false,
+    hexpand = false,
 }
 
 dlg:combobox {
@@ -302,6 +303,7 @@ dlg:combobox {
     option = defaults.dataType,
     options = dataTypes,
     focus = false,
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data
         local dataType <const> = args.dataType --[[@as string]]

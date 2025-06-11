@@ -123,6 +123,7 @@ dlg:combobox {
     option = defaults.palType,
     options = paletteTypes,
     visible = defaults.plotPalette,
+    hexpand = false,
     onchange = function()
         local state <const> = dlg.data.palType --[[@as string]]
         dlg:modify { id = "palFile", visible = state == "FILE" }

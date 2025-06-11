@@ -20,7 +20,8 @@ dlg:combobox {
     label = "Target:",
     focus = false,
     option = defaults.target,
-    options = targets
+    options = targets,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }

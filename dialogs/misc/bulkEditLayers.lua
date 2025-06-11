@@ -401,7 +401,8 @@ dlg:combobox {
     label = "Blend:",
     option = defaults.blendMode,
     options = blendModes,
-    focus = false
+    focus = false,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -545,7 +546,8 @@ dlg:combobox {
     id = "huePreset",
     label = "Easing:",
     option = GradientUtilities.DEFAULT_HUE_EASING,
-    options = GradientUtilities.HUE_EASING_PRESETS
+    options = GradientUtilities.HUE_EASING_PRESETS,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }

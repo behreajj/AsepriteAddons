@@ -154,7 +154,8 @@ dlg:combobox {
     label = "Grid:",
     option = defaults.shiftOption,
     options = shiftOptions,
-    visible = false
+    visible = false,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -241,7 +242,8 @@ dlg:combobox {
     label = "Logic:",
     -- option = selModes[1 + app.preferences.selection.mode],
     option = defaults.selMode,
-    options = selModes
+    options = selModes,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -642,7 +644,8 @@ dlg:combobox {
     id = "brushOption",
     label = "Brush:",
     option = defaults.brushOption,
-    options = brushOptions
+    options = brushOptions,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }

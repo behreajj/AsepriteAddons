@@ -97,6 +97,7 @@ dlg:combobox {
     label = "Mode:",
     option = defaults.mode,
     options = modes,
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data
         local mode <const> = args.mode --[[@as string]]
@@ -212,6 +213,7 @@ dlg:combobox {
     option = defaults.target,
     options = targets,
     focus = false,
+    hexpand = false,
     visible = defaults.mode ~= "MIX"
         and defaults.mode ~= "REMAP",
     onchange = function()

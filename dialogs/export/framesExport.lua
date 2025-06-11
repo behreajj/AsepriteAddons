@@ -314,6 +314,7 @@ dlg:combobox {
     label = "Frames:",
     option = defaults.frameTarget,
     options = frameTargetOptions,
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data
         local state <const> = args.frameTarget --[[@as string]]
@@ -361,7 +362,8 @@ dlg:combobox {
     label = "Trim:",
     option = defaults.cropType,
     options = cropTypes,
-    visible = true
+    visible = true,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -446,6 +448,7 @@ dlg:combobox {
     option = defaults.sheetOrient,
     options = sheetTypes,
     visible = defaults.useSheet,
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data
         local toPow2 <const> = args.toPow2 --[[@as boolean]]
@@ -535,7 +538,8 @@ dlg:combobox {
     label = "Format:",
     option = defaults.boundsFormat,
     options = JsonUtilities.RECT_OPTIONS,
-    visible = defaults.saveJson
+    visible = defaults.saveJson,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }

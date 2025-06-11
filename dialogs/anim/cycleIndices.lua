@@ -19,7 +19,8 @@ dlg:combobox {
     id = "target",
     label = "Frames:",
     option = defaults.target,
-    options = targets
+    options = targets,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -49,7 +50,8 @@ dlg:combobox {
     id = "incrType",
     label = "Step:",
     option = defaults.incrType,
-    options = incrTypes
+    options = incrTypes,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -58,7 +60,8 @@ dlg:combobox {
     id = "incrDir",
     label = "Direction:",
     option = defaults.incrDir,
-    options = incrDirs
+    options = incrDirs,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }

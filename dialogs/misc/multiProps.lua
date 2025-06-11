@@ -134,6 +134,7 @@ if hasBlend then
         option = blendModeToStr(layer.blendMode or BlendMode.NORMAL),
         options = blendModes,
         focus = false,
+        hexpand = false,
         onchange = function()
             if (not isBkg) then
                 local args <const> = dlg.data
@@ -381,6 +382,7 @@ if tag then
         option = aniDirToStr(tag.aniDir),
         options = aniDirs,
         focus = false,
+        hexpand = false,
         onchange = function()
             local args <const> = dlg.data
             local aniDirStr <const> = args.tagAniDir --[[@as string]]

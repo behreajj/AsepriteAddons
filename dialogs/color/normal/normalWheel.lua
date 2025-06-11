@@ -145,6 +145,7 @@ dlg:combobox {
     option = defaults.palType,
     options = palTypes,
     visible = defaults.plotPalette,
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data
         local state <const> = args.palType --[[@as string]]

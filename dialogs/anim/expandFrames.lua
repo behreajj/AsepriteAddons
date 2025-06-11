@@ -292,6 +292,7 @@ dlg:combobox {
     label = "Target:",
     option = defaults.frameTarget,
     options = frameTargets,
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data
         local frameTarget <const> = args.frameTarget --[[@as string]]
@@ -318,6 +319,7 @@ dlg:combobox {
     label = "Fill:",
     option = defaults.fillOpt,
     options = fillOpts,
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data
         local fillOpt <const> = args.fillOpt --[[@as string]]

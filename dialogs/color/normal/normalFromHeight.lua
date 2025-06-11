@@ -26,7 +26,8 @@ dlg:combobox {
     id = "target",
     label = "Target:",
     option = defaults.target,
-    options = targets
+    options = targets,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -43,7 +44,8 @@ dlg:combobox {
     id = "edgeType",
     label = "Edges:",
     option = defaults.edgeType,
-    options = edges
+    options = edges,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }

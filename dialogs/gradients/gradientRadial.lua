@@ -131,6 +131,7 @@ dlg:combobox {
     label = "Metric:",
     option = defaults.distMetric,
     options = metrics,
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data
         local distMetric <const> = args.distMetric --[[@as string]]

@@ -16,7 +16,8 @@ dlg:combobox {
     id = "target",
     label = "Target:",
     option = defaults.target,
-    options = targets
+    options = targets,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -36,7 +37,8 @@ dlg:combobox {
     label = "Over:",
     text = "Mask",
     option = defaults.delOver,
-    options = delOptions
+    options = delOptions,
+    hexpand = false,
 }
 
 dlg:combobox {
@@ -44,7 +46,8 @@ dlg:combobox {
     label = "Under:",
     text = "Source",
     option = defaults.delUnder,
-    options = delOptions
+    options = delOptions,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }

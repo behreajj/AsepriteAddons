@@ -96,7 +96,8 @@ dlg:combobox {
     id = "target",
     label = "Target:",
     option = defaults.target,
-    options = targets
+    options = targets,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -106,6 +107,7 @@ dlg:combobox {
     label = "Channel:",
     options = channels,
     option = defaults.channel,
+    hexpand = false,
     onchange = function()
         local args <const> = dlg.data
         local channel <const> = args.channel --[[@as string]]

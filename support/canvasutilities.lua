@@ -575,6 +575,7 @@ function CanvasUtilities.graphBezier(
             "EASE_OUT",
             "LINEAR" },
         visible = isVisVrf and visFuncsVrf,
+        hexpand = false,
         onchange = function()
             local args <const> = dialog.data
             local easeFunc <const> = args[easeFuncsId] --[[@as string]]
