@@ -235,13 +235,16 @@ dlg:button {
         local mat <const> = Mat3.mul(t, s)
         Utilities.mulMat3Mesh2(mat, mesh)
 
-        local layer <const> = sprite:newLayer()
-        layer.name = string.format("Arc %d to %d", startAngle, stopAngle)
-
-        local useTrim <const> = true
-        ShapeUtilities.drawMesh2(sprite, mesh, useFill, fillColor,
-            useStroke, strokeColor, strokeWeight, frame, layer,
-            useAntialias, useTrim)
+        local name <const> = string.format(
+            "Arc %d to %d",
+            startAngle, stopAngle)
+        app.transaction(name, function()
+            local layer <const> = sprite:newLayer()
+            layer.name = name
+            ShapeUtilities.drawMesh2(sprite, mesh, useFill, fillColor,
+                useStroke, strokeColor, strokeWeight, frame, layer,
+                useAntialias, true)
+        end)
 
         app.refresh()
     end

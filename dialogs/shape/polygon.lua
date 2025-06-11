@@ -234,13 +234,14 @@ dlg:button {
             sectors, skip, pick, inset * 0.01)
         Utilities.mulMat3Mesh2(mat, mesh)
 
-        local layer <const> = sprite:newLayer()
-        layer.name = mesh.name
-
-        local useTrim <const> = true
-        ShapeUtilities.drawMesh2(sprite, mesh, useFill, fillColor,
-            useStroke, strokeColor, strokeWeight, frame, layer,
-            useAntialias, useTrim)
+        local name <const> = mesh.name
+        app.transaction(name, function()
+            local layer <const> = sprite:newLayer()
+            layer.name = name
+            ShapeUtilities.drawMesh2(sprite, mesh, useFill, fillColor,
+                useStroke, strokeColor, strokeWeight, frame, layer,
+                useAntialias, true)
+        end)
 
         app.refresh()
     end
