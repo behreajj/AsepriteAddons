@@ -233,7 +233,8 @@ dlg:newrow { always = false }
 
 dlg:check {
     id = "uniquesOnly",
-    label = "Uniques Only:",
+    label = "Filter:",
+    text = "Uniques",
     focus = false,
     selected = defaults.uniquesOnly,
     hexpand = false,

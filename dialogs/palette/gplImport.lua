@@ -43,7 +43,8 @@ dlg:newrow { always = false }
 
 dlg:check {
     id = "useNew",
-    label = "New Sprite:",
+    label = "Sprite:",
+    text = "New",
     selected = defaults.useNew,
     hexpand = false,
     onclick = function()
@@ -59,7 +60,8 @@ dlg:newrow { always = false }
 
 dlg:check {
     id = "uniquesOnly",
-    label = "Uniques Only:",
+    label = "Filter:",
+    text = "Uniques",
     selected = defaults.uniquesOnly,
     hexpand = false,
 }
