@@ -342,8 +342,8 @@ dlg:newrow { always = false }
 dlg:check {
     id = "boolValue",
     label = "Boolean:",
-    selected = defaults.boolValue,
     text = "&True",
+    selected = defaults.boolValue,
     visible = defaults.dataType == "BOOLEAN",
     focus = false,
     hexpand = false,
