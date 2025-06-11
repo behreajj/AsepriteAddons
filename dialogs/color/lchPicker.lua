@@ -946,8 +946,7 @@ dlg:combobox {
     id = "harmonyType",
     option = defaults.harmonyType,
     options = harmonyTypes,
-    -- Make an exception for this combobox.
-    hexpand = true,
+    hexpand = false,
     onchange = function()
         dlg:repaint()
     end
