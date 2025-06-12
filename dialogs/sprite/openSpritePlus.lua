@@ -113,7 +113,6 @@ dlg:file {
     id = "spriteFile",
     label = "File:",
     filetypes = AseUtilities.FILE_FORMATS_OPEN,
-    filename = "*.*",
     basepath = app.fs.userDocsPath,
     focus = true,
     visible = defaults.asSeq == false
@@ -125,7 +124,6 @@ dlg:file {
     id = "fromFile",
     label = "From:",
     filetypes = AseUtilities.FILE_FORMATS_OPEN,
-    filename = "*.*",
     basepath = app.fs.userDocsPath,
     title = "Open Sequence",
     focus = false,
@@ -138,7 +136,7 @@ dlg:file {
     id = "toFile",
     label = "To:",
     filetypes = AseUtilities.FILE_FORMATS_OPEN,
-    filename = "*.*",
+
     basepath = app.fs.userDocsPath,
     title = "Open Sequence",
     focus = false,
@@ -224,7 +222,7 @@ dlg:newrow { always = false }
 dlg:file {
     id = "palFile",
     filetypes = AseUtilities.FILE_FORMATS_PAL,
-    filename = "*.*",
+
     basepath = app.fs.joinPath(app.fs.userConfigPath, "palettes"),
     visible = defaults.palType == "FILE",
     focus = false,

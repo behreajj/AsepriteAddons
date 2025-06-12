@@ -797,7 +797,6 @@ dlg:file {
     id = "filepath",
     label = "Path:",
     filetypes = { "svg" },
-    filename = "*.svg",
     basepath = app.fs.userDocsPath,
     title = "Export Svg",
     save = true,

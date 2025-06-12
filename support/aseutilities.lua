@@ -2966,9 +2966,9 @@ function AseUtilities.rotateImageZ(source, angle)
         return AseUtilities.rotateImage270(source)
     end
 
-    local rad <const> = angle * 0.017453292519943
+    local radians <const> = angle * 0.017453292519943
     return AseUtilities.rotateImageZInternal(source,
-        math.cos(rad), math.sin(rad))
+        math.cos(radians), math.sin(radians))
 end
 
 ---Internal helper function to rotateZ. Accepts pre-calculated cosine and sine

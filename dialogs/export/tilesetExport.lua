@@ -319,7 +319,6 @@ dlg:file {
     id = "filename",
     label = "File:",
     filetypes = tiledImgExts,
-    filename = "*.png",
     basepath = app.fs.userDocsPath,
     title = "Export Tile Set",
     save = true,

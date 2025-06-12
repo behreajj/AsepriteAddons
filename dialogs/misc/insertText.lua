@@ -76,7 +76,6 @@ dlg:newrow { always = false }
 dlg:file {
     id = "msgFilePath",
     filetypes = txtFormats,
-    filename = "*.*",
     basepath = app.fs.userDocsPath,
     visible = defaults.msgSrc == "FILE"
 }

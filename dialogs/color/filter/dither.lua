@@ -69,7 +69,6 @@ dlg:file {
     id = "ditherPath",
     label = "File:",
     filetypes = AseUtilities.FILE_FORMATS_OPEN,
-    filename = "*.*",
     basepath = app.fs.userDocsPath,
     focus = false,
     visible = defaults.ditherPattern == "DITHER_CUSTOM"
@@ -210,7 +209,7 @@ dlg:newrow { always = false }
 dlg:file {
     id = "palFile",
     filetypes = AseUtilities.FILE_FORMATS_PAL,
-    filename = "*.*",
+
     basepath = app.fs.joinPath(app.fs.userConfigPath, "palettes"),
     visible = defaults.ditherMode == "PALETTE"
         and defaults.palTarget == "FILE"

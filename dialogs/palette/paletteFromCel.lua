@@ -76,7 +76,6 @@ dlg:newrow { always = false }
 dlg:file {
     id = "filepath",
     filetypes = AseUtilities.FILE_FORMATS_PAL,
-    filename = "*.gpl",
     basepath = app.fs.userDocsPath,
     save = true,
     visible = defaults.palTarget == "FILE"

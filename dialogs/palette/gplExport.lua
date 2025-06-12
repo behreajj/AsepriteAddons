@@ -72,7 +72,6 @@ dlg:file {
     id = "filepath",
     label = "Path:",
     filetypes = { "gpl" },
-    filename = "*.gpl",
     basepath = app.fs.userDocsPath,
     title = "Export Gpl",
     save = true,
