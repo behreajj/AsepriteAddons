@@ -245,33 +245,33 @@ end
 ---
 ---For indexed, may return an index that is greater than the range of one byte,
 ---[0, 255].
----@param clr Color aseprite color
----@param clrMode ColorMode color mode
+---@param c Color aseprite color
+---@param colorMode ColorMode color mode
 ---@return integer
 ---@nodiscard
-function AseUtilities.aseColorToHex(clr, clrMode)
-    if clrMode == ColorMode.RGB then
-        return (clr.alpha << 0x18)
-            | (clr.blue << 0x10)
-            | (clr.green << 0x08)
-            | clr.red
-    elseif clrMode == ColorMode.GRAY then
+function AseUtilities.aseColorToHex(c, colorMode)
+    if colorMode == ColorMode.RGB then
+        return (c.alpha << 0x18)
+            | (c.blue << 0x10)
+            | (c.green << 0x08)
+            | c.red
+    elseif colorMode == ColorMode.GRAY then
         -- Color:grayPixel depends on HSL lightness, not on the user gray
         -- conversion preference (HSL, HSV or luma). See
         -- https://github.com/aseprite/aseprite/blob/main/src/app/color.cpp#L821
         -- https://github.com/aseprite/aseprite/blob/main/src/doc/color.h#L62
         -- and app.preferences.quantization.to_gray .
-        local sr <const> = clr.red
-        local sg <const> = clr.green
-        local sb <const> = clr.blue
+        local sr <const> = c.red
+        local sg <const> = c.green
+        local sb <const> = c.blue
         -- Prioritize consistency with grayscale convert over correctness.
         -- For comparison, see
         -- https://www.w3.org/TR/compositing-1/#blendingnonseparable .
         -- local gray <const> = (sr * 30 + sg * 59 + sb * 11) // 100
         local gray <const> = (sr * 2126 + sg * 7152 + sb * 722) // 10000
-        return (clr.alpha << 0x08) | gray
-    elseif clrMode == ColorMode.INDEXED then
-        return clr.index
+        return (c.alpha << 0x08) | gray
+    elseif colorMode == ColorMode.INDEXED then
+        return c.index
     end
     return 0
 end
