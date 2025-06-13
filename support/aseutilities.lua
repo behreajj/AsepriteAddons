@@ -1171,11 +1171,11 @@ end
 ---@param lyrCount integer layer count
 ---@param image Image cel image
 ---@param position? Point cel position
----@param guiClr? integer hexadecimal color
+---@param guiAbgr32? integer hexadecimal color
 ---@return Cel[]
 function AseUtilities.createCels(
     sprite, frStrtIdx, frCount, lyrStrtIdx,
-    lyrCount, image, position, guiClr)
+    lyrCount, image, position, guiAbgr32)
     -- Do not use app.transactions.
     -- https://github.com/aseprite/aseprite/issues/3276
 
@@ -1276,8 +1276,8 @@ function AseUtilities.createCels(
         cels[i] = sprite:newCel(layerObj, frameObj, valImg, valPos)
     end
 
-    if guiClr and guiClr ~= 0x0 then
-        local aseColor <const> = AseUtilities.hexToAseColor(guiClr)
+    if guiAbgr32 and guiAbgr32 ~= 0x0 then
+        local aseColor <const> = AseUtilities.hexToAseColor(guiAbgr32)
         local j = 0
         while j < flatCount do
             j = j + 1
