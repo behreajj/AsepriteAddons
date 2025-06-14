@@ -46,7 +46,7 @@ local srcZIndex <const> = cel.zIndex
 local len <const> = 1 + j - i
 if len <= 1 then return end
 
-app.transaction("Expand Cel", function()
+app.transaction("Fill Empty Cels", function()
     local k = 0
     while k < len do
         local trgCel <const> = sprite:newCel(
