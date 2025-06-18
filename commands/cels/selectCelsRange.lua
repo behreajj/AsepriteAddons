@@ -18,27 +18,36 @@ if appRange.sprite == activeSprite then
         local activeFrame <const> = site.frame
         if not activeFrame then return end
 
-        local xMouse <const>, yMouse <const> = AseUtilities.getMouse()
-        local palettes <const> = activeSprite.palettes
-        local specSprite <const> = activeSprite.spec
-        local colorMode <const> = specSprite.colorMode
-        local a01 <const>, candidate <const> = AseUtilities.layerUnderPoint(
-            activeSprite, activeFrame, xMouse, yMouse, 1.0,
-            palettes, colorMode)
+        -- TODO: Seek the topmost layer under the cursor?
+        local activeLayer <const> = site.layer
+        if activeLayer then
+            if activeLayer.isBackground then
+                activeSprite.selection = Selection(spriteBounds)
+            else
+                local leaves <const> = AseUtilities.appendLeaves(
+                    activeLayer, {}, true, true, true, true)
+                local lenLeaves <const> = #leaves
+                local union <const> = Selection()
 
-        if a01 > 0.0 then
-            local union <const> = Selection()
-            local cel <const> = candidate:cel(activeFrame)
-            if cel then
-                union:add(selectCel(cel))
-            end
-            union:intersect(spriteBounds)
-            if not union.isEmpty then
-                activeSprite.selection = union
-            end -- Non empty union.
-            app.layer = candidate
-        end -- Non zero alpha.
+                local i = 0
+                while i < lenLeaves do
+                    i = i + 1
+                    local leaf <const> = leaves[i]
+                    local cel <const> = leaf:cel(activeFrame)
+                    if cel then
+                        union:add(selectCel(cel))
+                    end
+                end
+
+                union:intersect(spriteBounds)
+                if not union.isEmpty then
+                    activeSprite.selection = union
+                end -- Non empty union.
+            end     -- Layer is background check.
+        end         -- Active Layer exists.
     else
+        -- TODO: Should the above default be activated when the images array
+        -- is lteq zero instead of the range being considered empty?
         local rangeImages <const> = appRange.images
         local lenRangeImages <const> = #rangeImages
         local union <const> = Selection()

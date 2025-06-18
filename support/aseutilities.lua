@@ -470,8 +470,8 @@ end
 ---Finds the average color of a selection in a sprite. If there is no selection,
 ---tries getting the color at the editor mouse position. Calculates the average
 ---in the SR LAB 2 color space. Excludes colors with zero alpha.
----@param sprite Sprite source sprite
----@param frame Frame|integer frame
+---@param sprite Sprite
+---@param frame Frame|integer
 ---@return Lab
 ---@nodiscard
 function AseUtilities.averageColor(sprite, frame)
@@ -2314,101 +2314,6 @@ function AseUtilities.getBytes(image)
     return Utilities.stringToByteArr(image.bytes)
 end
 
----Gets the alpha at an image's pixel x, y in local space. The alpha is
----multiplied by an external opacity that may come from cels,
----layers or a product thereof. The external alpha is expected to be a
----real number within the range [0.0, 1.0]. The return alpha is also a
----real number.
----Returns 0.0 if the coordinates are out of bounds.
----
----Of use when evaluating if a layer is beneath a mouse cursor.
----@param imgSrc Image image
----@param x integer x coordinate local to image
----@param y integer y coordinate local to image
----@param alphaHierarchy number composite opacity from layers and cel
----@param tileSet Tileset|nil tile set
----@param spriteColorMode ColorMode sprite color mode
----@param palette Palette|nil palette
----@return number alpha
-function AseUtilities.getPixelAlpha(
-    imgSrc, x, y, alphaHierarchy,
-    palette, tileSet, spriteColorMode)
-    if x < 0 or y < 0 then return 0.0 end
-
-    local aHier01 <const> = alphaHierarchy or 1.0
-    if aHier01 <= 0.0 then return 0.0 end
-
-    local imageSpec <const> = imgSrc.spec
-    local wImage <const> = imageSpec.width
-    local hImage <const> = imageSpec.height
-    local imageColorMode <const> = imageSpec.colorMode
-
-    local bpp <const> = imgSrc.bytesPerPixel
-    local byteStr <const> = imgSrc.bytes
-
-    if imageColorMode == ColorMode.TILEMAP then
-        if tileSet then
-            local tileSize <const> = tileSet.grid.tileSize
-            local wTile <const> = math.max(1, math.abs(tileSize.width))
-            local hTile <const> = math.max(1, math.abs(tileSize.height))
-            local lenTileSet <const> = #tileSet
-
-            local xMap <const> = x // wTile
-            local yMap <const> = y // hTile
-            if xMap >= wImage or yMap >= hImage then return 0.0 end
-
-            local dataIdx <const> = (yMap * wImage + xMap) * bpp
-            local dataStr <const> = string.sub(byteStr,
-                1 + dataIdx, bpp + dataIdx)
-
-            local tileEntry <const> = string.unpack("<I" .. bpp, dataStr)
-            local tileIndex <const> = app.pixelColor.tileI(tileEntry)
-            if tileIndex <= 0 or tileIndex >= lenTileSet then
-                return 0.0
-            end
-
-            local tile <const> = tileSet:tile(tileIndex)
-            if not tile then return 0.0 end
-
-            if wTile ~= hTile then return aHier01 end
-
-            local tileFlag <const> = app.pixelColor.tileF(tileEntry)
-            local tileImage <const> = AseUtilities.bakeFlag(
-                tile.image, tileFlag)
-            local xTile <const> = x % tileImage.width
-            local yTile <const> = y % tileImage.height
-
-            return AseUtilities.getPixelAlpha(
-                tileImage, xTile, yTile,
-                aHier01, palette, tileSet, spriteColorMode)
-        end -- End tile set exists.
-    else
-        if x >= wImage or y >= hImage then return 0.0 end
-
-        local dataIdx <const> = (y * wImage + x) * bpp
-        local dataStr <const> = string.sub(byteStr,
-            1 + dataIdx, bpp + dataIdx)
-        local dataInt <const> = string.unpack("<I" .. bpp, dataStr)
-
-        if imageColorMode == ColorMode.RGB then
-            local a8 <const> = (dataInt >> 0x18) & 0xff
-            return aHier01 * (a8 / 255.0)
-        elseif imageColorMode == ColorMode.GRAY then
-            local a8 <const> = (dataInt >> 0x08) & 0xff
-            return aHier01 * (a8 / 255.0)
-        elseif imageColorMode == ColorMode.INDEXED then
-            if dataInt == imageSpec.transparentColor then return 0.0 end
-            if not palette then return aHier01 end
-            if dataInt >= 0 and dataInt < #palette then
-                local aseColor <const> = palette:getColor(dataInt)
-                return aHier01 * (aseColor.alpha / 255.0)
-            end -- Index is not alpha index.
-        end     -- Other color mode block.
-    end         -- Is tile map block.
-
-    return 0.0
-end
-
 ---Gets a selection from a sprite. Calls InvertMask command twice. Returns a
 ---copy of the selection, not a reference. If the selection is empty, then tries
 ---to return the cel bounds. If that is empty, then returns the sprite bounds.
@@ -2706,92 +2611,8 @@ function AseUtilities.imageToBrush(
     }
 end
 
----Gets the alpha at an x, y coordinate for a parent. If the layer is a
----group, a child layer is returned. Otherwise, the input layer is
----returned. Returns 0.0 for reference and invisible layers. Returns 1.0
----for background layers. Returns 0.0 for empty cels.
----@param parent Layer|Sprite parent, group layer or sprite
----@param frame Frame|integer source frame
----@param x integer x coordinate
----@param y integer y coordinate
----@param alphaHierarchy number composite opacity from parents
----@param palettes Palette[] sprite palettes
----@param colorMode ColorMode sprite color mode
----@return number alpha
----@return Layer layer
-function AseUtilities.layerUnderPoint(
-    parent, frame, x, y, alphaHierarchy,
-    palettes, colorMode)
-    ---@diagnostic disable-next-line: undefined-field
-    local isSprite <const> = parent.__name == "doc::Sprite"
-
-    local defaultLayer <const> = isSprite
-        and (app.layer or parent.layers[#parent.layers])
-        or parent --[[@as Layer]]
-
-    if not defaultLayer.isVisible then return 0.0, defaultLayer end
-
-    local aHier01 <const> = alphaHierarchy or 1.0
-    if aHier01 <= 0.0 then return 0.0, defaultLayer end
-
-    local aLayer8 <const> = isSprite and 255
-        or (defaultLayer.opacity or 255)
-    if aLayer8 <= 0 then return 0.0, defaultLayer end
-    local aLayer01 <const> = aLayer8 / 255.0
-    local aLayerHier01 <const> = aHier01 * aLayer01
-
-    if isSprite or defaultLayer.isGroup then
-        local childLayers <const> = parent.layers
-        if not childLayers then return 0.0, defaultLayer end
-
-        local layerUnderPoint <const> = AseUtilities.layerUnderPoint
-        local lenChildLayers <const> = #childLayers
-        local i = lenChildLayers + 1
-        while i > 1 do
-            i = i - 1
-            local a01 <const>, candidate <const> = layerUnderPoint(
-                childLayers[i], frame, x, y, aLayerHier01,
-                palettes, colorMode)
-            if a01 > 0.0 then return a01, candidate end
-        end -- End children loop.
-    else
-        if defaultLayer.isReference then return 0.0, defaultLayer end
-        if defaultLayer.isBackground then return 1.0, defaultLayer end
-
-        local cel <const> = defaultLayer:cel(frame)
-        if not cel then return 0.0, defaultLayer end
-
-        local aCel8 <const> = cel.opacity
-        if aCel8 <= 0 then return 0.0, defaultLayer end
-        local aCel01 <const> = aCel8 / 255.0
-        local aFinal01 <const> = aLayerHier01 * aCel01
-
-        local celImage <const> = cel.image
-        local celPos <const> = cel.position
-        local xtlCel <const> = celPos.x
-        local ytlCel <const> = celPos.y
-
-        local xLocal <const> = x - xtlCel
-        local yLocal <const> = y - ytlCel
-
-        local palette <const> = AseUtilities.getPalette(
-            frame, palettes)
-        local tileSet <const> = defaultLayer.isTilemap
-            and defaultLayer.tileset
-            or nil
-
-        local a01 <const> = AseUtilities.getPixelAlpha(
-            celImage, xLocal, yLocal, aFinal01,
-            palette, tileSet, colorMode)
-        return a01, defaultLayer
-    end -- End group or leaf check.
-
-    return 0.0, defaultLayer
-end
-
----Adds padding around the edges of an image. Does not check if image
----is a tile map. If the padding is less than one, returns the source
----image.
+---Adds padding around the edges of an image. Does not check if image is a tile
+---map. If the padding is less than one, returns the source image.
 ---@param image Image source image
 ---@param padding integer padding
 ---@return Image
@@ -3197,11 +3018,10 @@ function AseUtilities.selectCel(cel, spriteBounds)
         cel.layer.tileset, spriteBounds)
 end
 
----Selects non-transparent pixels of an image. Intersects the selection
----with the sprite bounds, if provided, for cases where cel may be
----partially outside the canvas edges. Ignores tile flips and
----rotations. For indexed color mode, ignores the palette color's alpha
----channel.
+---Selects non-transparent pixels of an image. Intersects the selection with
+---the sprite bounds, if provided, for cases where cel may be partially outside
+---the canvas edges. Ignores tile flips and rotations. For indexed color mode,
+---ignores the palette color's alpha channel.
 ---@param image Image source image
 ---@param xtl integer cel position x
 ---@param ytl integer cel position y
@@ -3280,7 +3100,7 @@ end
 ---selection mask.
 ---@param sel Selection selection mask
 ---@param sprite Sprite sprite
----@param frame Frame|integer frame
+---@param frame Frame|integer frame index
 ---@return Image
 ---@return integer xtl
 ---@return integer ytl
@@ -3713,7 +3533,7 @@ function AseUtilities.trimCelToSelect(cel, mask, hexDefault)
                 or (alphaIndex >= 0 and alphaIndex < 256))
             and alphaIndex or 0
         local hexVerif <const> = hexDefault or alphaIndexVerif
-        local trimByteStr <const> = trimImage.bytes
+        local trimBytesStr <const> = trimImage.bytes
         local bpp <const> = trimImage.bytesPerPixel
         local hexPacked <const> = string.pack("<I" .. bpp, hexVerif)
         local strsub <const> = string.sub
@@ -3728,7 +3548,7 @@ function AseUtilities.trimCelToSelect(cel, mask, hexDefault)
                     xClip + i % wTrim,
                     yClip + i // wTrim) then
                 local ibpp <const> = i * bpp
-                byteStr = strsub(trimByteStr, 1 + ibpp, bpp + ibpp)
+                byteStr = strsub(trimBytesStr, 1 + ibpp, bpp + ibpp)
             end
             i = i + 1
             trimBytesArr[i] = byteStr
