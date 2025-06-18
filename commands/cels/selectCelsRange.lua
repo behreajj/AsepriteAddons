@@ -18,7 +18,11 @@ if appRange.sprite == activeSprite then
         local activeFrame <const> = site.frame
         if not activeFrame then return end
 
-        -- TODO: Seek the topmost layer under the cursor?
+        -- Seeking the top most layer under the cursor was tried in commit
+        -- c1e49f333d99edfd7cf801b278ec6dc46a9031eb
+        -- However, it is more beneficial to have the ability to select
+        -- group layers as a whole than it is to seek, which can be done
+        -- in a separate command (selectLayer).
         local activeLayer <const> = site.layer
         if activeLayer then
             if activeLayer.isBackground then
@@ -46,8 +50,6 @@ if appRange.sprite == activeSprite then
             end     -- Layer is background check.
         end         -- Active Layer exists.
     else
-        -- TODO: Should the above default be activated when the images array
-        -- is lteq zero instead of the range being considered empty?
         local rangeImages <const> = appRange.images
         local lenRangeImages <const> = #rangeImages
         local union <const> = Selection()
