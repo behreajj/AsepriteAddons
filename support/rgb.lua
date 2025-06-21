@@ -159,35 +159,68 @@ function Rgb.fromHexAv16(c)
         (c >> 0x08 & 0xff) / 255.0)
 end
 
----Converts from a web-friendly hexadecimal string, such as #AABBCC, to a color.
----@param hexstr string web string
+---Converts from a web-friendly hexadecimal string, such as #AABBCC,
+---to a color. Trims the string, but does not account for characters
+---that use more than one byte. Removes any initial hashtag.
+---@param webStr string web string
 ---@return Rgb
 ---@nodiscard
-function Rgb.fromHexWeb(hexstr)
-    local s = hexstr
+function Rgb.fromHexWeb(webStr)
+    local s = webStr
+    local lens <const> = #s
+
+    -- Find left trim index.
+    local orig = 0
+    while orig < lens do
+        orig = orig + 1
+        if string.sub(s, orig, orig) ~= ' ' then
+            break
+        end
+    end
+
+    -- Find right trim index.
+    local dest = lens + 1
+    while dest > 1 do
+        dest = dest - 1
+        if string.sub(s, dest, dest) ~= ' ' then
+            break
+        end
+    end
+
+    s = string.sub(s, orig, dest)
 
     -- Remove prefix.
     if string.sub(s, 1, 1) == '#' then
         s = string.sub(s, 2)
     end
 
-    local sn <const> = tonumber(s, 16)
+    return Rgb.fromHexWebInternal(s)
+end
+
+---Converts from a web-friendly hexadecimal string, such as AABBCC,
+---to a color. Does not perform any string trimming or checking for
+---initial hash tag.
+---@param webStr string web string
+---@return Rgb
+---@nodiscard
+function Rgb.fromHexWebInternal(webStr)
+    local sn <const> = tonumber(webStr, 16)
     if sn then
-        local lens <const> = #s
-        if lens == 6 then
+        local lenWebStr <const> = #webStr
+        if lenWebStr == 6 then
             return Rgb.new(
                 (sn >> 0x10 & 0xff) / 255.0,
                 (sn >> 0x08 & 0xff) / 255.0,
                 (sn & 0xff) / 255.0,
                 1.0)
-        elseif lens == 4 then
+        elseif lenWebStr == 4 then
             -- Assume RGB565.
             return Rgb.new(
                 (sn >> 0xb & 0x1f) / 31.0,
                 (sn >> 0x5 & 0x3f) / 63.0,
                 (sn & 0x1f) / 31.0,
                 1.0)
-        elseif lens == 3 then
+        elseif lenWebStr == 3 then
             return Rgb.new(
                 (sn >> 0x8 & 0xf) / 15.0,
                 (sn >> 0x4 & 0xf) / 15.0,

@@ -91,35 +91,6 @@ local function assignBack()
     app.command.SwitchColors()
 end
 
----Trims a string of excess spaces. It does not account for characters
----that may exceed one byte, hence the fast label.
----@param x string untrimmed string
----@return string
-local function trimStringFast(x)
-    -- TODO: Should this be incorporated into the Rgb method itself, maybe
-    -- with an internal and external method?
-
-    local lenx <const> = #x
-
-    local start = 0
-    while start < lenx do
-        start = start + 1
-        if string.sub(x, start, start) ~= ' ' then
-            break
-        end
-    end
-
-    local stop = lenx + 1
-    while stop > 1 do
-        stop = stop - 1
-        if string.sub(x, stop, stop) ~= ' ' then
-            break
-        end
-    end
-
-    return string.sub(x, start, stop)
-end
-
 ---@param dialog Dialog
 ---@param l number
 ---@param c number
@@ -339,10 +310,7 @@ dlg:entry {
         -- Because the spacebar can be used as a function key similar to
         -- Shift, Ctrl and Alt, there's a risk of spaces being
         -- introduced by accident.
-        -- local srgb <const> = Rgb.fromHexWeb(hexStr)
-        local hexStrTrimmed <const> = trimStringFast(hexStr)
-        local srgb <const> = Rgb.fromHexWeb(hexStrTrimmed)
-
+        local srgb <const> = Rgb.fromHexWeb(hexStr)
         local lch <const> = defaults.sRgbToLch(srgb)
         active.l = lch.l
         active.c = lch.c
