@@ -925,6 +925,28 @@ function Utilities.reverseTable(t)
     return t
 end
 
+---Converts an rgb color to a normal, stored in a Vec3.
+---If the color's alpha is zero, returns up.
+---If the normal's magnitude is approximately zero, returns up.
+---The boolean indicates the validity of the conversion.
+---@param rgb Rgb color
+---@return Vec3 converted
+---@return boolean isValid
+function Utilities.rgbToVec3(rgb)
+    -- TODO: Find places to use this method.
+    if rgb.a > 0.0 then
+        local x <const> = rgb.r * 2.0 - 1.0
+        local y <const> = rgb.g * 2.0 - 1.0
+        local z <const> = rgb.b * 2.0 - 1.0
+        local mSq <const> = x * x + y * y + z * z
+        if mSq > 0.0000462 then
+            local mInv <const> = 1.0 / math.sqrt(mSq)
+            return Vec3.new(x * mInv, y * mInv, z * mInv), true
+        end
+    end
+    return Vec3.new(0.0, 0.0, 1.0), false
+end
+
 ---Rotates an image's bytes 90 degrees counter clockwise.
 ---@param source string source bytes
 ---@param w integer image width
@@ -1514,6 +1536,54 @@ function Utilities.validateFilename(filename)
         end
     end
     return table.concat(fileChars)
+end
+
+---Converts a vector to a color, stored in an Rgb.
+---If the vector's magnitude is approximately zero, returns up.
+---If the alpha is zero, returns clear black.
+---The boolean indicates the validity of the conversion.
+---@param v Vec2 vector
+---@param alpha? number opacity
+---@return Rgb converted
+---@return boolean isValid
+function Utilities.vec2ToRgb(v, alpha)
+    local aVerif <const> = alpha or 1.0
+    if aVerif <= 0.0 then
+        return Rgb.new(0.0, 0.0, 0.0, 0.0), false
+    end
+
+    local mSq <const> = Vec2.magSq(v)
+    -- TODO: mSq probably has different epsilon for 2d.
+    if mSq > 0.0000462 then
+    end
+    return Rgb.new(0.5, 0.5, 1.0, aVerif), false
+end
+
+---Converts a vector to a color, stored in an Rgb.
+---If the vector's magnitude is approximately zero, returns up.
+---If the alpha is zero, returns clear black.
+---The boolean indicates the validity of the conversion.
+---@param v Vec3 vector
+---@param alpha? number opacity
+---@return Rgb converted
+---@return boolean isValid
+function Utilities.vec3ToRgb(v, alpha)
+    -- TODO: Find places to use this method.
+    local aVerif <const> = alpha or 1.0
+    if aVerif <= 0.0 then
+        return Rgb.new(0.0, 0.0, 0.0, 0.0), false
+    end
+
+    local mSq <const> = Vec3.magSq(v)
+    if mSq > 0.0000462 then
+        local mInv <const> = 1.0 / math.sqrt(mSq)
+        return Rgb.new(
+            (v.x * mInv) * 0.5 + 0.5,
+            (v.y * mInv) * 0.5 + 0.5,
+            (v.z * mInv) * 0.5 + 0.5,
+            aVerif), true
+    end
+    return Rgb.new(0.5, 0.5, 1.0, aVerif), false
 end
 
 ---Translates an image's bytes by a vector, wrapping elements that exceed its

@@ -307,7 +307,16 @@ dlg:entry {
         local args <const> = dlg.data
         local hexStr <const> = args.hexCode --[[@as string]]
 
-        local srgb <const> = Rgb.fromHexWeb(hexStr)
+        -- Because the spacebar can be used as a function key similar to
+        -- Shift, Ctrl and Alt, there's a risk of spaces being
+        -- introduced by accident.
+        -- local srgb <const> = Rgb.fromHexWeb(hexStr)
+        local hexStrTrimmed <const> = table.concat(
+            Utilities.trimCharsInitial(
+                Utilities.trimCharsFinal(
+                    Utilities.stringToCharArr(hexStr))))
+        local srgb <const> = Rgb.fromHexWeb(hexStrTrimmed)
+
         local lch <const> = defaults.sRgbToLch(srgb)
         active.l = lch.l
         active.c = lch.c
