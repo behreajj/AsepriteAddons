@@ -399,6 +399,10 @@ dlg:canvas {
         local rightPressed <const> = button == MouseButton.RIGHT
         local ctrlKey <const> = event.ctrlKey
 
+        -- TODO: It'd be nice to append to palette directly, both
+        -- here and for harmony swatches. However, space bar cannot
+        -- be used, since it opens combo box widget menus and
+        -- adds superfluous spaces to text entry widgets.
         if leftPressed and (not ctrlKey) then
             assignFore()
         end
