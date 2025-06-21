@@ -405,9 +405,9 @@ function Utilities.gcd(a, b)
 end
 
 ---Converts an array of integers representing color in hexadecimal to a
----dictionary. The value in each entry is the first index where the color was
----found. When true, the flag specifies that all completely transparent colors
----are considered equal, not unique.
+---dictionary. The value in each entry is the first index where the
+---color was found. When true, the flag specifies that all completely
+---transparent colors are considered equal, not unique.
 ---@param hexes integer[] hexadecimal colors
 ---@param za boolean zero alpha
 ---@return table<integer, integer>
@@ -435,9 +435,10 @@ function Utilities.hexArrToDict(hexes, za)
     return dict
 end
 
----Unclamped linear interpolation from an origin angle to a destination by a
----factor in [0.0, 1.0]. The range defaults to 360.0 for degrees, but can be
----tau for radians. Uses the counter-clockwise angular direction.
+---Unclamped linear interpolation from an origin angle to a destination
+---by a factor in [0.0, 1.0]. The range defaults to 360.0 for degrees,
+---but can be tau for radians.
+---Uses the counter-clockwise angular direction.
 ---@param orig number origin angle
 ---@param dest number destination angle
 ---@param t number factor
@@ -459,9 +460,9 @@ function Utilities.lerpAngleCcw(orig, dest, t, range)
     end
 end
 
----Unclamped linear interpolation from an origin angle to a destination by a
----factor in [0.0, 1.0]. The range defaults to 360.0 for degrees, but can be
----tau for radians. Uses the clockwise angular direction.
+---Unclamped linear interpolation from an origin angle to a destination
+---by a factor in [0.0, 1.0]. The range defaults to 360.0 for degrees,
+---but can be tau for radians. Uses the clockwise angular direction.
 ---@param orig number origin angle
 ---@param dest number destination angle
 ---@param t number factor
@@ -483,9 +484,9 @@ function Utilities.lerpAngleCw(orig, dest, t, range)
     end
 end
 
----Unclamped linear interpolation from an origin angle to a destination by a
----factor in [0.0, 1.0]. The range defaults to 360.0 for degrees, but can be
----tau for radians. Uses the furthest angular direction.
+---Unclamped linear interpolation from an origin angle to a destination
+---by a factor in [0.0, 1.0]. The range defaults to 360.0 for degrees,
+---but can be tau for radians. Uses the furthest angular direction.
 ---@param orig number origin angle
 ---@param dest number destination angle
 ---@param t number factor
@@ -509,9 +510,9 @@ function Utilities.lerpAngleFar(orig, dest, t, range)
     end
 end
 
----Unclamped linear interpolation from an origin angle to a destination by a
----factor in [0.0, 1.0]. The range defaults to 360.0 for degrees, but can be
----tau for radians. Uses the nearest angular direction.
+---Unclamped linear interpolation from an origin angle to a destination
+---by a factor in [0.0, 1.0]. The range defaults to 360.0 for degrees,
+---but can be tau for radians. Uses the nearest angular direction.
 ---@param orig number origin angle
 ---@param dest number destination angle
 ---@param t number factor
@@ -611,8 +612,9 @@ function Utilities.mulMat4Vec4(a, b)
         + a.m32 * b.z + a.m33 * b.w)
 end
 
----Finds the next power of 2 for a signed integer, i.e., multiplies the next
----power by the integer's sign. Returns zero if input is equal to zero.
+---Finds the next power of 2 for a signed integer, i.e., multiplies the
+---next power by the integer's sign. Returns zero if input is equal to
+---zero.
 ---@param x integer input value
 ---@return integer
 ---@nodiscard
@@ -633,14 +635,16 @@ function Utilities.nextPowerOf2(x)
     return 0
 end
 
----Parses a string of integers separated by a comma. The integers may either be
----individual or ranges connected by a colon. For example, "1,5,10:15,7".
+---Parses a string of integers separated by a comma. The integers may
+---either be individual or ranges connected by a colon. For example,
+---"1,5,10:15,7".
 ---
----Supplying the frame count ensures the range is not out of bounds. Defaults
----to an arbitrary large number.
+---Supplying the frame count ensures the range is not out of bounds.
+---Defaults to an arbitrary large number.
 ---
----Returns an array of arrays. Inner arrays can hold duplicate frame indices,
----as the user may intend for the same frame to appear in multiple groups.
+---Returns an array of arrays. Inner arrays can hold duplicate frame
+---indices, as the user may intend for the same frame to appear in
+---multiple groups.
 ---@param s string range string
 ---@param maxIdx? integer maximum index
 ---@param offset? integer offset
@@ -731,11 +735,12 @@ function Utilities.parseRangeStringOverlap(s, maxIdx, offset)
     return arrOuter
 end
 
----Parses a string of integers separated by a comma. The integers may either be
----individual or ranges connected by a colon. For example, "1,5,10:15,7".
+---Parses a string of integers separated by a comma. The integers may
+---either be individual or ranges connected by a colon. For example,
+---"1,5,10:15,7".
 ---
----Supplying the frame count ensures the range is not out of bounds. Defaults
----to an arbitrary large number.
+---Supplying the frame count ensures the range is not out of bounds.
+---Defaults sto an arbitrary large number.
 ---
 ---Returns an ordered set of integers.
 ---@param s string range string
@@ -768,10 +773,11 @@ function Utilities.parseRangeStringUnique(s, maxIdx, offset)
     return Utilities.dictToSortedSet(dict, nil)
 end
 
----Prepends an alpha mask to a table of hexadecimal integers representing color.
----If the table already includes a mask, the input table is returned unchanged.
----If it contains a mask at another index, it is removed and placed at the
----start. Colors with zero alpha are not considered equal to an alpha mask.
+---Prepends an alpha mask to a table of hexadecimal integers
+---representing color. If the table already includes a mask, the input
+---table is returned unchanged. If it contains a mask at another index,
+---it is removed and placed at the start. Colors with zero alpha are
+---not considered equal to an alpha mask.
 ---@param hexes integer[] colors
 ---@return integer[]
 function Utilities.prependMask(hexes)
@@ -789,8 +795,8 @@ function Utilities.prependMask(hexes)
     return hexes
 end
 
----Quantizes a signed number according to a number of levels. The quantization
----is centered about the range.
+---Quantizes a signed number according to a number of levels. The
+---quantization is centered about the range.
 ---@param a number value
 ---@param levels number levels
 ---@return number
@@ -803,9 +809,9 @@ function Utilities.quantizeSigned(a, levels)
     return a
 end
 
----Quantizes a signed number according to a number of levels. The quantization
----is centered about the range. Internal helper function. Assumes that delta
----has been calculated as 1 / levels.
+---Quantizes a signed number according to a number of levels. The
+---quantization is centered about the range. Internal helper function.
+---Assumes that delta has been calculated as 1 / levels.
 ---@param a number value
 ---@param levels number levels
 ---@param delta number inverse levels
@@ -830,8 +836,8 @@ function Utilities.quantizeUnsigned(a, levels)
 end
 
 ---Quantizes an unsigned number according to a number of levels. The
----quantization is based on the left edge. Internal helper function. Assumes
----that delta has been calculated as 1 / (levels - 1).
+---quantization is based on the left edge. Internal helper function.
+---Assumes that delta has been calculated as 1 / (levels - 1).
 ---@param a number value
 ---@param levels number levels
 ---@param delta number inverse levels
@@ -854,8 +860,9 @@ function Utilities.reduceRatio(a, b)
 end
 
 ---Resizes a source pixel array to new dimensions with nearest neighbor
----sampling. Performs no validation on target width or height. Creates a new
----pixel array. Not intended for use when upscaling images on export.
+---sampling. Performs no validation on target width or height. Creates
+---a new pixel array. Not intended for use when upscaling images on
+---export.
 ---@param source string source pixels
 ---@param wSrc integer original width
 ---@param hSrc integer original height
@@ -900,8 +907,8 @@ function Utilities.resizePixelsNearest(
     return table.concat(resized)
 end
 
----Reverses a table used as an array. Useful for rotating an array of pixels
----180 degrees. Changes the table in place.
+---Reverses a table used as an array. Useful for rotating an array of
+---pixels 180 degrees. Changes the table in place.
 ---@generic T element
 ---@param t T[] input table
 ---@return T[]
