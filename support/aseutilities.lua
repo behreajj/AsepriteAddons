@@ -276,16 +276,17 @@ function AseUtilities.aseColorToHex(c, colorMode)
     return 0
 end
 
----Loads a palette based on a string. The string is expected to be either
----"FILE" or "ACTIVE". The correctZeroAlpha flag replaces zero alpha
----colors with clear black, regardless of RGB channel values.
+---Loads a palette based on a string. The string is expected to be
+---either "FILE", "PRESET" or "ACTIVE". The correctZeroAlpha flag
+---replaces zero alpha colors with clear black, regardless of RGB
+---channel values.
 ---
----Returns a tuple of tables. The first table is an array of hexadecimals
----according to the sprite color profile. The second is a copy of the first
----converted to sRGB.
+---Returns a tuple of tables. The first table is an array of
+---hexadecimals according to the sprite color profile. The second is a
+---copy of the first converted to sRGB.
 ---
----If a palette is loaded from a filepath, the two tables should match, as
----Aseprite does not support color management for palettes.
+---If a palette is loaded from a filepath, the two tables should match,
+---as Aseprite does not support color management for palettes.
 ---@param palType string enumeration
 ---@param filePath string file path
 ---@param startIndex? integer start index
@@ -300,6 +301,9 @@ function AseUtilities.asePaletteLoad(
     local hexesProfile = nil
     local hexesSrgb = nil
 
+    local cntVrf <const> = count or 256
+    local siVrf <const> = startIndex or 0
+
     if palType == "FILE" then
         if filePath and #filePath > 0 then
             local isFile <const> = app.fs.isFile(filePath)
@@ -309,11 +313,22 @@ function AseUtilities.asePaletteLoad(
                 -- color profiles being ignored.
                 local palFile <const> = Palette { fromFile = filePath }
                 if palFile then
-                    local cntVrf <const> = count or 256
-                    local siVrf <const> = startIndex or 0
                     hexesProfile = AseUtilities.asePaletteToHexArr(
                         palFile, siVrf, cntVrf)
                 end
+            end
+        end
+    elseif palType == "PRESET" then
+        -- TODO: Reintroduce use of preset, may want to pass preset string
+        -- as separate from filePath...
+        local callSuccess <const> = pcall(function()
+            Palette { fromResource = filePath }
+        end)
+        if callSuccess then
+            local palFile <const> = Palette { fromResource = filePath }
+            if palFile then
+                hexesProfile = AseUtilities.asePaletteToHexArr(
+                    palFile, siVrf, cntVrf)
             end
         end
     elseif palType == "ACTIVE" then
