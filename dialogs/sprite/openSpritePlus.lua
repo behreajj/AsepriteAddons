@@ -4,7 +4,8 @@ local paletteTypes <const> = {
     "ACTIVE",
     "DEFAULT",
     "EMBEDDED",
-    "FILE"
+    "FILE",
+    "PRESET",
 }
 
 local defaults <const> = {
@@ -14,6 +15,7 @@ local defaults <const> = {
     trimCels = true,
     fixZeroAlpha = false,
     palType = "EMBEDDED",
+    palResource = "",
     uniquesOnly = true,
     prependMask = true,
     xGrid = 0,
@@ -214,7 +216,17 @@ dlg:combobox {
         local args <const> = dlg.data
         local state <const> = args.palType --[[@as string]]
         dlg:modify { id = "palFile", visible = state == "FILE" }
+        dlg:modify { id = "palResource", visible = state == "PRESET" }
     end
+}
+
+dlg:newrow { always = false }
+
+dlg:entry {
+    id = "palResource",
+    text = defaults.palResource,
+    visible = defaults.colorMode ~= "GRAY"
+        and defaults.palType == "PRESET"
 }
 
 dlg:newrow { always = false }
@@ -222,7 +234,6 @@ dlg:newrow { always = false }
 dlg:file {
     id = "palFile",
     filetypes = AseUtilities.FILE_FORMATS_PAL,
-
     basepath = app.fs.joinPath(app.fs.userConfigPath, "palettes"),
     visible = defaults.palType == "FILE",
     focus = false,
@@ -352,8 +363,10 @@ dlg:button {
 
         if palType ~= "DEFAULT" then
             local palFile <const> = args.palFile --[[@as string]]
+            local palResource <const> = args.palResource
+                or defaults.palResource --[[@as string]]
             hexesProfile, _ = AseUtilities.asePaletteLoad(
-                palType, palFile, "", 0, 512, true)
+                palType, palFile, palResource, 0, 512, true)
         else
             -- local defaultPalette = app.defaultPalette
             -- if defaultPalette then
