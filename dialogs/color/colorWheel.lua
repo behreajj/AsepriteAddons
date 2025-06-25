@@ -1,6 +1,6 @@
 dofile("../../support/shapeutilities.lua")
 
-local paletteTypes <const> = { "ACTIVE", "DEFAULT", "FILE" }
+local paletteTypes <const> = { "ACTIVE", "DEFAULT", "FILE", "PRESET" }
 
 local defaults <const> = {
     size = 256,
@@ -13,6 +13,7 @@ local defaults <const> = {
     ringCount = 0,
     plotPalette = true,
     palType = "ACTIVE",
+    palResource = "",
     palStart = 0,
     palCount = 256,
     strokeSize = 6,
@@ -112,6 +113,7 @@ dlg:check {
         local palType <const> = args.palType --[[@as string]]
         dlg:modify { id = "palType", visible = usePlot }
         dlg:modify { id = "palFile", visible = usePlot and palType == "FILE" }
+        dlg:modify { id = "palResource", visible = usePlot and palType == "PRESET" }
     end
 }
 
@@ -127,7 +129,17 @@ dlg:combobox {
     onchange = function()
         local state <const> = dlg.data.palType --[[@as string]]
         dlg:modify { id = "palFile", visible = state == "FILE" }
+        dlg:modify { id = "palResource", visible = state == "PRESET" }
     end
+}
+
+dlg:newrow { always = false }
+
+dlg:entry {
+    id = "palResource",
+    text = defaults.palResource,
+    visible = defaults.plotPalette
+        and defaults.palType == "PRESET"
 }
 
 dlg:newrow { always = false }
@@ -207,13 +219,15 @@ dlg:button {
                 or defaults.palType --[[@as string]]
             if palType ~= "DEFAULT" then
                 local palFile <const> = args.palFile --[[@as string]]
+                local palResource <const> = args.palResource
+                    or defaults.palResource --[[@as string]]
                 local palStart <const> = args.palStart
                     or defaults.palStart --[[@as integer]]
                 local palCount <const> = args.palCount
                     or defaults.palCount --[[@as integer]]
 
                 hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
-                    palType, palFile, "", palStart, palCount, true)
+                    palType, palFile, palResource, palStart, palCount, true)
             else
                 -- As of circa apiVersion 24, version v1.3-rc4.
                 -- local defaultPalette <const> = app.defaultPalette

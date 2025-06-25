@@ -173,9 +173,7 @@ dlg:number {
     end
 }
 
-dlg:separator {
-    id = "clrSeparate"
-}
+dlg:separator { id = "clrSeparate" }
 
 dlg:combobox {
     id = "colorMode",
@@ -243,9 +241,7 @@ dlg:slider {
     value = defaults.fps
 }
 
-dlg:separator {
-    id = "palSeparate"
-}
+dlg:separator { id = "palSeparate" }
 
 dlg:combobox {
     id = "palType",
