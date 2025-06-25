@@ -1,6 +1,6 @@
 dofile("../../support/aseutilities.lua")
 
-local palTypes <const> = { "ACTIVE", "FILE" }
+local palTypes <const> = { "ACTIVE", "FILE", "PRESET" }
 local sortOrders <const> = { "ASCENDING", "DESCENDING" }
 local sortPresets <const> = {
     "ALPHA",
@@ -14,6 +14,8 @@ local sortPresets <const> = {
 local defaults <const> = {
     aPalType = "ACTIVE",
     bPalType = "FILE",
+    aPalResource = "",
+    bPalResource = "",
     uniquesOnly = true,
     prependMask = true,
     useSort = false,
@@ -32,12 +34,17 @@ dlg:combobox {
     onchange = function()
         local args <const> = dlg.data
         local aState <const> = args.aPalType --[[@as string]]
-
-        dlg:modify {
-            id = "aPalFile",
-            visible = aState == "FILE"
-        }
+        dlg:modify { id = "aPalFile", visible = aState == "FILE" }
+        dlg:modify { id = "aPalResource", visible = aState == "PRESET" }
     end
+}
+
+dlg:newrow { always = false }
+
+dlg:entry {
+    id = "aPalResource",
+    text = defaults.aPalResource,
+    visible = defaults.aPalType == "PRESET"
 }
 
 dlg:newrow { always = false }
@@ -60,11 +67,18 @@ dlg:combobox {
     onchange = function()
         local args <const> = dlg.data
         local bState <const> = args.bPalType --[[@as string]]
-        dlg:modify {
-            id = "bPalFile",
-            visible = bState == "FILE"
-        }
+        dlg:modify { id = "bPalFile", visible = bState == "FILE" }
+        dlg:modify { id = "bPalResource", visible = bState == "PRESET" }
     end
+}
+
+dlg:newrow { always = false }
+
+dlg:entry {
+    id = "bPalResource",
+    text = defaults.bPalResource,
+    visible = defaults.bPalType == "PRESET",
+    focus = defaults.bPalType == "PRESET"
 }
 
 dlg:newrow { always = false }
@@ -72,9 +86,7 @@ dlg:newrow { always = false }
 dlg:file {
     id = "bPalFile",
     filetypes = AseUtilities.FILE_FORMATS_PAL,
-
     basepath = app.fs.joinPath(app.fs.userConfigPath, "palettes"),
-
     visible = defaults.bPalType == "FILE",
     focus = defaults.bPalType == "FILE"
 }
@@ -198,6 +210,20 @@ dlg:button {
                 }
                 return
             end
+        elseif aPalType == "PRESET" then
+            local aPalResource <const> = args.aPalResource --[[@as string]]
+            local aCallSuccess <const> = pcall(function()
+                Palette { fromResource = aPalResource }
+            end)
+            if aCallSuccess then
+                aPal = Palette { fromResource = aPalResource }
+            else
+                app.alert {
+                    title = "Error",
+                    text = "Palette A could not be found."
+                }
+                return
+            end
         else
             aPal = AseUtilities.getPalette(
                 activeFrame, spritePalettes)
@@ -221,6 +247,20 @@ dlg:button {
                 app.alert {
                     title = "Error",
                     text = "Invalid path for palette B."
+                }
+                return
+            end
+        elseif bPalType == "PRESET" then
+            local bPalResource <const> = args.bPalResource --[[@as string]]
+            local bCallSuccess <const> = pcall(function()
+                Palette { fromResource = bPalResource }
+            end)
+            if bCallSuccess then
+                bPal = Palette { fromResource = bPalResource }
+            else
+                app.alert {
+                    title = "Error",
+                    text = "Palette B could not be found."
                 }
                 return
             end
