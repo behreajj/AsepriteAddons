@@ -372,7 +372,7 @@ dlg:button {
             or defaults.count --[[@as integer]]
         local palFile <const> = args.palFile --[[@as string]]
         local hexesProfile <const>, hexesSrgb = AseUtilities.asePaletteLoad(
-            palType, palFile, startIndex, palCount, false)
+            palType, palFile, "", startIndex, palCount, false)
 
         -- Set manifest profile.
         -- This should be done BEFORE the manifest sprite is

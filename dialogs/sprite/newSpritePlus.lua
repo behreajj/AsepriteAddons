@@ -32,7 +32,7 @@ end
 -- Aseprite's routine to ask the user what to do when
 -- opening a sprite with a profile.
 local colorModes <const> = { "RGB", "INDEXED", "GRAY" }
-local palTypes <const> = { "ACTIVE", "DEFAULT", "FILE" }
+local palTypes <const> = { "ACTIVE", "DEFAULT", "FILE", "PRESET" }
 local sizeModes <const> = { "ASPECT", "CUSTOM" }
 
 local defaults <const> = {
@@ -46,6 +46,7 @@ local defaults <const> = {
     frames = 1,
     fps = 12,
     palType = "ACTIVE",
+    palResource = "",
     prependMask = true,
     xGrid = 0,
     yGrid = 0,
@@ -199,6 +200,10 @@ dlg:combobox {
             id = "palFile",
             visible = palType == "FILE" and not isGray
         }
+        dlg:modify {
+            id = "palResource",
+            visible = palType == "PRESET" and not isGray
+        }
         dlg:modify { id = "grayCount", visible = isGray }
     end
 }
@@ -253,7 +258,17 @@ dlg:combobox {
         local args <const> = dlg.data
         local state <const> = args.palType --[[@as string]]
         dlg:modify { id = "palFile", visible = state == "FILE" }
+        dlg:modify { id = "palResource", visible = state == "PRESET" }
     end
+}
+
+dlg:newrow { always = false }
+
+dlg:entry {
+    id = "palResource",
+    text = defaults.palResource,
+    visible = defaults.colorMode ~= "GRAY"
+        and defaults.palType == "PRESET"
 }
 
 dlg:newrow { always = false }
@@ -318,8 +333,10 @@ dlg:button {
             hexesProfile = AseUtilities.grayHexes(grayCount)
         elseif palType ~= "DEFAULT" then
             local palFile <const> = args.palFile --[[@as string]]
+            local palResource <const> = args.palResource
+                or defaults.palResource --[[@as string]]
             hexesProfile, _ = AseUtilities.asePaletteLoad(
-                palType, palFile, 0, 512, true)
+                palType, palFile, palResource, 0, 512, true)
         else
             -- As of circa apiVersion 24, version v1.3-rc4.
             -- local defaultPalette <const> = app.defaultPalette

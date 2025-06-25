@@ -190,7 +190,7 @@ dlg:button {
         local palFile <const> = args.palFile --[[@as string]]
         local hexesProfile <const>,
         hexesSrgb <const> = AseUtilities.asePaletteLoad(
-            palTarget, palFile, 0, 512, true)
+            palTarget, palFile, "", 0, 512, true)
         local lenHexesSrgb <const> = #hexesSrgb
 
         local octExpBits <const> = args.octCapacity

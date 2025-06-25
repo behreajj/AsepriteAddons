@@ -273,7 +273,7 @@ dlg:button {
         local count <const> = defaults.count
         local hexesProfile <const>,
         hexesSrgb <const> = AseUtilities.asePaletteLoad(
-            palType, palFile, startIndex, count)
+            palType, palFile, "", startIndex, count)
 
         -- Create profile.
         -- This should be done BEFORE the sprite is

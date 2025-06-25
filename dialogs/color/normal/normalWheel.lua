@@ -208,7 +208,7 @@ dlg:button {
             if palType ~= "DEFAULT" then
                 local palFile <const> = args.palFile --[[@as string]]
                 hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
-                    palType, palFile, 0, 512, true)
+                    palType, palFile, "", 0, 512, true)
             else
                 -- Different from other color wheels.
                 hexesProfile = normalsPal

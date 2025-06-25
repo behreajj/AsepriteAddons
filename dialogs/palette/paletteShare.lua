@@ -213,7 +213,7 @@ dlg:button {
         end
 
         local hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
-            palType, palFile, startIndex, count, true)
+            palType, palFile, "", startIndex, count, true)
 
         local uniquesOnly <const> = args.uniquesOnly --[[@as boolean]]
         if uniquesOnly then

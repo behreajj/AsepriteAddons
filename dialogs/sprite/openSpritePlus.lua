@@ -36,7 +36,7 @@ local function loadSprite(filePath, showLayerEdges)
         or lcFileExt == "col"
         or lcFileExt == "hex" then
         local spriteHexes <const>, _ <const> = AseUtilities.asePaletteLoad(
-            "FILE", filePath, 0, 512, true)
+            "FILE", filePath, "", 0, 512, true)
         local lenColors <const> = #spriteHexes
         local rtLen <const> = math.max(16,
             math.ceil(math.sqrt(math.max(1, lenColors))))
@@ -353,7 +353,7 @@ dlg:button {
         if palType ~= "DEFAULT" then
             local palFile <const> = args.palFile --[[@as string]]
             hexesProfile, _ = AseUtilities.asePaletteLoad(
-                palType, palFile, 0, 512, true)
+                palType, palFile, "", 0, 512, true)
         else
             -- local defaultPalette = app.defaultPalette
             -- if defaultPalette then

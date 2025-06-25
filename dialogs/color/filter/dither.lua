@@ -506,7 +506,7 @@ dlg:button {
 
             local hexesProfile <const>,
             hexesSrgb <const> = AseUtilities.asePaletteLoad(
-                palTarget, palFile, 0, 512, true)
+                palTarget, palFile, "", 0, 512, true)
 
             octCapacity = 1 << octCapacity
             local octree <const> = Octree.new(

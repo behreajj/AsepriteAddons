@@ -209,7 +209,7 @@ dlg:button {
         local palType <const> = args.palType or defaults.palType --[[@as string]]
         local palFile <const> = args.palFile --[[@as string]]
         local hexesProfile <const>, hexesSrgb <const> = AseUtilities.asePaletteLoad(
-            palType, palFile, startIndex, count)
+            palType, palFile, "", startIndex, count)
 
         -- Create profile.
         -- This should be done BEFORE the sprite is

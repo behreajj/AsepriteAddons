@@ -213,7 +213,7 @@ dlg:button {
                     or defaults.palCount --[[@as integer]]
 
                 hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
-                    palType, palFile, palStart, palCount, true)
+                    palType, palFile, "", palStart, palCount, true)
             else
                 -- As of circa apiVersion 24, version v1.3-rc4.
                 -- local defaultPalette <const> = app.defaultPalette

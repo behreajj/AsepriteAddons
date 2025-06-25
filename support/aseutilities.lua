@@ -281,21 +281,19 @@ end
 ---replaces zero alpha colors with clear black, regardless of RGB
 ---channel values.
 ---
----Returns a tuple of tables. The first table is an array of
----hexadecimals according to the sprite color profile. The second is a
----copy of the first converted to sRGB.
----
----If a palette is loaded from a filepath, the two tables should match,
----as Aseprite does not support color management for palettes.
+---Returns a tuple of tables. For the active prest, the first table is
+---an array of hexadecimal integers according to the sprite color
+---profile. The second is a copy of the first converted to sRGB.
 ---@param palType string enumeration
 ---@param filePath string file path
+---@param resource string resource id string
 ---@param startIndex? integer start index
 ---@param count? integer count of colors to sample
 ---@param correctZeroAlpha? boolean alpha correction flag
 ---@return integer[]
 ---@return integer[]
 function AseUtilities.asePaletteLoad(
-    palType, filePath,
+    palType, filePath, resource,
     startIndex, count,
     correctZeroAlpha)
     local hexesProfile = nil
@@ -322,10 +320,10 @@ function AseUtilities.asePaletteLoad(
         -- TODO: Reintroduce use of preset, may want to pass preset string
         -- as separate from filePath...
         local callSuccess <const> = pcall(function()
-            Palette { fromResource = filePath }
+            Palette { fromResource = resource }
         end)
         if callSuccess then
-            local palFile <const> = Palette { fromResource = filePath }
+            local palFile <const> = Palette { fromResource = resource }
             if palFile then
                 hexesProfile = AseUtilities.asePaletteToHexArr(
                     palFile, siVrf, cntVrf)
