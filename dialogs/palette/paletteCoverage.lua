@@ -1,10 +1,11 @@
 dofile("../../support/shapeutilities.lua")
 dofile("../../support/octree.lua")
 
-local palTypes <const> = { "ACTIVE", "FILE" }
+local palTypes <const> = { "ACTIVE", "FILE", "PRESET" }
 
 local defaults <const> = {
     palType = "ACTIVE",
+    palResource = "",
     startIndex = 0,
     count = 256,
     queryRad = 175,
@@ -49,10 +50,22 @@ dlg:combobox {
         local args <const> = dlg.data
         local state <const> = args.palType --[[@as string]]
         dlg:modify {
+            id = "palResource",
+            visible = state == "PRESET"
+        }
+        dlg:modify {
             id = "palFile",
             visible = state == "FILE"
         }
     end
+}
+
+dlg:newrow { always = false }
+
+dlg:entry {
+    id = "palResource",
+    text = defaults.palResource,
+    visible = defaults.palType == "PRESET"
 }
 
 dlg:newrow { always = false }
@@ -206,10 +219,14 @@ dlg:button {
         -- Get palette.
         local startIndex <const> = defaults.startIndex
         local count <const> = defaults.count
-        local palType <const> = args.palType or defaults.palType --[[@as string]]
+        local palType <const> = args.palType
+            or defaults.palType --[[@as string]]
+        local palResource <const> = args.palResource
+            or defaults.palResource --[[@as string]]
         local palFile <const> = args.palFile --[[@as string]]
-        local hexesProfile <const>, hexesSrgb <const> = AseUtilities.asePaletteLoad(
-            palType, palFile, "", startIndex, count)
+        local hexesProfile <const>,
+        hexesSrgb <const> = AseUtilities.asePaletteLoad(
+            palType, palFile, palResource, startIndex, count)
 
         -- Create profile.
         -- This should be done BEFORE the sprite is

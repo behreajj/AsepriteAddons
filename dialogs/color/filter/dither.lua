@@ -4,7 +4,7 @@ dofile("../../../support/octree.lua")
 
 local ditherModes <const> = { "ONE_BIT", "PALETTE", "QUANTIZE" }
 local areaTargets <const> = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
-local palTargets <const> = { "ACTIVE", "FILE" }
+local palTargets <const> = { "ACTIVE", "FILE", "PRESET" }
 local greyMethods <const> = { "AVERAGE", "HSL", "HSV", "LUMINANCE" }
 
 local defaults <const> = {
@@ -17,6 +17,7 @@ local defaults <const> = {
     alphaMode = "THRESHOLD",
     areaTarget = "ACTIVE",
     palTarget = "ACTIVE",
+    palResource = "",
     threshold = 50,
     octCapacityBits = 4,
     minCapacityBits = 2,
@@ -138,6 +139,10 @@ dlg:combobox {
 
         dlg:modify { id = "palTarget", visible = isPal }
         dlg:modify {
+            id = "palResource",
+            visible = isPal and palTarget == "PRESET"
+        }
+        dlg:modify {
             id = "palFile",
             visible = isPal and palTarget == "FILE"
         }
@@ -197,6 +202,10 @@ dlg:combobox {
         local args <const> = dlg.data
         local palTarget <const> = args.palTarget --[[@as string]]
         dlg:modify {
+            id = "palResource",
+            visible = palTarget == "PRESET"
+        }
+        dlg:modify {
             id = "palFile",
             visible = palTarget == "FILE"
         }
@@ -206,10 +215,18 @@ dlg:combobox {
 
 dlg:newrow { always = false }
 
+dlg:entry {
+    id = "palResource",
+    text = defaults.palResource,
+    visible = defaults.ditherMode == "PALETTE"
+        and defaults.palType == "PRESET"
+}
+
+dlg:newrow { always = false }
+
 dlg:file {
     id = "palFile",
     filetypes = AseUtilities.FILE_FORMATS_PAL,
-
     basepath = app.fs.joinPath(app.fs.userConfigPath, "palettes"),
     visible = defaults.ditherMode == "PALETTE"
         and defaults.palTarget == "FILE"
@@ -501,12 +518,14 @@ dlg:button {
             local palTarget <const> = args.palTarget
                 or defaults.palTarget --[[@as string]]
             local palFile <const> = args.palFile --[[@as string]]
+            local palResource <const> = args.palResource
+                or defaults.palResource --[[@as string]]
             local octCapacity = args.octCapacity
                 or defaults.octCapacityBits --[[@as integer]]
 
             local hexesProfile <const>,
             hexesSrgb <const> = AseUtilities.asePaletteLoad(
-                palTarget, palFile, "", 0, 512, true)
+                palTarget, palFile, palResource, 0, 512, true)
 
             octCapacity = 1 << octCapacity
             local octree <const> = Octree.new(

@@ -1,10 +1,11 @@
 dofile("../../support/gradientutilities.lua")
 
-local palTypes <const> = { "ACTIVE", "FILE" }
+local palTypes <const> = { "ACTIVE", "FILE", "PRESET" }
 local ditherTypes <const> = { "CHECKER", "CUSTOM" }
 
 local defaults <const> = {
     palType = "ACTIVE",
+    palResource = "",
     startIndex = 0,
     count = 256,
     swatchSize = 8,
@@ -40,10 +41,22 @@ dlg:combobox {
         local args <const> = dlg.data
         local state <const> = args.palType --[[@as string]]
         dlg:modify {
+            id = "palResource",
+            visible = state == "PRESET"
+        }
+        dlg:modify {
             id = "palFile",
             visible = state == "FILE"
         }
     end
+}
+
+dlg:newrow { always = false }
+
+dlg:entry {
+    id = "palResource",
+    text = defaults.palResource,
+    visible = defaults.palType == "PRESET"
 }
 
 dlg:newrow { always = false }
@@ -196,6 +209,8 @@ dlg:button {
         local args <const> = dlg.data
         local palType <const> = args.palType
             or defaults.palType --[[@as string]]
+        local palResource <const> = args.palResource
+            or defaults.palResource --[[@as string]]
         local palFile <const> = args.palFile --[[@as string]]
         local ditherType <const> = args.ditherType
             or defaults.ditherType --[[@as string]]
@@ -225,20 +240,22 @@ dlg:button {
             local ditherPath <const> = args.ditherPath --[[@as string]]
             if ditherPath and #ditherPath > 0
                 and app.fs.isFile(ditherPath) then
-                -- Disable asking about color profiles when loading these images.
+                -- Disable color profile alerts when loading images.
                 local oldAskProfile = 0
                 local oldAskMissing = 0
                 local appPrefs <const> = app.preferences
                 if appPrefs then
                     local cmPrefs <const> = appPrefs.color
                     if cmPrefs then
-                        oldAskProfile = cmPrefs.files_with_profile or 0 --[[@as integer]]
-                        oldAskMissing = cmPrefs.missing_profile or 0 --[[@as integer]]
+                        oldAskProfile = cmPrefs.files_with_profile
+                            or 0 --[[@as integer]]
+                        oldAskMissing = cmPrefs.missing_profile
+                            or 0 --[[@as integer]]
 
                         cmPrefs.files_with_profile = 0
                         cmPrefs.missing_profile = 0
-                    end
-                end
+                    end -- End color prefs exists.
+                end     -- End app prefs exists.
 
                 local image <const> = Image { fromFile = ditherPath }
 
@@ -253,12 +270,14 @@ dlg:button {
                 if image then
                     matrix, mw, mh = GradientUtilities.imageToMatrix(image)
                 end
-            end
-        end
+            end -- End valid path string.
+        end     -- End custom dither.
 
         -- Convert Color objects to hex
-        local bkgHex <const> = AseUtilities.aseColorToHex(bkgColor, ColorMode.RGB)
-        local highHex <const> = AseUtilities.aseColorToHex(highColor, ColorMode.RGB)
+        local bkgHex <const> = AseUtilities.aseColorToHex(
+            bkgColor, ColorMode.RGB)
+        local highHex <const> = AseUtilities.aseColorToHex(
+            highColor, ColorMode.RGB)
 
         -- Verify min and max highlight.
         local minHighVrf = minHighlight
@@ -273,7 +292,7 @@ dlg:button {
         local count <const> = defaults.count
         local hexesProfile <const>,
         hexesSrgb <const> = AseUtilities.asePaletteLoad(
-            palType, palFile, "", startIndex, count)
+            palType, palFile, palResource, startIndex, count)
 
         -- Create profile.
         -- This should be done BEFORE the sprite is

@@ -1,6 +1,6 @@
 dofile("../../../support/shapeutilities.lua")
 
-local palTypes <const> = { "ACTIVE", "DEFAULT", "FILE" }
+local palTypes <const> = { "ACTIVE", "DEFAULT", "FILE", "PRESET" }
 
 local defaults <const> = {
     size = 512,
@@ -12,6 +12,7 @@ local defaults <const> = {
     zFlip = false,
     plotPalette = false,
     palType = "DEFAULT",
+    palResource = "",
     correctPalette = true,
     strokeSize = 6,
     fillSize = 5,
@@ -123,6 +124,8 @@ dlg:check {
         dlg:modify { id = "palType", visible = usePlot }
         dlg:modify { id = "palFile", visible = usePlot
             and palType == "FILE" }
+        dlg:modify { id = "palResource", visible = usePlot
+            and palType == "PRESET" }
     end
 }
 
@@ -150,8 +153,18 @@ dlg:combobox {
         local args <const> = dlg.data
         local state <const> = args.palType --[[@as string]]
         dlg:modify { id = "palFile", visible = state == "FILE" }
+        dlg:modify { id = "palResource", visible = state == "PRESET" }
         dlg:modify { id = "correctPalette", visible = state ~= "DEFAULT" }
     end
+}
+
+dlg:newrow { always = false }
+
+dlg:entry {
+    id = "palResource",
+    text = defaults.palResource,
+    visible = defaults.plotPalette
+        and defaults.palType == "PRESET"
 }
 
 dlg:newrow { always = false }
@@ -207,8 +220,10 @@ dlg:button {
             local palType <const> = args.palType or defaults.palType --[[@as string]]
             if palType ~= "DEFAULT" then
                 local palFile <const> = args.palFile --[[@as string]]
+                local palResource <const> = args.palResource
+                    or defaults.palResource --[[@as string]]
                 hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
-                    palType, palFile, "", 0, 512, true)
+                    palType, palFile, palResource, 0, 512, true)
             else
                 -- Different from other color wheels.
                 hexesProfile = normalsPal
