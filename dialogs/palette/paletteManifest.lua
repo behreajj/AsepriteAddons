@@ -1,6 +1,6 @@
 dofile("../../support/textutilities.lua")
 
-local palTypes <const> = { "ACTIVE", "FILE" }
+local palTypes <const> = { "ACTIVE", "FILE", "PRESET" }
 local sortPresets <const> = {
     "A", "ALPHA", "B",
     "CHROMA", "HUE",
@@ -14,6 +14,7 @@ local defaults <const> = {
     count = 512,
     title = "Manifest",
     palType = "ACTIVE",
+    palResource = "",
     startIndex = 0,
     uniquesOnly = true,
     sortPreset = "INDEX",
@@ -119,10 +120,22 @@ dlg:combobox {
         local args <const> = dlg.data
         local state <const> = args.palType --[[@as string]]
         dlg:modify {
+            id = "palResource",
+            visible = state == "PRESET"
+        }
+        dlg:modify {
             id = "palFile",
             visible = state == "FILE"
         }
     end
+}
+
+dlg:newrow { always = false }
+
+dlg:entry {
+    id = "palResource",
+    text = defaults.palResource,
+    visible = defaults.palType == "PRESET"
 }
 
 dlg:newrow { always = false }
@@ -370,9 +383,12 @@ dlg:button {
             or defaults.startIndex --[[@as integer]]
         local palCount <const> = args.count
             or defaults.count --[[@as integer]]
+        local palResource <const> = args.palResource
+            or defaults.palResource --[[@as string]]
         local palFile <const> = args.palFile --[[@as string]]
-        local hexesProfile <const>, hexesSrgb = AseUtilities.asePaletteLoad(
-            palType, palFile, "", startIndex, palCount, false)
+        local hexesProfile <const>,
+        hexesSrgb = AseUtilities.asePaletteLoad(
+            palType, palFile, palResource, startIndex, palCount, false)
 
         -- Set manifest profile.
         -- This should be done BEFORE the manifest sprite is

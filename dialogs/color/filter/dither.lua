@@ -219,7 +219,7 @@ dlg:entry {
     id = "palResource",
     text = defaults.palResource,
     visible = defaults.ditherMode == "PALETTE"
-        and defaults.palType == "PRESET"
+        and defaults.palTarget == "PRESET"
 }
 
 dlg:newrow { always = false }

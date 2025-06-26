@@ -1,5 +1,17 @@
 dofile("../../support/aseutilities.lua")
 
+local palTypes <const> = { "ACTIVE", "FILE", "PRESET" }
+
+local defaults <const> = {
+    palType = "ACTIVE",
+    palResource = "",
+    keepIndices = false,
+    uniquesOnly = false,
+    prependMask = true,
+    startIndex = 0,
+    count = 256,
+}
+
 ---@param sprites Sprite[]
 ---@param hexes integer[]
 ---@param keepIndices boolean
@@ -40,17 +52,6 @@ local function updatePalettes(sprites, hexes, keepIndices)
     end
 end
 
-local palTypes <const> = { "ACTIVE", "FILE" }
-
-local defaults <const> = {
-    palType = "ACTIVE",
-    keepIndices = false,
-    uniquesOnly = false,
-    prependMask = true,
-    startIndex = 0,
-    count = 256,
-}
-
 local dlg <const> = Dialog { title = "Share Palette" }
 
 dlg:combobox {
@@ -63,10 +64,22 @@ dlg:combobox {
         local args <const> = dlg.data
         local state <const> = args.palType --[[@as string]]
         dlg:modify {
+            id = "palResource",
+            visible = state == "FILE"
+        }
+        dlg:modify {
             id = "palFile",
             visible = state == "FILE"
         }
     end
+}
+
+dlg:newrow { always = false }
+
+dlg:entry {
+    id = "palResource",
+    text = defaults.palResource,
+    visible = defaults.palType == "PRESET"
 }
 
 dlg:newrow { always = false }
@@ -169,6 +182,8 @@ dlg:button {
         local args <const> = dlg.data
         local palType <const> = args.palType
             or defaults.palType --[[@as string]]
+        local palResource <const> = args.palResource
+            or defaults.palResource --[[@as string]]
         local palFile <const> = args.palFile --[[@as string]]
         local startIndex <const> = args.startIndex
             or defaults.startIndex --[[@as integer]]
@@ -212,8 +227,9 @@ dlg:button {
             end
         end
 
-        local hexesProfile, hexesSrgb = AseUtilities.asePaletteLoad(
-            palType, palFile, "", startIndex, count, true)
+        local hexesProfile,
+        hexesSrgb = AseUtilities.asePaletteLoad(
+            palType, palFile, palResource, startIndex, count, true)
 
         local uniquesOnly <const> = args.uniquesOnly --[[@as boolean]]
         if uniquesOnly then

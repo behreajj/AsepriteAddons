@@ -2,11 +2,12 @@ dofile("../../support/aseutilities.lua")
 dofile("../../support/octree.lua")
 
 local areaTargets <const> = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
-local palTargets <const> = { "ACTIVE", "FILE" }
+local palTargets <const> = { "ACTIVE", "FILE", "PRESET" }
 
 local defaults <const> = {
     areaTarget = "ACTIVE",
     palTarget = "ACTIVE",
+    palResource = "",
     cvgLabRad = 175,
     octCapacityBits = 4,
     minCapacityBits = 2,
@@ -36,10 +37,22 @@ dlg:combobox {
         local args <const> = dlg.data
         local palTarget <const> = args.palTarget --[[@as string]]
         dlg:modify {
+            id = "palResource",
+            visible = palTarget == "PRESET"
+        }
+        dlg:modify {
             id = "palFile",
             visible = palTarget == "FILE"
         }
     end
+}
+
+dlg:newrow { always = false }
+
+dlg:entry {
+    id = "palResource",
+    text = defaults.palResource,
+    visible = defaults.palTarget == "PRESET"
 }
 
 dlg:newrow { always = false }
@@ -187,10 +200,12 @@ dlg:button {
 
         local palTarget <const> = args.palTarget
             or defaults.palTarget --[[@as string]]
+        local palResource <const> = args.palResource
+            or defaults.palResource --[[@as string]]
         local palFile <const> = args.palFile --[[@as string]]
         local hexesProfile <const>,
         hexesSrgb <const> = AseUtilities.asePaletteLoad(
-            palTarget, palFile, "", 0, 512, true)
+            palTarget, palFile, palResource, 0, 512, true)
         local lenHexesSrgb <const> = #hexesSrgb
 
         local octExpBits <const> = args.octCapacity

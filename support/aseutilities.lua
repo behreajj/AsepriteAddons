@@ -317,8 +317,6 @@ function AseUtilities.asePaletteLoad(
             end
         end
     elseif palType == "PRESET" then
-        -- TODO: Reintroduce use of preset, may want to pass preset string
-        -- as separate from filePath...
         local callSuccess <const> = pcall(function()
             Palette { fromResource = resource }
         end)
