@@ -1,6 +1,9 @@
 dofile("../../support/aseutilities.lua")
 
+local targets <const> = { "MANUAL", "RANGE" }
+
 local defaults <const> = {
+    target = "RANGE",
     rangeStr = "",
     strExample = "4,6:9,13",
     uniquesOnly = false,
@@ -8,6 +11,44 @@ local defaults <const> = {
 }
 
 local dlg <const> = Dialog { title = "Palette Subset" }
+
+dlg:combobox {
+    id = "target",
+    label = "Target:",
+    option = defaults.target,
+    options = targets,
+    focus = false,
+    hexpand = false,
+    onchange = function()
+        local args <const> = dlg.data
+        local target <const> = args.target --[[@as string]]
+        local isManual <const> = target == "MANUAL"
+        dlg:modify { id = "rangeStr", visible = isManual }
+        dlg:modify { id = "strExample", visible = false }
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:entry {
+    id = "rangeStr",
+    label = "Indices:",
+    text = defaults.rangeStr,
+    focus = false,
+    visible = defaults.target == "MANUAL",
+    onchange = function()
+        dlg:modify { id = "strExample", visible = true }
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:label {
+    id = "strExample",
+    label = "Example:",
+    text = defaults.strExample,
+    visible = false
+}
 
 dlg:newrow { always = false }
 
@@ -67,19 +108,40 @@ dlg:button {
             return
         end
 
-        -- TODO: See cycle indices, could use a range string...
-        local chosenIdcs <const> = {}
+        local args <const> = dlg.data
+        local target <const> = args.target or defaults.target --[[@as string]]
+        local prependMask <const> = args.prependMask --[[@as boolean]]
+        local uniquesOnly <const> = args.uniquesOnly --[[@as boolean]]
+        local rangeStr <const> = args.rangeStr
+            or defaults.rangeStr --[[@as string]]
 
-        local range <const> = app.range
-        local rangeIsValid <const> = range.sprite == activeSprite
-        if rangeIsValid then
-            local rangeColors <const> = range.colors
-            local lenRangeColors <const> = #rangeColors
-            local h = 0
-            while h < lenRangeColors do
-                h = h + 1
-                chosenIdcs[h] = rangeColors[h]
+        local palettes <const> = activeSprite.palettes
+        local palette <const> = AseUtilities.getPalette(activeFrame, palettes)
+        local lenPalette <const> = #palette
+
+        ---@type integer[]
+        local chosenIdcs = {}
+
+        if target == "RANGE" then
+            local range <const> = app.range
+            if range.sprite == activeSprite then
+                local rangeColors <const> = range.colors
+                local lenRangeColors <const> = #rangeColors
+                local h = 0
+                while h < lenRangeColors do
+                    h = h + 1
+                    chosenIdcs[h] = rangeColors[h]
+                end
+            else
+                app.alert {
+                    title = "Error",
+                    text = "Range sprite doesn't match active sprite."
+                }
+                return
             end
+        else
+            chosenIdcs = Utilities.parseRangeStringUnique(
+                rangeStr, lenPalette - 1, 0)
         end
 
         local lenChosenIdcs <const> = #chosenIdcs
@@ -91,10 +153,6 @@ dlg:button {
             return
         end
 
-        local palettes <const> = activeSprite.palettes
-        local palette <const> = AseUtilities.getPalette(activeFrame, palettes)
-        local lenPalette <const> = #palette
-
         if lenPalette <= 1 then
             app.alert {
                 title = "Error",
@@ -102,6 +160,8 @@ dlg:button {
             }
             return
         end
+
+        AseUtilities.preserveForeBack()
 
         ---@type integer[]
         local abgr32s = {}
@@ -112,10 +172,6 @@ dlg:button {
             local aseColor <const> = palette:getColor(idx)
             abgr32s[i] = AseUtilities.aseColorToHex(aseColor, ColorMode.RGB)
         end
-
-        local args <const> = dlg.data
-        local prependMask <const> = args.prependMask --[[@as boolean]]
-        local uniquesOnly <const> = args.uniquesOnly --[[@as boolean]]
 
         if uniquesOnly then
             local abgr32sUnique <const>,
