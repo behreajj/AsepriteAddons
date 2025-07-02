@@ -351,17 +351,6 @@ dlg:entry {
 
 dlg:newrow { always = false }
 
-dlg:check {
-    id = "useLayerUuids",
-    label = "UUID:",
-    text = "Layers",
-    selected = useLayerUuidsOld,
-    focus = false,
-    hexpand = false,
-}
-
-dlg:newrow { always = false }
-
 dlg:slider {
     id = "aPxRatio",
     label = "Pixel:",
@@ -377,6 +366,17 @@ dlg:slider {
     max = defaults.maxPxRatio,
     value = pixelHeight,
     visible = allowPxRatio
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "useLayerUuids",
+    label = "UUID:",
+    text = "Layers",
+    selected = useLayerUuidsOld,
+    focus = false,
+    hexpand = false,
 }
 
 dlg:newrow { always = false }

@@ -239,6 +239,7 @@ dlg:button {
             "Arc %d to %d",
             startAngle, stopAngle)
         app.transaction(name, function()
+            -- TODO: Parent layer to earliest visible parent?
             local layer <const> = sprite:newLayer()
             layer.name = name
             ShapeUtilities.drawMesh2(sprite, mesh, useFill, fillColor,

@@ -109,7 +109,8 @@ dlg:button {
         end
 
         local args <const> = dlg.data
-        local target <const> = args.target or defaults.target --[[@as string]]
+        local target <const> = args.target
+            or defaults.target --[[@as string]]
         local prependMask <const> = args.prependMask --[[@as boolean]]
         local uniquesOnly <const> = args.uniquesOnly --[[@as boolean]]
         local rangeStr <const> = args.rangeStr
