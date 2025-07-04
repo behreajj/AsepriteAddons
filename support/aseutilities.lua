@@ -303,17 +303,16 @@ function AseUtilities.asePaletteLoad(
     local siVrf <const> = startIndex or 0
 
     if palType == "FILE" then
-        if filePath and #filePath > 0 then
-            local isFile <const> = app.fs.isFile(filePath)
-            if isFile then
-                -- Loading an .aseprite file with multiple palettes will
-                -- register only the first palette. Also may be problems with
-                -- color profiles being ignored.
-                local palFile <const> = Palette { fromFile = filePath }
-                if palFile then
-                    hexesProfile = AseUtilities.asePaletteToHexArr(
-                        palFile, siVrf, cntVrf)
-                end
+        if filePath
+            and #filePath > 0
+            and app.fs.isFile(filePath) then
+            -- Loading an .aseprite file with multiple palettes will
+            -- register only the first palette. Also may be problems with
+            -- color profiles being ignored.
+            local palFile <const> = Palette { fromFile = filePath }
+            if palFile then
+                hexesProfile = AseUtilities.asePaletteToHexArr(
+                    palFile, siVrf, cntVrf)
             end
         end
     elseif palType == "PRESET" then
