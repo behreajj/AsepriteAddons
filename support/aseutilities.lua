@@ -338,25 +338,23 @@ function AseUtilities.asePaletteLoad(
                 hexesProfile = AseUtilities.asePalettesToHexArr(
                     palActSpr.palettes)
                 local profileAct <const> = palActSpr.colorSpace
-                if profileAct ~= nil then
-                    -- Tests a number of color profile components for
-                    -- approximate equality. See
-                    -- https://github.com/aseprite/laf/blob/main/gfx/color_space.cpp#L107
+                local profileSrgb <const> = ColorSpace { sRGB = true }
 
-                    -- It might be safer not to treat the NONE color space as
-                    -- equivalent to sRGB, as the user could have a display
-                    -- profile which differs radically.
-                    local profileSrgb <const> = ColorSpace { sRGB = true }
-                    if profileAct ~= profileSrgb then
-                        palActSpr:convertColorSpace(profileSrgb)
-                        hexesSrgb = AseUtilities.asePalettesToHexArr(
-                            palActSpr.palettes)
-                        palActSpr:convertColorSpace(profileAct)
-                    end -- End unequal profiles.
-                end     -- End profile exists.
-            end         -- End color mode check.
-        end             -- End sprite exists.
-    end                 -- End pal type block.
+                -- Tests a number of color profile components for
+                -- approximate equality. See
+                -- https://github.com/aseprite/laf/blob/main/gfx/color_space.cpp#L107
+                -- It might be safer not to treat the NONE color space as
+                -- equivalent to sRGB, as the user could have a display
+                -- profile which differs radically.
+                if profileAct ~= profileSrgb then
+                    palActSpr:convertColorSpace(profileSrgb)
+                    hexesSrgb = AseUtilities.asePalettesToHexArr(
+                        palActSpr.palettes)
+                    palActSpr:convertColorSpace(profileAct)
+                end -- End unequal profiles.
+            end     -- End color mode check.
+        end         -- End sprite exists.
+    end             -- End pal type block.
 
     -- Malformed file path could lead to nil.
     if hexesProfile == nil then
