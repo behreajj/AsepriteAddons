@@ -68,10 +68,11 @@ if not isValid then
     local wTrgi = brushSize
     local hTrgi = brushSize
     if rotNeeded then
-        local absCosa <const> = math.abs(cosa)
-        local absSina <const> = math.abs(sina)
-        wTrgi = math.ceil(brushSize * absSina + brushSize * absCosa)
-        hTrgi = math.ceil(brushSize * absCosa + brushSize * absSina)
+        local rotBrushSize <const> = math.ceil(
+            brushSize * math.abs(sina)
+            + brushSize * math.abs(cosa))
+        wTrgi = rotBrushSize
+        hTrgi = rotBrushSize
     end
 
     local spriteSpec <const> = sprite.spec
