@@ -12,7 +12,7 @@ if range.sprite == sprite then
     if rangeType == RangeType.EMPTY
         or rangeType == RangeType.FRAMES then
         -- Layer > Visible does not work properly when range is of type frames.
-        local layer <const> = app.layer
+        local layer <const> = app.site.layer
         if layer then
             layer.isVisible = not layer.isVisible
         end

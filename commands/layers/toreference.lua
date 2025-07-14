@@ -51,7 +51,7 @@ app.transaction("To Reference", function()
     app.command.NewLayer {
         reference = true,
     }
-    local refLayer <const> = app.layer
+    local refLayer <const> = app.site.layer
     if refLayer and refLayer.isReference then
         local lenFrObjs <const> = #frObjs
         local i = 0

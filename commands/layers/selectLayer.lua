@@ -178,10 +178,11 @@ local function evalLayer(
     return 0.0, layer
 end
 
-local sprite <const> = app.sprite
+local site <const> = app.site
+local sprite <const> = site.sprite
 if not sprite then return end
 
-local frObj <const> = app.frame
+local frObj <const> = site.frame
 if not frObj then return end
 
 local xMouse <const>, yMouse <const> = AseUtilities.getMouse()

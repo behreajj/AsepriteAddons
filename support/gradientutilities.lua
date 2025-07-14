@@ -59,14 +59,15 @@ GradientUtilities.MAX_KEYS = 32
 ---@return ClrGradient
 function GradientUtilities.clearGradient(gr)
     local origKeys <const> = {}
-    local sprite <const> = app.sprite
+    local site <const> = app.site
+    local sprite <const> = site.sprite
     if sprite then
         local aseColorToClr <const> = AseUtilities.aseColorToRgb
         local lenOrigKeys = 0
 
         local appRange <const> = app.range
         if appRange.sprite == sprite then
-            local frame <const> = app.frame or sprite.frames[1]
+            local frame <const> = site.frame or sprite.frames[1]
             local palette <const> = AseUtilities.getPalette(
                 frame, sprite.palettes)
             local lenPalette <const> = #palette
