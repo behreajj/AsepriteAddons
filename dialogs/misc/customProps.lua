@@ -62,14 +62,15 @@ end
 ---@return string errMsg
 ---@nodiscard
 local function getProperties(target)
+    local site <const> = app.site
     if target == "CEL" then
-        local activeCel <const> = app.cel
+        local activeCel <const> = site.cel
         if not activeCel then
             return nil, false, "There is no active cel."
         end
         return { activeCel.properties }, true, ""
     elseif target == "RANGE" then
-        local activeSprite <const> = app.sprite
+        local activeSprite <const> = site.sprite
         if not activeSprite then
             return nil, false, "There is no active sprite."
         end
@@ -138,7 +139,7 @@ local function getProperties(target)
 
         return nil, false, "No cels or layers were selected."
     elseif target == "SLICE" then
-        local activeSprite <const> = app.sprite
+        local activeSprite <const> = site.sprite
         if not activeSprite then
             return nil, false, "There is no active sprite."
         end
@@ -163,7 +164,7 @@ local function getProperties(target)
         app.tool = oldTool
         return { properties }, true, ""
     elseif target == "SPRITE" then
-        local activeSprite <const> = app.sprite
+        local activeSprite <const> = site.sprite
         if not activeSprite then
             return nil, false, "There is no active sprite."
         end
@@ -179,12 +180,12 @@ local function getProperties(target)
         or target == "TILES"
         or target == "FORE_TILE"
         or target == "BACK_TILE" then
-        local activeSprite <const> = app.sprite
+        local activeSprite <const> = site.sprite
         if not activeSprite then
             return nil, false, "There is no active sprite."
         end
 
-        local activeLayer <const> = app.layer
+        local activeLayer <const> = site.layer
         if not activeLayer then
             return nil, false, "There is no active layer."
         end
