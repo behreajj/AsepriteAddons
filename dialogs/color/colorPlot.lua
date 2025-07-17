@@ -393,6 +393,8 @@ dlg:button {
             end -- End palette type is not default
         end     -- End plot palette is true
 
+        local lenHexesSrgb <const> = #hexesSrgb
+
         -- Create sprite.
         local gamutSpec <const> = AseUtilities.createSpec(size, size)
         local sprite <const> = AseUtilities.createSprite(
@@ -403,10 +405,6 @@ dlg:button {
         ---@type Image[]
         local gamutImgs <const> = {}
         local gamutLayerName = "Layer"
-
-        local plotImg = Image(gamutSpec)
-        local xTlPlot = 0
-        local yTlPlot = 0
 
         ---@type integer[]
         local strokes <const> = {}
@@ -494,7 +492,6 @@ dlg:button {
 
             if plotPalette then
                 local center <const> = size // 2
-                local lenHexesSrgb <const> = #hexesSrgb
 
                 local j = 0
                 while j < lenHexesSrgb do
@@ -532,51 +529,6 @@ dlg:button {
                     xs[j] = xi
                     ys[j] = yi
                 end -- End swatches loop
-
-                -- TODO: This portion is no different across three
-                -- types of plots and can be consolidated.
-                if yMax == yMin then
-                    yMax = size
-                    yMin = 0
-                end
-
-                if xMax == xMin then
-                    xMax = size
-                    xMin = 0
-                end
-
-                xTlPlot = 1 + xMin - strokeSize
-                yTlPlot = 1 + yMin - strokeSize
-
-                local wPlot <const> = (xMax - xMin) + stroke2 - 1
-                local hPlot <const> = (yMax - yMin) + stroke2 - 1
-
-                local plotSpec <const> = AseUtilities.createSpec(
-                    wPlot, hPlot,
-                    gamutSpec.colorMode,
-                    gamutSpec.colorSpace,
-                    gamutSpec.transparentColor)
-                plotImg = Image(plotSpec)
-
-                local plotCtx <const> = plotImg.context
-                if not plotCtx then return end
-                plotCtx.antialias = false
-                plotCtx.blendMode = BlendMode.NORMAL
-                local drawEllipse <const> = ShapeUtilities.drawEllipse
-                local hexToColor <const> = AseUtilities.hexToAseColor
-
-                local k = 0
-                while k < lenHexesSrgb do
-                    k = k + 1
-                    local hexSrgb <const> = hexesSrgb[k]
-                    local xc <const> = xs[k] - xTlPlot
-                    local yc <const> = ys[k] - yTlPlot
-                    drawEllipse(plotCtx,
-                        xc, yc, fillSize, fillSize,
-                        true, hexToColor(hexSrgb),
-                        true, hexToColor(strokes[k]), strokeWeight,
-                        false)
-                end -- End draw swatch loop.
             end     -- End plot palette
         elseif axisIsHue then
             local quantization <const> = args.quantization
@@ -625,7 +577,6 @@ dlg:button {
             if plotPalette then
                 local invMaxChroma <const> = 1.0 / srMaxChroma
                 local invMaxLight <const> = 1.0 / 100.0
-                local lenHexesSrgb <const> = #hexesSrgb
 
                 local j = 0
                 while j < lenHexesSrgb do
@@ -661,51 +612,6 @@ dlg:button {
                     xs[j] = xi
                     ys[j] = yi
                 end -- End swatches loop
-
-                -- TODO: This portion is no different across three
-                -- types of plots and can be consolidated.
-                if yMax == yMin then
-                    yMax = size
-                    yMin = 0
-                end
-
-                if xMax == xMin then
-                    xMax = size
-                    xMin = 0
-                end
-
-                xTlPlot = 1 + xMin - strokeSize
-                yTlPlot = 1 + yMin - strokeSize
-
-                local wPlot <const> = (xMax - xMin) + stroke2 - 1
-                local hPlot <const> = (yMax - yMin) + stroke2 - 1
-
-                local plotSpec <const> = AseUtilities.createSpec(
-                    wPlot, hPlot,
-                    gamutSpec.colorMode,
-                    gamutSpec.colorSpace,
-                    gamutSpec.transparentColor)
-                plotImg = Image(plotSpec)
-
-                local plotCtx <const> = plotImg.context
-                if not plotCtx then return end
-                plotCtx.antialias = false
-                plotCtx.blendMode = BlendMode.NORMAL
-                local drawEllipse <const> = ShapeUtilities.drawEllipse
-                local hexToColor <const> = AseUtilities.hexToAseColor
-
-                local k = 0
-                while k < lenHexesSrgb do
-                    k = k + 1
-                    local hexSrgb <const> = hexesSrgb[k]
-                    local xc <const> = xs[k] - xTlPlot
-                    local yc <const> = ys[k] - yTlPlot
-                    drawEllipse(plotCtx,
-                        xc, yc, fillSize, fillSize,
-                        true, hexToColor(hexSrgb),
-                        true, hexToColor(strokes[k]), strokeWeight,
-                        false)
-                end -- End draw swatch loop.
             end     -- End plot palette
         else
             gamutLayerName = string.format(
@@ -787,7 +693,6 @@ dlg:button {
             if plotPalette then
                 local invMaxChroma <const> = 0.5 / srMaxChroma
                 local center <const> = size // 2
-                local lenHexesSrgb <const> = #hexesSrgb
 
                 local j = 0
                 while j < lenHexesSrgb do
@@ -823,51 +728,6 @@ dlg:button {
                     xs[j] = xi
                     ys[j] = yi
                 end -- End swatches loop
-
-                -- TODO: This portion is no different across three
-                -- types of plots and can be consolidated.
-                if yMax == yMin then
-                    yMax = size
-                    yMin = 0
-                end
-
-                if xMax == xMin then
-                    xMax = size
-                    xMin = 0
-                end
-
-                xTlPlot = 1 + xMin - strokeSize
-                yTlPlot = 1 + yMin - strokeSize
-
-                local wPlot <const> = (xMax - xMin) + stroke2 - 1
-                local hPlot <const> = (yMax - yMin) + stroke2 - 1
-
-                local plotSpec <const> = AseUtilities.createSpec(
-                    wPlot, hPlot,
-                    gamutSpec.colorMode,
-                    gamutSpec.colorSpace,
-                    gamutSpec.transparentColor)
-                plotImg = Image(plotSpec)
-
-                local plotCtx <const> = plotImg.context
-                if not plotCtx then return end
-                plotCtx.antialias = false
-                plotCtx.blendMode = BlendMode.NORMAL
-                local drawEllipse <const> = ShapeUtilities.drawEllipse
-                local hexToColor <const> = AseUtilities.hexToAseColor
-
-                local k = 0
-                while k < lenHexesSrgb do
-                    k = k + 1
-                    local hexSrgb <const> = hexesSrgb[k]
-                    local xc <const> = xs[k] - xTlPlot
-                    local yc <const> = ys[k] - yTlPlot
-                    drawEllipse(plotCtx,
-                        xc, yc, fillSize, fillSize,
-                        true, hexToColor(hexSrgb),
-                        true, hexToColor(strokes[k]), strokeWeight,
-                        false)
-                end -- End draw swatch loop.
             end     -- End plot palette
         end         -- End axis preset
 
@@ -901,17 +761,60 @@ dlg:button {
             end
         end)
 
-        if not plotImg:isEmpty() then
-            local plotPalLayer <const> = sprite:newLayer()
-            plotPalLayer.name = "Palette"
+        if plotPalette then
+            if yMax == yMin then
+                yMax = size
+                yMin = 0
+            end
 
-            app.transaction("Plot Palette", function()
-                AseUtilities.createCels(
-                    sprite,
-                    1, reqFrames,
-                    plotPalLayer.stackIndex, 1,
-                    plotImg, Point(xTlPlot, xTlPlot), 0x0)
-            end)
+            if xMax == xMin then
+                xMax = size
+                xMin = 0
+            end
+
+            local xTlPlot <const> = 1 + xMin - strokeSize
+            local yTlPlot <const> = 1 + yMin - strokeSize
+            local wPlot <const> = (xMax - xMin) + stroke2 - 1
+            local hPlot <const> = (yMax - yMin) + stroke2 - 1
+
+            local plotSpec <const> = AseUtilities.createSpec(
+                wPlot, hPlot,
+                gamutSpec.colorMode,
+                gamutSpec.colorSpace,
+                gamutSpec.transparentColor)
+            local plotImg <const> = Image(plotSpec)
+
+            local plotCtx <const> = plotImg.context
+            if plotCtx then
+                plotCtx.antialias = false
+                plotCtx.blendMode = BlendMode.NORMAL
+                local drawEllipse <const> = ShapeUtilities.drawEllipse
+                local hexToColor <const> = AseUtilities.hexToAseColor
+
+                local k = 0
+                while k < lenHexesSrgb do
+                    k = k + 1
+                    local hexSrgb <const> = hexesSrgb[k]
+                    local xc <const> = xs[k] - xTlPlot
+                    local yc <const> = ys[k] - yTlPlot
+                    drawEllipse(plotCtx,
+                        xc, yc, fillSize, fillSize,
+                        true, hexToColor(hexSrgb),
+                        true, hexToColor(strokes[k]), strokeWeight,
+                        false)
+                end -- End draw swatch loop.
+
+                local plotPalLayer <const> = sprite:newLayer()
+                plotPalLayer.name = "Palette"
+
+                app.transaction("Plot Palette", function()
+                    AseUtilities.createCels(
+                        sprite,
+                        1, reqFrames,
+                        plotPalLayer.stackIndex, 1,
+                        plotImg, Point(xTlPlot, xTlPlot), 0x0)
+                end)
+            end -- End drawing canvas exists.
 
             -- This needs to be done at the very end because
             -- prependMask modifies hexesProfile.
