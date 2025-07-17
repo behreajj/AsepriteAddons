@@ -287,10 +287,12 @@ dlg:button {
     onclick = function()
         -- Cache methods.
         local atan2 <const> = math.atan
+        local cos <const> = math.cos
         local floor <const> = math.floor
         local sqrt <const> = math.sqrt
         local min <const> = math.min
         local max <const> = math.max
+        local sin <const> = math.sin
         local strpack <const> = string.pack
         local tconcat <const> = table.concat
 
@@ -490,7 +492,92 @@ dlg:button {
                 idxFrame = idxFrame + 1
             end -- End frame loop
 
-            -- TODO: Implement plot palette.
+            if plotPalette then
+                local center <const> = size // 2
+                local lenHexesSrgb <const> = #hexesSrgb
+
+                local j = 0
+                while j < lenHexesSrgb do
+                    j = j + 1
+                    local hexSrgb <const> = hexesSrgb[j]
+                    local xi = center
+                    local yi = center
+
+                    local stroke = 0x0
+                    if hexSrgb & 0xff000000 ~= 0 then
+                        local lch <const> = sRgbToLch(fromHex(hexSrgb))
+
+                        local l01 <const> = (100.0 - lch.l) * 0.01
+                        local hRad <const> = lch.h * 6.2831853071796
+                        local xNrm <const> = 0.5 + 0.5 * l01 * cos(hRad)
+                        local yNrm <const> = 0.5 - 0.5 * l01 * sin(hRad)
+
+                        -- From [0.0, 1.0] to [0, size].
+                        xi = floor(0.5 + xNrm * size)
+                        yi = floor(0.5 + yNrm * size)
+
+                        if xi < xMin then xMin = xi end
+                        if xi > xMax then xMax = xi end
+                        if yi < yMin then yMin = yi end
+                        if yi > yMax then yMax = yi end
+
+                        if lch.l > 50.0 then
+                            stroke = 0xff000000
+                        else
+                            stroke = 0xffffffff
+                        end
+                    end
+
+                    strokes[j] = stroke
+                    xs[j] = xi
+                    ys[j] = yi
+                end -- End swatches loop
+
+                -- TODO: This portion is no different across three
+                -- types of plots and can be consolidated.
+                if yMax == yMin then
+                    yMax = size
+                    yMin = 0
+                end
+
+                if xMax == xMin then
+                    xMax = size
+                    xMin = 0
+                end
+
+                xTlPlot = 1 + xMin - strokeSize
+                yTlPlot = 1 + yMin - strokeSize
+
+                local wPlot <const> = (xMax - xMin) + stroke2 - 1
+                local hPlot <const> = (yMax - yMin) + stroke2 - 1
+
+                local plotSpec <const> = AseUtilities.createSpec(
+                    wPlot, hPlot,
+                    gamutSpec.colorMode,
+                    gamutSpec.colorSpace,
+                    gamutSpec.transparentColor)
+                plotImg = Image(plotSpec)
+
+                local plotCtx <const> = plotImg.context
+                if not plotCtx then return end
+                plotCtx.antialias = false
+                plotCtx.blendMode = BlendMode.NORMAL
+                local drawEllipse <const> = ShapeUtilities.drawEllipse
+                local hexToColor <const> = AseUtilities.hexToAseColor
+
+                local k = 0
+                while k < lenHexesSrgb do
+                    k = k + 1
+                    local hexSrgb <const> = hexesSrgb[k]
+                    local xc <const> = xs[k] - xTlPlot
+                    local yc <const> = ys[k] - yTlPlot
+                    drawEllipse(plotCtx,
+                        xc, yc, fillSize, fillSize,
+                        true, hexToColor(hexSrgb),
+                        true, hexToColor(strokes[k]), strokeWeight,
+                        false)
+                end -- End draw swatch loop.
+            end     -- End plot palette
         elseif axisIsHue then
             local quantization <const> = args.quantization
                 or defaults.quantization --[[@as integer]]
@@ -575,8 +662,8 @@ dlg:button {
                     ys[j] = yi
                 end -- End swatches loop
 
-                -- TODO: This portion is not different across three
-                -- different types of plots and can be consolidated.
+                -- TODO: This portion is no different across three
+                -- types of plots and can be consolidated.
                 if yMax == yMin then
                     yMax = size
                     yMin = 0
@@ -737,8 +824,8 @@ dlg:button {
                     ys[j] = yi
                 end -- End swatches loop
 
-                -- TODO: This portion is not different across three
-                -- different types of plots and can be consolidated.
+                -- TODO: This portion is no different across three
+                -- types of plots and can be consolidated.
                 if yMax == yMin then
                     yMax = size
                     yMin = 0
@@ -802,7 +889,6 @@ dlg:button {
 
         -- Create gamut layer cels.
         app.transaction("New Cels", function()
-            -- TODO: Color cels, especially for light and hue axes?
             local spriteFrames <const> = sprite.frames
             local idxCel = 0
             while idxCel < reqFrames do
@@ -811,6 +897,7 @@ dlg:button {
                     gamutLayer,
                     spriteFrames[idxCel],
                     gamutImgs[idxCel])
+                -- gamutCel.color = celColors[idxCel]
             end
         end)
 
