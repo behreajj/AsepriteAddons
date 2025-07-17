@@ -409,12 +409,6 @@ dlg:button {
         local xs <const> = {}
         ---@type integer[]
         local ys <const> = {}
-
-        -- Find min and max.
-        local xMin = 2147483647
-        local yMin = 2147483647
-        local xMax = -2147483648
-        local yMax = -2147483648
         local plotIsValid = false
 
         ---@type Color[]
@@ -494,13 +488,6 @@ dlg:button {
 
             if plotPalette then
                 local center <const> = size // 2
-
-                -- Lightness has an absolute lower and upper bound,
-                -- unlike chroma.
-                xMin = 0
-                yMin = 0
-                xMax = size - 1
-                yMax = size - 1
 
                 local j = 0
                 while j < lenHexesSrgb do
@@ -606,11 +593,6 @@ dlg:button {
                         xi = floor(0.5 + xNrm * size)
                         yi = floor(0.5 + yNrm * size)
 
-                        if xi < xMin then xMin = xi end
-                        if xi > xMax then xMax = xi end
-                        if yi < yMin then yMin = yi end
-                        if yi > yMax then yMax = yi end
-
                         if lch.l > 50.0 then
                             stroke = 0xff000000
                         else
@@ -708,11 +690,6 @@ dlg:button {
                 local invMaxChroma <const> = 0.5 / srMaxChroma
                 local center <const> = size // 2
 
-                xMin = 0
-                yMin = 0
-                xMax = size - 1
-                yMax = size - 1
-
                 local j = 0
                 while j < lenHexesSrgb do
                     j = j + 1
@@ -777,27 +754,17 @@ dlg:button {
         end)
 
         if plotPalette and plotIsValid then
-            if yMax == yMin then
-                yMax = size
-                yMin = 0
-            end
-
-            if xMax == xMin then
-                xMax = size
-                xMin = 0
-            end
-
-            local xTlPlot <const> = 1 + xMin - strokeSize
-            local yTlPlot <const> = 1 + yMin - strokeSize
-            local wPlot <const> = (xMax - xMin) + stroke2 - 1
-            local hPlot <const> = (yMax - yMin) + stroke2 - 1
+            local xTlPlot = 1 + 0 - strokeSize
+            local yTlPlot = 1 + 0 - strokeSize
+            local wPlot <const> = (size - 0) + stroke2 - 1
+            local hPlot <const> = (size - 0) + stroke2 - 1
 
             local plotSpec <const> = AseUtilities.createSpec(
                 wPlot, hPlot,
                 gamutSpec.colorMode,
                 gamutSpec.colorSpace,
                 gamutSpec.transparentColor)
-            local plotImg <const> = Image(plotSpec)
+            local plotImg = Image(plotSpec)
 
             local plotCtx <const> = plotImg.context
             if plotCtx then
@@ -819,6 +786,10 @@ dlg:button {
                         false)
                 end -- End draw swatch loop.
 
+                local trimmed, xtlTrim, ytlTrim = AseUtilities.trimImageAlpha(
+                    plotImg, 0, gamutSpec.transparentColor,
+                    size, size)
+
                 local plotPalLayer <const> = sprite:newLayer()
                 plotPalLayer.name = "Palette"
 
@@ -827,7 +798,9 @@ dlg:button {
                         sprite,
                         1, reqFrames,
                         plotPalLayer.stackIndex, 1,
-                        plotImg, Point(xTlPlot, xTlPlot), 0x0)
+                        trimmed, Point(
+                            xTlPlot + xtlTrim,
+                            yTlPlot + ytlTrim), 0x0)
                 end)
             end -- End drawing canvas exists.
 
