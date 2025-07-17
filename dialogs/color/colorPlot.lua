@@ -509,11 +509,9 @@ dlg:button {
                         xi = floor(0.5 + xNrm * size)
                         yi = floor(0.5 + yNrm * size)
 
-                        if lch.l > 50.0 then
-                            stroke = 0xff000000
-                        else
-                            stroke = 0xffffffff
-                        end
+                        stroke = lch.l > 50.0
+                            and 0xff000000
+                            or 0xffffffff
                     end
 
                     strokes[j] = stroke
@@ -592,11 +590,9 @@ dlg:button {
                         xi = floor(0.5 + xNrm * size)
                         yi = floor(0.5 + yNrm * size)
 
-                        if lch.l > 50.0 then
-                            stroke = 0xff000000
-                        else
-                            stroke = 0xffffffff
-                        end
+                        stroke = lch.l > 50.0
+                            and 0xff000000
+                            or 0xffffffff
                     end
 
                     strokes[j] = stroke
@@ -708,11 +704,9 @@ dlg:button {
                         xi = floor(0.5 + xNrm * size)
                         yi = floor(0.5 + yNrm * size)
 
-                        if lab.l > 50.0 then
-                            stroke = 0xff000000
-                        else
-                            stroke = 0xffffffff
-                        end
+                        stroke = lab.l > 50.0
+                            and 0xff000000
+                            or 0xffffffff
                     end
 
                     strokes[j] = stroke
