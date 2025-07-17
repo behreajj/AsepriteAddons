@@ -418,6 +418,7 @@ dlg:button {
         local yMin = 2147483647
         local xMax = -2147483648
         local yMax = -2147483648
+        local plotIsValid = false
 
         ---@type Color[]
         local celColors <const> = {}
@@ -502,6 +503,7 @@ dlg:button {
 
                     local stroke = 0x0
                     if hexSrgb & 0xff000000 ~= 0 then
+                        plotIsValid = true
                         local lch <const> = sRgbToLch(fromHex(hexSrgb))
 
                         local l01 <const> = (100.0 - lch.l) * 0.01
@@ -586,6 +588,7 @@ dlg:button {
                     local yi = size
                     local stroke = 0x0
                     if (hexSrgb & 0xff000000) ~= 0 then
+                        plotIsValid = true
                         local lch <const> = sRgbToLch(fromHex(hexSrgb))
 
                         -- Convert chroma to [0.0, 1.0].
@@ -702,6 +705,7 @@ dlg:button {
                     local yi = center
                     local stroke = 0x0
                     if hexSrgb & 0xff000000 ~= 0 then
+                        plotIsValid = true
                         local lab <const> = sRgbToLab(fromHex(hexSrgb))
 
                         -- From [0.0, chroma] to [0.0, 1.0]
@@ -761,7 +765,7 @@ dlg:button {
             end
         end)
 
-        if plotPalette then
+        if plotPalette and plotIsValid then
             if yMax == yMin then
                 yMax = size
                 yMin = 0
@@ -820,7 +824,7 @@ dlg:button {
             -- prependMask modifies hexesProfile.
             Utilities.prependMask(hexesProfile)
             AseUtilities.setPalette(hexesProfile, sprite, 1)
-        end
+        end -- End valid plot
 
         app.frame = plotIsPolar
             and sprite.frames[math.ceil(#sprite.frames / 2)]
