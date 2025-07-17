@@ -1,17 +1,13 @@
 dofile("../../support/shapeutilities.lua")
 
 local axisPresets <const> = {
-    -- hue is x, chroma is y, lightness is z;
-    -- or hue is angle, chroma is mag.
-    -- This is colorWheel.
+    -- Lightness is z, hue is theta, chroma is rho.
     "LIGHTNESS",
 
-    -- hue is x, l is y, chroma is z;
-    -- or hue is angle, l is mag.
+    -- Chroma is z, hue is theta, lightness is rho.
     "CHROMA",
 
-    -- chroma is x, l is y, hue is z.
-    -- This is colorShades.
+    -- Hue is z, chroma is x, lightness is y.
     "HUE",
 }
 
@@ -426,7 +422,7 @@ dlg:button {
 
         if axisIsChroma then
             gamutLayerName = string.format(
-                "Gamut Sectors %d Rings %d",
+                "Chroma Sectors %d Rings %d",
                 sectorCount, ringCount)
 
             local minChroma <const> = args.minChroma
@@ -543,7 +539,7 @@ dlg:button {
             local srMaxChroma <const> = Lab.SR_MAX_CHROMA
 
             gamutLayerName = string.format(
-                "Gamut Quantize %d",
+                "Hue Quantize %d",
                 quantization)
 
             local idxFrame = 0
@@ -627,7 +623,7 @@ dlg:button {
             end     -- End plot palette
         else
             gamutLayerName = string.format(
-                "Gamut Sectors %d Rings %d",
+                "Lightness Sectors %d Rings %d",
                 sectorCount, ringCount)
 
             local minLight <const> = args.minLight
