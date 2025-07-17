@@ -285,10 +285,10 @@ dlg:button {
         local atan2 <const> = math.atan
         local cos <const> = math.cos
         local floor <const> = math.floor
-        local sqrt <const> = math.sqrt
-        local min <const> = math.min
         local max <const> = math.max
+        local min <const> = math.min
         local sin <const> = math.sin
+        local sqrt <const> = math.sqrt
         local strpack <const> = string.pack
         local tconcat <const> = table.concat
 
@@ -330,7 +330,6 @@ dlg:button {
         -- Parameters not exposed to UI:
         local gamutTol <const> = defaults.gamutTol
         local strokeWeight <const> = defaults.strokeWeight
-        local stroke2 <const> = strokeSize + strokeSize
 
         -- Variables derived from arguments.
         local axisIsChroma <const> = axisPreset == "CHROMA"
@@ -754,10 +753,11 @@ dlg:button {
         end)
 
         if plotPalette and plotIsValid then
-            local xTlPlot = 1 + 0 - strokeSize
-            local yTlPlot = 1 + 0 - strokeSize
-            local wPlot <const> = (size - 0) + stroke2 - 1
-            local hPlot <const> = (size - 0) + stroke2 - 1
+            local xTlPlot = 1 - strokeSize
+            local yTlPlot = 1 - strokeSize
+            local stroke2 <const> = strokeSize + strokeSize
+            local wPlot <const> = size + stroke2 - 1
+            local hPlot <const> = size + stroke2 - 1
 
             local plotSpec <const> = AseUtilities.createSpec(
                 wPlot, hPlot,
