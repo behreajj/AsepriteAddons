@@ -495,6 +495,13 @@ dlg:button {
             if plotPalette then
                 local center <const> = size // 2
 
+                -- Lightness has an absolute lower and upper bound,
+                -- unlike chroma.
+                xMin = 0
+                yMin = 0
+                xMax = size - 1
+                yMax = size - 1
+
                 local j = 0
                 while j < lenHexesSrgb do
                     j = j + 1
@@ -515,11 +522,6 @@ dlg:button {
                         -- From [0.0, 1.0] to [0, size].
                         xi = floor(0.5 + xNrm * size)
                         yi = floor(0.5 + yNrm * size)
-
-                        if xi < xMin then xMin = xi end
-                        if xi > xMax then xMax = xi end
-                        if yi < yMin then yMin = yi end
-                        if yi > yMax then yMax = yi end
 
                         if lch.l > 50.0 then
                             stroke = 0xff000000
