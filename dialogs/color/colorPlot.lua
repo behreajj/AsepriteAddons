@@ -302,6 +302,7 @@ dlg:button {
         local sRgbToLch <const> = ColorUtilities.sRgbToSrLchInternal
         local lchTosRgb <const> = ColorUtilities.srLchTosRgbInternal
         local quantize <const> = Utilities.quantizeUnsigned
+        local rgbToAseColor <const> = AseUtilities.rgbToAseColor
 
         -- Unpack arguments.
         local args <const> = dlg.data
@@ -488,6 +489,10 @@ dlg:button {
                 gamutImg.bytes = tconcat(pixels)
                 gamutImgs[1 + idxFrame] = gamutImg
 
+                local celColor <const> = rgbToAseColor(
+                    lchTosRgb(50.0, chroma, 0.0, 1.0))
+                celColors[1 + idxFrame] = celColor
+
                 idxFrame = idxFrame + 1
             end -- End frame loop
 
@@ -572,6 +577,10 @@ dlg:button {
                 local gamutImg <const> = Image(gamutSpec)
                 gamutImg.bytes = tconcat(pixels)
                 gamutImgs[1 + idxFrame] = gamutImg
+
+                local celColor <const> = rgbToAseColor(
+                    lchTosRgb(50.0, 50.0, hue, 1.0))
+                celColors[1 + idxFrame] = celColor
 
                 idxFrame = idxFrame + 1
             end -- End frame loop
@@ -690,6 +699,10 @@ dlg:button {
                 gamutImg.bytes = tconcat(pixels)
                 gamutImgs[1 + idxFrame] = gamutImg
 
+                local celColor <const> = rgbToAseColor(
+                    lchTosRgb(light, 0.0, 0.0, 1.0))
+                celColors[1 + idxFrame] = celColor
+
                 idxFrame = idxFrame + 1
             end -- End frame loop
 
@@ -761,7 +774,7 @@ dlg:button {
                     gamutLayer,
                     spriteFrames[idxCel],
                     gamutImgs[idxCel])
-                -- gamutCel.color = celColors[idxCel]
+                gamutCel.color = celColors[idxCel]
             end
         end)
 
