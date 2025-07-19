@@ -747,11 +747,10 @@ dlg:button {
         end)
 
         if plotPalette and plotIsValid then
-            local xTlPlot = 1 - strokeSize
-            local yTlPlot = 1 - strokeSize
-            local stroke2 <const> = strokeSize + strokeSize
-            local wPlot <const> = size + stroke2 - 1
-            local hPlot <const> = size + stroke2 - 1
+            local xTlPlot <const> = 1 - strokeSize
+            local yTlPlot <const> = 1 - strokeSize
+            local wPlot <const> = size + strokeSize * 2 - 1
+            local hPlot <const> = size + strokeSize * 2 - 1
 
             local plotSpec <const> = AseUtilities.createSpec(
                 wPlot, hPlot,
