@@ -530,8 +530,7 @@ dlg:button {
 
             local idxFrame = 0
             while idxFrame < reqFrames do
-                local frameStep <const> = idxFrame * frameToStep
-                local hue = frameStep
+                local hue <const> = idxFrame * frameToStep
 
                 ---@type string[]
                 local pixels <const> = {}
@@ -550,7 +549,9 @@ dlg:button {
                     local r8 <const> = floor(min(max(srgb.r, 0.0), 1.0) * 255 + 0.5)
                     local g8 <const> = floor(min(max(srgb.g, 0.0), 1.0) * 255 + 0.5)
                     local b8 <const> = floor(min(max(srgb.b, 0.0), 1.0) * 255 + 0.5)
-                    local a8 <const> = rgbIsInGamut(srgb, gamutTol) and 255 or outOfGamut
+                    local a8 <const> = rgbIsInGamut(srgb, gamutTol)
+                        and 255
+                        or outOfGamut
 
                     j = j + 1
                     pixels[j] = strpack("B B B B", r8, g8, b8, a8)
