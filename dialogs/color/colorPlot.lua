@@ -780,14 +780,16 @@ dlg:button {
                         false)
                 end -- End draw swatch loop.
 
-                local trimmed, xtlTrim, ytlTrim = AseUtilities.trimImageAlpha(
+                local trimmed <const>,
+                    xtlTrim <const>,
+                    ytlTrim <const> = AseUtilities.trimImageAlpha(
                     plotImg, 0, gamutSpec.transparentColor,
                     size, size)
 
-                local plotPalLayer <const> = sprite:newLayer()
-                plotPalLayer.name = "Palette"
-
                 app.transaction("Plot Palette", function()
+                    local plotPalLayer <const> = sprite:newLayer()
+                    plotPalLayer.name = "Palette"
+
                     AseUtilities.createCels(
                         sprite,
                         1, reqFrames,
