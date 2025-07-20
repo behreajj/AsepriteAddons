@@ -206,7 +206,7 @@ dlg:button {
                 return
             end
             if readFile == nil then return end
-            binData = readFile:read("a")
+            binData = readFile:read("a") --[[@as string]]
             readFile:close()
         else
             local site <const> = app.site

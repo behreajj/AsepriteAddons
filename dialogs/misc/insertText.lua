@@ -284,7 +284,7 @@ dlg:button {
                 local file <const>, err <const> = io.open(msgFilePath, "r")
                 local flatStr = nil
                 if file ~= nil then
-                    flatStr = file:read("*all")
+                    flatStr = file:read("*all") --[[@as string]]
                     charTableStill = TextUtilities.lineWrapStringToChars(
                         flatStr, charLimit)
                     file:close()

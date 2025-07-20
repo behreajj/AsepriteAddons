@@ -223,7 +223,7 @@ dlg:button {
             end
             if binFile == nil then return end
 
-            local fileData <const> = binFile:read("a")
+            local fileData <const> = binFile:read("a") --[[@as string]]
             binFile:close()
 
             local lenFileData <const> = #fileData
