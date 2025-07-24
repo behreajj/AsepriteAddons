@@ -46,15 +46,17 @@ end
 
 ---@param dx integer
 ---@param dy integer
----@param trim boolean
-local function extrude(dx, dy, trim)
+local function shiftSel(dx, dy)
     local site <const> = app.site
     local activeSprite <const> = site.sprite
     if not activeSprite then return end
 
     -- This makes undoing with Ctrl+Z tedious, but in other cases the double
     -- mask invert needed to be outside a transaction anyway.
-    local selCurr <const>, _ <const> = AseUtilities.getSelection(activeSprite)
+    local selCurr <const>,
+    isValid <const> = AseUtilities.getSelection(activeSprite)
+    if not isValid then return end
+
     local selNext <const> = Selection()
     selNext:add(selCurr)
     local selOrigin <const> = selCurr.origin
@@ -62,51 +64,6 @@ local function extrude(dx, dy, trim)
     app.transaction("Nudge Mask", function()
         activeSprite.selection = selNext
     end)
-    app.refresh()
-
-    local activeFrame <const> = site.frame
-    if not activeFrame then return end
-
-    local activeLayer <const> = site.layer
-    if not activeLayer then return end
-    if activeLayer.isGroup then return end
-    if activeLayer.isBackground then return end
-    if activeLayer.isReference then return end
-    if activeLayer.isTilemap then
-        app.alert {
-            title = "Error",
-            text = "Tile maps are not supported."
-        }
-        return
-    end
-
-    local activeCel <const> = activeLayer:cel(activeFrame)
-    if not activeCel then return end
-
-    local srcImg = activeCel.image
-
-    app.transaction("Extrude Cel", function()
-        local celBounds <const> = activeCel.bounds
-        local xCel = celBounds.x
-        local yCel = celBounds.y
-
-        if trim then
-            local trm <const>, tmx <const>, tmy <const> = AseUtilities.trimImageAlpha(
-                srcImg, 0, 0)
-            srcImg = trm
-            xCel = xCel + tmx
-            yCel = yCel + tmy
-        end
-
-        local trgImg <const>, tlx <const>, tly <const> = AseUtilities.blendImage(
-            srcImg, srcImg,
-            xCel, yCel, xCel + dx, yCel - dy,
-            selNext, true)
-
-        activeCel.image = trgImg
-        activeCel.position = Point(tlx, tly)
-    end)
-
     app.refresh()
 end
 
@@ -139,6 +96,8 @@ end
 
 local dlg <const> = Dialog { title = "Selection" }
 
+dlg:separator { id = "extrudeSep", text = "Translate" }
+
 dlg:slider {
     id = "amount",
     label = "Amount:",
@@ -147,7 +106,7 @@ dlg:slider {
     value = defaults.amount
 }
 
--- dlg:separator { id = "extrudeSep", text = "Extrude" }
+dlg:newrow { always = false }
 
 dlg:combobox {
     id = "shiftOption",
@@ -160,78 +119,59 @@ dlg:combobox {
 
 dlg:newrow { always = false }
 
-dlg:check {
-    id = "trimCels",
-    label = "Trim:",
-    text = "Layer Ed&ges",
-    selected = defaults.trimCels,
-    visible = false,
-    hexpand = false,
-}
-
-dlg:newrow { always = false }
-
 dlg:button {
     id = "wExtrude",
     text = "&W",
-    visible = false,
     focus = false,
     onclick = function()
         local args <const> = dlg.data
         local amount <const> = args.amount --[[@as integer]]
-        local trim <const> = args.trimCels --[[@as boolean]]
         local shift <const> = args.shiftOption --[[@as string]]
         local tr <const> = shiftFromStr(shift)
-        extrude(tr.up[1] * amount,
-            tr.up[2] * amount, trim)
+        shiftSel(tr.up[1] * amount,
+            tr.up[2] * amount)
     end
 }
 
 dlg:button {
     id = "aExtrude",
     text = "&A",
-    visible = false,
     focus = false,
     onclick = function()
         local args <const> = dlg.data
         local amount <const> = args.amount --[[@as integer]]
-        local trim <const> = args.trimCels --[[@as boolean]]
         local shift <const> = args.shiftOption --[[@as string]]
         local dir <const> = shiftFromStr(shift)
-        extrude(dir.left[1] * amount,
-            dir.left[2] * amount, trim)
+        shiftSel(dir.left[1] * amount,
+            dir.left[2] * amount)
     end
 }
 
 dlg:button {
     id = "sExtrude",
     text = "&S",
-    visible = false,
     focus = false,
     onclick = function()
         local args <const> = dlg.data
         local amount <const> = args.amount --[[@as integer]]
-        local trim <const> = args.trimCels --[[@as boolean]]
         local shift <const> = args.shiftOption --[[@as string]]
         local dir <const> = shiftFromStr(shift)
-        extrude(dir.down[1] * amount,
-            dir.down[2] * amount, trim)
+        shiftSel(dir.down[1] * amount,
+            dir.down[2] * amount)
     end
 }
 
 dlg:button {
     id = "dExtrude",
     text = "&D",
-    visible = false,
     focus = false,
     onclick = function()
         local args <const> = dlg.data
         local amount <const> = args.amount --[[@as integer]]
-        local trim <const> = args.trimCels --[[@as boolean]]
         local shift <const> = args.shiftOption --[[@as string]]
         local dir <const> = shiftFromStr(shift)
-        extrude(dir.right[1] * amount,
-            dir.right[2] * amount, trim)
+        shiftSel(dir.right[1] * amount,
+            dir.right[2] * amount)
     end
 }
 
