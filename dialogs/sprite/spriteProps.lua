@@ -381,6 +381,7 @@ dlg:check {
 
 dlg:newrow { always = false }
 
+-- TODO: Maybe make a child dialog to set these properties?
 local spriteGrid <const> = sprite.gridBounds
 local xGridOld <const> = spriteGrid.x
 local yGridOld <const> = spriteGrid.y

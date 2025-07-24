@@ -194,7 +194,7 @@ dlg:button {
                 local aseToHex <const> = AseUtilities.aseColorToHex
                 local palette <const> = AseUtilities.getPalette(
                     palIdx, activeSprite.palettes)
-                local lenPalette = #palette
+                local lenPalette <const> = #palette
                 local i = 0
                 while i < lenPalette do
                     local aseColor <const> = palette:getColor(i)
