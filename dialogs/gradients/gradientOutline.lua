@@ -208,7 +208,7 @@ dlg:button {
             return
         end
 
-        local srcLayer <const> = site.layer
+        local srcLayer = site.layer
         if not srcLayer then
             app.alert {
                 title = "Error",
@@ -225,17 +225,10 @@ dlg:button {
             return
         end
 
-        if srcLayer.isGroup then
-            app.alert {
-                title = "Error",
-                text = "Group layers are not supported."
-            }
-            return
-        end
-
         -- Unpack arguments.
         local args <const> = dlg.data
-        local target <const> = args.target or defaults.target --[[@as string]]
+        local target <const> = args.target
+            or defaults.target --[[@as string]]
         local alphaFade <const> = args.alphaFade --[[@as boolean]]
         local reverseFade <const> = args.reverseFade --[[@as boolean]]
         local clrSpacePreset <const> = args.clrSpacePreset --[[@as string]]
@@ -244,6 +237,19 @@ dlg:button {
         local aseBkgColor <const> = args.bkgColor --[[@as Color]]
         local iterations <const> = args.iterations
             or defaults.iterations --[[@as integer]]
+
+        -- Find frames from target.
+        local frIdcs <const> = Utilities.flatArr2(
+            AseUtilities.getFrames(activeSprite, target))
+
+        local removeSrcLayer = false
+        if srcLayer.isGroup then
+            app.transaction("Flatten Group", function()
+                srcLayer = AseUtilities.flattenGroup(
+                    activeSprite, srcLayer, frIdcs)
+                removeSrcLayer = true
+            end)
+        end
 
         -- Create matrices.
         -- Directions need to be flipped on x and y axes.
@@ -328,10 +334,6 @@ dlg:button {
 
         local mixFunc <const> = GradientUtilities.clrSpcFuncFromPreset(
             clrSpacePreset, huePreset)
-
-        -- Find frames from target.
-        local frIdcs <const> = Utilities.flatArr2(
-            AseUtilities.getFrames(activeSprite, target))
 
         -- For auto alpha fade.
         -- The clr needs to be blended with the background.
@@ -513,6 +515,12 @@ dlg:button {
                         trgCel.opacity = srcCel.opacity
                     end)
             end
+        end
+
+        if removeSrcLayer then
+            app.transaction("Delete Layer", function()
+                activeSprite:deleteLayer(srcLayer)
+            end)
         end
 
         app.layer = trgLayer
