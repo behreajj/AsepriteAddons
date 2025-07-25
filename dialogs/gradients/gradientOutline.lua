@@ -3,6 +3,9 @@ dofile("../../support/gradientutilities.lua")
 local targets <const> = { "ACTIVE", "ALL", "RANGE" }
 
 local defaults <const> = {
+    -- TODO: Support creating a target from a selection?
+    -- Issue is that when a pixel border or edge is artifically
+    -- introduced by a selection, the outline has no way of telling.
     target = "ACTIVE",
     iterations = 1,
     alphaFade = false,
