@@ -428,7 +428,7 @@ dlg:button {
                 local areaTrg <const> = wTrg * hTrg
 
                 ---@type integer[]
-                local read = {}
+                local read <const> = {}
                 ---@type integer[]
                 local write <const> = {}
 
