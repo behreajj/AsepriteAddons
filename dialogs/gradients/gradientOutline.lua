@@ -7,9 +7,6 @@ local defaults <const> = {
     -- Issue is that when a pixel border or edge is artifically
     -- introduced by a selection, the outline has no way of telling.
 
-    -- TODO: Option to erase source image from the outline target layer
-    -- so that only the outline is visible? Would have to store a third
-    -- array of source image's initial state... maybe just as booleans.
     target = "ACTIVE",
     iterations = 1,
     alphaFade = false,
@@ -431,6 +428,8 @@ dlg:button {
                 local hTrg <const> = hSrc + itr2
                 local areaTrg <const> = wTrg * hTrg
 
+                ---@type boolean[]
+                local orig <const> = {}
                 ---@type integer[]
                 local read <const> = {}
                 ---@type integer[]
@@ -441,15 +440,18 @@ dlg:button {
                     local xSrc <const> = (i % wTrg) - iterations
                     local ySrc <const> = (i // wTrg) - iterations
 
+                    local removePixel = false
                     local hex = alphaIndexVerif
                     if ySrc >= 0 and ySrc < hSrc
                         and xSrc >= 0 and xSrc < wSrc then
                         local jbpp <const> = (ySrc * wSrc + xSrc) * srcBpp
                         hex = strunpack(unpackFmt, strsub(srcByteStr,
                             1 + jbpp, srcBpp + jbpp))
+                        removePixel = (hex & 0xff000000 ~= 0)
                     end
                     i = i + 1
                     write[i] = hex
+                    orig[i] = removePixel
                 end
 
                 h = 0
@@ -505,7 +507,8 @@ dlg:button {
                 i = 0
                 while i < areaTrg do
                     i = i + 1
-                    writeByteStrArr[i] = strpack("<I4", write[i])
+                    local wrMask <const> = orig[i] and 0 or write[i]
+                    writeByteStrArr[i] = strpack("<I4", wrMask)
                 end
 
                 local trgSpec <const> = createSpec(wTrg, hTrg, colorMode,
