@@ -36,6 +36,13 @@ if not isValid then
     -- Instead of returning when selection is not valid,
     -- try to correct issues with built-in square brush.
 
+    -- TODO: If app.site.tilemapMode is TilemapMode.TILES, then
+    -- convert active tile to brush? Or just return early and
+    -- make a separate function to convert active tile to brush?
+    if site.tilemapMode == TilemapMode.TILES then
+        return
+    end
+
     local brush <const> = app.brush
 
     local brushType <const> = brush.type
@@ -131,8 +138,9 @@ if not isValid then
 end
 
 local frame <const> = site.frame or sprite.frames[1]
-local image <const>, xSel <const>, ySel <const> = AseUtilities.selToImage(
-    sel, sprite, frame.frameNumber)
+local image <const>,
+    xSel <const>,
+    ySel <const> = AseUtilities.selToImage(sel, sprite, frame.frameNumber)
 
 -- You could change these to tile map top left corner, but the problem is
 -- when the selection size doesn't match up to tile dimensions.
