@@ -23,13 +23,27 @@ local tile <const> = tileSet:tile(tiCurr)
 if not tile then return end
 
 local image <const> = tile.image
-local tfCurr <const> = app.pixelColor.tileF(tifCurr)
-local flipped <const> = AseUtilities.bakeFlag(image, tfCurr)
 
-if not flipped:isEmpty() then
+if not image:isEmpty() then
+    local tfCurr <const> = app.pixelColor.tileF(tifCurr)
+    local flipped <const> = AseUtilities.bakeFlag(image, tfCurr)
+
+    local centerPreset = "CENTER"
+    local brushPattern = BrushPattern.NONE
+    local xPattern = 0
+    local yPattern = 0
+
+    -- local cel <const> = site.cel
+    -- if cel then
+    --     local celPos <const> = cel.position
+    --     xPattern = celPos.x
+    --     yPattern = celPos.y
+    -- end
+
     app.transaction("Brush From Tile", function()
         AseUtilities.setBrush(AseUtilities.imageToBrush(
-            flipped))
+            flipped, centerPreset,
+            brushPattern, xPattern, yPattern))
     end)
 end
 

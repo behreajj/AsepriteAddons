@@ -31,14 +31,15 @@ end             -- End preferences exists.
 local useTopleft <const> = (not cursorSnap) and useGridSnap
 local centerPreset = useTopleft and "TOP_LEFT" or "CENTER"
 
-local sel <const>, isValid <const> = AseUtilities.getSelection(sprite)
+local sel <const>,
+isValid <const> = AseUtilities.getSelection(sprite)
+
 if not isValid then
     -- Instead of returning when selection is not valid,
     -- try to correct issues with built-in square brush.
-
-    -- TODO: If app.site.tilemapMode is TilemapMode.TILES, then
-    -- convert active tile to brush? Or just return early and
-    -- make a separate function to convert active tile to brush?
+    -- The exception cases being when drawing tiles,
+    -- when the brush is already an image, or when the
+    -- default circle brush is adequate.
     if site.tilemapMode == TilemapMode.TILES then
         return
     end
@@ -132,15 +133,14 @@ if not isValid then
     end
 
     AseUtilities.setBrush(AseUtilities.imageToBrush(image, centerPreset))
-
     app.refresh()
     return
 end
 
 local frame <const> = site.frame or sprite.frames[1]
 local image <const>,
-    xSel <const>,
-    ySel <const> = AseUtilities.selToImage(sel, sprite, frame.frameNumber)
+xSel <const>,
+ySel <const> = AseUtilities.selToImage(sel, sprite, frame.frameNumber)
 
 -- You could change these to tile map top left corner, but the problem is
 -- when the selection size doesn't match up to tile dimensions.

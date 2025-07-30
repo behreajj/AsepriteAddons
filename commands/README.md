@@ -99,4 +99,6 @@ false, then returns to the first frame after reaching the last.
 
 ## Miscellaneous
 
-- `brushFromMask`: Creates a brush from a selection. If snap to grid is enabled, sets the brush center to top-left; otherwise, uses the selection pivot. If a tile map is active, sets the brush alignment. With no selection, creates a custom square or line brush.
+- `brushFromMask`: Creates a brush from a selection. If snap to grid is enabled, sets the brush center to top-left; otherwise, uses the selection pivot. With no selection, creates a custom square or line brush.
+
+- `brushFromTile`: Creates a brush from the active foreground tile.
