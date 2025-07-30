@@ -61,6 +61,7 @@ local function shiftSel(dx, dy)
     selNext:add(selCurr)
     local selOrigin <const> = selCurr.origin
     selNext.origin = Point(selOrigin.x + dx, selOrigin.y - dy)
+    selNext:intersect(activeSprite.bounds)
     app.transaction("Nudge Mask", function()
         activeSprite.selection = selNext
     end)
