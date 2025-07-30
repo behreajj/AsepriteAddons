@@ -7,9 +7,9 @@ local defaults <const> = {
     -- Issue is that when a pixel border or edge is artifically
     -- introduced by a selection, the outline has no way of telling.
 
-    -- TODO: Option to erase source image from the outline target layer
-    -- so that only the outline is visible? Would have to store a third
-    -- array of source image's initial state... maybe just as booleans.
+    -- Option to erase source image from the outline target layer
+    -- so that only the outline is visible tried in commit
+    -- a381cd20bdb36218ff98e275a47481c50ee1cc71 .
     target = "ACTIVE",
     iterations = 1,
     alphaFade = false,
