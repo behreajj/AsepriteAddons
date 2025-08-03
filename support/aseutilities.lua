@@ -1486,6 +1486,7 @@ end
 ---Attempts to read the path from user preferences.
 ---Defaults to user documents path.
 ---@return string
+---@nodiscard
 function AseUtilities.defaultFolder()
     local folderPath = app.fs.userDocsPath
     local appPrefs <const> = app.preferences
