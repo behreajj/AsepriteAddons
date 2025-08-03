@@ -708,6 +708,15 @@ dlg:button {
             if quantPrefs then
                 quantPrefs.rgbmap_algorithm = oldQuantAlg
             end
+
+            local fileSelectPrefs <const> = appPrefs.file_selector
+            if fileSelectPrefs then
+                local frFile <const> = args.fromFile --[[@as string]]
+                local fileFolder <const> = asSeq
+                    and app.fs.filePath(frFile)
+                    or app.fs.filePath(spriteFile)
+                fileSelectPrefs.current_folder = fileFolder
+            end
         end
 
         app.frame = openSprite.frames[1]
