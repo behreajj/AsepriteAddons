@@ -138,7 +138,6 @@ dlg:file {
     id = "toFile",
     label = "To:",
     filetypes = AseUtilities.FILE_FORMATS_OPEN,
-
     basepath = AseUtilities.defaultFolder(),
     title = "Open Sequence",
     focus = false,

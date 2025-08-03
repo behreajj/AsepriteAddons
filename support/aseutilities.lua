@@ -1487,8 +1487,7 @@ end
 ---Defaults to user documents path.
 ---@return string
 function AseUtilities.defaultFolder()
-    local userDocsPath <const> = app.fs.userDocsPath
-    local folderPath = userDocsPath
+    local folderPath = app.fs.userDocsPath
     local appPrefs <const> = app.preferences
     if appPrefs then
         local fileSelectPrefs <const> = appPrefs.file_selector
