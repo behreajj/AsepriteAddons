@@ -216,7 +216,7 @@ if colorMode == ColorMode.INDEXED then
         end
 
         local maskNonZero <const> = AseUtilities.aseColorToHex(
-            maskColorRef, ColorMode.RGB)
+            maskColorRef, ColorMode.RGB) ~= 0
         if maskNonZero then
             dlg:label {
                 id = "maskWarningRgb",
