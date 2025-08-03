@@ -1493,9 +1493,7 @@ function AseUtilities.defaultFolder()
         local fileSelectPrefs <const> = appPrefs.file_selector
         if fileSelectPrefs then
             local currFolder <const> = fileSelectPrefs.current_folder
-            if currFolder
-                and #currFolder > 0
-                and app.fs.isDirectory(currFolder) then
+            if app.fs.isDirectory(currFolder) then
                 folderPath = currFolder
             end
         end
