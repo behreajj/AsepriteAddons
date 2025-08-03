@@ -70,7 +70,7 @@ dlg:file {
     id = "ditherPath",
     label = "File:",
     filetypes = AseUtilities.FILE_FORMATS_OPEN,
-    basepath = app.fs.userDocsPath,
+    basepath = AseUtilities.defaultFolder(),
     focus = false,
     visible = defaults.ditherPattern == "DITHER_CUSTOM"
 }

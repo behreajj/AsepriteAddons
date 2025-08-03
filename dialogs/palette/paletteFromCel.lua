@@ -76,7 +76,7 @@ dlg:newrow { always = false }
 dlg:file {
     id = "filepath",
     filetypes = AseUtilities.FILE_FORMATS_PAL,
-    basepath = app.fs.userDocsPath,
+    basepath = AseUtilities.defaultFolder(),
     save = true,
     visible = defaults.palTarget == "FILE"
 }

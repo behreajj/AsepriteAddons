@@ -80,7 +80,7 @@ dlg:file {
     id = "importFilepath",
     label = "File:",
     filetypes = importFileExts,
-    basepath = app.fs.userDocsPath,
+    basepath = AseUtilities.defaultFolder(),
     focus = false,
     visible = defaults.inputType == "FILE"
 }
@@ -144,8 +144,7 @@ dlg:newrow { always = false }
 dlg:file {
     id = "exportFilepath",
     filetypes = exportFileExts,
-
-    basepath = app.fs.userDocsPath,
+    basepath = AseUtilities.defaultFolder(),
     save = true,
     focus = false,
     visible = defaults.outputType == "FILE"

@@ -92,9 +92,7 @@ dlg:file {
     id = "ditherPath",
     label = "File:",
     filetypes = AseUtilities.FILE_FORMATS_SAVE,
-
-    basepath = app.fs.userDocsPath,
-
+    basepath = AseUtilities.defaultFolder(),
     focus = false,
     visible = defaults.ditherType == "CUSTOM"
 }

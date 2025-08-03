@@ -76,7 +76,7 @@ dlg:newrow { always = false }
 dlg:file {
     id = "msgFilePath",
     filetypes = txtFormats,
-    basepath = app.fs.userDocsPath,
+    basepath = AseUtilities.defaultFolder(),
     visible = defaults.msgSrc == "FILE"
 }
 

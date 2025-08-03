@@ -319,7 +319,7 @@ dlg:file {
     id = "filename",
     label = "File:",
     filetypes = tiledImgExts,
-    basepath = app.fs.userDocsPath,
+    basepath = AseUtilities.defaultFolder(),
     title = "Export Tile Set",
     save = true,
     focus = true

@@ -797,7 +797,7 @@ dlg:file {
     id = "filepath",
     label = "Path:",
     filetypes = { "svg" },
-    basepath = app.fs.userDocsPath,
+    basepath = AseUtilities.defaultFolder(),
     title = "Export Svg",
     save = true,
     focus = true

@@ -212,9 +212,7 @@ dlg:file {
     id = "filename",
     label = "File:",
     filetypes = AseUtilities.FILE_FORMATS_SAVE,
-    filename = string.format("*.%s",
-        app.preferences.export_file.image_default_extension),
-    basepath = app.fs.userDocsPath,
+    basepath = AseUtilities.defaultFolder(),
     title = "Export Layers",
     save = true,
     focus = true

@@ -1482,6 +1482,28 @@ function AseUtilities.createSprite(spec, fileName, showLayerEdges)
     return sprite
 end
 
+---Gets the default folder path for a file widget.
+---Attempts to read the path from user preferences.
+---Defaults to user documents path.
+---@return string
+function AseUtilities.defaultFolder()
+    local userDocsPath <const> = app.fs.userDocsPath
+    local folderPath = userDocsPath
+    local appPrefs <const> = app.preferences
+    if appPrefs then
+        local fileSelectPrefs <const> = appPrefs.file_selector
+        if fileSelectPrefs then
+            local currFolder <const> = fileSelectPrefs.current_folder
+            if currFolder
+                and #currFolder > 0
+                and app.fs.isDirectory(currFolder) then
+                folderPath = currFolder
+            end
+        end
+    end
+    return folderPath
+end
+
 ---Blits input image onto another that is the next power of 2 in dimension. The
 ---nonUniform flag specifies whether the result can have unequal width and
 ---height, e.g., 64x32. Returns the image by reference if its size is already

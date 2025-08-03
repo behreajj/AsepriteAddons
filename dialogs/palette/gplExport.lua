@@ -72,7 +72,7 @@ dlg:file {
     id = "filepath",
     label = "Path:",
     filetypes = { "gpl" },
-    basepath = app.fs.userDocsPath,
+    basepath = AseUtilities.defaultFolder(),
     title = "Export Gpl",
     save = true,
     focus = true
