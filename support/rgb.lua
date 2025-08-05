@@ -283,16 +283,6 @@ function Rgb.gridsRgb(cols, rows, layers, alpha)
     return result
 end
 
----Evaluates whether a color is black.
----Does not check alpha channel.
----@param c Rgb
----@return boolean
-function Rgb.isBlack(c)
-    return c.r < 0.000001
-        and c.g < 0.000001
-        and c.b < 0.000001
-end
-
 ---Converts a color from linear RGB to standard RGB (sRGB).
 ---Clamps the input color to [0.0, 1.0].
 ---Does not transform the alpha channel.

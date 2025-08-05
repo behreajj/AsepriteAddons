@@ -69,10 +69,6 @@ end
 ---@return Rgb
 ---@nodiscard
 function ColorUtilities.mixSrLab2Internal(o, d, step)
-    -- Adverse side effect is black-to-white are also sRGB.
-    -- if Rgb.isBlack(o) or Rgb.isBlack(d) then
-    --     return Rgb.mixlRgbaInternal(o, d, step)
-    -- end
     return ColorUtilities.srLab2TosRgb(
         Lab.mix(
             ColorUtilities.sRgbToSrLab2Internal(o),
@@ -129,10 +125,6 @@ end
 ---@return Rgb
 ---@nodiscard
 function ColorUtilities.mixSrLchInternal(o, d, step, hueFunc)
-    -- Adverse side effect is black-to-white are also sRGB.
-    -- if Rgb.isBlack(o) or Rgb.isBlack(d) then
-    --     return Rgb.mixlRgbaInternal(o, d, step)
-    -- end
     return ColorUtilities.srLab2TosRgb(
         Lab.mixPolar(
             ColorUtilities.sRgbToSrLab2Internal(o),
