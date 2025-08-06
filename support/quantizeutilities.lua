@@ -388,7 +388,7 @@ function QuantizeUtilities.dialogWidgets(dlg, isVisible, enableAlpha)
 end
 
 ---Finds a dither function based on a preset.
----Presets include "FLOYD_STEINBERG" and "ORDERED".
+---Presets include "ERROR_DIFFUSION" and "ORDERED".
 ---Defaults to Floyd Steinberg dither.
 ---@param preset string dither preset
 ---@return fun(pixels: integer[], w: integer, h: integer, bpp: integer, matrix: integer[], cols: integer, rows: integer, xOff: integer, yOff: integer, fac: number, closestFunc: fun(r8: integer, g8: integer, b8: integer, a8: integer): integer, integer, integer, integer)
