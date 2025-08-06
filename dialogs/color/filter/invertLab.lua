@@ -3,6 +3,9 @@ dofile("../../../support/aseutilities.lua")
 local targets <const> = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
 
 local defaults <const> = {
+    -- TODO: Invert indexed color mode? Where color at i
+    -- becomes lenPalette - 1 - i? Alternatively, target
+    -- palette when this is in indexed color mode?
     target = "ACTIVE",
     lInvert = 100,
     aInvert = 100,

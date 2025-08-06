@@ -45,7 +45,8 @@ if not image:isEmpty() then
     -- colors native to the image. This also happens to brush
     -- from mask. Setting brush fgColor and bgColor manually does
     -- not help the problem. Color mode of color bar fore color
-    -- doesn't seem to matter.
+    -- doesn't seem to matter. Brush must be saved for color to
+    -- be fixed.
     app.transaction("Brush From Tile", function()
         local brush <const> = AseUtilities.imageToBrush(
             flipped, centerPreset,

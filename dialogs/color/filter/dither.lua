@@ -409,6 +409,9 @@ dlg:button {
             if math.abs(or8 - dr8) <= 4
                 and math.abs(og8 - dg8) <= 4
                 and math.abs(ob8 - db8) <= 4 then
+                -- TODO: Add buttons to this alert, offer option to
+                -- create high contrast version of the colors by converting
+                -- to LAB then converting back?
                 app.alert {
                     title = "Error",
                     text = "Contrast too low between colors."
