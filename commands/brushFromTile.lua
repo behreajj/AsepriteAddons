@@ -40,10 +40,16 @@ if not image:isEmpty() then
     --     yPattern = celPos.y
     -- end
 
+    -- Problem is that the brush's foreground and background
+    -- color can be updated such that the brush no longer uses
+    -- colors native to the image. This also happens to brush
+    -- from mask. Setting fgColor and bgColor manually does
+    -- not help the problem.
     app.transaction("Brush From Tile", function()
-        AseUtilities.setBrush(AseUtilities.imageToBrush(
+        local brush <const> = AseUtilities.imageToBrush(
             flipped, centerPreset,
-            brushPattern, xPattern, yPattern))
+            brushPattern, xPattern, yPattern)
+        AseUtilities.setBrush(brush)
     end)
 end
 
