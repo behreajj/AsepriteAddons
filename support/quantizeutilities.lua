@@ -395,6 +395,10 @@ end
 function QuantizeUtilities.ditherFuncFromPreset(preset)
     if preset == "ORDERED" then
         return QuantizeUtilities.orderedDither
+    elseif preset == "DITHER_BAYER" then
+        return QuantizeUtilities.orderedDither
+    elseif preset == "DITHER_CUSTOM" then
+        return QuantizeUtilities.orderedDither
     end
     return QuantizeUtilities.fsDither
 end

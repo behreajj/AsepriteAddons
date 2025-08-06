@@ -361,11 +361,8 @@ dlg:button {
 
         local alphaFunc <const> = QuantizeUtilities.alphaFuncFromPreset(
             alphaMode)
-        local ditherOrdered = ditherPattern ~= "FLOYD_STEINBERG"
-            and "ORDERED"
-            or "ERROR_DIFFUSION"
         local dither <const> = QuantizeUtilities.ditherFuncFromPreset(
-            ditherOrdered)
+            ditherPattern)
 
         local bayerIndex <const> = defaults.bayerIndex
         local ditherPath <const> = args.ditherPath --[[@as string]]
