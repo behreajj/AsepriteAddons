@@ -10,11 +10,14 @@ local greyMethods <const> = { "AVERAGE", "HSL", "HSV", "LUMINANCE" }
 local defaults <const> = {
     -- TODO: While one bit mode could be used for thresholding,
     -- it'd be interesting to pursue more specialized methods:
-    -- local thresholding and circular thresholding:
+    -- local thresholding and circular thresholding
     -- https://en.wikipedia.org/wiki/Circular_thresholding
     -- https://en.wikipedia.org/wiki/Otsu%27s_method
     -- https://craftofcoding.wordpress.com/2021/09/30/thresholding-algorithms-niblack-local/
     -- https://craftofcoding.wordpress.com/2021/10/06/thresholding-algorithms-sauvola-local/
+    -- https://docs.opencv.org/4.x/d7/d4d/tutorial_py_thresholding.html
+    -- https://www.youtube.com/watch?v=t8RR7QAjGAw
+    -- Maybe make an Otsu button that changes the threshold slider in UI?
 
     -- Animated x, y offset for ordered dither:
     -- d4fe9fee58d8e3d4edd17cea96c30ad41422eafc
@@ -713,12 +716,17 @@ dlg:button {
         if printElapsed then
             local endTime <const> = os.clock()
             local elapsed <const> = endTime - startTime
+            -- TODO: Use this format in other complex dialogs.
+            local elapsedStr <const> = elapsed > 60
+                and string.format("Elapsed: %dm %.2fs",
+                    elapsed // 60, elapsed % 60)
+                or string.format("Elapsed: %.6f", elapsed)
             app.alert {
                 title = "Diagnostic",
                 text = {
                     string.format("Start: %.2f", startTime),
                     string.format("End: %.2f", endTime),
-                    string.format("Elapsed: %.6f", elapsed)
+                    elapsedStr
                 }
             }
         end
