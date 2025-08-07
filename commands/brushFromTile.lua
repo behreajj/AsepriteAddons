@@ -28,30 +28,7 @@ if not image:isEmpty() then
     local tfCurr <const> = app.pixelColor.tileF(tifCurr)
     local flipped <const> = AseUtilities.bakeFlag(image, tfCurr)
 
-    local cursorSnap = false
-    local appPrefs <const> = app.preferences
-    if appPrefs then
-        local cursorPrefs <const> = appPrefs.cursor
-        if cursorPrefs then
-            local snapToGrid <const> = cursorPrefs.snap_to_grid
-            if snapToGrid then
-                cursorSnap = true
-            end
-        end
-
-        local docPrefs <const> = appPrefs.document(sprite)
-        if docPrefs then
-            local gridPrefs <const> = docPrefs.grid
-            if gridPrefs then
-                local snapPref <const> = gridPrefs.snap --[[@as boolean]]
-                if not snapPref then
-                    app.command.SnapToGrid()
-                end
-            end
-        end
-    end
-
-    local centerPreset = cursorSnap and "CENTER" or "TOP_LEFT"
+    local centerPreset = "CENTER"
     local brushPattern = BrushPattern.NONE
     local xPattern = 0
     local yPattern = 0
