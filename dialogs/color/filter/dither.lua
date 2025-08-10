@@ -714,21 +714,7 @@ dlg:button {
 
         local printElapsed <const> = args.printElapsed --[[@as boolean]]
         if printElapsed then
-            local endTime <const> = os.clock()
-            local elapsed <const> = endTime - startTime
-            -- TODO: Use this format in other complex dialogs.
-            local elapsedStr <const> = elapsed > 60
-                and string.format("Elapsed: %dm %.2fs",
-                    elapsed // 60, elapsed % 60)
-                or string.format("Elapsed: %.6f", elapsed)
-            app.alert {
-                title = "Diagnostic",
-                text = {
-                    string.format("Start: %.2f", startTime),
-                    string.format("End: %.2f", endTime),
-                    elapsedStr
-                }
-            }
+            AseUtilities.printElapsed(startTime)
         end
     end
 }

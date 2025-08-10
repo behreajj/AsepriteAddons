@@ -440,7 +440,6 @@ dlg:button {
     onclick = function()
         -- Begin timing the function elapsed.
         local args <const> = dlg.data
-        local printElapsed <const> = args.printElapsed --[[@as boolean]]
         local startTime <const> = os.clock()
 
         -- Early returns.
@@ -1065,17 +1064,9 @@ dlg:button {
         app.frame = trgFrames[1]
         app.refresh()
 
-        -- Report elapsed time.
+        local printElapsed <const> = args.printElapsed --[[@as boolean]]
         if printElapsed then
-            local endTime <const> = os.clock()
-            local elapsed <const> = endTime - startTime
-
-            local txtArr <const> = {
-                string.format("Start: %.2f", startTime),
-                string.format("End: %.2f", endTime),
-                string.format("Elapsed: %.6f", elapsed),
-            }
-            app.alert { title = "Diagnostic", text = txtArr }
+            AseUtilities.printElapsed(startTime)
         end
     end
 }

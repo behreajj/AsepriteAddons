@@ -188,7 +188,6 @@ dlg:button {
     text = "&OK",
     focus = true,
     onclick = function()
-        local printElapsed <const> = false
         local startTime <const> = os.clock()
 
         -- Early returns.
@@ -533,15 +532,9 @@ dlg:button {
         app.layer = trgLayer
         app.refresh()
 
+        local printElapsed <const> = false
         if printElapsed then
-            local endTime <const> = os.clock()
-            local elapsed <const> = endTime - startTime
-            local txtArr <const> = {
-                string.format("Start: %.2f", startTime),
-                string.format("End: %.2f", endTime),
-                string.format("Elapsed: %.6f", elapsed),
-            }
-            app.alert { title = "Diagnostic", text = txtArr }
+            AseUtilities.printElapsed(startTime)
         end
     end
 }

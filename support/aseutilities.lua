@@ -2790,6 +2790,25 @@ function AseUtilities.preserveForeBack()
     end
 end
 
+---Displays the elapsed time as an alert.
+---@param startTime number
+function AseUtilities.printElapsed(startTime)
+    local endTime <const> = os.clock()
+    local elapsed <const> = endTime - startTime
+    local elapsedStr <const> = elapsed > 60
+        and string.format("Elapsed: %dm %.2fs",
+            elapsed // 60, elapsed % 60)
+        or string.format("Elapsed: %.6f", elapsed)
+    app.alert {
+        title = "Diagnostic",
+        text = {
+            string.format("Start: %.2f", startTime),
+            string.format("End: %.2f", endTime),
+            elapsedStr
+        }
+    }
+end
+
 ---Returns a copy of the source image that has been resized to the width and
 ---height. Uses nearest neighbor sampling. If the width and height are equal to
 ---the original, then returns the source image by reference.

@@ -425,7 +425,6 @@ dlg:button {
     focus = true,
     onclick = function()
         local args <const> = dlg.data
-        local printElapsed <const> = args.printElapsed --[[@as boolean]]
         local startTime <const> = os.clock()
 
         local site <const> = app.site
@@ -842,17 +841,9 @@ dlg:button {
         app.layer = compLayer
         app.refresh()
 
+        local printElapsed <const> = args.printElapsed --[[@as boolean]]
         if printElapsed then
-            local endTime <const> = os.clock()
-            local elapsed <const> = endTime - startTime
-            app.alert {
-                title = "Diagnostic",
-                text = {
-                    string.format("Start: %.2f", startTime),
-                    string.format("End: %.2f", endTime),
-                    string.format("Elapsed: %.6f", elapsed)
-                }
-            }
+            AseUtilities.printElapsed(startTime)
         end
     end
 }
