@@ -413,6 +413,9 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         end
 
         if eventButton == MouseButton.LEFT
+            -- TODO: Clicking and dragging a color key to the left of another
+            -- and dragging that key to the right does not properly swap the
+            -- keys.
             and grdUtlActive.idxCurrent ~= -1 then
             grdUtlActive.isDragging = true
 

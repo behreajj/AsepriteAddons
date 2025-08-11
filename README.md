@@ -35,7 +35,7 @@ For more resources, see
 
 This repo includes
 
-- Export Tile Maps and Sets to [Tiled](https://www.mapeditor.org/).
+- Export Tile Maps and Sets to [Tiled](https://www.mapeditor.org/). ([Test image source](https://opengameart.org/content/more-nes-like-tiles).)
 
   ![Export Tiles](screencaps/exportTiles.png)
 
@@ -43,19 +43,15 @@ This repo includes
 
   ![Color Curve](screencaps/colorCurve.png)
   
-- A conic gradient.
+- A sweep gradient.
 
-  ![Conic Gradient](screencaps/conicGradient.png)
+  ![Sweep Gradient](screencaps/conicGradient.png)
 
-- A Floyd-Steinberg filter ([Test model source](https://www.myminifactory.com/object/3d-print-horseman-at-maria-theresia-platz-152331).)
+- A dither filter. ([Test image source](https://en.wikipedia.org/wiki/File:David_-_The_Death_of_Socrates.jpg).)
 
-  ![FS Dither](screencaps/dither.png)
+  ![Dither](screencaps/dither.png)
 
-- A text insertion dialog.
-
-  ![Insert Text](screencaps/insertText.png)
-
-- Interlaced layers. ([Test image source](https://en.wikipedia.org/wiki/File:Fire_breathing_2_Luc_Viatour.jpg).)
+- Interlaced layers. ([Test image source](https://en.wikipedia.org/wiki/File:David_-_The_Death_of_Socrates.jpg).)
 
   ![Interlaced](screencaps/interlaced.png)
 
@@ -75,6 +71,10 @@ This repo includes
 
   ![New Sprite](screencaps/newSpritePlus.png)
 
+- Custom Open Sprite
+
+  ![Open Sprite](screencaps/openSpritePlus.png)
+
 - Normal color picker.
 
   ![Normal Map](screencaps/normalMap.png)
@@ -91,10 +91,6 @@ This repo includes
 
   ![Palette Manifest](screencaps/paletteManifest.png)
 
-- Palette To Cel Assignment.
-
-  ![Palette To Cel](screencaps/paletteToCel.png)
-
 - A radial gradient.
 
   ![Radial Gradient](screencaps/radialGradient.png)
@@ -103,7 +99,7 @@ This repo includes
 
   ![Separate RGB](screencaps/sepRgb.png)
 
-- Basic cel transformation.
+- Cel transformation.
 
   ![Cel Transformation](screencaps/transformCel.png)
 
