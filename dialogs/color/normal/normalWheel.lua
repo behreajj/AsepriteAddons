@@ -353,13 +353,8 @@ dlg:button {
                 b8 = floor(zn * 127.5 + 128.0)
             end
 
-            local n4 <const> = n * 4
-            byteStrArr[1 + n4] = strchar(r8)
-            byteStrArr[2 + n4] = strchar(g8)
-            byteStrArr[3 + n4] = strchar(b8)
-            byteStrArr[4 + n4] = strchar(a8)
-
             n = n + 1
+            byteStrArr[n] = strchar(r8, g8, b8, a8)
         end
 
         local wheelImg <const> = Image(spec)

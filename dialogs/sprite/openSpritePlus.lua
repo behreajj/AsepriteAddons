@@ -512,15 +512,8 @@ dlg:button {
                                             end
                                         end
 
-                                        local k4 <const> = k * 4
-                                        -- TODO: Can this and other similar usages
-                                        -- be consolidated to one strchar call?
-                                        trgByteArr[1 + k4] = strchar(r8)
-                                        trgByteArr[2 + k4] = strchar(g8)
-                                        trgByteArr[3 + k4] = strchar(b8)
-                                        trgByteArr[4 + k4] = strchar(t8)
-
                                         k = k + 1
+                                        trgByteArr[k] = strchar(r8, g8, b8, t8)
                                     end -- End pixels loop.
                                 end     -- End palette exists.
                             end         -- End color mode block.

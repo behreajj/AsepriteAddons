@@ -276,19 +276,12 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
             local t <const> = i * iToFac
             local tq <const> = quantize(t, lvVerif)
             local c <const> = cgmix(gradient, tq, mixFunc)
-
-            local r8 <const> = floor(min(max(c.r, 0.0), 1.0) * 255.0 + 0.5)
-            local g8 <const> = floor(min(max(c.g, 0.0), 1.0) * 255.0 + 0.5)
-            local b8 <const> = floor(min(max(c.b, 0.0), 1.0) * 255.0 + 0.5)
-            local a8 <const> = floor(min(max(c.a, 0.0), 1.0) * 255.0 + 0.5)
-
-            local i4 <const> = i * 4
-            grdChars[1 + i4] = strchar(r8)
-            grdChars[2 + i4] = strchar(g8)
-            grdChars[3 + i4] = strchar(b8)
-            grdChars[4 + i4] = strchar(a8)
-
             i = i + 1
+            grdChars[i] = strchar(
+                floor(min(max(c.r, 0.0), 1.0) * 255.0 + 0.5),
+                floor(min(max(c.g, 0.0), 1.0) * 255.0 + 0.5),
+                floor(min(max(c.b, 0.0), 1.0) * 255.0 + 0.5),
+                floor(min(max(c.a, 0.0), 1.0) * 255.0 + 0.5))
         end
 
         local gradientSpec <const> = ImageSpec {
