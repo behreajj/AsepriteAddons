@@ -412,32 +412,41 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
             end
         end
 
-        -- TODO: Clicking and dragging a color key to the left of another
-        -- and dragging that key to the right does not properly swap the
-        -- keys.
         local idxPrev <const> = grdUtlActive.idxCurrent
         if eventButton == MouseButton.LEFT
-            and idxPrev ~= -1 then
+            and idxPrev ~= -1
+        -- and xNorm > 0.0
+        -- and xNorm < 1.0 then
+        then
             grdUtlActive.isDragging = true
-            local idxConflict = -1
-            local i = 0
-            while idxConflict == -1
-                and i < lenKeys do
-                i = i + 1
-                if abs(xNorm - keys[i].step) < grdUtlActive.epsilon then
-                    idxConflict = i
-                end
-            end
+            -- local firstKey <const> = keys[1]
+            -- local lastKey <const> = keys[#keys]
+            -- if xNorm <= lastKey.step then
+            local nextIdx <const> = ClrGradient.bisectRight(gradient, xNorm)
+            local prevKey <const> = keys[nextIdx - 1]
+            local nextKey <const> = keys[nextIdx]
 
-            if idxConflict ~= -1 then
-                local temp <const> = keys[idxConflict].rgb
-                keys[idxConflict].rgb = keys[idxPrev].rgb
+            if nextKey
+                and math.abs(xNorm - nextKey.step) < grdUtlActive.epsilon then
+                local temp <const> = nextKey.rgb
+                nextKey.rgb = keys[idxPrev].rgb
                 keys[idxPrev].rgb = temp
 
-                grdUtlActive.idxCurrent = idxConflict
-            end
+                grdUtlActive.idxCurrent = nextIdx
+            elseif prevKey
+                and math.abs(xNorm - prevKey.step) < grdUtlActive.epsilon then
+                local temp <const> = prevKey.rgb
+                prevKey.rgb = keys[idxPrev].rgb
+                keys[idxPrev].rgb = temp
 
-            keys[grdUtlActive.idxCurrent].step = xNorm
+                grdUtlActive.idxCurrent = nextIdx - 1
+            end
+            -- end
+
+            if grdUtlActive.idxCurrent >= 1
+                and grdUtlActive.idxCurrent <= lenKeys then
+                keys[grdUtlActive.idxCurrent].step = xNorm
+            end
         end
 
         dlg:repaint()
