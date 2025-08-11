@@ -1420,7 +1420,7 @@ end
 function AseUtilities.createSprite(spec, fileName, showLayerEdges)
     -- Do not allow slices UI interface to be active.
     local appPrefs <const> = app.preferences
-    local appTool <const> = app.tool
+    local appTool <const> = app.tool --[[@as Tool]]
     if appTool then
         if appTool.id == "slice"
             or appTool.id == "text" then
@@ -2587,8 +2587,8 @@ function AseUtilities.imageToBrush(
         -- https://github.com/aseprite/aseprite/blob/main/data/pref.xml#L467
         local appPrefs <const> = app.preferences
         if appPrefs then
-            local tool <const> = app.tool
-            local toolPrefs <const> = appPrefs.tool(tool)
+            local appTool <const> = app.tool --[[@as Tool]]
+            local toolPrefs <const> = appPrefs.tool(appTool)
             if toolPrefs then
                 local brushPrefs <const> = toolPrefs.brush
                 if brushPrefs then
@@ -3265,7 +3265,7 @@ function AseUtilities.setBrush(brush)
 
     local appPrefs <const> = app.preferences
     if appPrefs then
-        local oldTool <const> = app.tool
+        local oldTool <const> = app.tool --[[@as Tool]]
         local oldToolPrefs <const> = appPrefs.tool(oldTool)
         if oldToolPrefs then
             local inkPrefs <const> = oldToolPrefs.ink --[[@as Ink]]
@@ -3289,7 +3289,7 @@ function AseUtilities.setBrush(brush)
             appBrushPrefs.pattern = brush.pattern
         end -- End app brush prefs exists.
 
-        local newTool <const> = app.tool
+        local newTool <const> = app.tool --[[@as Tool]]
         local toolPrefs <const> = appPrefs.tool(newTool)
         if toolPrefs then
             toolPrefs.ink = Ink.SIMPLE

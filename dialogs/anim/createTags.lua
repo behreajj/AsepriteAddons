@@ -207,7 +207,7 @@ dlg:button {
 
         -- Acquire tool for no other reason than to prevent transformation
         -- preview from stopping script.
-        local _ <const> = app.tool
+        local _ <const> = app.tool --[[@as Tool]]
 
         if deleteExisting then
             local oldTags <const> = activeSprite.tags

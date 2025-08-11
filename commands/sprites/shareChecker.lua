@@ -4,7 +4,7 @@ local site <const> = app.site
 local srcSprite <const> = site.sprite
 if not srcSprite then return end
 
-local appTool <const> = app.tool
+local appTool <const> = app.tool --[[@as Tool]]
 if appTool then
     if appTool.id == "slice"
         or appTool.id == "text" then

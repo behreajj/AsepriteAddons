@@ -144,24 +144,25 @@ local function getProperties(target)
             return nil, false, "There is no active sprite."
         end
 
-        local oldTool <const> = app.tool.id
+        local oldTool <const> = app.tool --[[@as Tool]]
+        local oldToolId <const> = oldTool.id
         app.tool = "slice"
 
         local range <const> = app.range
         if range.sprite ~= activeSprite then
-            app.tool = oldTool
+            app.tool = oldToolId
             return nil, false, "Range doesn't belong to sprite."
         end
 
         local rangeSlices <const> = range.slices
         local lenRangeSlices <const> = #rangeSlices
         if lenRangeSlices <= 0 then
-            app.tool = oldTool
+            app.tool = oldToolId
             return nil, false, "No slices were selected."
         end
 
         local properties <const> = rangeSlices[1].properties
-        app.tool = oldTool
+        app.tool = oldToolId
         return { properties }, true, ""
     elseif target == "SPRITE" then
         local activeSprite <const> = site.sprite
