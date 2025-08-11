@@ -3292,7 +3292,8 @@ function AseUtilities.setBrush(brush)
         local newTool <const> = app.tool --[[@as Tool]]
         local toolPrefs <const> = appPrefs.tool(newTool)
         if toolPrefs then
-            toolPrefs.ink = Ink.SIMPLE
+            -- Causes a UI glitch.
+            -- toolPrefs.ink = Ink.SIMPLE
             toolPrefs.opacity = toolOpacity
 
             -- Trying to set tool brush image type causes UI glitch
@@ -3301,7 +3302,7 @@ function AseUtilities.setBrush(brush)
             -- brush type is changed in the UI.
             -- local toolBrushPrefs <const> = toolPrefs.brush
             -- if toolBrushPrefs then
-            -- toolBrushPrefs.type = BrushType.IMAGE
+            --     toolBrushPrefs.type = brush.type
             -- end
 
             -- https://github.com/aseprite/aseprite/blob/main/src/app/tools/dynamics.h
