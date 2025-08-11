@@ -3257,34 +3257,60 @@ function AseUtilities.setBrush(brush)
         app.command.ToggleTilesMode()
     end
 
+    -- The pencil tool opacity is active for custom brushes, regardless
+    -- of the ink. For built-in brushes, this opacity is ignored unless
+    -- the ink type is one that supports opacity.
+    -- https://github.com/aseprite/aseprite/blob/main/data/pref.xml#L474
+    local toolOpacity = 255
+
     local appPrefs <const> = app.preferences
     if appPrefs then
-        -- Setting the preference for the active brush is more important than
-        -- setting a brush object's pattern property.
-        local brushPrefs <const> = appPrefs.brush
-        if brushPrefs then
-            brushPrefs.pattern = brush.pattern
-        end
-
-        -- The pencil tool opacity is active for custom brushes, regardless
-        -- of the ink. For built-in brushes, this opacity is ignored unless
-        -- the ink type is one that supports opacity.
-        local toolOpacity = 255
         local oldTool <const> = app.tool
-        local toolPrefs <const> = appPrefs.tool(oldTool)
-        local inkPrefs <const> = toolPrefs.ink --[[@as Ink]]
-        local opacityPrefs <const> = toolPrefs.opacity --[[@as integer]]
-        if opacityPrefs and opacityPrefs > 0
-            and (inkPrefs == Ink.ALPHA_COMPOSITING
-                or inkPrefs == Ink.LOCK_ALPHA) then
-            toolOpacity = opacityPrefs
-        end
-
-        appPrefs.tool("pencil").opacity = toolOpacity
-    end -- End app prefs exists.
+        local oldToolPrefs <const> = appPrefs.tool(oldTool)
+        if oldToolPrefs then
+            local inkPrefs <const> = oldToolPrefs.ink --[[@as Ink]]
+            local opacityPrefs <const> = oldToolPrefs.opacity --[[@as integer]]
+            if opacityPrefs and opacityPrefs > 0
+                and (inkPrefs == Ink.ALPHA_COMPOSITING
+                    or inkPrefs == Ink.LOCK_ALPHA) then
+                toolOpacity = opacityPrefs
+            end -- End opacity prefs exists.
+        end     -- End tool prefs exists.
+    end         -- End app prefs exists.
 
     app.tool = "pencil"
     app.brush = brush
+
+    if appPrefs then
+        -- Setting the preference for the active brush is more important than
+        -- setting a brush object's pattern property.
+        local appBrushPrefs <const> = appPrefs.brush
+        if appBrushPrefs then
+            appBrushPrefs.pattern = brush.pattern
+        end -- End app brush prefs exists.
+
+        local newTool <const> = app.tool
+        local toolPrefs <const> = appPrefs.tool(newTool)
+        if toolPrefs then
+            toolPrefs.ink = Ink.SIMPLE
+            toolPrefs.opacity = toolOpacity
+
+            -- Trying to set tool brush image type causes UI glitch
+            -- where custom brush can't be reverted to built-in brush
+            -- through Esc key or the context bar Back button until the
+            -- brush type is changed in the UI.
+            -- local toolBrushPrefs <const> = toolPrefs.brush
+            -- if toolBrushPrefs then
+            -- toolBrushPrefs.type = BrushType.IMAGE
+            -- end
+
+            -- https://github.com/aseprite/aseprite/blob/main/src/app/tools/dynamics.h
+            -- local toolDynamicsPrefs <const> = toolPrefs.dynamics
+            -- if toolDynamicsPrefs then
+            -- toolDynamicsPrefs.gradient = 0
+            -- end
+        end -- End tool prefs exists.
+    end     -- End app prefs exists.
 end
 
 ---Sets an image to an array of bytes. No validation is performed on the array

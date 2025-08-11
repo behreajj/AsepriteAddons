@@ -400,6 +400,7 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
         local keys <const> = gradient:getKeys()
         local lenKeys <const> = #keys
 
+        -- TODO: Can this hover routine reuse the bisectRight method below?
         if y >= 0 and y < hCanvas then
             local search = true
             local j = 0
@@ -414,14 +415,8 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
 
         local idxPrev <const> = grdUtlActive.idxCurrent
         if eventButton == MouseButton.LEFT
-            and idxPrev ~= -1
-        -- and xNorm > 0.0
-        -- and xNorm < 1.0 then
-        then
+            and idxPrev ~= -1 then
             grdUtlActive.isDragging = true
-            -- local firstKey <const> = keys[1]
-            -- local lastKey <const> = keys[#keys]
-            -- if xNorm <= lastKey.step then
             local nextIdx <const> = ClrGradient.bisectRight(gradient, xNorm)
             local prevKey <const> = keys[nextIdx - 1]
             local nextKey <const> = keys[nextIdx]
@@ -441,7 +436,6 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
 
                 grdUtlActive.idxCurrent = nextIdx - 1
             end
-            -- end
 
             if grdUtlActive.idxCurrent >= 1
                 and grdUtlActive.idxCurrent <= lenKeys then
