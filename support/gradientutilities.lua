@@ -412,29 +412,29 @@ function GradientUtilities.dialogWidgets(dlg, showStyle)
             end
         end
 
+        -- TODO: Clicking and dragging a color key to the left of another
+        -- and dragging that key to the right does not properly swap the
+        -- keys.
+        local idxPrev <const> = grdUtlActive.idxCurrent
         if eventButton == MouseButton.LEFT
-            -- TODO: Clicking and dragging a color key to the left of another
-            -- and dragging that key to the right does not properly swap the
-            -- keys.
-            and grdUtlActive.idxCurrent ~= -1 then
+            and idxPrev ~= -1 then
             grdUtlActive.isDragging = true
-
-            local conflictingKeyIndex = -1
+            local idxConflict = -1
             local i = 0
-            while conflictingKeyIndex == -1
+            while idxConflict == -1
                 and i < lenKeys do
                 i = i + 1
                 if abs(xNorm - keys[i].step) < grdUtlActive.epsilon then
-                    conflictingKeyIndex = i
+                    idxConflict = i
                 end
             end
 
-            if conflictingKeyIndex ~= -1 then
-                local temp <const> = keys[conflictingKeyIndex].rgb
-                keys[conflictingKeyIndex].rgb = keys[grdUtlActive.idxCurrent].rgb
-                keys[grdUtlActive.idxCurrent].rgb = temp
+            if idxConflict ~= -1 then
+                local temp <const> = keys[idxConflict].rgb
+                keys[idxConflict].rgb = keys[idxPrev].rgb
+                keys[idxPrev].rgb = temp
 
-                grdUtlActive.idxCurrent = conflictingKeyIndex
+                grdUtlActive.idxCurrent = idxConflict
             end
 
             keys[grdUtlActive.idxCurrent].step = xNorm
