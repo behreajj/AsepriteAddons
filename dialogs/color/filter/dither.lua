@@ -13,8 +13,6 @@ local defaults <const> = {
     -- local thresholding and circular thresholding
     -- https://en.wikipedia.org/wiki/Circular_thresholding
     -- https://en.wikipedia.org/wiki/Otsu%27s_method
-    -- https://craftofcoding.wordpress.com/2021/09/30/thresholding-algorithms-niblack-local/
-    -- https://craftofcoding.wordpress.com/2021/10/06/thresholding-algorithms-sauvola-local/
     -- https://docs.opencv.org/4.x/d7/d4d/tutorial_py_thresholding.html
     -- https://www.youtube.com/watch?v=t8RR7QAjGAw
     -- Maybe make an Otsu button that changes the threshold slider in UI?
@@ -420,12 +418,9 @@ dlg:button {
             if math.abs(or8 - dr8) <= 4
                 and math.abs(og8 - dg8) <= 4
                 and math.abs(ob8 - db8) <= 4 then
-                -- TODO: Add buttons to this alert, offer option to
-                -- create high contrast version of the colors by converting
-                -- to LAB then converting back?
                 app.alert {
                     title = "Error",
-                    text = "Contrast too low between colors."
+                    text = "Contrast between colors is too low."
                 }
                 return
             end

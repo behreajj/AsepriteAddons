@@ -432,8 +432,8 @@ dlg:button {
             local wMax = -2147483648
             local hMax = -2147483648
 
-            local frIdxVrf = math.min(frIdx, toIdx)
-            local toIdxVrf = math.max(frIdx, toIdx)
+            local frIdxVrf <const> = math.min(frIdx, toIdx)
+            local toIdxVrf <const> = math.max(frIdx, toIdx)
 
             local i = frIdxVrf - 1
             while i < toIdxVrf do
@@ -513,6 +513,8 @@ dlg:button {
                                         end
 
                                         local k4 <const> = k * 4
+                                        -- TODO: Can this and other similar usages
+                                        -- be consolidated to one strchar call?
                                         trgByteArr[1 + k4] = strchar(r8)
                                         trgByteArr[2 + k4] = strchar(g8)
                                         trgByteArr[3 + k4] = strchar(b8)
