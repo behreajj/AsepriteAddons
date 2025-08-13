@@ -497,6 +497,14 @@ function AseUtilities.averageColor(sprite, frame)
         flat, _, _ = AseUtilities.selToImage(
             sel, sprite, frame)
     else
+        -- If you wanted to support the difference between
+        -- sampling the active layer vs. the composite, see
+        -- app.preferences.eyedropper.sample  in
+        -- https://github.com/aseprite/aseprite/blob/main/data/pref.xml#L340
+        -- where all layers is 0, current layer is 1, first reference
+        -- layer is 2.
+        -- You'd have to account for reference layers, tile
+        -- map layers, etc.
         local x <const>, y <const> = AseUtilities.getMouse()
         local mouseSpec <const> = ImageSpec {
             width = 1,
