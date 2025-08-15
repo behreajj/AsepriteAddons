@@ -688,7 +688,7 @@ dlg:slider {
     id = "scale",
     label = "Scale:",
     min = 1,
-    max = AseUtilities.UPSCALE_LIMIT,
+    max = AseUtilities.UPSCALE_LIMIT * 2,
     value = defaults.scale
 }
 
