@@ -688,6 +688,8 @@ dlg:slider {
     id = "scale",
     label = "Scale:",
     min = 1,
+    -- This needs to be relatively large compared to
+    -- raster exports so as to accomodate text labels.
     max = AseUtilities.UPSCALE_LIMIT * 2,
     value = defaults.scale
 }
