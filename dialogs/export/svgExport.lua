@@ -61,7 +61,6 @@ local circleFormat <const> = table.concat({
 ---@param bm BlendMode blend mode
 ---@return string
 local function blendModeToStr(bm)
-    -- The blend mode for group layers is nil.
     if bm then
         -- As of v1.3, blend mode NORMAL reports as SRC-OVER.
         -- CSS does not support addition, subtract or divide.
@@ -124,9 +123,9 @@ local function imgToSvgStr(
     -- https://github.com/aseprite/aseprite/issues/3561
     -- SVGs displayed in Firefox and Inkscape have thin gaps between squares at
     -- fractional zoom levels, e.g., 133%. Subtracting an epsilon from the left
-    -- edge and adding to the right edge interferes with margin, can cause other
-    -- zooming artifacts. Creating a path for each color then using subpaths for
-    -- each square diminishes issue.
+    -- edge and adding to the right edge interferes with translucent colors.
+    -- Creating a path for each color then using subpaths for each square
+    -- diminishes issue.
     local strfmt <const> = string.format
     local tconcat <const> = table.concat
     local strbyte <const> = string.byte
