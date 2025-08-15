@@ -1210,7 +1210,7 @@ dlg:button {
                 and strfmt(" fill-opacity=\"%.3f\"", aBorder / 255.0)
                 or ""
 
-            -- Round interior cut out of border if if rdVerif is
+            -- Round interior cut out of border if rdVerif is
             -- greater than zero? Might not be worth it, since
             -- pixels on non-corner edges of border will show gaps.
             borderStr = strfmt(
