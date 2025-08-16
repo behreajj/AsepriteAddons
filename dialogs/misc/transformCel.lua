@@ -887,61 +887,6 @@ dlg:button {
 }
 
 dlg:button {
-    id = "flipdButton",
-    text = "FLIP &D",
-    focus = false,
-    visible = true,
-    onclick = function()
-        local site <const> = app.site
-        local activeSprite <const> = site.sprite
-        if not activeSprite then return end
-        local activeLayer <const> = site.layer
-
-        local args <const> = dlg.data
-        local target <const> = args.target or defaults.target --[[@as string]]
-
-        local filterFrames = activeSprite.frames
-        if target == "ACTIVE" then
-            local activeFrame <const> = site.frame
-            if not activeFrame then return end
-            filterFrames = { activeFrame }
-        end
-
-        local cels <const> = AseUtilities.filterCels(
-            activeSprite, activeLayer, filterFrames, target,
-            false, false, false, true)
-        local lenCels <const> = #cels
-
-        local flipd <const> = AseUtilities.transposeImage
-
-        app.transaction("Flip D", function()
-            local i = 0
-            while i < lenCels do
-                i = i + 1
-                local cel <const> = cels[i]
-
-                local srcImg <const> = cel.image
-                local xSrcHalf <const> = srcImg.width // 2
-                local ySrcHalf <const> = srcImg.height // 2
-
-                cel.image = flipd(srcImg)
-
-                -- The target image width and height
-                -- are the source image height and width.
-                local celPos <const> = cel.position
-                cel.position = Point(
-                    celPos.x + xSrcHalf - ySrcHalf,
-                    celPos.y + ySrcHalf - xSrcHalf)
-            end
-        end)
-
-        app.refresh()
-    end
-}
-
-dlg:newrow { always = false }
-
-dlg:button {
     id = "scaleButton",
     text = "&SCALE",
     focus = false,
