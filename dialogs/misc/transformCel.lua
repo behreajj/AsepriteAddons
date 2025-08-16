@@ -19,6 +19,9 @@ local defaults <const> = {
     --
     -- Dismiss selection after transformation tried in commit
     -- 08ac54d4dd95b748dd3277f7cb951e828e1c5bd3 .
+    --
+    -- Support for diagonal flips in light of Image flip bug:
+    -- 49cefa9d189cc25c964a64d43d92dff43ff2751f
 
     target = "ACTIVE",
     xTranslate = 0,
