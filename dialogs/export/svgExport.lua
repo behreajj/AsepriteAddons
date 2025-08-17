@@ -445,8 +445,10 @@ local function layerToSvgStr(
         and (includeHidden or isVisible) then
         -- Possible for layer name to be empty string.
         local layerName = "layer"
-        if layer.name and #layer.name > 0 then
-            layerName = string.lower(Utilities.validateFilename(layer.name))
+        local lnCandidate <const> = layer.name
+        if lnCandidate and #lnCandidate > 0 then
+            layerName = string.lower(
+                Utilities.validateFilename(lnCandidate))
         end
 
         local visStr = ""
@@ -1288,11 +1290,19 @@ dlg:button {
                 "dominant-baseline=\"middle\" ", })
             or ""
 
+        local title <const> = Utilities.validateFilename(
+            app.fs.fileTitle(activeSprite.filename))
+        local ariaTitleId <const> = "ariaTitleId"
+        local desc <const> = "A vectorized pixel art image."
+        local ariaDescId <const> = "ariaDescId"
+
         local svgStr <const> = tconcat({
             "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n",
             "<svg ",
             "xmlns=\"http://www.w3.org/2000/svg\" ",
             "xmlns:xlink=\"http://www.w3.org/1999/xlink\" ",
+            strfmt("aria-labelledby=\"%s %s\" ", ariaTitleId, ariaDescId),
+            "role=\"img\" ",
             renderHintStr,
             "stroke=\"none\" ",
             fontBlock,
@@ -1303,6 +1313,8 @@ dlg:button {
             strfmt(
                 "viewBox=\"0 0 %d %d\">\n",
                 wViewBox, hViewBox),
+            strfmt("<title id=\"%s\">%s</title>\n", ariaTitleId, title),
+            strfmt("<desc id=\"%s\">%s</desc>\n", ariaDescId, desc),
             defsStr,
             checkerStr,
             alphaIdxStr,

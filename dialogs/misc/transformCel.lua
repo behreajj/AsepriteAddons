@@ -21,7 +21,8 @@ local defaults <const> = {
     -- 08ac54d4dd95b748dd3277f7cb951e828e1c5bd3 .
     --
     -- Support for diagonal flips in light of Image flip bug:
-    -- 49cefa9d189cc25c964a64d43d92dff43ff2751f
+    -- 49cefa9d189cc25c964a64d43d92dff43ff2751f . See
+    -- https://github.com/aseprite/aseprite/issues/5359 .
 
     target = "ACTIVE",
     xTranslate = 0,
