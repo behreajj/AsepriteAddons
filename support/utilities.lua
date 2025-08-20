@@ -1039,15 +1039,8 @@ function Utilities.rotatePixelsX(
     source, wSrc, hSrc, cosa, sina, bpp, alphaIndex)
     local hTrgSigned <const> = Utilities.round(cosa * hSrc)
     if hTrgSigned == 0 then
-        ---@type string[]
-        local rotated <const> = {}
         local alphaStr <const> = string.pack("<I" .. bpp, alphaIndex)
-        local i = 0
-        while i < wSrc do
-            i = i + 1
-            rotated[i] = alphaStr
-        end
-        return table.concat(rotated), wSrc, 1
+        return string.rep(alphaStr, wSrc), wSrc, 1
     end
 
     local hTrgAbs <const> = math.abs(hTrgSigned)
@@ -1077,15 +1070,8 @@ function Utilities.rotatePixelsY(
     source, wSrc, hSrc, cosa, sina, bpp, alphaIndex)
     local wTrgSigned <const> = Utilities.round(cosa * wSrc)
     if wTrgSigned == 0 then
-        ---@type string[]
-        local rotated <const> = {}
         local alphaStr <const> = string.pack("<I" .. bpp, alphaIndex)
-        local i = 0
-        while i < hSrc do
-            i = i + 1
-            rotated[i] = alphaStr
-        end
-        return table.concat(rotated), 1, hSrc
+        return string.rep(alphaStr, hSrc), 1, hSrc
     end
 
     local wTrgAbs <const> = math.abs(wTrgSigned)

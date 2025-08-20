@@ -124,6 +124,8 @@ dlg:check {
     end
 }
 
+dlg:newrow { always = false }
+
 dlg:slider {
     id = "strokeWeight",
     min = 1,
@@ -131,6 +133,8 @@ dlg:slider {
     value = defaults.strokeWeight,
     visible = defaults.useStroke
 }
+
+dlg:newrow { always = false }
 
 dlg:color {
     id = "strokeClr",
