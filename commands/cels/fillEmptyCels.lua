@@ -2,10 +2,6 @@ local site <const> = app.site
 local sprite <const> = site.sprite
 if not sprite then return end
 
-local frObjs <const> = sprite.frames
-local lenFrObjs <const> = #frObjs
-if lenFrObjs <= 1 then return end
-
 local frObj <const> = site.frame
 if not frObj then return end
 local frIdx <const> = frObj.frameNumber
@@ -14,7 +10,22 @@ local layer <const> = site.layer
 if not layer then return end
 
 local cel <const> = layer:cel(frIdx)
-if not cel then return end
+if not cel then
+    if layer.isReference
+        or layer.isTilemap
+        or layer.isGroup
+        or layer.isBackground then
+        return
+    end
+    app.transaction("Fill Empty Cels", function()
+        sprite:newCel(layer, frObj, Image(sprite.spec))
+    end)
+    return
+end
+
+local frObjs <const> = sprite.frames
+local lenFrObjs <const> = #frObjs
+if lenFrObjs <= 1 then return end
 
 local i = frIdx
 local searchLeft = true

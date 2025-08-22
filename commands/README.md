@@ -6,7 +6,7 @@ Unlike `dialog` scripts, it's not always apparent what `commands` scripts do. No
 
 - `cycleCelRight`: Moves a cel to the next frame. If the next frame is occupied by another cel, swaps the other cel into the active cel's frame. Loops around at the first and last frame. Ignores reference layers.
 
-- `fillEmptyCels`: Duplicates the active cel to empty frames before and after it on the active layer.
+- `fillEmptyCels`: Duplicates the active cel to empty frames before and after it on the active layer. If there is no cel, and the layer is a regular layer, creates a cel with an empty image.
 
 - `findLikeImages`: Assigns a signed 64 bit integer hash of an image to the key "hash" in non empty cels' [properties](https://github.com/aseprite/api/blob/main/api/properties.md). Cels that contain duplicate images according to the hash are highlighted in red.
 
