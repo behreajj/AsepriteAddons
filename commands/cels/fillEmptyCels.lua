@@ -17,9 +17,12 @@ if not cel then
         or layer.isBackground then
         return
     end
+
     app.transaction("Fill Empty Cels", function()
         sprite:newCel(layer, frObj, Image(sprite.spec))
     end)
+    app.refresh()
+
     return
 end
 
