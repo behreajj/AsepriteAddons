@@ -56,7 +56,7 @@ local defaults <const> = {
     prcHeight = 100,
     units = "PERCENT",
     coordSystem = "TOP_LEFT",
-    selTargetRevert = "ACTIVE"
+    selTargetRevert = "ACTIVE",
 }
 
 ---@param dialog Dialog
@@ -131,6 +131,7 @@ local function translateCels(dialog, x, y)
             id = "majorTarget",
             option = defaults.selTargetRevert
         }
+        activeSprite.selection:deselect()
     end
     app.refresh()
 end
@@ -271,6 +272,7 @@ dlg:button {
                 id = "majorTarget",
                 option = defaults.selTargetRevert
             }
+            activeSprite.selection:deselect()
         end
         app.refresh()
     end
@@ -401,6 +403,7 @@ dlg:button {
                 id = "majorTarget",
                 option = defaults.selTargetRevert
             }
+            activeSprite.selection:deselect()
         end
         app.refresh()
     end
@@ -527,6 +530,7 @@ dlg:button {
                 id = "majorTarget",
                 option = defaults.selTargetRevert
             }
+            activeSprite.selection:deselect()
         end
         app.refresh()
     end
@@ -601,6 +605,7 @@ dlg:button {
                 id = "majorTarget",
                 option = defaults.selTargetRevert
             }
+            activeSprite.selection:deselect()
         end
         app.refresh()
     end
@@ -728,6 +733,7 @@ dlg:button {
                 id = "majorTarget",
                 option = defaults.selTargetRevert
             }
+            activeSprite.selection:deselect()
         end
         app.refresh()
     end
@@ -905,6 +911,7 @@ dlg:button {
                 id = "majorTarget",
                 option = defaults.selTargetRevert
             }
+            activeSprite.selection:deselect()
         end
         app.refresh()
     end
@@ -951,6 +958,7 @@ dlg:button {
                 id = "majorTarget",
                 option = defaults.selTargetRevert
             }
+            activeSprite.selection:deselect()
         end
         app.refresh()
     end
@@ -1042,11 +1050,13 @@ dlg:button {
             end
         end)
 
+        -- TODO: Do the same for replace color?
         if majorTarget == "SELECTION" then
             dlg:modify {
                 id = "majorTarget",
                 option = defaults.selTargetRevert
             }
+            activeSprite.selection:deselect()
         end
         app.refresh()
     end

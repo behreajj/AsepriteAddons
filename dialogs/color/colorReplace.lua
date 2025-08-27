@@ -27,6 +27,7 @@ local defaults <const> = {
     switchColors = false,
     ignoreAlpha = false,
     useTrim = true,
+    selTargetRevert = "ACTIVE",
 }
 
 ---@param o Lab
@@ -556,7 +557,16 @@ dlg:button {
                     end -- End of cels loop.
                 end)    -- End fuzzy transaction.
             end         -- End of exact vs. tolerance.
-        end             -- End of tiles vs. canvas.
+
+            if majorTarget == "SELECTION" then
+                -- Luckily, this also seems to trigger an onchange event.
+                dlg:modify {
+                    id = "majorTarget",
+                    option = defaults.selTargetRevert
+                }
+                activeSprite.selection:deselect()
+            end
+        end -- End of tiles vs. canvas.
 
         app.refresh()
     end
