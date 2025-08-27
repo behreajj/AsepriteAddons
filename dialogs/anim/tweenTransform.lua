@@ -1116,6 +1116,10 @@ dlg:button {
 }
 
 dlg:show {
+    -- Autoscrollbars is false because when true,
+    -- a dialog widget that changes the visibility
+    -- of others will cause the whole dialog to
+    -- collapse to a small size.
     autoscrollbars = false,
     wait = false
 }
