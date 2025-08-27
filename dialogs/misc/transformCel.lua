@@ -41,8 +41,6 @@ local defaults <const> = {
     --
     -- Design issues with selection target creating excess
     -- layers, especially with nudge keys:
-    -- Changing target from selection to a default
-    -- cf27f6460efcf6123b4b0af4c88de75b68912981
     -- Hiding nudge keys when target is selection
     -- 97a0d8b511491d78c5c142ccf1e980aaf6f87a75
 
@@ -58,6 +56,7 @@ local defaults <const> = {
     prcHeight = 100,
     units = "PERCENT",
     coordSystem = "TOP_LEFT",
+    selTargetRevert = "ACTIVE"
 }
 
 ---@param dialog Dialog
@@ -127,6 +126,12 @@ local function translateCels(dialog, x, y)
         end)
     end
 
+    if majorTarget == "SELECTION" then
+        dialog:modify {
+            id = "majorTarget",
+            option = defaults.selTargetRevert
+        }
+    end
     app.refresh()
 end
 
@@ -261,6 +266,12 @@ dlg:button {
             end)
         end
 
+        if majorTarget == "SELECTION" then
+            dlg:modify {
+                id = "majorTarget",
+                option = defaults.selTargetRevert
+            }
+        end
         app.refresh()
     end
 }
@@ -385,6 +396,12 @@ dlg:button {
             end)
         end
 
+        if majorTarget == "SELECTION" then
+            dlg:modify {
+                id = "majorTarget",
+                option = defaults.selTargetRevert
+            }
+        end
         app.refresh()
     end
 }
@@ -505,6 +522,12 @@ dlg:button {
             end
         end)
 
+        if majorTarget == "SELECTION" then
+            dlg:modify {
+                id = "majorTarget",
+                option = defaults.selTargetRevert
+            }
+        end
         app.refresh()
     end
 }
@@ -573,6 +596,12 @@ dlg:button {
             end
         end)
 
+        if majorTarget == "SELECTION" then
+            dlg:modify {
+                id = "majorTarget",
+                option = defaults.selTargetRevert
+            }
+        end
         app.refresh()
     end
 }
@@ -694,6 +723,12 @@ dlg:button {
             end)
         end
 
+        if majorTarget == "SELECTION" then
+            dlg:modify {
+                id = "majorTarget",
+                option = defaults.selTargetRevert
+            }
+        end
         app.refresh()
     end
 }
@@ -865,6 +900,12 @@ dlg:button {
             end
         end)
 
+        if majorTarget == "SELECTION" then
+            dlg:modify {
+                id = "majorTarget",
+                option = defaults.selTargetRevert
+            }
+        end
         app.refresh()
     end
 }
@@ -905,6 +946,12 @@ dlg:button {
             end
         end)
 
+        if majorTarget == "SELECTION" then
+            dlg:modify {
+                id = "majorTarget",
+                option = defaults.selTargetRevert
+            }
+        end
         app.refresh()
     end
 }
@@ -995,6 +1042,12 @@ dlg:button {
             end
         end)
 
+        if majorTarget == "SELECTION" then
+            dlg:modify {
+                id = "majorTarget",
+                option = defaults.selTargetRevert
+            }
+        end
         app.refresh()
     end
 }
