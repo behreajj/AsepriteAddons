@@ -1,12 +1,25 @@
 dofile("../../support/aseutilities.lua")
 
-local targets <const> = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
+-- The canvas or layer target.
+local majorTargets <const> = {
+    "ACTIVE",
+    "ALL",
+    "RANGE",
+    "SELECTION",
+}
+
+-- The frame target.
+local minorTargets <const> = {
+    "ACTIVE",
+    "ALL",
+    "RANGE",
+    "TAG"
+}
+
 local unitOptions <const> = { "PERCENT", "PIXEL" }
 local coordSystems <const> = { "CENTER", "TOP_LEFT" }
 
 local defaults <const> = {
-    -- TODO: Separate layer and frame targets. See replace color dialog.
-
     -- Polar and Cartesian coordinates tried in commit
     -- 650a11ebc57a7e4539b5113297f5e2c404978e02 .
     --
@@ -25,8 +38,16 @@ local defaults <const> = {
     -- Support for diagonal flips in light of Image flip bug:
     -- 49cefa9d189cc25c964a64d43d92dff43ff2751f . See
     -- https://github.com/aseprite/aseprite/issues/5359 .
+    --
+    -- Design issues with selection target creating excess
+    -- layers, especially with nudge keys:
+    -- Changing target from selection to a default
+    -- cf27f6460efcf6123b4b0af4c88de75b68912981
+    -- Hiding nudge keys when target is selection
+    -- 97a0d8b511491d78c5c142ccf1e980aaf6f87a75
 
-    target = "ACTIVE",
+    majorTarget = "ACTIVE",
+    minorTarget = "ACTIVE",
     xTranslate = 0,
     yTranslate = 0,
     degrees = 90,
@@ -50,18 +71,16 @@ local function translateCels(dialog, x, y)
     local activeLayer <const> = site.layer
 
     local args <const> = dialog.data
-    local target <const> = args.target
-        or defaults.target --[[@as string]]
+    local majorTarget <const> = args.majorTarget
+        or defaults.majorTarget --[[@as string]]
+    local minorTarget <const> = args.minorTarget
+        or defaults.minorTarget --[[@as string]]
 
-    local filterFrames = activeSprite.frames
-    if target == "ACTIVE" then
-        local activeFrame <const> = site.frame
-        if not activeFrame then return end
-        filterFrames = { activeFrame }
-    end
-
+    local trgFrames <const> = Utilities.flatArr2(
+        AseUtilities.getFrames(
+            activeSprite, minorTarget))
     local cels <const> = AseUtilities.filterCels(
-        activeSprite, activeLayer, filterFrames, target,
+        activeSprite, activeLayer, trgFrames, majorTarget,
         false, false, false, false)
     local lenCels <const> = #cels
 
@@ -114,20 +133,21 @@ end
 local dlg <const> = Dialog { title = "Transform Cel" }
 
 dlg:combobox {
-    id = "target",
+    id = "majorTarget",
     label = "Target:",
-    option = defaults.target,
-    options = targets,
+    option = defaults.majorTarget,
+    options = majorTargets,
     hexpand = false,
-    onchange = function()
-        local args <const> = dlg.data
-        local target <const> = args.target
-        local notSelect <const> = target ~= "SELECTION"
-        dlg:modify { id = "nudgeUp", visible = notSelect }
-        dlg:modify { id = "nudgeLeft", visible = notSelect }
-        dlg:modify { id = "nudgeDown", visible = notSelect }
-        dlg:modify { id = "nudgeRight", visible = notSelect }
-    end
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "minorTarget",
+    label = "Frames:",
+    option = defaults.minorTarget,
+    options = minorTargets,
+    hexpand = false,
 }
 
 dlg:separator { id = "translateSep" }
@@ -169,15 +189,10 @@ dlg:button {
         local activeLayer <const> = site.layer
 
         local args <const> = dlg.data
-        local target <const> = args.target
-            or defaults.target --[[@as string]]
-
-        local filterFrames = activeSprite.frames
-        if target == "ACTIVE" then
-            local activeFrame <const> = site.frame
-            if not activeFrame then return end
-            filterFrames = { activeFrame }
-        end
+        local majorTarget <const> = args.majorTarget
+            or defaults.majorTarget --[[@as string]]
+        local minorTarget <const> = args.minorTarget
+            or defaults.minorTarget --[[@as string]]
 
         local coordSystem <const> = args.coordSystem or
             defaults.coordSystem --[[@as string]]
@@ -186,8 +201,11 @@ dlg:button {
         local y <const> = args.yTranslate
             or defaults.yTranslate --[[@as integer]]
 
+        local trgFrames <const> = Utilities.flatArr2(
+            AseUtilities.getFrames(
+                activeSprite, minorTarget))
         local cels <const> = AseUtilities.filterCels(
-            activeSprite, activeLayer, filterFrames, target,
+            activeSprite, activeLayer, trgFrames, majorTarget,
             false, false, false, false)
         local lenCels <const> = #cels
 
@@ -278,15 +296,10 @@ dlg:button {
             or defaults.yTranslate --[[@as integer]]
         if dx == 0.0 and dy == 0.0 then return end
 
-        local target <const> = args.target
-            or defaults.target --[[@as string]]
-
-        local filterFrames = activeSprite.frames
-        if target == "ACTIVE" then
-            local activeFrame <const> = site.frame
-            if not activeFrame then return end
-            filterFrames = { activeFrame }
-        end
+        local majorTarget <const> = args.majorTarget
+            or defaults.majorTarget --[[@as string]]
+        local minorTarget <const> = args.minorTarget
+            or defaults.minorTarget --[[@as string]]
 
         -- Only include background if wrapping on both edges.
         local docPrefs <const> = app.preferences.document(activeSprite)
@@ -295,8 +308,11 @@ dlg:button {
             or (tiledMode == 1 and dy == 0)
             or tiledMode == 3
             or tiledMode == 0
+        local trgFrames <const> = Utilities.flatArr2(
+            AseUtilities.getFrames(
+                activeSprite, minorTarget))
         local cels <const> = AseUtilities.filterCels(
-            activeSprite, activeLayer, filterFrames, target,
+            activeSprite, activeLayer, trgFrames, majorTarget,
             false, false, false, includeBkg)
         local lenCels <const> = #cels
 
@@ -380,7 +396,6 @@ dlg:button {
     text = "&I",
     label = "Nudge:",
     focus = false,
-    visible = defaults.target ~= "SELECTION",
     onclick = function()
         translateCels(dlg, 0, 1)
     end
@@ -390,7 +405,6 @@ dlg:button {
     id = "nudgeLeft",
     text = "&J",
     focus = false,
-    visible = defaults.target ~= "SELECTION",
     onclick = function()
         translateCels(dlg, -1, 0)
     end
@@ -400,7 +414,6 @@ dlg:button {
     id = "nudgeDown",
     text = "&K",
     focus = false,
-    visible = defaults.target ~= "SELECTION",
     onclick = function()
         translateCels(dlg, 0, -1)
     end
@@ -410,7 +423,6 @@ dlg:button {
     id = "nudgeRight",
     text = "&L",
     focus = false,
-    visible = defaults.target ~= "SELECTION",
     onclick = function()
         translateCels(dlg, 1, 0)
     end
@@ -441,8 +453,13 @@ dlg:button {
 
         -- Unpack arguments.
         local args <const> = dlg.data
+        local majorTarget <const> = args.majorTarget
+            or defaults.majorTarget --[[@as string]]
+        local minorTarget <const> = args.minorTarget
+            or defaults.minorTarget --[[@as string]]
         local degrees <const> = args.degrees
             or defaults.degrees --[[@as integer]]
+
         if degrees == 0 or degrees == 180 or degrees == 360 then
             return
         end
@@ -452,19 +469,13 @@ dlg:button {
         local skewx <const> = AseUtilities.skewImageX
         local trimAlpha <const> = AseUtilities.trimImageAlpha
 
-        local target <const> = args.target
-            or defaults.target --[[@as string]]
-
-        local filterFrames = activeSprite.frames
-        if target == "ACTIVE" then
-            local activeFrame <const> = site.frame
-            if not activeFrame then return end
-            filterFrames = { activeFrame }
-        end
-
         local alphaIndex <const> = activeSprite.transparentColor
+
+        local trgFrames <const> = Utilities.flatArr2(
+            AseUtilities.getFrames(
+                activeSprite, minorTarget))
         local cels <const> = AseUtilities.filterCels(
-            activeSprite, activeLayer, filterFrames, target,
+            activeSprite, activeLayer, trgFrames, majorTarget,
             false, false, false, false)
         local lenCels <const> = #cels
 
@@ -511,6 +522,10 @@ dlg:button {
 
         -- Unpack arguments.
         local args <const> = dlg.data
+        local majorTarget <const> = args.majorTarget
+            or defaults.majorTarget --[[@as string]]
+        local minorTarget <const> = args.minorTarget
+            or defaults.minorTarget --[[@as string]]
         local degrees <const> = args.degrees
             or defaults.degrees --[[@as integer]]
         if degrees == 0 or degrees == 180 or degrees == 360 then
@@ -522,19 +537,13 @@ dlg:button {
         local skewy <const> = AseUtilities.skewImageY
         local trimAlpha <const> = AseUtilities.trimImageAlpha
 
-        local target <const> = args.target
-            or defaults.target --[[@as string]]
-
-        local filterFrames = activeSprite.frames
-        if target == "ACTIVE" then
-            local activeFrame <const> = site.frame
-            if not activeFrame then return end
-            filterFrames = { activeFrame }
-        end
-
         local alphaIndex <const> = activeSprite.transparentColor
+
+        local trgFrames <const> = Utilities.flatArr2(
+            AseUtilities.getFrames(
+                activeSprite, minorTarget))
         local cels <const> = AseUtilities.filterCels(
-            activeSprite, activeLayer, filterFrames, target,
+            activeSprite, activeLayer, trgFrames, majorTarget,
             false, false, false, false)
         local lenCels <const> = #cels
 
@@ -581,19 +590,13 @@ dlg:button {
 
         -- Unpack arguments.
         local args <const> = dlg.data
+        local majorTarget <const> = args.majorTarget
+            or defaults.majorTarget --[[@as string]]
+        local minorTarget <const> = args.minorTarget
+            or defaults.minorTarget --[[@as string]]
         local degrees = args.degrees
             or defaults.degrees --[[@as integer]]
         if degrees == 0 or degrees == 360 then return end
-
-        local target <const> = args.target
-            or defaults.target --[[@as string]]
-
-        local filterFrames = activeSprite.frames
-        if target == "ACTIVE" then
-            local activeFrame <const> = site.frame
-            if not activeFrame then return end
-            filterFrames = { activeFrame }
-        end
 
         local is90 <const> = degrees == 90
         local is180 <const> = degrees == 180
@@ -602,8 +605,11 @@ dlg:button {
         local includeBkg <const> = is180
             or (activeSprite.width == activeSprite.height
                 and (is90 or is270))
+        local trgFrames <const> = Utilities.flatArr2(
+            AseUtilities.getFrames(
+                activeSprite, minorTarget))
         local cels <const> = AseUtilities.filterCels(
-            activeSprite, activeLayer, filterFrames, target,
+            activeSprite, activeLayer, trgFrames, majorTarget,
             false, false, false, includeBkg)
         local lenCels <const> = #cels
 
@@ -834,17 +840,16 @@ dlg:button {
         local activeLayer <const> = site.layer
 
         local args <const> = dlg.data
-        local target <const> = args.target or defaults.target --[[@as string]]
+        local majorTarget <const> = args.majorTarget
+            or defaults.majorTarget --[[@as string]]
+        local minorTarget <const> = args.minorTarget
+            or defaults.minorTarget --[[@as string]]
 
-        local filterFrames = activeSprite.frames
-        if target == "ACTIVE" then
-            local activeFrame <const> = site.frame
-            if not activeFrame then return end
-            filterFrames = { activeFrame }
-        end
-
+        local trgFrames <const> = Utilities.flatArr2(
+            AseUtilities.getFrames(
+                activeSprite, minorTarget))
         local cels <const> = AseUtilities.filterCels(
-            activeSprite, activeLayer, filterFrames, target,
+            activeSprite, activeLayer, trgFrames, majorTarget,
             false, false, false, true)
         local lenCels <const> = #cels
 
@@ -875,17 +880,16 @@ dlg:button {
         local activeLayer <const> = site.layer
 
         local args <const> = dlg.data
-        local target <const> = args.target or defaults.target --[[@as string]]
+        local majorTarget <const> = args.majorTarget
+            or defaults.majorTarget --[[@as string]]
+        local minorTarget <const> = args.minorTarget
+            or defaults.minorTarget --[[@as string]]
 
-        local filterFrames = activeSprite.frames
-        if target == "ACTIVE" then
-            local activeFrame <const> = site.frame
-            if not activeFrame then return end
-            filterFrames = { activeFrame }
-        end
-
+        local trgFrames <const> = Utilities.flatArr2(
+            AseUtilities.getFrames(
+                activeSprite, minorTarget))
         local cels <const> = AseUtilities.filterCels(
-            activeSprite, activeLayer, filterFrames, target,
+            activeSprite, activeLayer, trgFrames, majorTarget,
             false, false, false, true)
         local lenCels <const> = #cels
 
@@ -923,12 +927,12 @@ dlg:button {
 
         -- Unpack arguments.
         local args <const> = dlg.data
-        local target <const> = args.target
-            or defaults.target --[[@as string]]
+        local majorTarget <const> = args.majorTarget
+            or defaults.majorTarget --[[@as string]]
+        local minorTarget <const> = args.minorTarget
+            or defaults.minorTarget --[[@as string]]
         local unitType <const> = args.units
             or defaults.units --[[@as string]]
-
-        local usePercent <const> = unitType == "PERCENT"
         local wPrc = args.prcWidth
             or defaults.prcWidth --[[@as number]]
         local hPrc = args.prcHeight
@@ -943,6 +947,7 @@ dlg:button {
         wPrc = 0.01 * abs(wPrc)
         hPrc = 0.01 * abs(hPrc)
 
+        local usePercent <const> = unitType == "PERCENT"
         if usePercent then
             if (wPrc < 0.000001 or hPrc < 0.000001)
                 or (wPrc == 1.0 and hPrc == 1.0) then
@@ -952,15 +957,11 @@ dlg:button {
             return
         end
 
-        local filterFrames = activeSprite.frames
-        if target == "ACTIVE" then
-            local activeFrame <const> = site.frame
-            if not activeFrame then return end
-            filterFrames = { activeFrame }
-        end
-
+        local trgFrames <const> = Utilities.flatArr2(
+            AseUtilities.getFrames(
+                activeSprite, minorTarget))
         local cels <const> = AseUtilities.filterCels(
-            activeSprite, activeLayer, filterFrames, target,
+            activeSprite, activeLayer, trgFrames, majorTarget,
             false, false, false, false)
         local lenCels = #cels
 
