@@ -35,6 +35,7 @@ local defaults <const> = {
     prcHeight = 100,
     units = "PERCENT",
     coordSystem = "TOP_LEFT",
+    selTargetRevert = "ACTIVE"
 }
 
 ---@param dialog Dialog
@@ -106,6 +107,10 @@ local function translateCels(dialog, x, y)
         end)
     end
 
+    if target == "SELECTION" then
+        dialog:modify { id = "target", option = defaults.selTargetRevert }
+    end
+
     app.refresh()
 end
 
@@ -117,15 +122,6 @@ dlg:combobox {
     option = defaults.target,
     options = targets,
     hexpand = false,
-    onchange = function()
-        local args <const> = dlg.data
-        local target <const> = args.target
-        local notSelect <const> = target ~= "SELECTION"
-        dlg:modify { id = "nudgeUp", visible = notSelect }
-        dlg:modify { id = "nudgeLeft", visible = notSelect }
-        dlg:modify { id = "nudgeDown", visible = notSelect }
-        dlg:modify { id = "nudgeRight", visible = notSelect }
-    end
 }
 
 dlg:separator { id = "translateSep" }
@@ -378,7 +374,6 @@ dlg:button {
     text = "&I",
     label = "Nudge:",
     focus = false,
-    visible = defaults.target ~= "SELECTION",
     onclick = function()
         translateCels(dlg, 0, 1)
     end
@@ -388,7 +383,6 @@ dlg:button {
     id = "nudgeLeft",
     text = "&J",
     focus = false,
-    visible = defaults.target ~= "SELECTION",
     onclick = function()
         translateCels(dlg, -1, 0)
     end
@@ -398,7 +392,6 @@ dlg:button {
     id = "nudgeDown",
     text = "&K",
     focus = false,
-    visible = defaults.target ~= "SELECTION",
     onclick = function()
         translateCels(dlg, 0, -1)
     end
@@ -408,7 +401,6 @@ dlg:button {
     id = "nudgeRight",
     text = "&L",
     focus = false,
-    visible = defaults.target ~= "SELECTION",
     onclick = function()
         translateCels(dlg, 1, 0)
     end
@@ -492,6 +484,10 @@ dlg:button {
             end
         end)
 
+        if target == "SELECTION" then
+            dlg:modify { id = "target", option = defaults.selTargetRevert }
+        end
+
         app.refresh()
     end
 }
@@ -561,6 +557,10 @@ dlg:button {
                 end
             end
         end)
+
+        if target == "SELECTION" then
+            dlg:modify { id = "target", option = defaults.selTargetRevert }
+        end
 
         app.refresh()
     end
@@ -684,6 +684,10 @@ dlg:button {
                     end
                 end
             end)
+        end
+
+        if target == "SELECTION" then
+            dlg:modify { id = "target", option = defaults.selTargetRevert }
         end
 
         app.refresh()
@@ -858,6 +862,10 @@ dlg:button {
             end
         end)
 
+        if target == "SELECTION" then
+            dlg:modify { id = "target", option = defaults.selTargetRevert }
+        end
+
         app.refresh()
     end
 }
@@ -898,6 +906,10 @@ dlg:button {
                 cel.image = flipped
             end
         end)
+
+        if target == "SELECTION" then
+            dlg:modify { id = "target", option = defaults.selTargetRevert }
+        end
 
         app.refresh()
     end
@@ -991,6 +1003,10 @@ dlg:button {
                 end
             end
         end)
+
+        if target == "SELECTION" then
+            dlg:modify { id = "target", option = defaults.selTargetRevert }
+        end
 
         app.refresh()
     end
