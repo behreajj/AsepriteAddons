@@ -18,9 +18,9 @@ local minorTargets <const> = {
 }
 
 local unitOptions <const> = { "PERCENT", "PIXEL" }
-local coordSystems <const> = { "CENTER", "TOP_LEFT" }
 
 local defaults <const> = {
+    -- TODO: Support rotate x and y.
     majorTarget = "ACTIVE",
     minorTarget = "ACTIVE",
     degrees = 90,
@@ -90,15 +90,9 @@ dlg:button {
         local degrees = args.degrees
             or defaults.degrees --[[@as integer]]
 
-        if degrees == 0 or degrees == 360 then return end
-
-        local is90 <const> = degrees == 90
-        local is180 <const> = degrees == 180
-        local is270 <const> = degrees == 270
-
-        local includeBkg <const> = is180
+        local includeBkg <const> = degrees == 180
             or (activeSprite.width == activeSprite.height
-                and (is90 or is270))
+                and (degrees == 90 or degrees == 270))
         local trgFrames <const> = Utilities.flatArr2(
             AseUtilities.getFrames(
                 activeSprite, minorTarget))
@@ -106,7 +100,6 @@ dlg:button {
             activeSprite, activeLayer, trgFrames, majorTarget,
             false, false, false, includeBkg)
         local lenCels <const> = #cels
-
 
         degrees = 360 - degrees
         local query <const> = AseUtilities.DIMETRIC_ANGLES[degrees]
