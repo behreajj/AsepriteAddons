@@ -6,6 +6,9 @@ CanvasUtilities.__index = CanvasUtilities
 
 setmetatable(CanvasUtilities, {
     __call = function(cls, ...)
+        -- TODO: There are likely other places where a dialog
+        -- modify would collapse the dialog bounds, esp. when
+        -- the dialog has scrollbars because it is too big.
         return cls.new(...)
     end
 })
@@ -256,6 +259,12 @@ function CanvasUtilities.graphBezier(
             local lenKnotIds <const> = #knotIds
             local args <const> = dialog.data
 
+            local r <const> = dialog.bounds
+            local xb <const> = r.x
+            local yb <const> = r.y
+            local wb <const> = r.width
+            local hb <const> = r.height
+
             local i = 0
             while i < lenKnotIds do
                 local isEven <const> = (i % 2) ~= 1
@@ -291,7 +300,10 @@ function CanvasUtilities.graphBezier(
                     dialog:modify { id = xControlId, text = string.format("%.5f", xClamped) }
                     dialog:modify { id = yControlId, text = string.format("%.5f", ym01) }
                     dialog:modify { id = easeFuncsId, option = "CUSTOM" }
+
                     dialog:repaint()
+                    dialog.bounds = Rectangle(xb, yb, wb, hb)
+
                     return
                 end
 
@@ -312,7 +324,10 @@ function CanvasUtilities.graphBezier(
                         dialog:modify { id = xControlId, text = string.format("%.5f", xCtrlNew) }
                         dialog:modify { id = yControlId, text = string.format("%.5f", yCtrlNew) }
                         dialog:modify { id = easeFuncsId, option = "CUSTOM" }
+
                         dialog:repaint()
+                        dialog.bounds = Rectangle(xb, yb, wb, hb)
+
                         return
                     end -- End point is in radius.
                 end     -- End allow anchor point movement.
@@ -580,6 +595,12 @@ function CanvasUtilities.graphBezier(
             local args <const> = dialog.data
             local easeFunc <const> = args[easeFuncsId] --[[@as string]]
             if easeFunc ~= "CUSTOM" then
+                local r <const> = dialog.bounds
+                local xb <const> = r.x
+                local yb <const> = r.y
+                local wb <const> = r.width
+                local hb <const> = r.height
+
                 local presetPoints = {
                     0.0, 0.0,
                     0.33333, 0.33333,
@@ -608,6 +629,7 @@ function CanvasUtilities.graphBezier(
                     }
                 end
                 dialog:repaint()
+                dialog.bounds = Rectangle(xb, yb, wb, hb)
             end
         end
     }

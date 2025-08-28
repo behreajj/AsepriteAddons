@@ -74,6 +74,18 @@ local defaults <const> = {
     hIncr = 0,
 }
 
+---@param r Rectangle
+---@return integer
+---@return integer
+---@return integer
+---@return integer
+local function unpackAseRect(r)
+    return r.x,
+        r.y,
+        math.max(1, math.abs(r.width)),
+        math.max(1, math.abs(r.height))
+end
+
 ---@param axis string
 ---@return integer frIdx
 ---@return number xCenter
@@ -197,6 +209,11 @@ dlg:combobox {
     options = modes,
     hexpand = false,
     onchange = function()
+        local xb <const>,
+        yb <const>,
+        wb <const>,
+        hb <const> = unpackAseRect(dlg.bounds)
+
         local args <const> = dlg.data
 
         local mode <const> = args.mode --[[@as string]]
@@ -207,7 +224,7 @@ dlg:combobox {
         local ispx <const> = unitType == "PIXEL"
         local ispc <const> = unitType == "PERCENT"
 
-        -- dlg:modify { id = "facType", visible = isMix }
+        dlg:modify { id = "facType", visible = isMix }
         dlg:modify { id = "angleType", visible = isMix }
         dlg:modify { id = "units", visible = isMix }
         dlg:modify { id = "easeCurve", visible = isMix }
@@ -236,6 +253,8 @@ dlg:combobox {
         dlg:modify { id = "autoCalcIncr", visible = isAdd }
         dlg:modify { id = "wIncr", visible = isAdd }
         dlg:modify { id = "hIncr", visible = isAdd }
+
+        dlg.bounds = Rectangle(xb, yb, wb, hb)
     end
 }
 
@@ -246,8 +265,7 @@ dlg:combobox {
     label = "Factor:",
     option = defaults.facType,
     options = facTypes,
-    -- visible = defaults.mode == "MIX"
-    visible = false,
+    visible = defaults.mode == "MIX",
     hexpand = false,
 }
 
@@ -280,6 +298,11 @@ dlg:combobox {
     visible = defaults.mode == "MIX",
     hexpand = false,
     onchange = function()
+        local xb <const>,
+        yb <const>,
+        wb <const>,
+        hb <const> = unpackAseRect(dlg.bounds)
+
         local args <const> = dlg.data
         local unitType <const> = args.units --[[@as string]]
         local ispx <const> = unitType == "PIXEL"
@@ -294,6 +317,8 @@ dlg:combobox {
         dlg:modify { id = "pxhDest", visible = ispx }
         dlg:modify { id = "prcwDest", visible = ispc }
         dlg:modify { id = "prchDest", visible = ispc }
+
+        dlg.bounds = Rectangle(xb, yb, wb, hb)
     end
 }
 
@@ -305,6 +330,11 @@ dlg:button {
     text = "&FROM",
     focus = defaults.mode == "MIX",
     onclick = function()
+        local xb <const>,
+        yb <const>,
+        wb <const>,
+        hb <const> = unpackAseRect(dlg.bounds)
+
         local args <const> = dlg.data
         local axis <const> = args.axis --[[@as string]]
 
@@ -326,6 +356,8 @@ dlg:button {
         dlg:modify { id = "pxhOrig", text = string.format("%d", pxh) }
         dlg:modify { id = "prcwOrig", text = string.format("%.2f", 100) }
         dlg:modify { id = "prchOrig", text = string.format("%.2f", 100) }
+
+        dlg.bounds = Rectangle(xb, yb, wb, hb)
     end
 }
 
@@ -334,6 +366,11 @@ dlg:button {
     text = "&TO",
     focus = false,
     onclick = function()
+        local xb <const>,
+        yb <const>,
+        wb <const>,
+        hb <const> = unpackAseRect(dlg.bounds)
+
         local args <const> = dlg.data
         local axis <const> = args.axis --[[@as string]]
         local frIdx <const>,
@@ -354,6 +391,8 @@ dlg:button {
         dlg:modify { id = "pxhDest", text = string.format("%d", pxh) }
         dlg:modify { id = "prcwDest", text = string.format("%.2f", 100) }
         dlg:modify { id = "prchDest", text = string.format("%.2f", 100) }
+
+        dlg.bounds = Rectangle(xb, yb, wb, hb)
     end
 }
 
@@ -568,6 +607,11 @@ dlg:button {
         local lenFrames <const> = #frObjs
         if lenFrames <= 1 then return end
 
+        local xb <const>,
+        yb <const>,
+        wb <const>,
+        hb <const> = unpackAseRect(dlg.bounds)
+
         local args <const> = dlg.data
         local frIdxOrig <const> = args.frameOrig
             or defaults.frameOrig --[[@as integer]]
@@ -594,6 +638,8 @@ dlg:button {
         local countFrames <const> = 1 + frIdxDestVerif - frIdxOrigVerif
         local autoIncr <const> = 360.0 / countFrames
         dlg:modify { id = "rotIncr", text = string.format("%.3f", autoIncr) }
+
+        dlg.bounds = Rectangle(xb, yb, wb, hb)
     end
 }
 
@@ -1116,10 +1162,6 @@ dlg:button {
 }
 
 dlg:show {
-    -- Autoscrollbars is false because when true,
-    -- a dialog widget that changes the visibility
-    -- of others will cause the whole dialog to
-    -- collapse to a small size.
-    autoscrollbars = false,
+    autoscrollbars = true,
     wait = false
 }
