@@ -805,7 +805,6 @@ dlg:canvas {
         local l <const> = active.l
         local c <const> = active.c
         local h <const> = active.h
-        local a <const> = active.a
         local labKey <const> = Lab.fromLch(l, c, h, 1.0, 0.5)
 
         ---@type Lab[]
@@ -913,6 +912,7 @@ dlg:canvas {
         local fac <const> = event.x / (active.swatchesWidth - 1.0)
         local swatches <const> = active.swatches
         local lenSwatches <const> = #swatches
+        if lenSwatches <= 0 then return end
 
         local idx = 0
         if fac <= 0.0 then
