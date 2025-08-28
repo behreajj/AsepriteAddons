@@ -36,6 +36,26 @@ local defaults <const> = {
 
 local dlg <const> = Dialog { title = "Transform Normals" }
 
+dlg:combobox {
+    id = "majorTarget",
+    label = "Target:",
+    option = defaults.majorTarget,
+    options = majorTargets,
+    hexpand = false,
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "minorTarget",
+    label = "Frames:",
+    option = defaults.minorTarget,
+    options = minorTargets,
+    hexpand = false,
+}
+
+dlg:separator { id = "rotateSep" }
+
 dlg:slider {
     id = "degrees",
     label = "Degrees:",
