@@ -971,12 +971,13 @@ dlg:button {
 }
 
 setFromAse(dlg, app.preferences.color_bar.fg_color)
+
+local window <const> = app.window
+local hWindow <const> = window.height
 dlg:show {
+    bounds = Rectangle(
+        16, hWindow // 4,
+        300 // screenScale, 420 // screenScale),
     autoscrollbars = true,
     wait = false
 }
-
-local dlgBounds <const> = dlg.bounds
-dlg.bounds = Rectangle(
-    16, dlgBounds.y,
-    dlgBounds.w, dlgBounds.h)
