@@ -630,6 +630,7 @@ dlg:button {
             or defaults.minorTarget --[[@as string]]
         local degrees = args.degrees
             or defaults.degrees --[[@as integer]]
+
         if degrees == 0 or degrees == 360 then return end
 
         local is90 <const> = degrees == 90
@@ -1050,7 +1051,6 @@ dlg:button {
             end
         end)
 
-        -- TODO: Do the same for replace color?
         if majorTarget == "SELECTION" then
             dlg:modify {
                 id = "majorTarget",
