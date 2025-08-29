@@ -978,6 +978,6 @@ dlg:show {
     bounds = Rectangle(
         16, hWindow // 4,
         300 // screenScale, 420 // screenScale),
-    autoscrollbars = true,
+    autoscrollbars = false,
     wait = false
 }
