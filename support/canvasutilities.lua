@@ -13,6 +13,18 @@ setmetatable(CanvasUtilities, {
     end
 })
 
+---Copies a rectangle component-wise by value.
+---Validates that width and height are positive and at least 1.
+---@param r Rectangle source
+---@return Rectangle
+---@nodiscard
+function CanvasUtilities.copyRect(r)
+    return Rectangle(
+        r.x, r.y,
+        math.max(1, math.abs(r.width)),
+        math.max(1, math.abs(r.height)))
+end
+
 ---Draws a grid of overlapping horizontal and vertical lines. Turns off
 ---antialiasing. Sets color and stroke width.
 ---@param context GraphicsContext canvas
@@ -259,11 +271,7 @@ function CanvasUtilities.graphBezier(
             local lenKnotIds <const> = #knotIds
             local args <const> = dialog.data
 
-            local r <const> = dialog.bounds
-            local xb <const> = r.x
-            local yb <const> = r.y
-            local wb <const> = r.width
-            local hb <const> = r.height
+            local r <const> = CanvasUtilities.copyRect(dialog.bounds)
 
             local i = 0
             while i < lenKnotIds do
@@ -302,7 +310,7 @@ function CanvasUtilities.graphBezier(
                     dialog:modify { id = easeFuncsId, option = "CUSTOM" }
 
                     dialog:repaint()
-                    dialog.bounds = Rectangle(xb, yb, wb, hb)
+                    dialog.bounds = r
 
                     return
                 end
@@ -326,7 +334,7 @@ function CanvasUtilities.graphBezier(
                         dialog:modify { id = easeFuncsId, option = "CUSTOM" }
 
                         dialog:repaint()
-                        dialog.bounds = Rectangle(xb, yb, wb, hb)
+                        dialog.bounds = r
 
                         return
                     end -- End point is in radius.
@@ -595,12 +603,7 @@ function CanvasUtilities.graphBezier(
             local args <const> = dialog.data
             local easeFunc <const> = args[easeFuncsId] --[[@as string]]
             if easeFunc ~= "CUSTOM" then
-                -- TODO: Use an AseUtilities safeDupeRect method?
-                local r <const> = dialog.bounds
-                local xb <const> = r.x
-                local yb <const> = r.y
-                local wb <const> = r.width
-                local hb <const> = r.height
+                local r <const> = CanvasUtilities.copyRect(dialog.bounds)
 
                 local presetPoints = {
                     0.0, 0.0,
@@ -630,7 +633,7 @@ function CanvasUtilities.graphBezier(
                     }
                 end
                 dialog:repaint()
-                dialog.bounds = Rectangle(xb, yb, wb, hb)
+                dialog.bounds = r
             end
         end
     }

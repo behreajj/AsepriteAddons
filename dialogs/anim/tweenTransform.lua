@@ -74,19 +74,6 @@ local defaults <const> = {
     hIncr = 0,
 }
 
----@param r Rectangle
----@return integer
----@return integer
----@return integer
----@return integer
-local function unpackAseRect(r)
-    -- TODO: Make an AseUtilities safeDupeRect method?
-    return r.x,
-        r.y,
-        math.max(1, math.abs(r.width)),
-        math.max(1, math.abs(r.height))
-end
-
 ---@param axis string
 ---@return integer frIdx
 ---@return number xCenter
@@ -210,10 +197,7 @@ dlg:combobox {
     options = modes,
     hexpand = false,
     onchange = function()
-        local xb <const>,
-        yb <const>,
-        wb <const>,
-        hb <const> = unpackAseRect(dlg.bounds)
+        local r <const> = CanvasUtilities.copyRect(dlg.bounds)
 
         local args <const> = dlg.data
 
@@ -255,7 +239,7 @@ dlg:combobox {
         dlg:modify { id = "wIncr", visible = isAdd }
         dlg:modify { id = "hIncr", visible = isAdd }
 
-        dlg.bounds = Rectangle(xb, yb, wb, hb)
+        dlg.bounds = r
     end
 }
 
@@ -299,10 +283,7 @@ dlg:combobox {
     visible = defaults.mode == "MIX",
     hexpand = false,
     onchange = function()
-        local xb <const>,
-        yb <const>,
-        wb <const>,
-        hb <const> = unpackAseRect(dlg.bounds)
+        local r <const> = CanvasUtilities.copyRect(dlg.bounds)
 
         local args <const> = dlg.data
         local unitType <const> = args.units --[[@as string]]
@@ -319,7 +300,7 @@ dlg:combobox {
         dlg:modify { id = "prcwDest", visible = ispc }
         dlg:modify { id = "prchDest", visible = ispc }
 
-        dlg.bounds = Rectangle(xb, yb, wb, hb)
+        dlg.bounds = r
     end
 }
 
@@ -331,10 +312,7 @@ dlg:button {
     text = "&FROM",
     focus = defaults.mode == "MIX",
     onclick = function()
-        local xb <const>,
-        yb <const>,
-        wb <const>,
-        hb <const> = unpackAseRect(dlg.bounds)
+        local r <const> = CanvasUtilities.copyRect(dlg.bounds)
 
         local args <const> = dlg.data
         local axis <const> = args.axis --[[@as string]]
@@ -358,7 +336,7 @@ dlg:button {
         dlg:modify { id = "prcwOrig", text = string.format("%.2f", 100) }
         dlg:modify { id = "prchOrig", text = string.format("%.2f", 100) }
 
-        dlg.bounds = Rectangle(xb, yb, wb, hb)
+        dlg.bounds = r
     end
 }
 
@@ -367,10 +345,7 @@ dlg:button {
     text = "&TO",
     focus = false,
     onclick = function()
-        local xb <const>,
-        yb <const>,
-        wb <const>,
-        hb <const> = unpackAseRect(dlg.bounds)
+        local r <const> = CanvasUtilities.copyRect(dlg.bounds)
 
         local args <const> = dlg.data
         local axis <const> = args.axis --[[@as string]]
@@ -393,7 +368,7 @@ dlg:button {
         dlg:modify { id = "prcwDest", text = string.format("%.2f", 100) }
         dlg:modify { id = "prchDest", text = string.format("%.2f", 100) }
 
-        dlg.bounds = Rectangle(xb, yb, wb, hb)
+        dlg.bounds = r
     end
 }
 
@@ -608,10 +583,7 @@ dlg:button {
         local lenFrames <const> = #frObjs
         if lenFrames <= 1 then return end
 
-        local xb <const>,
-        yb <const>,
-        wb <const>,
-        hb <const> = unpackAseRect(dlg.bounds)
+        local r <const> = CanvasUtilities.copyRect(dlg.bounds)
 
         local args <const> = dlg.data
         local frIdxOrig <const> = args.frameOrig
@@ -640,7 +612,7 @@ dlg:button {
         local autoIncr <const> = 360.0 / countFrames
         dlg:modify { id = "rotIncr", text = string.format("%.3f", autoIncr) }
 
-        dlg.bounds = Rectangle(xb, yb, wb, hb)
+        dlg.bounds = r
     end
 }
 
