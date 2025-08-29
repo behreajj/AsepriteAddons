@@ -697,6 +697,10 @@ dlg:button {
             -- Avoid trigonometric functions in while loop below.
             -- Cache sine and cosine here, then use formula for
             -- vector rotation.
+
+            -- TODO: Instead of using negative sign and subtracting degrees,
+            -- make AseUtilities rotate work in the other direction for
+            -- consistency...
             local cosa <const> = math.cos(radians)
             local sina <const> = -math.sin(radians)
             local alphaIndex <const> = activeSprite.transparentColor
