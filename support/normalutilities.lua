@@ -51,7 +51,7 @@ function NormalUtilities.flipImageX(source)
             local v <const>, _ <const> = toVec3(rgb)
             local rgbTr <const>, _ <const> = toRgb(
                 v3new(-v.x, v.y, v.z), rgb.a)
-            transformed = rgb.a > 0.0 and toHex(rgbTr) or 0
+            transformed = toHex(rgbTr)
             srcToTrg[srcAbgr32] = transformed
         end
 
@@ -106,7 +106,7 @@ function NormalUtilities.flipImageY(source)
             local v <const>, _ <const> = toVec3(rgb)
             local rgbTr <const>, _ <const> = toRgb(
                 v3new(v.x, -v.y, v.z), rgb.a)
-            transformed = rgb.a > 0.0 and toHex(rgbTr) or 0
+            transformed = toHex(rgbTr)
             srcToTrg[srcAbgr32] = transformed
         end
 
@@ -230,7 +230,7 @@ function NormalUtilities.resizeImageNearest(source, wTrg, hTrg)
             local v <const>, _ <const> = toVec3(rgb)
             local rgbTr <const>, _ <const> = toRgb(
                 hadamard(v, denom), rgb.a)
-            transformed = rgb.a > 0.0 and toHex(rgbTr) or 0
+            transformed = toHex(rgbTr)
             srcToTrg[srcAbgr32] = transformed
         end
 
@@ -316,7 +316,7 @@ function NormalUtilities.rotateImage90(source)
             local v <const>, _ <const> = toVec3(rgb)
             local rgbTr <const>, _ <const> = toRgb(
                 v3new(-v.y, v.x, v.z), rgb.a)
-            transformed = rgb.a > 0.0 and toHex(rgbTr) or 0
+            transformed = toHex(rgbTr)
             srcToTrg[srcAbgr32] = transformed
         end
 
@@ -377,7 +377,7 @@ function NormalUtilities.rotateImage180(source)
             local rgb <const> = fromHex(srcAbgr32)
             local v <const>, _ <const> = toVec3(rgb)
             local rgbTr <const>, _ <const> = toRgb(v3new(-v.x, -v.y, v.z), rgb.a)
-            transformed = rgb.a > 0.0 and toHex(rgbTr) or 0
+            transformed = toHex(rgbTr)
             srcToTrg[srcAbgr32] = transformed
         end
 
@@ -433,7 +433,7 @@ function NormalUtilities.rotateImage270(source)
             local v <const>, _ <const> = toVec3(rgb)
             local rgbTr <const>, _ <const> = toRgb(
                 v3new(v.y, -v.x, v.z), rgb.a)
-            transformed = rgb.a > 0.0 and toHex(rgbTr) or 0
+            transformed = toHex(rgbTr)
             srcToTrg[srcAbgr32] = transformed
         end
 
@@ -463,10 +463,6 @@ end
 ---@return Image
 ---@nodiscard
 function NormalUtilities.rotateImageZ(source, angle)
-    -- TODO: Unlike a 2D rotateX and rotateY, the normal version
-    -- would not need to rely on scale for the pixel colors themselves,
-    -- only the pixel movement. So 3d rotations should be used.
-
     local deg <const> = Utilities.round(angle) % 360
 
     if deg == 0 then
@@ -480,7 +476,7 @@ function NormalUtilities.rotateImageZ(source, angle)
     end
 
     local radians <const> = angle * 0.017453292519943
-    return AseUtilities.rotateImageZInternal(source,
+    return NormalUtilities.rotateImageZInternal(source,
         math.cos(radians), math.sin(radians))
 end
 
@@ -535,7 +531,7 @@ function NormalUtilities.rotateImageZInternal(source, cosa, sina)
             local v <const>, _ <const> = toVec3(rgb)
             local rgbTr <const>, _ <const> = toRgb(
                 rotz(v, cosa, sina), rgb.a)
-            transformed = rgb.a > 0.0 and toHex(rgbTr) or 0
+            transformed = toHex(rgbTr)
             srcToTrg[srcAbgr32] = transformed
         end
 

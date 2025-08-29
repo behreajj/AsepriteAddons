@@ -628,7 +628,7 @@ dlg:button {
             or defaults.majorTarget --[[@as string]]
         local minorTarget <const> = args.minorTarget
             or defaults.minorTarget --[[@as string]]
-        local degrees = args.degrees
+        local degrees <const> = args.degrees
             or defaults.degrees --[[@as integer]]
 
         if degrees == 0 or degrees == 360 then return end
@@ -689,7 +689,6 @@ dlg:button {
             local rotz <const> = AseUtilities.rotateImageZInternal
 
             -- Unpack angle.
-            degrees = 360 - degrees
             local query <const> = AseUtilities.DIMETRIC_ANGLES[degrees]
             local radians <const> = query
                 or (0.017453292519943 * degrees)
@@ -697,12 +696,8 @@ dlg:button {
             -- Avoid trigonometric functions in while loop below.
             -- Cache sine and cosine here, then use formula for
             -- vector rotation.
-
-            -- TODO: Instead of using negative sign and subtracting degrees,
-            -- make AseUtilities rotate work in the other direction for
-            -- consistency...
             local cosa <const> = math.cos(radians)
-            local sina <const> = -math.sin(radians)
+            local sina <const> = math.sin(radians)
             local alphaIndex <const> = activeSprite.transparentColor
 
             app.transaction("Rotate Cels", function()

@@ -1098,11 +1098,11 @@ function Utilities.rotatePixelsZ(
     local i = 0
     while i < lenTrg do
         local xSgnf <const> = (i % wTrgi) - xTrgCenter
-        local ySgnf <const> = (i // wTrgi) - yTrgCenter
-        local xRotf <const> = cosa * xSgnf - sina * ySgnf
-        local yRotf <const> = cosa * ySgnf + sina * xSgnf
+        local ySgnf <const> = yTrgCenter - (i // wTrgi)
+        local xRotf <const> = cosa * xSgnf + sina * ySgnf
+        local yRotf <const> = cosa * ySgnf - sina * xSgnf
         local xSrci <const> = round(xSrcCenter + xRotf)
-        local ySrci <const> = round(ySrcCenter + yRotf)
+        local ySrci <const> = round(ySrcCenter - yRotf)
         if ySrci >= 0 and ySrci < hSrc
             and xSrci >= 0 and xSrci < wSrc then
             local jbpp <const> = (ySrci * wSrc + xSrci) * bpp

@@ -20,7 +20,6 @@ local minorTargets <const> = {
 local unitOptions <const> = { "PERCENT", "PIXEL" }
 
 local defaults <const> = {
-    -- TODO: Support rotate x and y, flip on z axis.
     majorTarget = "ACTIVE",
     minorTarget = "ACTIVE",
     degrees = 90,
@@ -83,7 +82,7 @@ dlg:button {
             or defaults.majorTarget --[[@as string]]
         local minorTarget <const> = args.minorTarget
             or defaults.minorTarget --[[@as string]]
-        local degrees = args.degrees
+        local degrees <const> = args.degrees
             or defaults.degrees --[[@as integer]]
 
         local includeBkg <const> = degrees == 180
@@ -97,16 +96,12 @@ dlg:button {
             false, false, false, includeBkg)
         local lenCels <const> = #cels
 
-        degrees = 360 - degrees
         local query <const> = AseUtilities.DIMETRIC_ANGLES[degrees]
         local radians <const> = query
             or (0.017453292519943 * degrees)
 
-        -- Avoid trigonometric functions in while loop below.
-        -- Cache sine and cosine here, then use formula for
-        -- vector rotation.
         local cosa <const> = math.cos(radians)
-        local sina <const> = -math.sin(radians)
+        local sina <const> = math.sin(radians)
 
         -- Cache methods.
         local floor <const> = math.floor
