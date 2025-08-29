@@ -595,6 +595,7 @@ function CanvasUtilities.graphBezier(
             local args <const> = dialog.data
             local easeFunc <const> = args[easeFuncsId] --[[@as string]]
             if easeFunc ~= "CUSTOM" then
+                -- TODO: Use an AseUtilities safeDupeRect method?
                 local r <const> = dialog.bounds
                 local xb <const> = r.x
                 local yb <const> = r.y

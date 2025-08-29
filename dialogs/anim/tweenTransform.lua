@@ -80,6 +80,7 @@ local defaults <const> = {
 ---@return integer
 ---@return integer
 local function unpackAseRect(r)
+    -- TODO: Make an AseUtilities safeDupeRect method?
     return r.x,
         r.y,
         math.max(1, math.abs(r.width)),

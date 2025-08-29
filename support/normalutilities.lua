@@ -5,7 +5,6 @@ NormalUtilities.__index = NormalUtilities
 
 setmetatable(NormalUtilities, {
     __call = function(cls, ...)
-        -- TODO: Option to flip on depth axis?
         return cls.new(...)
     end
 })
@@ -120,6 +119,61 @@ function NormalUtilities.flipImageY(source)
     return target
 end
 
+---Returns a copy of the source image that has been flipped on the
+---depth axis.
+---@param source Image source image
+---@return Image
+---@nodiscard
+function NormalUtilities.flipImageZ(source)
+    local srcSpec <const> = source.spec
+    local colorMode <const> = srcSpec.colorMode
+    if colorMode ~= ColorMode.RGB then return source end
+
+    ---@type string[]
+    local normBytesArr <const> = {}
+    ---@type table<integer, integer>
+    local srcToTrg <const> = {}
+
+    local srcBytes <const> = source.bytes
+    local wSrc <const> = srcSpec.width
+    local hSrc <const> = srcSpec.height
+    local lenTrg <const> = wSrc * hSrc
+
+    -- Cache methods used in looop.
+    local strpack <const> = string.pack
+    local strsub <const> = string.sub
+    local strunpack <const> = string.unpack
+    local v3new <const> = Vec3.new
+    local fromHex <const> = Rgb.fromHexAbgr32
+    local toHex <const> = Rgb.toHex
+    local toVec3 <const> = NormalUtilities.rgbToVec3
+    local toRgb <const> = NormalUtilities.vec3ToRgb
+
+    local i = 0
+    while i < lenTrg do
+        local i4 <const> = i * 4
+        local srcAbgr32 <const> = strunpack("<I4", strsub(
+            srcBytes, 1 + i4, 4 + i4))
+
+        local transformed = srcToTrg[srcAbgr32]
+        if not transformed then
+            local rgb <const> = fromHex(srcAbgr32)
+            local v <const>, _ <const> = toVec3(rgb)
+            local rgbTr <const>, _ <const> = toRgb(
+                v3new(v.x, v.y, -v.z), rgb.a)
+            transformed = rgb.a > 0.0 and toHex(rgbTr) or 0
+            srcToTrg[srcAbgr32] = transformed
+        end
+
+        i = i + 1
+        normBytesArr[i] = strpack("<I4", transformed)
+    end
+
+    local target <const> = Image(srcSpec)
+    target.bytes = table.concat(normBytesArr)
+    return target
+end
+
 ---Converts colors in an image to a vector, then converts them back,
 ---ensuring colors conform to a normal map.
 ---@param source Image source image
@@ -128,13 +182,13 @@ function NormalUtilities.normalizeImage(source)
     local srcSpec <const> = source.spec
     local colorMode <const> = srcSpec.colorMode
     if colorMode ~= ColorMode.RGB then return source end
-    local srcBytes <const> = source.bytes
 
     ---@type string[]
     local normBytesArr <const> = {}
     ---@type table<integer, integer>
     local srcToTrg <const> = {}
 
+    local srcBytes <const> = source.bytes
     local wSrc <const> = srcSpec.width
     local hSrc <const> = srcSpec.height
     local lenTrg <const> = wSrc * hSrc
