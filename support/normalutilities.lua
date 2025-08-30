@@ -5,7 +5,6 @@ NormalUtilities.__index = NormalUtilities
 
 setmetatable(NormalUtilities, {
     __call = function(cls, ...)
-        -- TODO: Absolute z button so vectors always face camera?
         return cls.new(...)
     end
 })

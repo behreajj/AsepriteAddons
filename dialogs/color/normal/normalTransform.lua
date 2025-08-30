@@ -20,6 +20,8 @@ local minorTargets <const> = {
 local unitOptions <const> = { "PERCENT", "PIXEL" }
 
 local defaults <const> = {
+    -- Tried absolute z (face camera) normals method in commit:
+    -- 69c7ed30ee192d413c5091f61ae849c060cc48d2
     majorTarget = "ACTIVE",
     minorTarget = "ACTIVE",
     degrees = 90,
