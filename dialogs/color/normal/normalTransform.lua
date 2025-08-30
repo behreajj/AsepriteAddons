@@ -111,11 +111,10 @@ dlg:button {
                 local srcImg <const> = cel.image
                 if not srcImg:isEmpty() then
                     local celPos <const> = cel.position
-                    local xSrcCtr <const> = celPos.x + srcImg.width * 0.5
                     local ySrcCtr <const> = celPos.y + srcImg.height * 0.5
 
                     local trgImg = rotx(srcImg, cosa, sina)
-                    local xtlTrg = xSrcCtr - trgImg.width * 0.5
+                    local xtlTrg = celPos.x
                     local ytlTrg = ySrcCtr - trgImg.height * 0.5
 
                     local xTrim = 0
@@ -187,11 +186,10 @@ dlg:button {
                 if not srcImg:isEmpty() then
                     local celPos <const> = cel.position
                     local xSrcCtr <const> = celPos.x + srcImg.width * 0.5
-                    local ySrcCtr <const> = celPos.y + srcImg.height * 0.5
 
                     local trgImg = roty(srcImg, cosa, sina)
                     local xtlTrg = xSrcCtr - trgImg.width * 0.5
-                    local ytlTrg = ySrcCtr - trgImg.height * 0.5
+                    local ytlTrg = celPos.y
 
                     local xTrim = 0
                     local yTrim = 0
@@ -199,7 +197,7 @@ dlg:button {
                     xtlTrg = xtlTrg + xTrim
                     ytlTrg = ytlTrg + yTrim
 
-                    cel.position = Point(floor(xtlTrg), floor(ytlTrg))
+                    cel.position = Point(floor(xtlTrg), ytlTrg)
                     cel.image = trgImg
                 end -- End source image not empty.
             end     -- End cels loop.
@@ -429,98 +427,6 @@ dlg:check {
 dlg:newrow { always = false }
 
 dlg:button {
-    id = "fliphButton",
-    text = "FLIP &H",
-    focus = false,
-    onclick = function()
-        local site <const> = app.site
-        local activeSprite <const> = site.sprite
-        if not activeSprite then return end
-        local activeLayer <const> = site.layer
-
-        local args <const> = dlg.data
-        local majorTarget <const> = args.majorTarget
-            or defaults.majorTarget --[[@as string]]
-        local minorTarget <const> = args.minorTarget
-            or defaults.minorTarget --[[@as string]]
-
-        local trgFrames <const> = Utilities.flatArr2(
-            AseUtilities.getFrames(
-                activeSprite, minorTarget))
-        local cels <const> = AseUtilities.filterCels(
-            activeSprite, activeLayer, trgFrames, majorTarget,
-            false, false, false, true)
-        local lenCels <const> = #cels
-        local flipx <const> = NormalUtilities.flipImageX
-
-        app.transaction("Flip H", function()
-            local i = 0
-            while i < lenCels do
-                i = i + 1
-                local cel <const> = cels[i]
-                cel.image = flipx(cel.image)
-            end
-        end)
-
-        if majorTarget == "SELECTION" then
-            dlg:modify {
-                id = "majorTarget",
-                option = defaults.selTargetRevert
-            }
-            activeSprite.selection:deselect()
-        end
-        app.refresh()
-    end
-}
-
-dlg:button {
-    id = "flipvButton",
-    text = "FLIP &V",
-    focus = false,
-    onclick = function()
-        local site <const> = app.site
-        local activeSprite <const> = site.sprite
-        if not activeSprite then return end
-        local activeLayer <const> = site.layer
-
-        local args <const> = dlg.data
-        local majorTarget <const> = args.majorTarget
-            or defaults.majorTarget --[[@as string]]
-        local minorTarget <const> = args.minorTarget
-            or defaults.minorTarget --[[@as string]]
-
-        local trgFrames <const> = Utilities.flatArr2(
-            AseUtilities.getFrames(
-                activeSprite, minorTarget))
-        local cels <const> = AseUtilities.filterCels(
-            activeSprite, activeLayer, trgFrames, majorTarget,
-            false, false, false, true)
-        local lenCels <const> = #cels
-        local flipy <const> = NormalUtilities.flipImageY
-
-        app.transaction("Flip V", function()
-            local i = 0
-            while i < lenCels do
-                i = i + 1
-                local cel <const> = cels[i]
-                cel.image = flipy(cel.image)
-            end
-        end)
-
-        if majorTarget == "SELECTION" then
-            dlg:modify {
-                id = "majorTarget",
-                option = defaults.selTargetRevert
-            }
-            activeSprite.selection:deselect()
-        end
-        app.refresh()
-    end
-}
-
-dlg:newrow { always = false }
-
-dlg:button {
     id = "scaleButton",
     text = "&SCALE",
     focus = false,
@@ -594,6 +500,144 @@ dlg:button {
                     cel.position = Point(floor(xtlTrg), floor(ytlTrg))
                     cel.image = trgImg
                 end
+            end
+        end)
+
+        if majorTarget == "SELECTION" then
+            dlg:modify {
+                id = "majorTarget",
+                option = defaults.selTargetRevert
+            }
+            activeSprite.selection:deselect()
+        end
+        app.refresh()
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:button {
+    id = "fliphButton",
+    label = "Flip:",
+    text = "&H",
+    focus = false,
+    onclick = function()
+        local site <const> = app.site
+        local activeSprite <const> = site.sprite
+        if not activeSprite then return end
+        local activeLayer <const> = site.layer
+
+        local args <const> = dlg.data
+        local majorTarget <const> = args.majorTarget
+            or defaults.majorTarget --[[@as string]]
+        local minorTarget <const> = args.minorTarget
+            or defaults.minorTarget --[[@as string]]
+
+        local trgFrames <const> = Utilities.flatArr2(
+            AseUtilities.getFrames(
+                activeSprite, minorTarget))
+        local cels <const> = AseUtilities.filterCels(
+            activeSprite, activeLayer, trgFrames, majorTarget,
+            false, false, false, true)
+        local lenCels <const> = #cels
+        local flipx <const> = NormalUtilities.flipImageX
+
+        app.transaction("Flip H", function()
+            local i = 0
+            while i < lenCels do
+                i = i + 1
+                local cel <const> = cels[i]
+                cel.image = flipx(cel.image)
+            end
+        end)
+
+        if majorTarget == "SELECTION" then
+            dlg:modify {
+                id = "majorTarget",
+                option = defaults.selTargetRevert
+            }
+            activeSprite.selection:deselect()
+        end
+        app.refresh()
+    end
+}
+
+dlg:button {
+    id = "flipvButton",
+    text = "&V",
+    focus = false,
+    onclick = function()
+        local site <const> = app.site
+        local activeSprite <const> = site.sprite
+        if not activeSprite then return end
+        local activeLayer <const> = site.layer
+
+        local args <const> = dlg.data
+        local majorTarget <const> = args.majorTarget
+            or defaults.majorTarget --[[@as string]]
+        local minorTarget <const> = args.minorTarget
+            or defaults.minorTarget --[[@as string]]
+
+        local trgFrames <const> = Utilities.flatArr2(
+            AseUtilities.getFrames(
+                activeSprite, minorTarget))
+        local cels <const> = AseUtilities.filterCels(
+            activeSprite, activeLayer, trgFrames, majorTarget,
+            false, false, false, true)
+        local lenCels <const> = #cels
+        local flipy <const> = NormalUtilities.flipImageY
+
+        app.transaction("Flip V", function()
+            local i = 0
+            while i < lenCels do
+                i = i + 1
+                local cel <const> = cels[i]
+                cel.image = flipy(cel.image)
+            end
+        end)
+
+        if majorTarget == "SELECTION" then
+            dlg:modify {
+                id = "majorTarget",
+                option = defaults.selTargetRevert
+            }
+            activeSprite.selection:deselect()
+        end
+        app.refresh()
+    end
+}
+
+dlg:button {
+    id = "flipdButton",
+    text = "&D",
+    focus = false,
+    onclick = function()
+        local site <const> = app.site
+        local activeSprite <const> = site.sprite
+        if not activeSprite then return end
+        local activeLayer <const> = site.layer
+
+        local args <const> = dlg.data
+        local majorTarget <const> = args.majorTarget
+            or defaults.majorTarget --[[@as string]]
+        local minorTarget <const> = args.minorTarget
+            or defaults.minorTarget --[[@as string]]
+
+        local trgFrames <const> = Utilities.flatArr2(
+            AseUtilities.getFrames(
+                activeSprite, minorTarget))
+        local cels <const> = AseUtilities.filterCels(
+            activeSprite, activeLayer, trgFrames, majorTarget,
+            false, false, false, true)
+        local lenCels <const> = #cels
+        local flipz <const> = NormalUtilities.flipImageZ
+
+        app.transaction("Flip D", function()
+            local i = 0
+            while i < lenCels do
+                i = i + 1
+                local cel <const> = cels[i]
+                cel.image = flipz(cel.image)
             end
         end)
 

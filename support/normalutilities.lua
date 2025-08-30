@@ -5,6 +5,7 @@ NormalUtilities.__index = NormalUtilities
 
 setmetatable(NormalUtilities, {
     __call = function(cls, ...)
+        -- TODO: Absolute z button so vectors always face camera?
         return cls.new(...)
     end
 })
@@ -44,6 +45,22 @@ function NormalUtilities.flipImageY(source)
     return NormalUtilities.transformNormalsInternal(
         wSrc, hSrc, srcSpec.colorSpace, srcBytes,
         function(v) return Vec3.new(v.x, -v.y, v.z) end)
+end
+
+---Returns a copy of the source image that has been flipped on its depth axis.
+---@param source Image source image
+---@return Image
+---@nodiscard
+function NormalUtilities.flipImageZ(source)
+    local srcSpec <const> = source.spec
+    if srcSpec.colorMode ~= ColorMode.RGB then return source end
+
+    return NormalUtilities.transformNormalsInternal(
+        srcSpec.width,
+        srcSpec.height,
+        srcSpec.colorSpace,
+        source.bytes,
+        function(v) return Vec3.new(v.x, v.y, -v.z) end)
 end
 
 ---Converts colors in an image to a vector, then converts them back,
