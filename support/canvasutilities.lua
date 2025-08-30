@@ -6,9 +6,6 @@ CanvasUtilities.__index = CanvasUtilities
 
 setmetatable(CanvasUtilities, {
     __call = function(cls, ...)
-        -- TODO: There are likely other places where a dialog
-        -- modify would collapse the dialog bounds, esp. when
-        -- the dialog has scrollbars because it is too big.
         return cls.new(...)
     end
 })
@@ -19,6 +16,9 @@ setmetatable(CanvasUtilities, {
 ---@return Rectangle
 ---@nodiscard
 function CanvasUtilities.copyRect(r)
+    -- TODO: Problem is that this is too general to
+    -- belong in canvasutilities, and it would likely
+    -- need to be used elsewhere.
     return Rectangle(
         r.x, r.y,
         math.max(1, math.abs(r.width)),
@@ -461,8 +461,10 @@ function CanvasUtilities.graphBezier(
             focus = false,
             visible = isVisVrf and visNumsVrf,
             onchange = function()
+                local r <const> = CanvasUtilities.copyRect(dialog.bounds)
                 dialog:modify { id = easeFuncsId, option = "CUSTOM" }
                 dialog:repaint()
+                dialog.bounds = r
             end
         }
         if not isEven then
@@ -476,6 +478,8 @@ function CanvasUtilities.graphBezier(
         focus = false,
         visible = isVisVrf and visButtonsVrf,
         onclick = function()
+            local r <const> = CanvasUtilities.copyRect(dialog.bounds)
+
             local args <const> = dialog.data
             local ap0x <const> = args[idPts[1]] --[[@as number]]
             local ap0y <const> = args[idPts[2]] --[[@as number]]
@@ -497,6 +501,7 @@ function CanvasUtilities.graphBezier(
             dialog:modify { id = easeFuncsId, option = "CUSTOM" }
 
             dialog:repaint()
+            dialog.bounds = r
         end
     }
 
@@ -506,6 +511,8 @@ function CanvasUtilities.graphBezier(
         focus = false,
         visible = isVisVrf and visButtonsVrf,
         onclick = function()
+            local r <const> = CanvasUtilities.copyRect(dialog.bounds)
+
             local args <const> = dialog.data
             local ap0x <const> = args[idPts[1]] --[[@as number]]
             local ap0y <const> = args[idPts[2]] --[[@as number]]
@@ -525,6 +532,7 @@ function CanvasUtilities.graphBezier(
             dialog:modify { id = easeFuncsId, option = "CUSTOM" }
 
             dialog:repaint()
+            dialog.bounds = r
         end
     }
 
@@ -536,6 +544,8 @@ function CanvasUtilities.graphBezier(
         focus = false,
         visible = isVisVrf and visButtonsVrf,
         onclick = function()
+            local r <const> = CanvasUtilities.copyRect(dialog.bounds)
+
             local args <const> = dialog.data
             local ap0x <const> = args[idPts[1]] --[[@as number]]
             local ap0y <const> = args[idPts[2]] --[[@as number]]
@@ -557,6 +567,7 @@ function CanvasUtilities.graphBezier(
             dialog:modify { id = easeFuncsId, option = "CUSTOM" }
 
             dialog:repaint()
+            dialog.bounds = r
         end
     }
 
@@ -566,6 +577,8 @@ function CanvasUtilities.graphBezier(
         focus = false,
         visible = isVisVrf and visButtonsVrf,
         onclick = function()
+            local r <const> = CanvasUtilities.copyRect(dialog.bounds)
+
             local args <const> = dialog.data
             local ap0y <const> = args[idPts[2]] --[[@as number]]
             local cp0y <const> = args[idPts[4]] --[[@as number]]
@@ -579,6 +592,7 @@ function CanvasUtilities.graphBezier(
             dialog:modify { id = easeFuncsId, option = "CUSTOM" }
 
             dialog:repaint()
+            dialog.bounds = r
         end
     }
 
@@ -765,6 +779,8 @@ function CanvasUtilities.graphLine(
         onmousemove = function(event)
             -- TODO: How to handle canvas resize.
             if event.button ~= MouseButton.NONE then
+                local r <const> = CanvasUtilities.copyRect(dialog.bounds)
+
                 local xMouse <const> = math.min(math.max(event.x, 0), wVrf - 1)
                 local yMouse <const> = math.min(math.max(event.y, 0), hVrf - 1)
                 local xdUnsigned <const> = xMouse / (wVrf - 1.0)
@@ -819,13 +835,16 @@ function CanvasUtilities.graphLine(
 
                 local xi <const> = Utilities.round(xdSigned * 100.0)
                 local yi <const> = Utilities.round(ydSigned * 100.0)
+
                 dialog:modify { id = "xDest", value = xi }
                 dialog:modify { id = "yDest", value = yi }
                 dialog:repaint()
+                dialog.bounds = r
             end
         end,
         onmousedown = function(event)
             -- TODO: How to handle canvas resize.
+            local r <const> = CanvasUtilities.copyRect(dialog.bounds)
 
             local xMouse <const> = math.min(math.max(event.x, 0), wVrf - 1)
             local yMouse <const> = math.min(math.max(event.y, 0), hVrf - 1)
@@ -842,11 +861,14 @@ function CanvasUtilities.graphLine(
 
             local xi <const> = Utilities.round(xSigned * 100.0)
             local yi <const> = Utilities.round(ySigned * 100.0)
+
             dialog:modify { id = "xOrig", value = xi }
             dialog:modify { id = "yOrig", value = yi }
             dialog:modify { id = "xDest", value = xi }
             dialog:modify { id = "yDest", value = yi }
+
             dialog:repaint()
+            dialog.bounds = r
         end
     }
 
@@ -954,6 +976,8 @@ function CanvasUtilities.spectrum(
 
     ---@param event MouseEvent
     local onMouseFunc <const> = function(event)
+        local r <const> = CanvasUtilities.copyRect(dialog.bounds)
+
         local xMouse <const> = event.x
         local yMouse <const> = event.y
 
@@ -966,6 +990,7 @@ function CanvasUtilities.spectrum(
             local hMouse <const> = (xMouse * xToHue) % 1.0
             local lMouse <const> = math.min(math.max(
                 100.0 - yMouse * yToLgt, 0.0), 100.0)
+
             dialog:modify {
                 id = "spectrumHue",
                 text = string.format("%.5f", hMouse)
@@ -984,6 +1009,7 @@ function CanvasUtilities.spectrum(
 
             local sMouse <const> = math.min(math.max(
                 xMouse * xToChr, 0.0), Lab.SR_MAX_CHROMA)
+
             dialog:modify {
                 id = "spectrumChroma",
                 text = string.format("%.5f", sMouse)
@@ -1005,6 +1031,7 @@ function CanvasUtilities.spectrum(
         end
 
         dialog:repaint()
+        dialog.bounds = r
     end
 
     dialog:canvas {

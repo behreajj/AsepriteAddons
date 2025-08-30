@@ -9,6 +9,9 @@ local blendModes <const> = {
 }
 
 local defaults <const> = {
+    -- This also has autoscrollbars and modifies dialog color widgets,
+    -- but it doesn't seem to be a problem in terms of collapsing the
+    -- dialog bounds.
     nameEntry = "Layer",
     blendMode = "NORMAL",
     reverse = false
