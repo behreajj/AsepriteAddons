@@ -848,6 +848,7 @@ dlg:button {
         if not activeSprite then return end
         local activeLayer <const> = site.layer
         if not activeLayer then return end
+        if activeLayer.isBackground then return end
 
         local layer = activeLayer
         ---@diagnostic disable-next-line: undefined-field
@@ -874,6 +875,7 @@ dlg:button {
         if not activeSprite then return end
         local activeLayer <const> = site.layer
         if not activeLayer then return end
+        if activeLayer.isBackground then return end
 
         local layer = activeLayer
         ---@diagnostic disable-next-line: undefined-field
