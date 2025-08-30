@@ -23,45 +23,9 @@ function NormalUtilities.flipImageX(source)
     local srcBytes <const> = Utilities.flipPixelsX(source.bytes,
         wSrc, hSrc, source.bytesPerPixel)
 
-    ---@type string[]
-    local normBytesArr <const> = {}
-    ---@type table<integer, integer>
-    local srcToTrg <const> = {}
-    local lenTrg <const> = wSrc * hSrc
-
-    -- Cache methods used in looop.
-    local strpack <const> = string.pack
-    local strsub <const> = string.sub
-    local strunpack <const> = string.unpack
-    local v3new <const> = Vec3.new
-    local fromHex <const> = Rgb.fromHexAbgr32
-    local toHex <const> = Rgb.toHex
-    local toVec3 <const> = NormalUtilities.rgbToVec3
-    local toRgb <const> = NormalUtilities.vec3ToRgb
-
-    local i = 0
-    while i < lenTrg do
-        local i4 <const> = i * 4
-        local srcAbgr32 <const> = strunpack("<I4", strsub(
-            srcBytes, 1 + i4, 4 + i4))
-
-        local transformed = srcToTrg[srcAbgr32]
-        if not transformed then
-            local rgb <const> = fromHex(srcAbgr32)
-            local v <const>, _ <const> = toVec3(rgb)
-            local rgbTr <const>, _ <const> = toRgb(
-                v3new(-v.x, v.y, v.z), rgb.a)
-            transformed = toHex(rgbTr)
-            srcToTrg[srcAbgr32] = transformed
-        end
-
-        i = i + 1
-        normBytesArr[i] = strpack("<I4", transformed)
-    end
-
-    local target <const> = Image(srcSpec)
-    target.bytes = table.concat(normBytesArr)
-    return target
+    return NormalUtilities.transformNormalsInternal(
+        wSrc, hSrc, srcSpec.colorSpace, srcBytes,
+        function(v) return Vec3.new(-v.x, v.y, v.z) end)
 end
 
 ---Returns a copy of the source image that has been flipped vertically.
@@ -70,53 +34,16 @@ end
 ---@nodiscard
 function NormalUtilities.flipImageY(source)
     local srcSpec <const> = source.spec
-    local colorMode <const> = srcSpec.colorMode
-    if colorMode ~= ColorMode.RGB then return source end
+    if srcSpec.colorMode ~= ColorMode.RGB then return source end
 
     local wSrc <const> = srcSpec.width
     local hSrc <const> = srcSpec.height
     local srcBytes <const> = Utilities.flipPixelsY(source.bytes,
         wSrc, hSrc, source.bytesPerPixel)
 
-    ---@type string[]
-    local normBytesArr <const> = {}
-    ---@type table<integer, integer>
-    local srcToTrg <const> = {}
-    local lenTrg <const> = wSrc * hSrc
-
-    -- Cache methods used in looop.
-    local strpack <const> = string.pack
-    local strsub <const> = string.sub
-    local strunpack <const> = string.unpack
-    local v3new <const> = Vec3.new
-    local fromHex <const> = Rgb.fromHexAbgr32
-    local toHex <const> = Rgb.toHex
-    local toVec3 <const> = NormalUtilities.rgbToVec3
-    local toRgb <const> = NormalUtilities.vec3ToRgb
-
-    local i = 0
-    while i < lenTrg do
-        local i4 <const> = i * 4
-        local srcAbgr32 <const> = strunpack("<I4", strsub(
-            srcBytes, 1 + i4, 4 + i4))
-
-        local transformed = srcToTrg[srcAbgr32]
-        if not transformed then
-            local rgb <const> = fromHex(srcAbgr32)
-            local v <const>, _ <const> = toVec3(rgb)
-            local rgbTr <const>, _ <const> = toRgb(
-                v3new(v.x, -v.y, v.z), rgb.a)
-            transformed = toHex(rgbTr)
-            srcToTrg[srcAbgr32] = transformed
-        end
-
-        i = i + 1
-        normBytesArr[i] = strpack("<I4", transformed)
-    end
-
-    local target <const> = Image(srcSpec)
-    target.bytes = table.concat(normBytesArr)
-    return target
+    return NormalUtilities.transformNormalsInternal(
+        wSrc, hSrc, srcSpec.colorSpace, srcBytes,
+        function(v) return Vec3.new(v.x, -v.y, v.z) end)
 end
 
 ---Converts colors in an image to a vector, then converts them back,
@@ -128,47 +55,12 @@ function NormalUtilities.normalizeImage(source)
     local colorMode <const> = srcSpec.colorMode
     if colorMode ~= ColorMode.RGB then return source end
 
-    ---@type string[]
-    local normBytesArr <const> = {}
-    ---@type table<integer, integer>
-    local srcToTrg <const> = {}
-
-    local srcBytes <const> = source.bytes
-    local wSrc <const> = srcSpec.width
-    local hSrc <const> = srcSpec.height
-    local lenTrg <const> = wSrc * hSrc
-
-    -- Cache methods used in looop.
-    local strpack <const> = string.pack
-    local strsub <const> = string.sub
-    local strunpack <const> = string.unpack
-
-    local fromHex <const> = Rgb.fromHexAbgr32
-    local toHex <const> = Rgb.toHex
-    local toVec3 <const> = NormalUtilities.rgbToVec3
-    local toRgb <const> = NormalUtilities.vec3ToRgb
-
-    local i = 0
-    while i < lenTrg do
-        local i4 <const> = i * 4
-        local srcAbgr32 <const> = strunpack("<I4", strsub(
-            srcBytes, 1 + i4, 4 + i4))
-
-        local transformed = srcToTrg[srcAbgr32]
-        if not transformed then
-            local rgb <const> = fromHex(srcAbgr32)
-            local v <const>, _ <const> = toVec3(rgb)
-            transformed = rgb.a > 0.0 and toHex(toRgb(v, rgb.a)) or 0
-            srcToTrg[srcAbgr32] = transformed
-        end
-
-        i = i + 1
-        normBytesArr[i] = strpack("<I4", transformed)
-    end
-
-    local target <const> = Image(srcSpec)
-    target.bytes = table.concat(normBytesArr)
-    return target
+    return NormalUtilities.transformNormalsInternal(
+        srcSpec.width,
+        srcSpec.height,
+        srcSpec.colorSpace,
+        source.bytes,
+        function(v) return v end)
 end
 
 ---Returns a copy of the source image that has been resized to the width and
@@ -182,72 +74,28 @@ end
 ---@nodiscard
 function NormalUtilities.resizeImageNearest(source, wTrg, hTrg)
     local srcSpec <const> = source.spec
-    local colorMode <const> = srcSpec.colorMode
-    if colorMode ~= ColorMode.RGB then return source end
+    if srcSpec.colorMode ~= ColorMode.RGB then return source end
 
     local wSrc <const> = srcSpec.width
     local hSrc <const> = srcSpec.height
-    local wVrf <const> = math.max(1, math.abs(wTrg))
-    local hVrf <const> = math.max(1, math.abs(hTrg))
+    local wTrgVrf <const> = math.max(1, math.abs(wTrg))
+    local hTrgVrf <const> = math.max(1, math.abs(hTrg))
 
-    if wVrf == wSrc and hVrf == hSrc then
+    if wTrgVrf == wSrc and hTrgVrf == hSrc then
         return NormalUtilities.normalizeImage(source)
     end
 
-    local alphaIndex <const> = srcSpec.transparentColor
     local bytesRsz <const> = Utilities.resizePixelsNearest(
-        source.bytes, wSrc, hSrc, wVrf, hVrf, source.bytesPerPixel, alphaIndex)
-
-    ---@type string[]
-    local normBytesArr <const> = {}
-    ---@type table<integer, integer>
-    local srcToTrg <const> = {}
-    local lenTrg <const> = wVrf * hVrf
+        source.bytes, wSrc, hSrc, wTrgVrf, hTrgVrf,
+        source.bytesPerPixel,
+        srcSpec.transparentColor)
 
     -- To transform normals, the inverse of the scalar is used,
     -- but the original scale also has to be accounted for.
-    local denom <const> = Vec3.new(wSrc / wVrf, hSrc / hVrf, 1.0)
-
-    -- Cache methods used in looop.
-    local strpack <const> = string.pack
-    local strsub <const> = string.sub
-    local strunpack <const> = string.unpack
-    local fromHex <const> = Rgb.fromHexAbgr32
-    local toHex <const> = Rgb.toHex
-    local toVec3 <const> = NormalUtilities.rgbToVec3
-    local toRgb <const> = NormalUtilities.vec3ToRgb
-    local hadamard <const> = Vec3.hadamard
-
-    local i = 0
-    while i < lenTrg do
-        local i4 <const> = i * 4
-        local srcAbgr32 <const> = strunpack("<I4", strsub(
-            bytesRsz, 1 + i4, 4 + i4))
-
-        local transformed = srcToTrg[srcAbgr32]
-        if not transformed then
-            local rgb <const> = fromHex(srcAbgr32)
-            local v <const>, _ <const> = toVec3(rgb)
-            local rgbTr <const>, _ <const> = toRgb(
-                hadamard(v, denom), rgb.a)
-            transformed = toHex(rgbTr)
-            srcToTrg[srcAbgr32] = transformed
-        end
-
-        i = i + 1
-        normBytesArr[i] = strpack("<I4", transformed)
-    end
-
-    local trgSpec <const> = ImageSpec {
-        width = wVrf,
-        height = hVrf,
-        colorMode = colorMode,
-        transparentColor = alphaIndex
-    }
-    trgSpec.colorSpace = srcSpec.colorSpace
-    local target <const> = Image(trgSpec)
-    target.bytes = table.concat(normBytesArr)
-    return target
+    local denom <const> = Vec3.new(wSrc / wTrgVrf, hSrc / hTrgVrf, 1.0)
+    return NormalUtilities.transformNormalsInternal(
+        wTrgVrf, hTrgVrf, srcSpec.colorSpace, bytesRsz,
+        function(v) return Vec3.hadamard(v, denom) end)
 end
 
 ---Converts an rgb color to a normal, stored in a Vec3.
@@ -280,60 +128,16 @@ end
 ---@nodiscard
 function NormalUtilities.rotateImage90(source)
     local srcSpec <const> = source.spec
-    local colorMode <const> = srcSpec.colorMode
-    if colorMode ~= ColorMode.RGB then return source end
+    if srcSpec.colorMode ~= ColorMode.RGB then return source end
 
     local wSrc <const> = srcSpec.width
     local hSrc <const> = srcSpec.height
     local srcBytes <const> = Utilities.rotatePixels270(
         source.bytes, wSrc, hSrc, source.bytesPerPixel)
 
-    ---@type string[]
-    local normBytesArr <const> = {}
-    ---@type table<integer, integer>
-    local srcToTrg <const> = {}
-    local lenTrg <const> = wSrc * hSrc
-
-    -- Cache methods used in looop.
-    local strpack <const> = string.pack
-    local strsub <const> = string.sub
-    local strunpack <const> = string.unpack
-    local v3new <const> = Vec3.new
-    local fromHex <const> = Rgb.fromHexAbgr32
-    local toHex <const> = Rgb.toHex
-    local toVec3 <const> = NormalUtilities.rgbToVec3
-    local toRgb <const> = NormalUtilities.vec3ToRgb
-
-    local i = 0
-    while i < lenTrg do
-        local i4 <const> = i * 4
-        local srcAbgr32 <const> = strunpack("<I4", strsub(
-            srcBytes, 1 + i4, 4 + i4))
-
-        local transformed = srcToTrg[srcAbgr32]
-        if not transformed then
-            local rgb <const> = fromHex(srcAbgr32)
-            local v <const>, _ <const> = toVec3(rgb)
-            local rgbTr <const>, _ <const> = toRgb(
-                v3new(-v.y, v.x, v.z), rgb.a)
-            transformed = toHex(rgbTr)
-            srcToTrg[srcAbgr32] = transformed
-        end
-
-        i = i + 1
-        normBytesArr[i] = strpack("<I4", transformed)
-    end
-
-    local trgSpec <const> = ImageSpec {
-        width = hSrc,
-        height = wSrc,
-        colorMode = colorMode,
-        transparentColor = srcSpec.transparentColor
-    }
-    trgSpec.colorSpace = srcSpec.colorSpace
-    local target <const> = Image(trgSpec)
-    target.bytes = table.concat(normBytesArr)
-    return target
+    return NormalUtilities.transformNormalsInternal(
+        wSrc, hSrc, srcSpec.colorSpace, srcBytes,
+        function(v) return Vec3.new(-v.y, v.x, v.z) end)
 end
 
 ---Returns a copy of the source image that has been rotated 180 degrees.
@@ -342,52 +146,16 @@ end
 ---@nodiscard
 function NormalUtilities.rotateImage180(source)
     local srcSpec <const> = source.spec
-    local colorMode <const> = srcSpec.colorMode
-    if colorMode ~= ColorMode.RGB then return source end
+    if srcSpec.colorMode ~= ColorMode.RGB then return source end
 
     local wSrc <const> = srcSpec.width
     local hSrc <const> = srcSpec.height
     local srcBytes <const> = Utilities.rotatePixels180(
         source.bytes, wSrc, hSrc, source.bytesPerPixel)
 
-    ---@type string[]
-    local normBytesArr <const> = {}
-    ---@type table<integer, integer>
-    local srcToTrg <const> = {}
-    local lenTrg <const> = wSrc * hSrc
-
-    -- Cache methods used in looop.
-    local strpack <const> = string.pack
-    local strsub <const> = string.sub
-    local strunpack <const> = string.unpack
-    local v3new <const> = Vec3.new
-    local fromHex <const> = Rgb.fromHexAbgr32
-    local toHex <const> = Rgb.toHex
-    local toVec3 <const> = NormalUtilities.rgbToVec3
-    local toRgb <const> = NormalUtilities.vec3ToRgb
-
-    local i = 0
-    while i < lenTrg do
-        local i4 <const> = i * 4
-        local srcAbgr32 <const> = strunpack("<I4", strsub(
-            srcBytes, 1 + i4, 4 + i4))
-
-        local transformed = srcToTrg[srcAbgr32]
-        if not transformed then
-            local rgb <const> = fromHex(srcAbgr32)
-            local v <const>, _ <const> = toVec3(rgb)
-            local rgbTr <const>, _ <const> = toRgb(v3new(-v.x, -v.y, v.z), rgb.a)
-            transformed = toHex(rgbTr)
-            srcToTrg[srcAbgr32] = transformed
-        end
-
-        i = i + 1
-        normBytesArr[i] = strpack("<I4", transformed)
-    end
-
-    local target <const> = Image(srcSpec)
-    target.bytes = table.concat(normBytesArr)
-    return target
+    return NormalUtilities.transformNormalsInternal(
+        wSrc, hSrc, srcSpec.colorSpace, srcBytes,
+        function(v) return Vec3.new(-v.x, -v.y, v.z) end)
 end
 
 ---Returns a copy of the source image that has been rotated 270 degrees
@@ -397,60 +165,16 @@ end
 ---@nodiscard
 function NormalUtilities.rotateImage270(source)
     local srcSpec <const> = source.spec
-    local colorMode <const> = srcSpec.colorMode
-    if colorMode ~= ColorMode.RGB then return source end
+    if srcSpec.colorMode ~= ColorMode.RGB then return source end
 
     local wSrc <const> = srcSpec.width
     local hSrc <const> = srcSpec.height
     local srcBytes <const> = Utilities.rotatePixels270(
         source.bytes, wSrc, hSrc, source.bytesPerPixel)
 
-    ---@type string[]
-    local normBytesArr <const> = {}
-    ---@type table<integer, integer>
-    local srcToTrg <const> = {}
-    local lenTrg <const> = wSrc * hSrc
-
-    -- Cache methods used in looop.
-    local strpack <const> = string.pack
-    local strsub <const> = string.sub
-    local strunpack <const> = string.unpack
-    local v3new <const> = Vec3.new
-    local fromHex <const> = Rgb.fromHexAbgr32
-    local toHex <const> = Rgb.toHex
-    local toVec3 <const> = NormalUtilities.rgbToVec3
-    local toRgb <const> = NormalUtilities.vec3ToRgb
-
-    local i = 0
-    while i < lenTrg do
-        local i4 <const> = i * 4
-        local srcAbgr32 <const> = strunpack("<I4", strsub(
-            srcBytes, 1 + i4, 4 + i4))
-
-        local transformed = srcToTrg[srcAbgr32]
-        if not transformed then
-            local rgb <const> = fromHex(srcAbgr32)
-            local v <const>, _ <const> = toVec3(rgb)
-            local rgbTr <const>, _ <const> = toRgb(
-                v3new(v.y, -v.x, v.z), rgb.a)
-            transformed = toHex(rgbTr)
-            srcToTrg[srcAbgr32] = transformed
-        end
-
-        i = i + 1
-        normBytesArr[i] = strpack("<I4", transformed)
-    end
-
-    local trgSpec <const> = ImageSpec {
-        width = hSrc,
-        height = wSrc,
-        colorMode = colorMode,
-        transparentColor = srcSpec.transparentColor
-    }
-    trgSpec.colorSpace = srcSpec.colorSpace
-    local target <const> = Image(trgSpec)
-    target.bytes = table.concat(normBytesArr)
-    return target
+    return NormalUtilities.transformNormalsInternal(
+        wSrc, hSrc, srcSpec.colorSpace, srcBytes,
+        function(v) return Vec3.new(v.y, -v.x, v.z) end)
 end
 
 ---Returns a copy of the source image that has been rotated counter
@@ -489,16 +213,34 @@ end
 ---@nodiscard
 function NormalUtilities.rotateImageZInternal(source, cosa, sina)
     local srcSpec <const> = source.spec
-    local colorMode <const> = srcSpec.colorMode
-    if colorMode ~= ColorMode.RGB then return source end
+    if srcSpec.colorMode ~= ColorMode.RGB then return source end
 
-    local alphaIndex <const> = srcSpec.transparentColor
     local srcBytes <const>,
     wSrc <const>,
     hSrc <const> = Utilities.rotatePixelsZ(
         source.bytes, srcSpec.width, srcSpec.height,
-        cosa, sina, source.bytesPerPixel, alphaIndex)
+        cosa, sina, source.bytesPerPixel,
+        srcSpec.transparentColor)
 
+    return NormalUtilities.transformNormalsInternal(
+        wSrc, hSrc, srcSpec.colorSpace, srcBytes,
+        function(v)
+            return Vec3.rotateZInternal(v, cosa, sina)
+        end)
+end
+
+---Transforms vectors in an image according to the given function.
+---Image bytes are assumed to be in 32 bit RGB color mode with
+---zero as its alpha index.
+---@param wSrc integer width source
+---@param hSrc integer height source
+---@param colorSpace ColorSpace source color space
+---@param srcBytes string source bytes
+---@param transformFunc fun(v: Vec3): Vec3 transformation
+---@return Image
+function NormalUtilities.transformNormalsInternal(
+    wSrc, hSrc, colorSpace,
+    srcBytes, transformFunc)
     ---@type string[]
     local normBytesArr <const> = {}
     ---@type table<integer, integer>
@@ -509,11 +251,6 @@ function NormalUtilities.rotateImageZInternal(source, cosa, sina)
     local strpack <const> = string.pack
     local strsub <const> = string.sub
     local strunpack <const> = string.unpack
-
-    -- While this could be generalized to use Vec3 rotate axis,
-    -- there's no general rotate axis for the image pixel
-    -- locations anyway.
-    local rotz <const> = Vec3.rotateZInternal
     local fromHex <const> = Rgb.fromHexAbgr32
     local toHex <const> = Rgb.toHex
     local toVec3 <const> = NormalUtilities.rgbToVec3
@@ -524,17 +261,15 @@ function NormalUtilities.rotateImageZInternal(source, cosa, sina)
         local i4 <const> = i * 4
         local srcAbgr32 <const> = strunpack("<I4", strsub(
             srcBytes, 1 + i4, 4 + i4))
-
         local transformed = srcToTrg[srcAbgr32]
         if not transformed then
             local rgb <const> = fromHex(srcAbgr32)
             local v <const>, _ <const> = toVec3(rgb)
             local rgbTr <const>, _ <const> = toRgb(
-                rotz(v, cosa, sina), rgb.a)
+                transformFunc(v), rgb.a)
             transformed = toHex(rgbTr)
             srcToTrg[srcAbgr32] = transformed
         end
-
         i = i + 1
         normBytesArr[i] = strpack("<I4", transformed)
     end
@@ -542,10 +277,10 @@ function NormalUtilities.rotateImageZInternal(source, cosa, sina)
     local trgSpec <const> = ImageSpec {
         width = wSrc,
         height = hSrc,
-        colorMode = colorMode,
-        transparentColor = alphaIndex
+        colorMode = ColorMode.RGB,
+        transparentColor = 0,
     }
-    trgSpec.colorSpace = srcSpec.colorSpace
+    trgSpec.colorSpace = colorSpace
     local target <const> = Image(trgSpec)
     target.bytes = table.concat(normBytesArr)
     return target
