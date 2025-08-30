@@ -114,16 +114,15 @@ dlg:button {
                     local ySrcCtr <const> = celPos.y + srcImg.height * 0.5
 
                     local trgImg = rotx(srcImg, cosa, sina)
-                    local xtlTrg = celPos.x
                     local ytlTrg = ySrcCtr - trgImg.height * 0.5
 
                     local xTrim = 0
                     local yTrim = 0
                     trgImg, xTrim, yTrim = trimAlpha(trgImg, 0, 0)
-                    xtlTrg = xtlTrg + xTrim
+                    local xtlTrg <const> = celPos.x + xTrim
                     ytlTrg = ytlTrg + yTrim
 
-                    cel.position = Point(floor(xtlTrg), floor(ytlTrg))
+                    cel.position = Point(xtlTrg, floor(ytlTrg))
                     cel.image = trgImg
                 end -- End source image not empty.
             end     -- End cels loop.
@@ -189,13 +188,12 @@ dlg:button {
 
                     local trgImg = roty(srcImg, cosa, sina)
                     local xtlTrg = xSrcCtr - trgImg.width * 0.5
-                    local ytlTrg = celPos.y
 
                     local xTrim = 0
                     local yTrim = 0
                     trgImg, xTrim, yTrim = trimAlpha(trgImg, 0, 0)
                     xtlTrg = xtlTrg + xTrim
-                    ytlTrg = ytlTrg + yTrim
+                    local ytlTrg <const> = celPos.y + yTrim
 
                     cel.position = Point(floor(xtlTrg), ytlTrg)
                     cel.image = trgImg
