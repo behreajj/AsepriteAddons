@@ -66,8 +66,159 @@ dlg:slider {
 dlg:newrow { always = false }
 
 dlg:button {
+    id = "xRotateButton",
+    label = "Rotate:",
+    text = "&X",
+    focus = false,
+    onclick = function()
+        -- Early returns.
+        local site <const> = app.site
+        local activeSprite <const> = site.sprite
+        if not activeSprite then return end
+        local activeLayer <const> = site.layer
+
+        -- Unpack arguments.
+        local args <const> = dlg.data
+        local majorTarget <const> = args.majorTarget
+            or defaults.majorTarget --[[@as string]]
+        local minorTarget <const> = args.minorTarget
+            or defaults.minorTarget --[[@as string]]
+        local degrees <const> = args.degrees
+            or defaults.degrees --[[@as integer]]
+
+        local trgFrames <const> = Utilities.flatArr2(
+            AseUtilities.getFrames(
+                activeSprite, minorTarget))
+        local cels <const> = AseUtilities.filterCels(
+            activeSprite, activeLayer, trgFrames, majorTarget,
+            false, false, false, false)
+        local lenCels <const> = #cels
+
+        local radians <const> = 0.017453292519943 * degrees
+        local cosa <const> = math.cos(radians)
+        local sina <const> = math.sin(radians)
+
+        -- Cache methods.
+        local floor <const> = math.floor
+        local trimAlpha <const> = AseUtilities.trimImageAlpha
+        local rotx <const> = NormalUtilities.rotateImageXInternal
+
+        app.transaction("Rotate Cels", function()
+            local i = 0
+            while i < lenCels do
+                i = i + 1
+                local cel <const> = cels[i]
+                local srcImg <const> = cel.image
+                if not srcImg:isEmpty() then
+                    local celPos <const> = cel.position
+                    local xSrcCtr <const> = celPos.x + srcImg.width * 0.5
+                    local ySrcCtr <const> = celPos.y + srcImg.height * 0.5
+
+                    local trgImg = rotx(srcImg, cosa, sina)
+                    local xtlTrg = xSrcCtr - trgImg.width * 0.5
+                    local ytlTrg = ySrcCtr - trgImg.height * 0.5
+
+                    local xTrim = 0
+                    local yTrim = 0
+                    trgImg, xTrim, yTrim = trimAlpha(trgImg, 0, 0)
+                    xtlTrg = xtlTrg + xTrim
+                    ytlTrg = ytlTrg + yTrim
+
+                    cel.position = Point(floor(xtlTrg), floor(ytlTrg))
+                    cel.image = trgImg
+                end -- End source image not empty.
+            end     -- End cels loop.
+        end)        -- End transaction.
+
+        if majorTarget == "SELECTION" then
+            dlg:modify {
+                id = "majorTarget",
+                option = defaults.selTargetRevert
+            }
+            activeSprite.selection:deselect()
+        end
+        app.refresh()
+    end
+}
+
+dlg:button {
+    id = "yRotateButton",
+    text = "&Y",
+    focus = false,
+    onclick = function()
+        -- Early returns.
+        local site <const> = app.site
+        local activeSprite <const> = site.sprite
+        if not activeSprite then return end
+        local activeLayer <const> = site.layer
+
+        -- Unpack arguments.
+        local args <const> = dlg.data
+        local majorTarget <const> = args.majorTarget
+            or defaults.majorTarget --[[@as string]]
+        local minorTarget <const> = args.minorTarget
+            or defaults.minorTarget --[[@as string]]
+        local degrees <const> = args.degrees
+            or defaults.degrees --[[@as integer]]
+
+        local trgFrames <const> = Utilities.flatArr2(
+            AseUtilities.getFrames(
+                activeSprite, minorTarget))
+        local cels <const> = AseUtilities.filterCels(
+            activeSprite, activeLayer, trgFrames, majorTarget,
+            false, false, false, false)
+        local lenCels <const> = #cels
+
+        local radians <const> = 0.017453292519943 * degrees
+        local cosa <const> = math.cos(radians)
+        local sina <const> = math.sin(radians)
+
+        -- Cache methods.
+        local floor <const> = math.floor
+        local trimAlpha <const> = AseUtilities.trimImageAlpha
+        local roty <const> = NormalUtilities.rotateImageYInternal
+
+        app.transaction("Rotate Cels", function()
+            local i = 0
+            while i < lenCels do
+                i = i + 1
+                local cel <const> = cels[i]
+                local srcImg <const> = cel.image
+                if not srcImg:isEmpty() then
+                    local celPos <const> = cel.position
+                    local xSrcCtr <const> = celPos.x + srcImg.width * 0.5
+                    local ySrcCtr <const> = celPos.y + srcImg.height * 0.5
+
+                    local trgImg = roty(srcImg, cosa, sina)
+                    local xtlTrg = xSrcCtr - trgImg.width * 0.5
+                    local ytlTrg = ySrcCtr - trgImg.height * 0.5
+
+                    local xTrim = 0
+                    local yTrim = 0
+                    trgImg, xTrim, yTrim = trimAlpha(trgImg, 0, 0)
+                    xtlTrg = xtlTrg + xTrim
+                    ytlTrg = ytlTrg + yTrim
+
+                    cel.position = Point(floor(xtlTrg), floor(ytlTrg))
+                    cel.image = trgImg
+                end -- End source image not empty.
+            end     -- End cels loop.
+        end)        -- End transaction.
+
+        if majorTarget == "SELECTION" then
+            dlg:modify {
+                id = "majorTarget",
+                option = defaults.selTargetRevert
+            }
+            activeSprite.selection:deselect()
+        end
+        app.refresh()
+    end
+}
+
+dlg:button {
     id = "zRotateButton",
-    text = "&ROTATE",
+    text = "&Z",
     focus = true,
     onclick = function()
         -- Early returns.

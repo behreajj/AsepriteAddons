@@ -177,10 +177,56 @@ function NormalUtilities.rotateImage270(source)
         function(v) return Vec3.new(v.y, -v.x, v.z) end)
 end
 
+---Returns a copy of the source image that has been rotated around
+---the x axis by an angle in degrees. Uses nearest
+---neighbor sampling. If the angle is 0 degrees, then returns a normalized
+---copy of the source image. If the angle is 180 degrees,
+---then flips the image.
+---@param source Image source image
+---@param angle number angle in degrees
+---@return Image
+---@nodiscard
+function NormalUtilities.rotateImageX(source, angle)
+    local deg <const> = Utilities.round(angle) % 360
+
+    if deg == 0 then
+        return NormalUtilities.normalizeImage(source)
+    elseif deg == 180 then
+        return NormalUtilities.flipImageY(source)
+    end
+
+    local radians <const> = angle * 0.017453292519943
+    return NormalUtilities.rotateImageXInternal(source,
+        math.cos(radians), math.sin(radians))
+end
+
+---Returns a copy of the source image that has been rotated around
+---the y axis by an angle in degrees. Uses nearest
+---neighbor sampling. If the angle is 0 degrees, then returns a normalized
+---copy of the source image. If the angle is 180 degrees,
+---then flips the image.
+---@param source Image source image
+---@param angle number angle in degrees
+---@return Image
+---@nodiscard
+function NormalUtilities.rotateImageY(source, angle)
+    local deg <const> = Utilities.round(angle) % 360
+
+    if deg == 0 then
+        return NormalUtilities.normalizeImage(source)
+    elseif deg == 180 then
+        return NormalUtilities.flipImageX(source)
+    end
+
+    local radians <const> = angle * 0.017453292519943
+    return NormalUtilities.rotateImageYInternal(source,
+        math.cos(radians), math.sin(radians))
+end
+
 ---Returns a copy of the source image that has been rotated counter
 ---clockwise around the z axis by an angle in degrees. Uses nearest
----neighbor sampling. If the angle is 0 degrees, then returns the
----source image by reference. If the angle is 90, 180 or 270 degrees,
+---neighbor sampling. If the angle is 0 degrees, then returns a normalized
+---copy of the source image. If the angle is 90, 180 or 270 degrees,
 ---then defers to orthogonal rotations.
 ---@param source Image source image
 ---@param angle number angle in degrees
@@ -204,11 +250,61 @@ function NormalUtilities.rotateImageZ(source, angle)
         math.cos(radians), math.sin(radians))
 end
 
+---Internal helper function to rotateX. Accepts pre-calculated cosine
+---and sine of an angle.
+---@param source Image source image
+---@param cosa number cosine of angle
+---@param sina number sine of angle
+---@return Image
+---@nodiscard
+function NormalUtilities.rotateImageXInternal(source, cosa, sina)
+    local srcSpec <const> = source.spec
+    if srcSpec.colorMode ~= ColorMode.RGB then return source end
+
+    local srcBytes <const>,
+    wSrc <const>,
+    hSrc <const> = Utilities.rotatePixelsX(
+        source.bytes, srcSpec.width, srcSpec.height,
+        cosa, sina, source.bytesPerPixel,
+        srcSpec.transparentColor)
+
+    return NormalUtilities.transformNormalsInternal(
+        wSrc, hSrc, srcSpec.colorSpace, srcBytes,
+        function(v)
+            return Vec3.rotateXInternal(v, cosa, sina)
+        end)
+end
+
+---Internal helper function to rotateY. Accepts pre-calculated cosine
+---and sine of an angle.
+---@param source Image source image
+---@param cosa number cosine of angle
+---@param sina number sine of angle
+---@return Image
+---@nodiscard
+function NormalUtilities.rotateImageYInternal(source, cosa, sina)
+    local srcSpec <const> = source.spec
+    if srcSpec.colorMode ~= ColorMode.RGB then return source end
+
+    local srcBytes <const>,
+    wSrc <const>,
+    hSrc <const> = Utilities.rotatePixelsY(
+        source.bytes, srcSpec.width, srcSpec.height,
+        cosa, sina, source.bytesPerPixel,
+        srcSpec.transparentColor)
+
+    return NormalUtilities.transformNormalsInternal(
+        wSrc, hSrc, srcSpec.colorSpace, srcBytes,
+        function(v)
+            return Vec3.rotateYInternal(v, cosa, sina)
+        end)
+end
+
 ---Internal helper function to rotateZ. Accepts pre-calculated cosine
 ---and sine of an angle.
 ---@param source Image source image
----@param cosa number sine of angle
----@param sina number cosine of angle
+---@param cosa number cosine of angle
+---@param sina number sine of angle
 ---@return Image
 ---@nodiscard
 function NormalUtilities.rotateImageZInternal(source, cosa, sina)

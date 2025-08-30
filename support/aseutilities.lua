@@ -3030,8 +3030,8 @@ end
 ---Internal helper function to rotateZ. Accepts pre-calculated cosine and sine
 ---of an angle.
 ---@param source Image source image
----@param cosa number sine of angle
----@param sina number cosine of angle
+---@param cosa number cosine of angle
+---@param sina number sine of angle
 ---@return Image
 ---@nodiscard
 function AseUtilities.rotateImageZInternal(source, cosa, sina)
