@@ -11,7 +11,7 @@ assignees: ''
 For example, Windows 11.
 
 **Aseprite version**
-The minimum supported version is 1.3.14.
+The minimum supported version is 1.3.15.
 
 **Sprite color mode**
 For example, RGB, indexed or grayscale.
