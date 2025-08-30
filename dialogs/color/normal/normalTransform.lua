@@ -653,53 +653,6 @@ dlg:button {
 dlg:newrow { always = false }
 
 dlg:button {
-    id = "absButton",
-    text = "A&BS",
-    focus = false,
-    onclick = function()
-        local site <const> = app.site
-        local activeSprite <const> = site.sprite
-        if not activeSprite then return end
-        local activeLayer <const> = site.layer
-
-        local args <const> = dlg.data
-        local majorTarget <const> = args.majorTarget
-            or defaults.majorTarget --[[@as string]]
-        local minorTarget <const> = args.minorTarget
-            or defaults.minorTarget --[[@as string]]
-
-        local trgFrames <const> = Utilities.flatArr2(
-            AseUtilities.getFrames(
-                activeSprite, minorTarget))
-        local cels <const> = AseUtilities.filterCels(
-            activeSprite, activeLayer, trgFrames, majorTarget,
-            false, false, false, true)
-        local lenCels <const> = #cels
-        local abs <const> = NormalUtilities.faceCameraImage
-
-        app.transaction("Absolute", function()
-            local i = 0
-            while i < lenCels do
-                i = i + 1
-                local cel <const> = cels[i]
-                cel.image = abs(cel.image)
-            end
-        end)
-
-        if majorTarget == "SELECTION" then
-            dlg:modify {
-                id = "majorTarget",
-                option = defaults.selTargetRevert
-            }
-            activeSprite.selection:deselect()
-        end
-        app.refresh()
-    end
-}
-
-dlg:newrow { always = false }
-
-dlg:button {
     id = "cancel",
     text = "&CANCEL",
     focus = false,
