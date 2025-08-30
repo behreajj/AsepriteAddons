@@ -885,7 +885,8 @@ dlg:button {
         end
 
         app.transaction("Send To Back", function()
-            layer.stackIndex = 1
+            layer.stackIndex = activeSprite.backgroundLayer ~= nil
+                and 2 or 1
         end)
 
         app.layer = activeLayer
