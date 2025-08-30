@@ -5,10 +5,26 @@ NormalUtilities.__index = NormalUtilities
 
 setmetatable(NormalUtilities, {
     __call = function(cls, ...)
-        -- TODO: Absolute z button so vectors always face camera?
         return cls.new(...)
     end
 })
+
+---Returns a copy of the source image with the absolute value of the z axis,
+---such that all normals face the camera.
+---@param source Image source image
+---@return Image
+---@nodiscard
+function NormalUtilities.faceCameraImage(source)
+    local srcSpec <const> = source.spec
+    if srcSpec.colorMode ~= ColorMode.RGB then return source end
+
+    return NormalUtilities.transformNormalsInternal(
+        srcSpec.width,
+        srcSpec.height,
+        srcSpec.colorSpace,
+        source.bytes,
+        function(v) return Vec3.new(v.x, v.y, math.abs(v.z)) end)
+end
 
 ---Returns a copy of the source image that has been flipped horizontally.
 ---@param source Image source image
