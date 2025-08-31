@@ -65,7 +65,7 @@ dlg:combobox {
         local state <const> = args.palType --[[@as string]]
         dlg:modify {
             id = "palResource",
-            visible = state == "FILE"
+            visible = state == "PRESET"
         }
         dlg:modify {
             id = "palFile",
