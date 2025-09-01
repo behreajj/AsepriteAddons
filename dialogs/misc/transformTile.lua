@@ -1317,8 +1317,38 @@ dlg:button {
             end
         end)
 
+        local tsIdActive <const> = tileSet.properties["id"]
+        if tsIdActive == nil then
+            local minint64 <const> = 0x1000000000000000
+            local maxint64 <const> = 0x7fffffffffffffff
+            math.randomseed(os.time())
+            tileSet.properties["id"] = math.random(minint64, maxint64)
+        end
+
+        ---@type Layer[]
+        local usingLayers <const> = {}
+        local lenUsingLayers = 0
+        local leaves <const> = AseUtilities.getLayerHierarchy(activeSprite,
+            true, true, true, true)
+        local lenLeaves <const> = #leaves
+        local n = 0
+        while n < lenLeaves do
+            n = n + 1
+            local leaf <const> = leaves[n]
+            if leaf.isTilemap then
+                local tsCand <const> = leaf.tileset
+                if tsCand then
+                    local tsIdCand <const> = tsCand.properties["id"]
+                    if tsIdCand and tsIdCand == tsIdActive then
+                        lenUsingLayers = lenUsingLayers + 1
+                        usingLayers[lenUsingLayers] = leaf
+                    end -- End id candidate matches active.
+                end     -- End tile set exists.
+            end         -- End leaf is tile map.
+        end             -- End leaves loop.
+
         local uniqueCels <const> = AseUtilities.getUniqueCelsFromLeaves(
-            { activeLayer }, activeSprite.frames)
+            usingLayers, activeSprite.frames)
 
         local lenUniques <const> = #uniqueCels
         local k = 0
