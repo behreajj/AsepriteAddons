@@ -666,8 +666,8 @@ dlg:button {
 
                         local layerName <const> = verifLayerNames[j]
                         local fileNameShort <const> = strfmt(
-                            "%s_%s_%03d",
-                            fileTitle, layerName, frIdx - 1)
+                            "%s_%d_%s_%03d",
+                            fileTitle, chosenLayer.id, layerName, frIdx - 1)
                         local fileNameLong <const> = strfmt(
                             "%s%s.%s",
                             filePath, fileNameShort, fileExt)

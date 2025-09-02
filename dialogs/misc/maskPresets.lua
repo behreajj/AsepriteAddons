@@ -183,6 +183,7 @@ dlg:button {
     label = "To:",
     text = "FRAME",
     focus = false,
+    visible = false,
     onclick = function()
         local site <const> = app.site
         local activeSprite <const> = site.sprite
@@ -225,6 +226,7 @@ dlg:button {
     id = "toCelButton",
     text = "CEL",
     focus = false,
+    visible = false,
     onclick = function()
         local site <const> = app.site
         local activeSprite <const> = site.sprite

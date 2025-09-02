@@ -2,6 +2,9 @@ dofile("../../support/aseutilities.lua")
 
 local selModes <const> = { "REPLACE", "ADD", "SUBTRACT", "INTERSECT" }
 local targets <const> = {
+    -- TODO: tilesetShare similar to paletteShare?
+    -- It would create a new tile set in all other open sprites, excepting
+    -- if they have a different color mode?
     "CURSOR",
     "FORE_TILE",
     "BACK_TILE",
@@ -1317,6 +1320,7 @@ dlg:button {
             end
         end)
 
+        -- TODO: Turn this into its own AseUtilities method?
         local tsIdActive <const> = tileSet.properties["id"]
         if tsIdActive == nil then
             local minint64 <const> = 0x1000000000000000
@@ -1326,8 +1330,8 @@ dlg:button {
         end
 
         ---@type Layer[]
-        local usingLayers <const> = {}
-        local lenUsingLayers = 0
+        local usedBy <const> = {}
+        local lenUsedBy = 0
         local leaves <const> = AseUtilities.getLayerHierarchy(activeSprite,
             true, true, true, true)
         local lenLeaves <const> = #leaves
@@ -1340,15 +1344,15 @@ dlg:button {
                 if tsCand then
                     local tsIdCand <const> = tsCand.properties["id"]
                     if tsIdCand and tsIdCand == tsIdActive then
-                        lenUsingLayers = lenUsingLayers + 1
-                        usingLayers[lenUsingLayers] = leaf
+                        lenUsedBy = lenUsedBy + 1
+                        usedBy[lenUsedBy] = leaf
                     end -- End id candidate matches active.
                 end     -- End tile set exists.
             end         -- End leaf is tile map.
         end             -- End leaves loop.
 
         local uniqueCels <const> = AseUtilities.getUniqueCelsFromLeaves(
-            usingLayers, activeSprite.frames)
+            usedBy, activeSprite.frames)
 
         local lenUniques <const> = #uniqueCels
         local k = 0

@@ -327,7 +327,6 @@ function AseUtilities.asePaletteLoad(
             end
         end
     elseif palType == "ACTIVE" then
-        -- TODO: Get sprite from site for other scripts.
         local palActSpr <const> = app.site.sprite
         if palActSpr ~= nil then
             local modeAct <const> = palActSpr.colorMode
