@@ -664,10 +664,11 @@ dlg:button {
                             image = imgPow2
                         end
 
+                        local layerId <const> = chosenLayer.id
                         local layerName <const> = verifLayerNames[j]
                         local fileNameShort <const> = strfmt(
                             "%s_%d_%s_%03d",
-                            fileTitle, chosenLayer.id, layerName, frIdx - 1)
+                            fileTitle, layerId, layerName, frIdx - 1)
                         local fileNameLong <const> = strfmt(
                             "%s%s.%s",
                             filePath, fileNameShort, fileExt)
@@ -680,7 +681,6 @@ dlg:button {
                         }
 
                         if saveJson then
-                            local layerId <const> = chosenLayer.id
                             if not layerPackets[layerId] then
                                 local parent <const> = chosenLayer.parent
                                 local parentId = -1
