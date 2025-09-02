@@ -176,6 +176,108 @@ dlg:button {
     end
 }
 
+dlg:newrow { always = false }
+
+dlg:button {
+    id = "toFrameButton",
+    label = "To:",
+    text = "FRAME",
+    focus = false,
+    onclick = function()
+        local site <const> = app.site
+        local activeSprite <const> = site.sprite
+        if not activeSprite then return end
+
+        local activeFrame <const> = site.frame
+        if not activeFrame then return end
+
+        local selCurr <const>,
+        isValid <const> = AseUtilities.getSelection(activeSprite)
+        if not isValid then return end
+
+        local flat <const> = Image(activeSprite.spec)
+        flat:drawSprite(activeSprite, activeFrame)
+
+        local spriteSpec <const> = activeSprite.spec
+        local alphaIndex <const> = spriteSpec.transparentColor
+        local trimmed <const>,
+        xtlFrame <const>,
+        ytlFrame <const> = AseUtilities.trimImageAlpha(flat, 0, alphaIndex)
+        local wFrame <const> = trimmed.width
+        local hFrame <const> = trimmed.height
+
+        local maskBounds <const> = selCurr.bounds
+        local wMask <const> = math.max(1, math.abs(maskBounds.width))
+        local hMask <const> = math.max(1, math.abs(maskBounds.height))
+
+        selCurr.origin = Point(
+            math.floor(xtlFrame + wFrame * 0.5 - wMask * 0.5),
+            math.floor(ytlFrame + hFrame * 0.5 - hMask * 0.5))
+        selCurr:intersect(activeSprite.bounds)
+        app.transaction("Move to Frame", function()
+            activeSprite.selection = selCurr
+        end)
+        app.refresh()
+    end,
+}
+
+dlg:button {
+    id = "toCelButton",
+    text = "CEL",
+    focus = false,
+    onclick = function()
+        local site <const> = app.site
+        local activeSprite <const> = site.sprite
+        if not activeSprite then return end
+
+        local activeFrame <const> = site.frame
+        if not activeFrame then return end
+
+        local activeLayer <const> = site.layer
+        if not activeLayer then return end
+        if activeLayer.isReference then return end
+
+        local activeCel <const> = activeLayer:cel(activeFrame)
+        if not activeCel then return end
+
+        local selCurr <const>,
+        isValid <const> = AseUtilities.getSelection(activeSprite)
+        if not isValid then return end
+
+        local wTile, hTile = 1, 1
+        local isTileMap <const> = activeLayer.isTilemap
+        if isTileMap then
+            local tileSet <const> = activeLayer.tileset
+            if tileSet then
+                local tileSize <const> = tileSet.grid.tileSize
+                wTile = math.max(1, math.abs(tileSize.width))
+                hTile = math.max(1, math.abs(tileSize.height))
+            end
+        end
+
+        local celPos <const> = activeCel.position
+        local xtlCel <const> = celPos.x
+        local ytlCel <const> = celPos.y
+
+        local celImg <const> = activeCel.image
+        local wImage <const> = celImg.width * wTile
+        local hImage <const> = celImg.height * hTile
+
+        local maskBounds <const> = selCurr.bounds
+        local wMask <const> = math.max(1, math.abs(maskBounds.width))
+        local hMask <const> = math.max(1, math.abs(maskBounds.height))
+
+        selCurr.origin = Point(
+            math.floor(xtlCel + wImage * 0.5 - wMask * 0.5),
+            math.floor(ytlCel + hImage * 0.5 - hMask * 0.5))
+        selCurr:intersect(activeSprite.bounds)
+        app.transaction("Move to Cel", function()
+            activeSprite.selection = selCurr
+        end)
+        app.refresh()
+    end,
+}
+
 dlg:separator { id = "presetSep", text = "Presets" }
 
 dlg:combobox {
