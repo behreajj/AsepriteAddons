@@ -745,6 +745,15 @@ dlg:button {
     end
 }
 
+dlg:button  {
+    id = "invertButton",
+    text = "IN&VERT",
+    focus = false,
+    onclick = function()
+        app.command.InvertMask()
+    end
+}
+
 dlg:newrow { always = false }
 
 dlg:button {
