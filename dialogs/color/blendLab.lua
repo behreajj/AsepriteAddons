@@ -10,13 +10,13 @@ local abCompOptions <const> = {
     "BLEND",
     "OVER",
     "SUBTRACT",
-    "UNDER"
+    "UNDER",
 }
 
 local cCompOptions <const> = {
     "BLEND",
     "OVER",
-    "UNDER"
+    "UNDER",
 }
 
 local hCompOptions <const> = {
@@ -24,7 +24,7 @@ local hCompOptions <const> = {
     "CW",
     "NEAR",
     "OVER",
-    "UNDER"
+    "UNDER",
 }
 
 local lCompOptions <const> = {
@@ -40,7 +40,7 @@ local lCompOptions <const> = {
     "OVER",
     "SCREEN",
     "SUBTRACT",
-    "UNDER"
+    "UNDER",
 }
 
 local tCompOptions <const> = {
@@ -49,7 +49,7 @@ local tCompOptions <const> = {
     "MIN",
     "MULTIPLY",
     "OVER",
-    "UNDER"
+    "UNDER",
 }
 
 local defaults <const> = {
