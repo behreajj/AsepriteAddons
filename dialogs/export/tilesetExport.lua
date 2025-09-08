@@ -1,10 +1,14 @@
 dofile("../../support/aseutilities.lua")
 
---[[ https://doc.mapeditor.org/en/stable/reference/tmx-map-format/
-    The problem with export to CSV is that tile maps would contain
-    meta-data, but there's no meta-data for tile sets only.
+--[[
+    Tiled documentation
+    https://doc.mapeditor.org/en/stable/reference/tmx-map-format/
+
+    Unreal tile maps
+    https://www.reddit.com/r/aseprite/comments/1nbfzer/lua_script_for_exporting_tilemap_with_mirrored/
+    https://dev.epicgames.com/documentation/en-us/unreal-engine/paper-2d-tile-sets-and-tile-maps-in-unreal-engine
 ]]
-local dataOptions <const> = { "NONE", "TILED" }
+local dataOptions <const> = { "CSV", "NONE", "TILED" }
 local targetOptions <const> = { "ACTIVE", "ALL" }
 local tiledImgExts <const> = {
     "bmp",
@@ -44,6 +48,7 @@ local defaults <const> = {
     toPow2 = false,
     potUniform = false,
     metaData = "TILED",
+    sepFlipFlags = false,
     includeMaps = true,
     tmxInfinite = false,
     tmxVersion = "1.10",
@@ -139,16 +144,23 @@ local tsxTileFormat <const> = table.concat({
     "</tile>"
 })
 
----@param mapPacket table
+---@param mapPacket {flags: integer[], height: integer, indices: integer[], width: integer}
 ---@param idxOffset? integer
----@return string[] csvData
+---@param sepFlags? boolean
 ---@return integer wMap
 ---@return integer hMap
-local function writeCsv(mapPacket, idxOffset)
-    ---@type string[]
-    local csvData <const> = {}
+---@return string[] primaryData
+---@return string[] secondaryData
+---@nodiscard
+local function writeCsv(mapPacket, idxOffset, sepFlags)
     local wMap = 0
     local hMap = 0
+
+    ---@type string[]
+    local primaryData <const> = {}
+    ---@type string[]
+    local secondaryData <const> = {}
+
     if mapPacket then
         wMap = mapPacket.width
         hMap = mapPacket.height
@@ -158,30 +170,58 @@ local function writeCsv(mapPacket, idxOffset)
         local tconcat <const> = table.concat
         local idxOffVrf <const> = idxOffset or 0
 
-        local y = 0
-        while y < hMap do
-            local yw <const> = y * wMap
-            ---@type integer[]
-            local colArr <const> = {}
-            local x = 0
-            while x < wMap do
-                local flat <const> = 1 + yw + x
-                local index <const> = indices[flat]
-                local comp = 0
-                if index ~= 0 then
-                    local flag <const> = flags[flat]
-                    comp = flag | (idxOffVrf + index)
+        if sepFlags then
+            local y = 0
+            while y < hMap do
+                local yw <const> = y * wMap
+
+                ---@type integer[]
+                local idcsColArr <const> = {}
+                ---@type integer[]
+                local flagsColArr <const> = {}
+
+                local x = 0
+                while x < wMap do
+                    local flat <const> = 1 + yw + x
+                    local index <const> = indices[flat]
+                    local flag <const> = index ~= 0
+                        and flags[flat]
+                        or 0
+                    x = x + 1
+                    idcsColArr[x] = idxOffVrf + index
+                    flagsColArr[x] = flag
                 end
-                x = x + 1
-                colArr[x] = comp
-            end
 
-            y = y + 1
-            csvData[y] = tconcat(colArr, ",")
-        end
-    end
+                y = y + 1
+                primaryData[y] = tconcat(idcsColArr, ",")
+                secondaryData[y] = tconcat(flagsColArr, ",")
+            end -- End y loop.
+        else
+            local y = 0
+            while y < hMap do
+                local yw <const> = y * wMap
+                ---@type integer[]
+                local colArr <const> = {}
+                local x = 0
+                while x < wMap do
+                    local flat <const> = 1 + yw + x
+                    local index <const> = indices[flat]
+                    local comp = 0
+                    if index ~= 0 then
+                        local flag <const> = flags[flat]
+                        comp = flag | (idxOffVrf + index)
+                    end
+                    x = x + 1
+                    colArr[x] = comp
+                end
 
-    return csvData, wMap, hMap
+                y = y + 1
+                primaryData[y] = tconcat(colArr, ",")
+            end -- End y loop.
+        end     -- End separate flags check.
+    end         -- End Map packet exists.
+
+    return wMap, hMap, primaryData, secondaryData
 end
 
 ---@param properties table<string, any>
@@ -338,10 +378,12 @@ dlg:combobox {
         local metaData <const> = args.metaData --[[@as string]]
         local inclMaps <const> = args.includeMaps --[[@as boolean]]
 
-        local usemd <const> = metaData ~= "NONE"
+        local useCsv <const> = metaData == "CSV"
         local useTsx <const> = metaData == "TILED"
 
-        dlg:modify { id = "includeMaps", visible = usemd }
+        dlg:modify { id = "sepFlipFlags", visible = useCsv }
+
+        dlg:modify { id = "includeMaps", visible = useTsx }
         dlg:modify { id = "bkgColor", visible = useTsx }
         dlg:modify { id = "tsxAlign", visible = useTsx }
         dlg:modify { id = "tsxRender", visible = useTsx }
@@ -349,6 +391,17 @@ dlg:combobox {
         dlg:modify { id = "tmxInfinite", visible = useTsx and inclMaps }
         dlg:modify { id = "tmxRenderOrder", visible = useTsx and inclMaps }
     end
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "sepFlipFlags",
+    label = "Separate:",
+    text = "Flips",
+    selected = defaults.sepFlipFlags,
+    visible = defaults.metaData == "CSV",
+    hexpand = false,
 }
 
 dlg:newrow { always = false }
@@ -400,7 +453,7 @@ dlg:check {
     label = "Include:",
     text = "&Tilemaps",
     selected = defaults.includeMaps,
-    visible = defaults.metaData ~= "NONE",
+    visible = defaults.metaData == "TILED",
     hexpand = false,
     onclick = function()
         local args <const> = dlg.data
@@ -468,7 +521,6 @@ dlg:button {
         local potUniform <const> = args.potUniform --[[@as boolean]]
         local metaData <const> = args.metaData
             or defaults.metaData --[[@as string]]
-        local includeMaps <const> = args.includeMaps --[[@as boolean]]
 
         -- Unpack sprite spec.
         local spriteSpec <const> = activeSprite.spec
@@ -785,7 +837,139 @@ dlg:button {
             }
         end
 
-        if metaData ~= "NONE" then
+        if metaData == "CSV" then
+            local sepFlipFlags <const> = args.sepFlipFlags --[[@as boolean]]
+
+            local tmFrames <const> = Utilities.flatArr2(
+                AseUtilities.getFrames(activeSprite, target))
+            local lenTmFrames <const> = #tmFrames
+            if lenTmFrames <= 0 then
+                app.alert {
+                    title = "Error",
+                    text = "No frames were selected."
+                }
+                return
+            end
+
+            ---@type Layer[]
+            local tmLayers = {}
+            if target == "ACTIVE" then
+                -- This has already been validated to be
+                -- non-nil and a tile map at start of function.
+                tmLayers = { site.layer --[[@as Layer]] }
+            else
+                tmLayers = AseUtilities.getLayerHierarchy(
+                    activeSprite,
+                    true, true, true, true)
+            end
+            local lenTmLayers <const> = #tmLayers
+            if lenTmLayers <= 0 then
+                app.alert {
+                    title = "Error",
+                    text = "No layers were selected."
+                }
+                return
+            end
+
+            local pxTilei <const> = app.pixelColor.tileI
+            local pxTilef <const> = app.pixelColor.tileF
+            local validateFilename <const> = Utilities.validateFilename
+
+            ---@type table<integer, boolean>
+            local visited <const> = {}
+            local j = 0
+            while j < lenTmLayers do
+                j = j + 1
+                local tmLayer <const> = tmLayers[j]
+                local tileSet <const> = tmLayer.tileset
+                if tmLayer.isTilemap and tileSet then
+                    local idLayer <const> = tmLayer.id
+                    local layerNameVerif <const> = validateFilename(tmLayer.name)
+                    local lenTileSet <const> = #tileSet
+
+                    local k = 0
+                    while k < lenTmFrames do
+                        k = k + 1
+                        local tmFrame <const> = tmFrames[k]
+                        local tmCel <const> = tmLayer:cel(tmFrame)
+                        if tmCel then
+                            local tmImg <const> = tmCel.image
+                            local idImg <const> = tmImg.id
+                            if not visited[idImg] then
+                                visited[idImg] = true
+
+                                ---@type integer[]
+                                local tmIndicesArr <const> = {}
+                                ---@type integer[]
+                                local tmFlagsArr <const> = {}
+
+                                local tmBytes <const> = tmImg.bytes
+                                local wTileMap <const> = tmImg.width
+                                local hTileMap <const> = tmImg.height
+                                local areaTileMap <const> = wTileMap * hTileMap
+
+                                -- TODO: Make this into its own function, as it
+                                -- is used both for CSV and TMX formats.
+                                local n = 0
+                                while n < areaTileMap do
+                                    local n4 <const> = n * 4
+                                    local tlData <const> = strunpack("<I4",
+                                        strsub(tmBytes, 1 + n4, 4 + n4))
+                                    local tlIndex = pxTilei(tlData)
+                                    local tlFlag = pxTilef(tlData)
+                                    if tlIndex >= lenTileSet then
+                                        tlIndex = 0
+                                        tlFlag = 0
+                                    end
+
+                                    n = n + 1
+                                    tmIndicesArr[n] = tlIndex
+                                    tmFlagsArr[n] = tlFlag
+                                end
+
+                                local mapPacket <const> = {
+                                    width = wTileMap,
+                                    height = hTileMap,
+                                    indices = tmIndicesArr,
+                                    flags = tmFlagsArr,
+                                }
+
+                                local _ <const>,
+                                _ <const>,
+                                idcsData <const>,
+                                flipsData <const> = writeCsv(mapPacket, 0, sepFlipFlags)
+
+                                local fileName <const> = strfmt(
+                                    "%s_%d_%s_%03d",
+                                    fileTitle, idLayer, layerNameVerif, tmFrame - 1)
+                                if sepFlipFlags then
+                                    local idcsFilePath <const> = strfmt("%s%s_indices.csv", filePath, fileName)
+                                    local idcsFile <const>, _ <const> = ioOpen(idcsFilePath, "w")
+                                    if idcsFile then
+                                        idcsFile:write(tconcat(idcsData, ",\n"))
+                                        idcsFile:close()
+                                    end
+
+                                    local flipsFilePath <const> = strfmt("%s%s_flags.csv", filePath, fileName)
+                                    local flipsFile <const>, _ <const> = ioOpen(flipsFilePath, "w")
+                                    if flipsFile then
+                                        flipsFile:write(tconcat(flipsData, ",\n"))
+                                        flipsFile:close()
+                                    end
+                                else
+                                    local csvFilePath <const> = strfmt("%s%s.csv", filePath, fileName)
+                                    local csvFile <const>, _ <const> = ioOpen(csvFilePath, "w")
+                                    if csvFile then
+                                        csvFile:write(tconcat(idcsData, ",\n"))
+                                        csvFile:close()
+                                    end
+                                end -- Separate flip flags check.
+                            end     -- Cel has not been visited.
+                        end         -- End cel exists check.
+                    end             -- End frames loop.
+                end                 -- End layer isTilemap check.
+            end                     -- End layers loop.
+        elseif metaData == "TILED" then
             ---@type table[]
             local celPackets <const> = {}
             -- Because frames is an inner array, use a dictionary
@@ -797,10 +981,8 @@ dlg:button {
             ---@type table[]
             local mapPackets <const> = {}
 
+            local includeMaps <const> = args.includeMaps --[[@as boolean]]
             if includeMaps then
-                local pxTilei <const> = app.pixelColor.tileI
-                local pxTilef <const> = app.pixelColor.tileF
-
                 local frObjs <const> = activeSprite.frames
                 local tmFrames <const> = Utilities.flatArr2(
                     AseUtilities.getFrames(activeSprite, target))
@@ -832,6 +1014,9 @@ dlg:button {
                     }
                     return
                 end
+
+                local pxTilei <const> = app.pixelColor.tileI
+                local pxTilef <const> = app.pixelColor.tileF
 
                 local j = 0
                 while j < lenTmLayers do
@@ -934,254 +1119,253 @@ dlg:button {
                 end             -- End layers loop.
             end                 -- End include maps check.
 
-            if metaData == "TILED" then
-                local alphaStr = ""
-                if spriteColorMode == ColorMode.INDEXED then
-                    local trColor <const> = sheetPalette:getColor(alphaIndexVerif)
-                    local aTr <const> = trColor.alpha
-                    local rTr <const> = trColor.red
-                    local gTr <const> = trColor.green
-                    local bTr <const> = trColor.blue
+            local alphaStr = ""
+            if spriteColorMode == ColorMode.INDEXED then
+                local trColor <const> = sheetPalette:getColor(alphaIndexVerif)
+                local aTr <const> = trColor.alpha
+                local rTr <const> = trColor.red
+                local gTr <const> = trColor.green
+                local bTr <const> = trColor.blue
 
-                    -- Format is slightly different than other colors,
-                    -- as it doesn't use hashtag.
-                    alphaStr = string.format("trans=\"%08x\" ",
-                        aTr << 0x18 | rTr << 0x10 | gTr << 0x08 | bTr)
+                -- Format is slightly different than other colors,
+                -- as it doesn't use hashtag.
+                alphaStr = string.format("trans=\"%08x\" ",
+                    aTr << 0x18 | rTr << 0x10 | gTr << 0x08 | bTr)
+            end
+
+            local bkgColor <const> = args.bkgColor --[[@as Color]]
+            local bkgArgb <const> = bkgColor.alpha << 0x18
+                | bkgColor.red << 0x10
+                | bkgColor.green << 0x08
+                | bkgColor.blue
+
+            local tmxVersion <const> = defaults.tmxVersion
+            local tmxTiledVersion <const> = defaults.tmxTiledVersion
+            local tsxAlign <const> = string.lower(args.tsxAlign
+                or defaults.tsxAlign --[[@as string]])
+            local tsxRender <const> = string.lower(args.tsxRender
+                or defaults.tsxRender --[[@as string]])
+            local tsxFill <const> = string.lower(args.tsxFill
+                or defaults.tsxFill --[[@as string]])
+
+            local tmxInfinite <const> = args.tmxInfinite and 1 or 0
+            local tmxOrientation <const> = defaults.tmxOrientation
+            local tmxRenderOrder <const> = string.lower(args.tmxRenderOrder
+                or defaults.tmxRenderOrder --[[@as string]])
+
+            for _, sheet in pairs(sheetPackets) do
+                local columns <const> = sheet.columns
+                local fileName <const> = sheet.fileName
+                local height <const> = sheet.height
+                local hTile <const> = sheet.hTile
+                local lenTileSet <const> = sheet.lenTileSet
+                local tsProps <const> = sheet.properties
+                local tileData <const> = sheet.tileData
+                local width <const> = sheet.width
+                local wTile <const> = sheet.wTile
+
+                ---@type string[]
+                local tPropStrs <const> = {}
+                local lenTileData = #tileData
+
+                local j = 0
+                while j < lenTileData do
+                    j = j + 1
+                    local td <const> = tileData[j]
+                    tPropStrs[j] = strfmt(
+                        tsxTileFormat, td.id, td.class, td.probability,
+                        tconcat(writeProps(td.properties), "\n"))
                 end
 
-                local bkgColor <const> = args.bkgColor --[[@as Color]]
-                local bkgArgb <const> = bkgColor.alpha << 0x18
-                    | bkgColor.red << 0x10
-                    | bkgColor.green << 0x08
-                    | bkgColor.blue
+                -- Currently the allowed flips and rotations don't seem
+                -- accessible from Lua API, so default to 1, 1, 1, 0.
+                local tsxStr <const> = strfmt(
+                    tsxFormat,
+                    tmxVersion, tmxTiledVersion, fileName,
+                    wTile, hTile, padding, margin, lenTileSet, columns,
+                    bkgArgb, tsxAlign, tsxRender, tsxFill,
+                    1, 1, 1, 0,
+                    tconcat(writeProps(tsProps), "\n"),
+                    strfmt("%s.%s", fileName, fileExt),
+                    alphaStr, width, height,
+                    tconcat(tPropStrs, "\n"))
 
-                local tmxVersion <const> = defaults.tmxVersion
-                local tmxTiledVersion <const> = defaults.tmxTiledVersion
-                local tsxAlign <const> = string.lower(args.tsxAlign
-                    or defaults.tsxAlign --[[@as string]])
-                local tsxRender <const> = string.lower(args.tsxRender
-                    or defaults.tsxRender --[[@as string]])
-                local tsxFill <const> = string.lower(args.tsxFill
-                    or defaults.tsxFill --[[@as string]])
+                local tsxFilePath <const> = strfmt("%s%s.tsx", filePath, fileName)
+                local tsxFile <const>, _ <const> = ioOpen(tsxFilePath, "w")
+                if tsxFile then
+                    tsxFile:write(tsxStr)
+                    tsxFile:close()
+                end
+            end -- End sheet packets loop.
 
-                local tmxInfinite <const> = args.tmxInfinite and 1 or 0
-                local tmxOrientation <const> = defaults.tmxOrientation
-                local tmxRenderOrder <const> = string.lower(args.tmxRenderOrder
-                    or defaults.tmxRenderOrder --[[@as string]])
+            if includeMaps then
+                -- Aseprite and Tiled handle tile sets of variable sizes in
+                -- the same sprite / map differently. Avoid extra issues by
+                -- using the tile set grid size if there's only one. Other
+                -- wise, use the sprite grid.
+                local wSprGrd = 1
+                local hSprGrd = 1
+                if lenTileSets == 1 then
+                    local tileSet <const> = tileSets[1]
+                    local tileDim <const> = tileSet.grid.tileSize
+                    wSprGrd = math.max(1, math.abs(tileDim.width))
+                    hSprGrd = math.max(1, math.abs(tileDim.height))
+                else
+                    local spriteGrid <const> = activeSprite.gridBounds
+                    wSprGrd = math.max(1, math.abs(spriteGrid.width))
+                    hSprGrd = math.max(1, math.abs(spriteGrid.height))
+                end
 
-                for _, sheet in pairs(sheetPackets) do
-                    local columns <const> = sheet.columns
-                    local fileName <const> = sheet.fileName
-                    local height <const> = sheet.height
-                    local hTile <const> = sheet.hTile
-                    local lenTileSet <const> = sheet.lenTileSet
-                    local tsProps <const> = sheet.properties
-                    local tileData <const> = sheet.tileData
-                    local width <const> = sheet.width
-                    local wTile <const> = sheet.wTile
+                local wSprGridScaled <const> = wScale * wSprGrd
+                local hSprGridScaled <const> = hScale * hSprGrd
+
+                local wSprInTiles <const> = math.max(1, math.ceil(
+                    (wScale * spriteSpec.width) / wSprGridScaled))
+                local hSprInTiles <const> = math.max(1, math.ceil(
+                    (hScale * spriteSpec.height) / hSprGridScaled))
+
+                local lenLayerPackets <const> = #layerPackets
+                local lenCelPackets <const> = #celPackets
+                local lenMapPackets <const> = #mapPackets
+
+                -- Append frame duration and number to sprite properties.
+                local mapPropsStrs <const> = writeProps(activeSprite.properties)
+                local durPropIdx <const> = #mapPropsStrs + 1
+                local frNoPropIdx <const> = durPropIdx + 1
+                mapPropsStrs[durPropIdx] = ""
+                mapPropsStrs[frNoPropIdx] = ""
+
+                for _, frame in pairs(framePackets) do
+                    local frIdx <const> = frame.frameNumber
+
+                    -- Use layer ID as a key to access packet.
+                    ---@type table<integer, table>
+                    local filteredMapPackets <const> = {}
+                    local k = 0
+                    while k < lenMapPackets do
+                        k = k + 1
+                        local mapPacket <const> = mapPackets[k]
+                        if mapPacket.frameNumber == frIdx then
+                            filteredMapPackets[mapPacket.layer] = mapPacket
+                        end
+                    end
+
+                    -- Use layer ID as a key to access packet.
+                    ---@type table<integer, table>
+                    local filteredCelPackets <const> = {}
+                    local j = 0
+                    while j < lenCelPackets do
+                        j = j + 1
+                        local celPacket <const> = celPackets[j]
+                        if celPacket.frameNumber == frIdx then
+                            filteredCelPackets[celPacket.layer] = celPacket
+                        end
+                    end
+
+                    local firstgid = 1
+                    ---@type table<integer, integer>
+                    local usedTileSets <const> = {}
+                    ---@type string[]
+                    local tmxLayerStrs <const> = {}
+                    local m = 0
+                    while m < lenLayerPackets do
+                        m = m + 1
+                        local layerPacket <const> = layerPackets[m]
+                        local layerId <const> = layerPacket.id
+                        local isLocked <const> = layerPacket.isLocked and 1 or 0
+                        local isVisible <const> = layerPacket.isVisible and 1 or 0
+                        local layerName <const> = layerPacket.name
+                        local layerOpacity <const> = layerPacket.opacity / 255.0
+                        local layerProps <const> = layerPacket.properties
+                        local tileSetId <const> = layerPacket.tileset
+
+                        local idxOffset = 0
+                        if usedTileSets[tileSetId] then
+                            idxOffset = usedTileSets[tileSetId]
+                        else
+                            idxOffset = firstgid
+                            usedTileSets[tileSetId] = firstgid
+                            local sheetPacket <const> = sheetPackets[tileSetId]
+                            local lenTileSet <const> = sheetPacket.lenTileSet
+                            firstgid = firstgid + lenTileSet
+                        end
+
+                        local mapPacket <const> = filteredMapPackets[layerId]
+                        local wMap <const>,
+                        hMap <const>,
+                        csvData <const>,
+                        _ <const> = writeCsv(mapPacket, idxOffset, false)
+
+                        local celOpacity = 1.0
+                        local xOffset = 0
+                        local yOffset = 0
+                        local celPacket <const> = filteredCelPackets[layerId]
+                        if celPacket then
+                            celOpacity = celPacket.opacity / 255.0
+                            local boundsPacket <const> = celPacket.bounds
+                            xOffset = boundsPacket.x
+                            yOffset = boundsPacket.y
+                        end
+
+                        local compOpacity <const> = layerOpacity * celOpacity
+                        local tmxLayerStr <const> = strfmt(
+                            tmxLayerFormat,
+                            m, layerName,
+                            wMap, hMap,
+                            xOffset, yOffset,
+                            isVisible, isLocked,
+                            compOpacity,
+                            tconcat(writeProps(layerProps), "\n"),
+                            tconcat(csvData, ",\n"))
+                        tmxLayerStrs[m] = tmxLayerStr
+                    end
 
                     ---@type string[]
-                    local tPropStrs <const> = {}
-                    local lenTileData = #tileData
-
-                    local j = 0
-                    while j < lenTileData do
-                        j = j + 1
-                        local td <const> = tileData[j]
-                        tPropStrs[j] = strfmt(
-                            tsxTileFormat, td.id, td.class, td.probability,
-                            tconcat(writeProps(td.properties), "\n"))
+                    local tsxRefStrs <const> = {}
+                    for tsId, tsGid in pairs(usedTileSets) do
+                        local sheet <const> = sheetPackets[tsId]
+                        tsxRefStrs[#tsxRefStrs + 1] = strfmt(
+                            tilesetRefFormat,
+                            tsGid,
+                            sheet.fileName)
                     end
 
-                    -- Currently the allowed flips and rotations don't seem
-                    -- accessible from Lua API, so default to 1, 1, 1, 0.
-                    local tsxStr <const> = strfmt(
-                        tsxFormat,
-                        tmxVersion, tmxTiledVersion, fileName,
-                        wTile, hTile, padding, margin, lenTileSet, columns,
-                        bkgArgb, tsxAlign, tsxRender, tsxFill,
-                        1, 1, 1, 0,
-                        tconcat(writeProps(tsProps), "\n"),
-                        strfmt("%s.%s", fileName, fileExt),
-                        alphaStr, width, height,
-                        tconcat(tPropStrs, "\n"))
+                    mapPropsStrs[durPropIdx] = strfmt(
+                        "<property name=\"duration\" type=\"int\" value=\"%d\"/>",
+                        floor(frame.duration * 1000)
+                    )
+                    mapPropsStrs[frNoPropIdx] = strfmt(
+                        "<property name=\"frameNumber\" type=\"int\" value=\"%d\"/>",
+                        frame.frameNumber - 1)
 
-                    local tsxFilePath <const> = strfmt("%s%s.tsx", filePath, fileName)
-                    local tsxFile <const>, _ <const> = ioOpen(tsxFilePath, "w")
-                    if tsxFile then
-                        tsxFile:write(tsxStr)
-                        tsxFile:close()
+                    local tmxString <const> = strfmt(
+                        tmxMapFormat,
+                        tmxVersion, tmxTiledVersion,
+                        tmxOrientation, tmxRenderOrder,
+                        wSprInTiles,
+                        hSprInTiles,
+                        wSprGridScaled,
+                        hSprGridScaled,
+                        tmxInfinite,
+                        bkgArgb,
+                        tconcat(mapPropsStrs, "\n"),
+                        tconcat(tsxRefStrs, "\n"),
+                        tconcat(tmxLayerStrs, "\n"))
+
+                    local tmxFilepath = filePrefix
+                    if #fileTitle < 1 then
+                        tmxFilepath = filePath .. pathSep .. "manifest"
                     end
-                end
+                    tmxFilepath = strfmt("%s_%03d.tmx", tmxFilepath, frIdx - 1)
 
-                if includeMaps then
-                    -- Aseprite and Tiled handle tile sets of variable sizes in
-                    -- the same sprite / map differently. Avoid extra issues by
-                    -- using the tile set grid size if there's only one. Other
-                    -- wise, use the sprite grid.
-                    local wSprGrd = 1
-                    local hSprGrd = 1
-                    if lenTileSets == 1 then
-                        local tileSet <const> = tileSets[1]
-                        local tileDim <const> = tileSet.grid.tileSize
-                        wSprGrd = math.max(1, math.abs(tileDim.width))
-                        hSprGrd = math.max(1, math.abs(tileDim.height))
-                    else
-                        local spriteGrid <const> = activeSprite.gridBounds
-                        wSprGrd = math.max(1, math.abs(spriteGrid.width))
-                        hSprGrd = math.max(1, math.abs(spriteGrid.height))
+                    local tmxFile <const>, _ <const> = ioOpen(tmxFilepath, "w")
+                    if tmxFile then
+                        tmxFile:write(tmxString)
+                        tmxFile:close()
                     end
-
-                    local wSprGridScaled <const> = wScale * wSprGrd
-                    local hSprGridScaled <const> = hScale * hSprGrd
-
-                    local wSprInTiles <const> = math.max(1, math.ceil(
-                        (wScale * spriteSpec.width) / wSprGridScaled))
-                    local hSprInTiles <const> = math.max(1, math.ceil(
-                        (hScale * spriteSpec.height) / hSprGridScaled))
-
-                    local lenLayerPackets <const> = #layerPackets
-                    local lenCelPackets <const> = #celPackets
-                    local lenMapPackets <const> = #mapPackets
-
-                    -- Append frame duration and number to sprite properties.
-                    local mapPropsStrs <const> = writeProps(activeSprite.properties)
-                    local durPropIdx <const> = #mapPropsStrs + 1
-                    local frNoPropIdx <const> = durPropIdx + 1
-                    mapPropsStrs[durPropIdx] = ""
-                    mapPropsStrs[frNoPropIdx] = ""
-
-                    for _, frame in pairs(framePackets) do
-                        local frIdx <const> = frame.frameNumber
-
-                        -- Use layer ID as a key to access packet.
-                        ---@type table<integer, table>
-                        local filteredMapPackets <const> = {}
-                        local k = 0
-                        while k < lenMapPackets do
-                            k = k + 1
-                            local mapPacket <const> = mapPackets[k]
-                            if mapPacket.frameNumber == frIdx then
-                                filteredMapPackets[mapPacket.layer] = mapPacket
-                            end
-                        end
-
-                        -- Use layer ID as a key to access packet.
-                        ---@type table<integer, table>
-                        local filteredCelPackets <const> = {}
-                        local j = 0
-                        while j < lenCelPackets do
-                            j = j + 1
-                            local celPacket <const> = celPackets[j]
-                            if celPacket.frameNumber == frIdx then
-                                filteredCelPackets[celPacket.layer] = celPacket
-                            end
-                        end
-
-                        local firstgid = 1
-                        ---@type table<integer, integer>
-                        local usedTileSets <const> = {}
-                        ---@type string[]
-                        local tmxLayerStrs <const> = {}
-                        local m = 0
-                        while m < lenLayerPackets do
-                            m = m + 1
-                            local layerPacket <const> = layerPackets[m]
-                            local layerId <const> = layerPacket.id
-                            local isLocked <const> = layerPacket.isLocked and 1 or 0
-                            local isVisible <const> = layerPacket.isVisible and 1 or 0
-                            local layerName <const> = layerPacket.name
-                            local layerOpacity <const> = layerPacket.opacity / 255.0
-                            local layerProps <const> = layerPacket.properties
-                            local tileSetId <const> = layerPacket.tileset
-
-                            local idxOffset = 0
-                            if usedTileSets[tileSetId] then
-                                idxOffset = usedTileSets[tileSetId]
-                            else
-                                idxOffset = firstgid
-                                usedTileSets[tileSetId] = firstgid
-                                local sheetPacket <const> = sheetPackets[tileSetId]
-                                local lenTileSet <const> = sheetPacket.lenTileSet
-                                firstgid = firstgid + lenTileSet
-                            end
-
-                            local mapPacket <const> = filteredMapPackets[layerId]
-                            local csvData <const>,
-                            wMap <const>,
-                            hMap <const> = writeCsv(mapPacket, idxOffset)
-
-                            local celOpacity = 1.0
-                            local xOffset = 0
-                            local yOffset = 0
-                            local celPacket <const> = filteredCelPackets[layerId]
-                            if celPacket then
-                                celOpacity = celPacket.opacity / 255.0
-                                local boundsPacket <const> = celPacket.bounds
-                                xOffset = boundsPacket.x
-                                yOffset = boundsPacket.y
-                            end
-
-                            local compOpacity <const> = layerOpacity * celOpacity
-                            local tmxLayerStr <const> = strfmt(
-                                tmxLayerFormat,
-                                m, layerName,
-                                wMap, hMap,
-                                xOffset, yOffset,
-                                isVisible, isLocked,
-                                compOpacity,
-                                tconcat(writeProps(layerProps), "\n"),
-                                tconcat(csvData, ",\n"))
-                            tmxLayerStrs[m] = tmxLayerStr
-                        end
-
-                        ---@type string[]
-                        local tsxRefStrs <const> = {}
-                        for tsId, tsGid in pairs(usedTileSets) do
-                            local sheet <const> = sheetPackets[tsId]
-                            tsxRefStrs[#tsxRefStrs + 1] = strfmt(
-                                tilesetRefFormat,
-                                tsGid,
-                                sheet.fileName)
-                        end
-
-                        mapPropsStrs[durPropIdx] = strfmt(
-                            "<property name=\"duration\" type=\"int\" value=\"%d\"/>",
-                            floor(frame.duration * 1000)
-                        )
-                        mapPropsStrs[frNoPropIdx] = strfmt(
-                            "<property name=\"frameNumber\" type=\"int\" value=\"%d\"/>",
-                            frame.frameNumber - 1)
-
-                        local tmxString <const> = strfmt(
-                            tmxMapFormat,
-                            tmxVersion, tmxTiledVersion,
-                            tmxOrientation, tmxRenderOrder,
-                            wSprInTiles,
-                            hSprInTiles,
-                            wSprGridScaled,
-                            hSprGridScaled,
-                            tmxInfinite,
-                            bkgArgb,
-                            tconcat(mapPropsStrs, "\n"),
-                            tconcat(tsxRefStrs, "\n"),
-                            tconcat(tmxLayerStrs, "\n"))
-
-                        local tmxFilepath = filePrefix
-                        if #fileTitle < 1 then
-                            tmxFilepath = filePath .. pathSep .. "manifest"
-                        end
-                        tmxFilepath = strfmt("%s_%03d.tmx", tmxFilepath, frIdx - 1)
-
-                        local tmxFile <const>, _ <const> = ioOpen(tmxFilepath, "w")
-                        if tmxFile then
-                            tmxFile:write(tmxString)
-                            tmxFile:close()
-                        end
-                    end -- End frame dict loop.
-                end     -- End include maps check.
-            end         -- End Tiled format check.
-        end             -- End write meta data check.
+                end -- End frame dict loop.
+            end     -- End include maps check.
+        end         -- End write meta data check.
 
         app.alert {
             title = "Success",
