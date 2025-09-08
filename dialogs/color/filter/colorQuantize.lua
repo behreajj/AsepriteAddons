@@ -4,6 +4,9 @@ dofile("../../../support/quantizeutilities.lua")
 local targets <const> = { "ACTIVE", "ALL", "PALETTE", "RANGE" }
 
 local defaults <const> = {
+    -- TODO: Separate color space setting for LAB?
+    -- Maybe convert lab to 16bit integer, then quantize
+    -- then convert back?
     target = "ACTIVE",
     genPalette = false
 }
