@@ -144,84 +144,124 @@ local tsxTileFormat <const> = table.concat({
     "</tile>"
 })
 
----@param mapPacket {flags: integer[], height: integer, indices: integer[], width: integer}
+---@param wTileMap integer
+---@param hTileMap integer
+---@param lenTileSet integer
+---@param tmBytes string
+---@return integer[] tmIndicesArr
+---@return integer[] tmFlagsArr
+local function parseTilemap(wTileMap, hTileMap, lenTileSet, tmBytes)
+    ---@type integer[]
+    local tmIndicesArr <const> = {}
+    ---@type integer[]
+    local tmFlagsArr <const> = {}
+
+    local strunpack <const> = string.unpack
+    local strsub <const> = string.sub
+    local pxTilei <const> = app.pixelColor.tileI
+    local pxTilef <const> = app.pixelColor.tileF
+
+    local areaTileMap <const> = wTileMap * hTileMap
+
+    local i = 0
+    while i < areaTileMap do
+        local i4 <const> = i * 4
+        local tlData <const> = strunpack("<I4",
+            strsub(tmBytes, 1 + i4, 4 + i4))
+        local tlIndex = pxTilei(tlData)
+        local tlFlag = pxTilef(tlData)
+        if tlIndex >= lenTileSet then
+            tlIndex = 0
+            tlFlag = 0
+        end
+
+        i = i + 1
+        tmIndicesArr[i] = tlIndex
+        tmFlagsArr[i] = tlFlag
+    end
+
+    return tmIndicesArr, tmFlagsArr
+end
+
+---@param wMap integer
+---@param hMap integer
+---@param indices integer[]
+---@param flags integer[]
+---@param rowDelim? string
 ---@param idxOffset? integer
 ---@param sepFlags? boolean
----@return integer wMap
----@return integer hMap
----@return string[] primaryData
----@return string[] secondaryData
+---@return string primaryData
+---@return string secondaryData
 ---@nodiscard
-local function writeCsv(mapPacket, idxOffset, sepFlags)
-    local wMap = 0
-    local hMap = 0
-
+local function writeCsv(
+    wMap, hMap, indices, flags,
+    rowDelim, idxOffset, sepFlags)
     ---@type string[]
     local primaryData <const> = {}
     ---@type string[]
     local secondaryData <const> = {}
 
-    if mapPacket then
-        wMap = mapPacket.width
-        hMap = mapPacket.height
+    local tconcat <const> = table.concat
+    local idxOffVrf <const> = idxOffset or 0
 
-        local indices <const> = mapPacket.indices
-        local flags <const> = mapPacket.flags
-        local tconcat <const> = table.concat
-        local idxOffVrf <const> = idxOffset or 0
+    if sepFlags ~= nil and sepFlags == true then
+        local y = 0
+        while y < hMap do
+            local yw <const> = y * wMap
 
-        if sepFlags then
-            local y = 0
-            while y < hMap do
-                local yw <const> = y * wMap
+            ---@type integer[]
+            local idcsColArr <const> = {}
+            ---@type integer[]
+            local flagsColArr <const> = {}
 
-                ---@type integer[]
-                local idcsColArr <const> = {}
-                ---@type integer[]
-                local flagsColArr <const> = {}
+            local x = 0
+            while x < wMap do
+                local flat <const> = 1 + yw + x
+                local index <const> = indices[flat]
+                local flag <const> = index ~= 0
+                    and flags[flat]
+                    or 0
+                x = x + 1
+                idcsColArr[x] = idxOffVrf + index
+                flagsColArr[x] = flag
+            end
 
-                local x = 0
-                while x < wMap do
-                    local flat <const> = 1 + yw + x
-                    local index <const> = indices[flat]
-                    local flag <const> = index ~= 0
-                        and flags[flat]
-                        or 0
-                    x = x + 1
-                    idcsColArr[x] = idxOffVrf + index
-                    flagsColArr[x] = flag
+            y = y + 1
+            primaryData[y] = tconcat(idcsColArr, ",")
+            secondaryData[y] = tconcat(flagsColArr, ",")
+        end -- End y loop.
+    else
+        local y = 0
+        while y < hMap do
+            local yw <const> = y * wMap
+            ---@type integer[]
+            local colArr <const> = {}
+            local x = 0
+            while x < wMap do
+                local flat <const> = 1 + yw + x
+                local index <const> = indices[flat]
+                local comp = 0
+                if index ~= 0 then
+                    local flag <const> = flags[flat]
+                    comp = flag | (idxOffVrf + index)
                 end
+                x = x + 1
+                colArr[x] = comp
+            end
 
-                y = y + 1
-                primaryData[y] = tconcat(idcsColArr, ",")
-                secondaryData[y] = tconcat(flagsColArr, ",")
-            end -- End y loop.
-        else
-            local y = 0
-            while y < hMap do
-                local yw <const> = y * wMap
-                ---@type integer[]
-                local colArr <const> = {}
-                local x = 0
-                while x < wMap do
-                    local flat <const> = 1 + yw + x
-                    local index <const> = indices[flat]
-                    local comp = 0
-                    if index ~= 0 then
-                        local flag <const> = flags[flat]
-                        comp = flag | (idxOffVrf + index)
-                    end
-                    x = x + 1
-                    colArr[x] = comp
-                end
+            y = y + 1
+            primaryData[y] = tconcat(colArr, ",")
+        end -- End y loop.
+    end     -- End separate flags check.
 
-                y = y + 1
-                primaryData[y] = tconcat(colArr, ",")
-            end -- End y loop.
-        end     -- End separate flags check.
-    end         -- End Map packet exists.
-
-    return wMap, hMap, primaryData, secondaryData
+    -- Different parsers will have issues with row delimeters.
+    -- Tiled seems to require a comma after the final column,
+    -- while VS Code's CSV lint will want either no comma or
+    -- commas after all columns, including the final column
+    -- of the final row.
+    local rowDelimVerif <const> = rowDelim or ",\n"
+    return tconcat(primaryData, rowDelimVerif),
+        tconcat(secondaryData, rowDelimVerif)
 end
 
 ---@param properties table<string, any>
@@ -898,69 +938,47 @@ dlg:button {
                             if not visited[idImg] then
                                 visited[idImg] = true
 
-                                ---@type integer[]
-                                local tmIndicesArr <const> = {}
-                                ---@type integer[]
-                                local tmFlagsArr <const> = {}
-
                                 local tmBytes <const> = tmImg.bytes
                                 local wTileMap <const> = tmImg.width
                                 local hTileMap <const> = tmImg.height
-                                local areaTileMap <const> = wTileMap * hTileMap
 
-                                -- TODO: Make this into its own function, as it
-                                -- is used both for CSV and TMX formats.
-                                local n = 0
-                                while n < areaTileMap do
-                                    local n4 <const> = n * 4
-                                    local tlData <const> = strunpack("<I4",
-                                        strsub(tmBytes, 1 + n4, 4 + n4))
-                                    local tlIndex = pxTilei(tlData)
-                                    local tlFlag = pxTilef(tlData)
-                                    if tlIndex >= lenTileSet then
-                                        tlIndex = 0
-                                        tlFlag = 0
-                                    end
+                                local tmIndicesArr <const>,
+                                tmFlagsArr <const> = parseTilemap(
+                                    wTileMap, hTileMap, lenTileSet, tmBytes)
 
-                                    n = n + 1
-                                    tmIndicesArr[n] = tlIndex
-                                    tmFlagsArr[n] = tlFlag
-                                end
-
-                                local mapPacket <const> = {
-                                    width = wTileMap,
-                                    height = hTileMap,
-                                    indices = tmIndicesArr,
-                                    flags = tmFlagsArr,
-                                }
-
-                                local _ <const>,
-                                _ <const>,
-                                idcsData <const>,
-                                flipsData <const> = writeCsv(mapPacket, 0, sepFlipFlags)
+                                local idcsData <const>,
+                                flipsData <const> = writeCsv(
+                                    wTileMap, hTileMap,
+                                    tmIndicesArr,
+                                    tmFlagsArr,
+                                    "\n", 0, sepFlipFlags)
 
                                 local fileName <const> = strfmt(
                                     "%s_%d_%s_%03d",
                                     fileTitle, idLayer, layerNameVerif, tmFrame - 1)
                                 if sepFlipFlags then
-                                    local idcsFilePath <const> = strfmt("%s%s_indices.csv", filePath, fileName)
+                                    local idcsFilePath <const> = strfmt(
+                                        "%s%s_indices.csv",
+                                        filePath, fileName)
                                     local idcsFile <const>, _ <const> = ioOpen(idcsFilePath, "w")
                                     if idcsFile then
-                                        idcsFile:write(tconcat(idcsData, ",\n"))
+                                        idcsFile:write(idcsData)
                                         idcsFile:close()
                                     end
 
-                                    local flipsFilePath <const> = strfmt("%s%s_flags.csv", filePath, fileName)
+                                    local flipsFilePath <const> = strfmt(
+                                        "%s%s_flags.csv",
+                                        filePath, fileName)
                                     local flipsFile <const>, _ <const> = ioOpen(flipsFilePath, "w")
                                     if flipsFile then
-                                        flipsFile:write(tconcat(flipsData, ",\n"))
+                                        flipsFile:write(flipsData)
                                         flipsFile:close()
                                     end
                                 else
                                     local csvFilePath <const> = strfmt("%s%s.csv", filePath, fileName)
                                     local csvFile <const>, _ <const> = ioOpen(csvFilePath, "w")
                                     if csvFile then
-                                        csvFile:write(tconcat(idcsData, ",\n"))
+                                        csvFile:write(idcsData)
                                         csvFile:close()
                                     end
                                 end -- Separate flip flags check.
@@ -1062,31 +1080,11 @@ dlg:button {
                                 local tmImage <const> = tmCel.image
                                 local tmBytes <const> = tmImage.bytes
 
-                                ---@type integer[]
-                                local tmIndicesArr <const> = {}
-                                ---@type integer[]
-                                local tmFlagsArr <const> = {}
-
                                 local wTileMap <const> = tmImage.width
                                 local hTileMap <const> = tmImage.height
-                                local areaTileMap <const> = wTileMap * hTileMap
-
-                                local n = 0
-                                while n < areaTileMap do
-                                    local n4 <const> = n * 4
-                                    local tlData <const> = strunpack("<I4",
-                                        strsub(tmBytes, 1 + n4, 4 + n4))
-                                    local tlIndex = pxTilei(tlData)
-                                    local tlFlag = pxTilef(tlData)
-                                    if tlIndex >= lenTileSet then
-                                        tlIndex = 0
-                                        tlFlag = 0
-                                    end
-
-                                    n = n + 1
-                                    tmIndicesArr[n] = tlIndex
-                                    tmFlagsArr[n] = tlFlag
-                                end
+                                local tmIndicesArr <const>,
+                                tmFlagsArr <const> = parseTilemap(
+                                    wTileMap, hTileMap, lenTileSet, tmBytes)
 
                                 local mapPacket <const> = {
                                     flags = tmFlagsArr,
@@ -1290,11 +1288,23 @@ dlg:button {
                             firstgid = firstgid + lenTileSet
                         end
 
+                        local wMap = 0
+                        local hMap = 0
+                        local indices = {}
+                        local flags = {}
+
+                        -- Map packet may be nil.
                         local mapPacket <const> = filteredMapPackets[layerId]
-                        local wMap <const>,
-                        hMap <const>,
-                        csvData <const>,
-                        _ <const> = writeCsv(mapPacket, idxOffset, false)
+                        if mapPacket then
+                            wMap = mapPacket.width
+                            hMap = mapPacket.height
+                            indices = mapPacket.indices
+                            flags = mapPacket.flags
+                        end
+
+                        local csvData <const>, _ <const> = writeCsv(
+                            wMap, hMap, indices, flags,
+                            ",\n", idxOffset, false)
 
                         local celOpacity = 1.0
                         local xOffset = 0
@@ -1316,7 +1326,7 @@ dlg:button {
                             isVisible, isLocked,
                             compOpacity,
                             tconcat(writeProps(layerProps), "\n"),
-                            tconcat(csvData, ",\n"))
+                            csvData)
                         tmxLayerStrs[m] = tmxLayerStr
                     end
 
