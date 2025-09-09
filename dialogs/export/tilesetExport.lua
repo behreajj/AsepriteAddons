@@ -1228,7 +1228,7 @@ dlg:button {
                     local frIdx <const> = frame.frameNumber
 
                     -- Use layer ID as a key to access packet.
-                    ---@type table<integer, table>
+                    ---@type table<integer, table|nil>
                     local filteredMapPackets <const> = {}
                     local k = 0
                     while k < lenMapPackets do
