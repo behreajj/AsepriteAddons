@@ -1240,7 +1240,7 @@ dlg:button {
                     end
 
                     -- Use layer ID as a key to access packet.
-                    ---@type table<integer, table>
+                    ---@type table<integer, table|nil>
                     local filteredCelPackets <const> = {}
                     local j = 0
                     while j < lenCelPackets do
