@@ -185,7 +185,7 @@ end
 ---@param hMap integer
 ---@param indices integer[]
 ---@param flags integer[]
----@param rowDelim? string
+---@param rowDelim string
 ---@param idxOffset? integer
 ---@param sepFlags? boolean
 ---@return string primaryData
@@ -227,7 +227,7 @@ local function writeCsv(
             y = y + 1
             primaryData[y] = tconcat(idcsColArr, ",")
             secondaryData[y] = tconcat(flagsColArr, ",")
-        end -- End y loop.
+        end
     else
         local y = 0
         while y < hMap do
@@ -257,9 +257,8 @@ local function writeCsv(
     -- while VS Code's CSV lint will want either no comma or
     -- commas after all columns, including the final column
     -- of the final row.
-    local rowDelimVerif <const> = rowDelim or ",\n"
-    return tconcat(primaryData, rowDelimVerif),
-        tconcat(secondaryData, rowDelimVerif)
+    return tconcat(primaryData, rowDelim),
+        tconcat(secondaryData, rowDelim)
 end
 
 ---@param properties table<string, any>
