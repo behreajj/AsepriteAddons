@@ -38,8 +38,6 @@ local tsxAligns <const> = {
 }
 
 local defaults <const> = {
-    -- TODO: Refactor to include group hierarchy and layers that are not
-    -- tile maps if user wants them.
     target = "ALL",
     border = 0,
     padding = 0,
@@ -715,8 +713,6 @@ dlg:button {
         local rng <const> = math.random
         local sqrt <const> = math.sqrt
         local strfmt <const> = string.format
-        local strsub <const> = string.sub
-        local strunpack <const> = string.unpack
         local tconcat <const> = table.concat
         local nextPow2 <const> = Utilities.nextPowerOf2
         local verifName <const> = Utilities.validateFilename
@@ -911,8 +907,6 @@ dlg:button {
                 return
             end
 
-            local pxTilei <const> = app.pixelColor.tileI
-            local pxTilef <const> = app.pixelColor.tileF
             local validateFilename <const> = Utilities.validateFilename
 
             ---@type table<integer, boolean>
@@ -1032,9 +1026,6 @@ dlg:button {
                     }
                     return
                 end
-
-                local pxTilei <const> = app.pixelColor.tileI
-                local pxTilef <const> = app.pixelColor.tileF
 
                 local j = 0
                 while j < lenTmLayers do
