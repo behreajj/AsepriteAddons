@@ -641,6 +641,7 @@ dlg:button {
                         "sprites with multiple palettes."
                     }
                 }
+                return
             end
         elseif spriteColorMode == ColorMode.GRAY then
             local lcFileExt <const> = string.lower(fileExt)
