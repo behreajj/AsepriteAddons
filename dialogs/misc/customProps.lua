@@ -652,6 +652,52 @@ dlg:button {
                         uuidPreset, uuidIndex)
                 }
             end
+        elseif typeQuery == "userdata" then
+            local queryName <const> = query.__name
+                or getmetatable(query)["__name"] --[[@as string]]
+            if queryName == "gfx::Point" then
+                dlg:modify { id = "dataType", option = "POINT" }
+
+                dlg:modify { id = "ptxValue", visible = true }
+                dlg:modify { id = "ptyValue", visible = true }
+
+                dlg:modify { id = "ptxValue", text = string.format("%d", query.x) }
+                dlg:modify { id = "ptyValue", text = string.format("%d", query.y) }
+            elseif queryName == "gfx::Rect" then
+                dlg:modify { id = "dataType", option = "RECTANGLE" }
+
+                dlg:modify { id = "ptxValue", visible = true }
+                dlg:modify { id = "ptyValue", visible = true }
+                dlg:modify { id = "szwValue", visible = true }
+                dlg:modify { id = "szhValue", visible = true }
+
+                dlg:modify { id = "ptxValue", text = string.format("%d", query.x) }
+                dlg:modify { id = "ptyValue", text = string.format("%d", query.y) }
+                dlg:modify { id = "szwValue", text = string.format("%d", query.width) }
+                dlg:modify { id = "szhValue", text = string.format("%d", query.height) }
+            elseif queryName == "gfx::Size" then
+                dlg:modify { id = "dataType", option = "SIZE" }
+
+                dlg:modify { id = "szwValue", visible = true }
+                dlg:modify { id = "szhValue", visible = true }
+
+                dlg:modify { id = "szwValue", text = string.format("%d", query.width) }
+                dlg:modify { id = "szhValue", text = string.format("%d", query.height) }
+            elseif queryName == "Uuid" then
+                dlg:modify { id = "dataType", option = "UUID" }
+
+                dlg:modify { id = "uuidValue", visible = true }
+                dlg:modify { id = "genUuidButton", visible = true }
+
+                dlg:modify { id = "uuidValue", text = string.format("%s", query) }
+            else
+                dlg:modify { id = "dataType", option = "NIL" }
+                app.alert {
+                    title = "Error",
+                    text = "Unsupported data type."
+                }
+                return
+            end -- Check name property.
         else
             dlg:modify { id = "dataType", option = "NIL" }
             app.alert {
