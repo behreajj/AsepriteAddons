@@ -33,8 +33,6 @@ local defaults <const> = {
     -- that you'd need another string entry so you can rename "x" to "y".
     -- Maybe create a child dialog?
 
-    -- TODO: Draw button for Rectangle type?
-
     target = "CEL",
     dataType = "STRING",
     propName = "property",
@@ -49,6 +47,8 @@ local defaults <const> = {
     uuidValue = "00000000-0000-0000-0000-000000000000",
     uuidPreset = "STRING",
     uuidIndex = 0,
+    rectFillAlpha = 96,
+    rectStrokeAlpha = 255,
 }
 
 ---@param x any
@@ -340,6 +340,7 @@ dlg:combobox {
         dlg:modify { id = "stringValue", visible = isStr and notNil }
         dlg:modify { id = "uuidValue", visible = isUuid and notNil }
         dlg:modify { id = "genUuidButton", visible = isUuid and notNil }
+        dlg:modify { id = "drawRectButton", visible = isRect and notNil }
     end
 }
 
@@ -489,6 +490,118 @@ dlg:button {
 dlg:newrow { always = false }
 
 dlg:button {
+    id = "drawRectButton",
+    text = "&DRAW",
+    visible = defaults.dataType == "RECTANGLE",
+    focus = false,
+    onclick = function()
+        local site <const> = app.site
+        local activeSprite <const> = site.sprite
+        if not activeSprite then return end
+
+        local activeFrame <const> = site.frame
+        if not activeFrame then return end
+
+        local activeLayer <const> = site.layer
+
+        local args <const> = dlg.data
+        local x <const> = args.ptxValue --[[@as integer]]
+        local y <const> = args.ptyValue --[[@as integer]]
+        local w <const> = args.szwValue --[[@as integer]]
+        local h <const> = args.szhValue --[[@as integer]]
+
+        if w <= 0 or h <= 0 then
+            app.alert {
+                title = "Error",
+                text = "Rectangle dimensions less than or equal to zero."
+            }
+            return
+        end
+
+        local spriteSpec <const> = activeSprite.spec
+        local trgImg <const> = Image(spriteSpec)
+        local context <const> = trgImg.context
+        if not context then
+            app.alert {
+                title = "Error",
+                text = "Graphics context is not supported."
+            }
+            return
+        end
+
+        local baseColor = app.fgColor
+        if baseColor.alpha <= 0 then
+            local appPrefs <const> = app.preferences
+            if appPrefs then
+                local slicePrefs <const> = appPrefs.slices
+                if slicePrefs then
+                    local prefsColor <const> = slicePrefs.default_color --[[@as Color]]
+                    if prefsColor then
+                        if prefsColor.alpha > 0 then
+                            baseColor = Color {
+                                r = prefsColor.red,
+                                g = prefsColor.green,
+                                b = prefsColor.blue,
+                                a = prefsColor.alpha
+                            }
+                        end -- Pref color alpha is non zero.
+                    end     -- Pref color eixsts.
+                end         -- Slices preferences exists.
+            end             -- App preferences exits.
+        end                 -- Base color alpha is zero.
+
+        local strokeColor <const> = Color {
+            r = baseColor.red,
+            g = baseColor.green,
+            b = baseColor.blue,
+            a = defaults.rectStrokeAlpha,
+        }
+        local fillColor <const> = Color {
+            r = baseColor.red,
+            g = baseColor.green,
+            b = baseColor.blue,
+            a = defaults.rectFillAlpha,
+        }
+
+        local useAntialias <const> = spriteSpec.colorMode == ColorMode.RGB
+        context.antialias = useAntialias
+        context.strokeWidth = 1
+
+        context:beginPath()
+        context:moveTo(x, y)
+        context:lineTo(x + w, y)
+        context:lineTo(x + w, y + h)
+        context:lineTo(x, y + h)
+        context:closePath()
+
+        context.color = fillColor
+        context:fill()
+
+        context.color = strokeColor
+        context:stroke()
+
+        local trimmed <const>,
+        xCel <const>,
+        yCel <const> = AseUtilities.trimImageAlpha(
+            trgImg, 0, spriteSpec.transparentColor)
+
+        app.transaction("Draw Rectangle", function()
+            local rectLayer <const> = activeSprite:newLayer()
+            rectLayer.name = "Rectangle"
+            activeSprite:newCel(rectLayer, activeFrame,
+                trimmed, Point(xCel, yCel))
+        end)
+
+        if activeLayer then
+            app.layer = activeLayer
+        end
+        app.refresh()
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:button {
     id = "get",
     text = "&GET",
     focus = false,
@@ -520,6 +633,7 @@ dlg:button {
         dlg:modify { id = "szhValue", visible = false }
         dlg:modify { id = "stringValue", visible = false }
         dlg:modify { id = "uuidValue", visible = false }
+        dlg:modify { id = "drawRectButton", visible = false }
         dlg:modify { id = "genUuidButton", visible = false }
 
         -- It is possible for the key to be an empty string, "".
@@ -621,6 +735,7 @@ dlg:button {
                 dlg:modify { id = "ptyValue", visible = true }
                 dlg:modify { id = "szwValue", visible = true }
                 dlg:modify { id = "szhValue", visible = true }
+                dlg:modify { id = "drawRectButton", visible = true }
 
                 dlg:modify { id = "ptxValue", text = string.format("%d", x) }
                 dlg:modify { id = "ptyValue", text = string.format("%d", y) }
@@ -670,6 +785,7 @@ dlg:button {
                 dlg:modify { id = "ptyValue", visible = true }
                 dlg:modify { id = "szwValue", visible = true }
                 dlg:modify { id = "szhValue", visible = true }
+                dlg:modify { id = "drawRectButton", visible = true }
 
                 dlg:modify { id = "ptxValue", text = string.format("%d", query.x) }
                 dlg:modify { id = "ptyValue", text = string.format("%d", query.y) }
