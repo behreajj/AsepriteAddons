@@ -481,7 +481,7 @@ dlg:newrow { always = false }
 
 dlg:button {
     id = "genUuidButton",
-    text = "C&REATE",
+    text = "CR&EATE",
     visible = defaults.dataType == "UUID",
     focus = false,
     onclick = function()
@@ -842,7 +842,7 @@ dlg:newrow { always = false }
 
 dlg:button {
     id = "renameButton",
-    text = "R&ENAME",
+    text = "&RENAME",
     focus = false,
     onclick = function()
         local args <const> = dlg.data
