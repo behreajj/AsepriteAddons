@@ -1669,10 +1669,10 @@ function AseUtilities.filterLayers(
                         and (includeBkg or (not rangeLayer.isBackground)) then
                         lenTrgLayers = lenTrgLayers + 1
                         trgLayers[lenTrgLayers] = rangeLayer
-                    end
-                end
-            end
-        end
+                    end -- Criteria check.
+                end     -- Range layers loop.
+            end         -- Range type check.
+        end             -- Range sprite matches active.
 
         if tlHidden then
             app.command.Timeline { close = true }
@@ -2851,10 +2851,9 @@ function AseUtilities.resizeImageNearest(source, wTrg, hTrg)
     }
     trgSpec.colorSpace = srcSpec.colorSpace
     local target <const> = Image(trgSpec)
-
-    local bytesRsz <const> = Utilities.resizePixelsNearest(
-        source.bytes, wSrc, hSrc, wVrf, hVrf, source.bytesPerPixel, alphaIndex)
-    target.bytes = bytesRsz
+    target.bytes = Utilities.resizePixelsNearest(
+        source.bytes, wSrc, hSrc, wVrf, hVrf,
+        source.bytesPerPixel, alphaIndex)
     return target
 end
 

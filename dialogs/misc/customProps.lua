@@ -21,6 +21,8 @@ local dataTypes <const> = {
     "NIL",
     "NUMBER",
     "POINT",
+    "RECTANGLE",
+    "SIZE",
     "STRING",
     "UUID",
 }
@@ -29,6 +31,9 @@ local defaults <const> = {
     -- TODO: Include a rename button, which sets the current property value
     -- to a new name, then sets the current property key to nil. Problem is
     -- that you'd need another string entry so you can rename "x" to "y".
+    -- Maybe create a child dialog?
+
+    -- TODO: Draw button for Rectangle type?
 
     target = "CEL",
     dataType = "STRING",
@@ -38,6 +43,8 @@ local defaults <const> = {
     numValue = 0.0,
     ptxValue = 0,
     ptyValue = 0,
+    szwValue = 1,
+    szhValue = 1,
     stringValue = "",
     uuidValue = "00000000-0000-0000-0000-000000000000",
     uuidPreset = "STRING",
@@ -315,6 +322,8 @@ dlg:combobox {
         local isInt <const> = dataType == "INTEGER"
         local isNum <const> = dataType == "NUMBER"
         local isPt <const> = dataType == "POINT"
+        local isRect <const> = dataType == "RECTANGLE"
+        local isSz <const> = dataType == "SIZE"
         local isStr <const> = dataType == "STRING"
         local isUuid <const> = dataType == "UUID"
         local notNil <const> = dataType ~= "NIL"
@@ -324,8 +333,10 @@ dlg:combobox {
         dlg:modify { id = "intValue", visible = isInt and notNil }
         dlg:modify { id = "hexLabel", visible = isInt and notNil }
         dlg:modify { id = "numValue", visible = isNum and notNil }
-        dlg:modify { id = "ptxValue", visible = isPt and notNil }
-        dlg:modify { id = "ptyValue", visible = isPt and notNil }
+        dlg:modify { id = "ptxValue", visible = (isPt or isRect) and notNil }
+        dlg:modify { id = "ptyValue", visible = (isPt or isRect) and notNil }
+        dlg:modify { id = "szwValue", visible = (isSz or isRect) and notNil }
+        dlg:modify { id = "szhValue", visible = (isSz or isRect) and notNil }
         dlg:modify { id = "stringValue", visible = isStr and notNil }
         dlg:modify { id = "uuidValue", visible = isUuid and notNil }
         dlg:modify { id = "genUuidButton", visible = isUuid and notNil }
@@ -406,7 +417,8 @@ dlg:number {
     label = "Point:",
     text = string.format("%d", defaults.ptxValue),
     decimals = 0,
-    visible = defaults.dataType == "POINT",
+    visible = defaults.dataType == "POINT"
+        or defaults.dataType == "RECTANGLE",
     focus = false
 }
 
@@ -414,7 +426,29 @@ dlg:number {
     id = "ptyValue",
     text = string.format("%d", defaults.ptyValue),
     decimals = 0,
-    visible = defaults.dataType == "POINT",
+    visible = defaults.dataType == "POINT"
+        or defaults.dataType == "RECTANGLE",
+    focus = false
+}
+
+dlg:newrow { always = false }
+
+dlg:number {
+    id = "szwValue",
+    label = "Size:",
+    text = string.format("%d", defaults.szwValue),
+    decimals = 0,
+    visible = defaults.dataType == "SIZE"
+        or defaults.dataType == "RECTANGLE",
+    focus = false
+}
+
+dlg:number {
+    id = "szhValue",
+    text = string.format("%d", defaults.szhValue),
+    decimals = 0,
+    visible = defaults.dataType == "SIZE"
+        or defaults.dataType == "RECTANGLE",
     focus = false
 }
 
@@ -482,6 +516,8 @@ dlg:button {
         dlg:modify { id = "numValue", visible = false }
         dlg:modify { id = "ptxValue", visible = false }
         dlg:modify { id = "ptyValue", visible = false }
+        dlg:modify { id = "szwValue", visible = false }
+        dlg:modify { id = "szhValue", visible = false }
         dlg:modify { id = "stringValue", visible = false }
         dlg:modify { id = "uuidValue", visible = false }
         dlg:modify { id = "genUuidButton", visible = false }
@@ -550,6 +586,63 @@ dlg:button {
                 dlg:modify { id = "ptyValue", visible = true }
                 dlg:modify { id = "ptxValue", text = string.format("%d", x) }
                 dlg:modify { id = "ptyValue", text = string.format("%d", y) }
+            elseif dataType == "RECTANGLE" then
+                local xQuery, yQuery, wQuery, hQuery = 0, 0, 0, 0
+
+                local topLeftQuery <const> = query["topLeft"]
+                local sizeQuery <const> = query["size"]
+                if topLeftQuery
+                    and sizeQuery
+                    and type(topLeftQuery) == "table"
+                    and type(sizeQuery) == "table" then
+                    xQuery = topLeftQuery["x"] or 0
+                    yQuery = topLeftQuery["y"] or 0
+                    wQuery = sizeQuery["x"] or 0
+                    hQuery = sizeQuery["y"] or 0
+                else
+                    xQuery = (query["x"] or query[1]) or 0
+                    yQuery = (query["y"] or query[2]) or 0
+                    wQuery = (((query["width"]
+                                or query["w"])
+                            or query["x"])
+                        or query[3]) or 0
+                    hQuery = (((query["height"]
+                                or query["h"])
+                            or query["y"])
+                        or query[4]) or 0
+                end
+
+                local x <const> = type(xQuery) == "number" and xQuery or 0
+                local y <const> = type(yQuery) == "number" and yQuery or 0
+                local w <const> = type(wQuery) == "number" and wQuery or 0
+                local h <const> = type(hQuery) == "number" and hQuery or 0
+
+                dlg:modify { id = "ptxValue", visible = true }
+                dlg:modify { id = "ptyValue", visible = true }
+                dlg:modify { id = "szwValue", visible = true }
+                dlg:modify { id = "szhValue", visible = true }
+
+                dlg:modify { id = "ptxValue", text = string.format("%d", x) }
+                dlg:modify { id = "ptyValue", text = string.format("%d", y) }
+                dlg:modify { id = "szwValue", text = string.format("%d", w) }
+                dlg:modify { id = "szhValue", text = string.format("%d", h) }
+            elseif dataType == "SIZE" then
+                local wQuery <const> = (((query["width"]
+                            or query["w"])
+                        or query["x"])
+                    or query[1]) or 0
+                local hQuery <const> = (((query["height"]
+                            or query["h"])
+                        or query["y"])
+                    or query[2]) or 0
+
+                local w <const> = type(wQuery) == "number" and wQuery or 0
+                local h <const> = type(hQuery) == "number" and hQuery or 0
+
+                dlg:modify { id = "szwValue", visible = true }
+                dlg:modify { id = "szhValue", visible = true }
+                dlg:modify { id = "szwValue", text = string.format("%d", w) }
+                dlg:modify { id = "szhValue", text = string.format("%d", h) }
             else
                 dlg:modify { id = "dataType", option = "STRING" }
                 dlg:modify { id = "stringValue", visible = true }
@@ -626,9 +719,27 @@ dlg:button {
         elseif dataType == "NIL" then
             assignment = nil
         elseif dataType == "POINT" then
+            -- When this script was originally made, userdata lua type
+            -- did not work.
             assignment = {
                 x = args.ptxValue --[[@as integer]],
                 y = args.ptyValue --[[@as integer]]
+            }
+        elseif dataType == "RECTANGLE" then
+            assignment = {
+                topLeft = {
+                    x = args.ptxValue --[[@as integer]],
+                    y = args.ptyValue --[[@as integer]]
+                },
+                size = {
+                    x = args.szwValue --[[@as integer]],
+                    y = args.szhValue --[[@as integer]]
+                }
+            }
+        elseif dataType == "SIZE" then
+            assignment = {
+                x = args.szwValue --[[@as integer]],
+                y = args.szhValue --[[@as integer]]
             }
         elseif dataType == "STRING" then
             assignment = args.stringValue --[[@as string]]
