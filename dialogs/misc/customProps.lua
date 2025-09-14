@@ -28,12 +28,8 @@ local dataTypes <const> = {
 }
 
 local defaults <const> = {
-    -- TODO: Include a rename button, which sets the current property value
-    -- to a new name, then sets the current property key to nil. Problem is
-    -- that you'd need another string entry so you can rename "x" to "y".
-    -- Maybe create a child dialog?
-
-    -- TODO: Draw button for Rectangle type?
+    -- Draw diagnostic triangle tried in commit:
+    -- cfc8afddf3a692803234997e3bda55da2ee77002
 
     target = "CEL",
     dataType = "STRING",
@@ -295,7 +291,16 @@ local function getProperties(target)
     return nil, false, "Unrecognized target."
 end
 
-local dlg <const> = Dialog { title = "Custom Properties" }
+local dlg <const> = Dialog {
+    title = "Custom Properties"
+}
+
+local dlgRename <const> = Dialog {
+    title = "Rename Property",
+    parent = dlg
+}
+
+-- region Main Dialog
 
 dlg:combobox {
     id = "target",
@@ -602,13 +607,11 @@ dlg:button {
                 else
                     xQuery = (query["x"] or query[1]) or 0
                     yQuery = (query["y"] or query[2]) or 0
-                    wQuery = (((query["width"]
-                                or query["w"])
-                            or query["x"])
+                    wQuery = ((query["width"]
+                            or query["w"])
                         or query[3]) or 0
-                    hQuery = (((query["height"]
-                                or query["h"])
-                            or query["y"])
+                    hQuery = ((query["height"]
+                            or query["h"])
                         or query[4]) or 0
                 end
 
@@ -838,7 +841,25 @@ dlg:button {
 dlg:newrow { always = false }
 
 dlg:button {
-    id = "openConsole",
+    id = "renameButton",
+    text = "R&ENAME",
+    focus = false,
+    onclick = function()
+        local args <const> = dlg.data
+        local propName <const> = args.propName --[[@as string]]
+        dlgRename:modify { id = "fromPropName", text = propName }
+        dlgRename:modify { id = "toPropName", text = "" }
+        dlgRename:show {
+            autoscrollbars = false,
+            wait = true,
+        }
+    end
+}
+
+dlg:newrow { always = false }
+
+dlg:button {
+    id = "openConsoleButton",
     text = "CO&NSOLE",
     focus = false,
     onclick = function()
@@ -850,7 +871,7 @@ dlg:button {
 }
 
 dlg:button {
-    id = "list",
+    id = "printButton",
     text = "&PRINT",
     focus = false,
     onclick = function()
@@ -892,6 +913,132 @@ dlg:button {
         dlg:close()
     end
 }
+
+-- endregion
+
+-- region Rename Menu
+
+dlgRename:entry {
+    id = "fromPropName",
+    label = "From:",
+    text = "",
+    focus = false,
+}
+
+dlgRename:newrow { always = false }
+
+dlgRename:entry {
+    id = "toPropName",
+    label = "To:",
+    text = "",
+    focus = true,
+}
+
+dlgRename:newrow { always = false }
+
+dlgRename:button {
+    id = "confirmRename",
+    text = "OK",
+    focus = false,
+    onclick = function()
+        local argsMain <const> = dlg.data
+        local target <const> = argsMain.target --[[@as string]]
+
+        local properties <const>,
+        success <const>,
+        errMsg <const> = getProperties(target)
+        if (not properties) or (not success) then
+            app.alert { title = "Error", text = errMsg }
+            return
+        end
+
+        local argsRename <const> = dlgRename.data
+        local fromPropName <const> = argsRename.fromPropName --[[@as string]]
+        local toPropName <const> = argsRename.toPropName --[[@as string]]
+
+        local toPropNameVerif <const> = Utilities.validateFilename(toPropName)
+
+        if #toPropNameVerif <= 0 then
+            app.alert {
+                title = "Error",
+                text = "The to property name is empty."
+            }
+            return
+        end
+
+        if toPropNameVerif == fromPropName then
+            app.alert {
+                title = "Error",
+                text = "The to and from property names are the same."
+            }
+            return
+        end
+
+        local propNameWarn <const> = toPropNameVerif ~= toPropName
+        local confirm = 1
+        if propNameWarn then
+            confirm = app.alert {
+                title = "Warning",
+                text = {
+                    string.format(
+                        "The to property name \"%s\" will be changed to \"%s\".",
+                        toPropName, toPropNameVerif),
+                    "Do you wish to proceed?"
+                },
+                buttons = { "&YES", "&NO" }
+            }
+        end
+
+        if (not confirm) or confirm == 2 then
+            return
+        end
+
+        local lenProperties <const> = #properties
+        local minChange = false
+        local i = 0
+        while i < lenProperties do
+            i = i + 1
+            local assignment <const> = properties[i][fromPropName]
+            if assignment then
+                minChange = true
+                properties[i][toPropNameVerif] = assignment
+                properties[i][fromPropName] = nil
+            end
+        end
+
+        if minChange then
+            app.alert {
+                title = "Success",
+                text = string.format(
+                    "The property \"%s\" has been renamed to \"%s\".",
+                    fromPropName, toPropNameVerif)
+            }
+        else
+            app.alert {
+                title = "Error",
+                text = {
+                    string.format(
+                        "No properties with the name \"%s\" could be found",
+                        fromPropName),
+                    string.format("for the target %s.", target)
+                }
+            }
+        end
+
+        dlgRename:close()
+    end
+}
+
+dlgRename:button {
+    id = "cancel",
+    text = "CANCEL",
+    focus = false,
+    onclick = function()
+        dlgRename:close()
+    end
+}
+
+-- endregion
 
 dlg:show {
     autoscrollbars = true,
