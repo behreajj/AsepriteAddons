@@ -930,23 +930,6 @@ dlgRename:button {
         local toPropName <const> = argsRename.toPropName --[[@as string]]
 
         local toPropNameVerif <const> = Utilities.validateFilename(toPropName)
-
-        if #toPropNameVerif <= 0 then
-            app.alert {
-                title = "Error",
-                text = "The to property name is empty."
-            }
-            return
-        end
-
-        if toPropNameVerif == fromPropName then
-            app.alert {
-                title = "Error",
-                text = "The to and from property names are the same."
-            }
-            return
-        end
-
         local propNameWarn <const> = toPropNameVerif ~= toPropName
         local confirm = 1
         if propNameWarn then
@@ -963,6 +946,22 @@ dlgRename:button {
         end
 
         if (not confirm) or confirm == 2 then
+            return
+        end
+
+        if #toPropNameVerif <= 0 then
+            app.alert {
+                title = "Error",
+                text = "The to property name is empty."
+            }
+            return
+        end
+
+        if toPropNameVerif == fromPropName then
+            app.alert {
+                title = "Error",
+                text = "The to and from property names are the same."
+            }
             return
         end
 
