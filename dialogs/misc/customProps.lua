@@ -7,7 +7,6 @@ local targets <const> = {
     "BACK_TILE",
     "LAYER",
     "RANGE",
-    "SLICE",
     "SPRITE",
     "TAG",
     "TILE_SET",
@@ -28,7 +27,7 @@ local dataTypes <const> = {
 }
 
 local defaults <const> = {
-    -- Draw diagnostic triangle tried in commit:
+    -- Draw diagnostic rectangle tried in commit:
     -- cfc8afddf3a692803234997e3bda55da2ee77002
 
     target = "CEL",
@@ -141,32 +140,6 @@ local function getProperties(target)
         end
 
         return nil, false, "No cels or layers were selected."
-    elseif target == "SLICE" then
-        local activeSprite <const> = site.sprite
-        if not activeSprite then
-            return nil, false, "There is no active sprite."
-        end
-
-        local oldTool <const> = app.tool --[[@as Tool]]
-        local oldToolId <const> = oldTool.id
-        app.tool = "slice"
-
-        local range <const> = app.range
-        if range.sprite ~= activeSprite then
-            app.tool = oldToolId
-            return nil, false, "Range doesn't belong to sprite."
-        end
-
-        local rangeSlices <const> = range.slices
-        local lenRangeSlices <const> = #rangeSlices
-        if lenRangeSlices <= 0 then
-            app.tool = oldToolId
-            return nil, false, "No slices were selected."
-        end
-
-        local properties <const> = rangeSlices[1].properties
-        app.tool = oldToolId
-        return { properties }, true, ""
     elseif target == "SPRITE" then
         local activeSprite <const> = site.sprite
         if not activeSprite then
