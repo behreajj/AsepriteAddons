@@ -617,6 +617,10 @@ end
 ---@return Vec3
 ---@nodiscard
 function AseUtilities.averageNormal(sprite, frame)
+    -- TODO: Move this to normalutilities? Normal utilities
+    -- would have to depend on AseUtilities then, so as to
+    -- get selection, sel to image, etc.
+
     local sprSpec <const> = sprite.spec
     local colorMode <const> = sprSpec.colorMode
     if colorMode ~= ColorMode.RGB then return Vec3.up() end

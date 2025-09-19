@@ -509,7 +509,7 @@ dlg:button {
                     local xc <const> = xs[k] - xOff
                     local yc <const> = ys[k] - yOff
                     drawEllipse(plotCtx,
-                        xc, yc, strokeSize, strokeSize,
+                        xc, yc, fillSize, fillSize,
                         true, hexToColor(hexPlot),
                         true, strokeColor, strokeWeight,
                         false)
