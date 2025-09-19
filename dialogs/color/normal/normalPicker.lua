@@ -439,6 +439,7 @@ dlg:canvas {
         -- Cache methods.
         local cos <const> = math.cos
         local sin <const> = math.sin
+        local strpack <const> = string.pack
 
         -- Unpack active.
         local azimuth <const> = active.azimuth
@@ -457,17 +458,22 @@ dlg:canvas {
         local xToAzimuth <const> = barWidth > 1
             and 6.2831853071796 / (barWidth - 1.0)
             or 0.0
-        local img <const> = Image(barWidth, 1, ColorMode.RGB)
-        -- TODO: Replace pixel iterator with string bytes.
-        local pxItr <const> = img:pixels()
-        for pixel in pxItr do
-            local az <const> = pixel.x * xToAzimuth
-            pixel(vecToHex(
+
+        ---@type string[]
+        local bytes <const> = {}
+        local i = 0
+        while i < barWidth do
+            local az <const> = i * xToAzimuth
+            local hex <const> = vecToHex(
                 cosIncl * cos(az),
                 cosIncl * sin(az),
-                sinIncl))
+                sinIncl)
+            bytes[1 + i] = strpack("<I4", hex)
+            i = i + 1
         end
 
+        local img <const> = Image(barWidth, 1, ColorMode.RGB)
+        img.bytes = table.concat(bytes)
         ctx:drawImage(img,
             Rectangle(0, 0, barWidth, 1),
             Rectangle(0, 0, barWidth, barHeight))
@@ -495,6 +501,7 @@ dlg:canvas {
         -- Cache methods.
         local cos <const> = math.cos
         local sin <const> = math.sin
+        local strpack <const> = string.pack
 
         -- Unpack active.
         local azimuth <const> = active.azimuth
@@ -514,18 +521,23 @@ dlg:canvas {
         local xToIncl <const> = barWidth > 1
             and math.pi / (barWidth - 1.0)
             or 0.0
-        local img <const> = Image(barWidth, 1, ColorMode.RGB)
-        -- TODO: Replace pixel iterator with string bytes.
-        local pxItr <const> = img:pixels()
-        for pixel in pxItr do
-            local incl <const> = pixel.x * xToIncl - halfPi
+
+        ---@type string[]
+        local bytes <const> = {}
+        local i = 0
+        while i < barWidth do
+            local incl <const> = i * xToIncl - halfPi
             local cosIncl <const> = cos(incl)
-            pixel(vecToHex(
+            local hex <const> = vecToHex(
                 cosIncl * cosAzim,
                 cosIncl * sinAzim,
-                sin(incl)))
+                sin(incl))
+            bytes[1 + i] = strpack("<I4", hex)
+            i = i + 1
         end
 
+        local img <const> = Image(barWidth, 1, ColorMode.RGB)
+        img.bytes = table.concat(bytes)
         ctx:drawImage(img,
             Rectangle(0, 0, barWidth, 1),
             Rectangle(0, 0, barWidth, barHeight))
@@ -625,8 +637,7 @@ dlg:button {
             local i = 0
             while i < lenFrIdcs do
                 i = i + 1
-                local frIdx <const> = frIdcs[i]
-                sprite:newCel(layer, frIdx, selImage, tlSel)
+                sprite:newCel(layer, frIdcs[i], selImage, tlSel)
             end
         end)
         app.refresh()
