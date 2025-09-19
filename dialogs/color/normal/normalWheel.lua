@@ -482,8 +482,8 @@ dlg:button {
                 local strokeColor <const> = AseUtilities.hexToAseColor(
                     defaults.strokeColor)
                 local stroke2 <const> = strokeSize + strokeSize
-                local xOff <const> = 1 + xMin - strokeSize
-                local yOff <const> = 1 + yMin - strokeSize
+                local xTlPlot <const> = 1 + xMin - strokeSize
+                local yTlPlot <const> = 1 + yMin - strokeSize
 
                 local wPlot <const> = (xMax - xMin) + stroke2 - 1
                 local hPlot <const> = (yMax - yMin) + stroke2 - 1
@@ -506,8 +506,8 @@ dlg:button {
                 while k < lenHexesPlot do
                     k = k + 1
                     local hexPlot <const> = hexesPlot[k]
-                    local xc <const> = xs[k] - xOff
-                    local yc <const> = ys[k] - yOff
+                    local xc <const> = xs[k] - xTlPlot
+                    local yc <const> = ys[k] - yTlPlot
                     drawEllipse(plotCtx,
                         xc, yc, fillSize, fillSize,
                         true, hexToColor(hexPlot),
@@ -519,7 +519,7 @@ dlg:button {
                 plotPalLayer.name = "Palette"
                 sprite:newCel(
                     plotPalLayer, sprite.frames[1],
-                    plotImage, Point(xOff, yOff))
+                    plotImage, Point(xTlPlot, yTlPlot))
 
                 -- This needs to be done at the very end because
                 -- prependMask modifies hexesProfile.
