@@ -458,6 +458,7 @@ dlg:canvas {
             and 6.2831853071796 / (barWidth - 1.0)
             or 0.0
         local img <const> = Image(barWidth, 1, ColorMode.RGB)
+        -- TODO: Replace pixel iterator with string bytes.
         local pxItr <const> = img:pixels()
         for pixel in pxItr do
             local az <const> = pixel.x * xToAzimuth
@@ -514,6 +515,7 @@ dlg:canvas {
             and math.pi / (barWidth - 1.0)
             or 0.0
         local img <const> = Image(barWidth, 1, ColorMode.RGB)
+        -- TODO: Replace pixel iterator with string bytes.
         local pxItr <const> = img:pixels()
         for pixel in pxItr do
             local incl <const> = pixel.x * xToIncl - halfPi

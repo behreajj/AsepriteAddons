@@ -18,24 +18,22 @@ local function evalImage(
         1 + dataIdx, bpp + dataIdx)
     local dataInt <const> = string.unpack("<I" .. bpp, dataStr)
 
+    local a01 = 0.0
     if colorMode == ColorMode.RGB then
         local a8 <const> = (dataInt >> 0x18) & 0xff
-        local a01 <const> = aComp01 * (a8 / 255.0)
-        return a01
+        a01 = aComp01 * (a8 / 255.0)
     elseif colorMode == ColorMode.GRAY then
         local a8 <const> = (dataInt >> 0x08) & 0xff
-        local a01 <const> = aComp01 * (a8 / 255.0)
-        return a01
+        a01 = aComp01 * (a8 / 255.0)
     elseif colorMode == ColorMode.INDEXED then
         if dataInt ~= alphaIndex
             and dataInt >= 0 and dataInt < #palette then
             local aseColor <const> = palette:getColor(dataInt)
             local a8 <const> = aseColor.alpha
-            local a01 <const> = aComp01 * (a8 / 255.0)
-            return a01
+            a01 = aComp01 * (a8 / 255.0)
         end
     end
-    return 0.0
+    return a01
 end
 
 ---@param layer Layer
