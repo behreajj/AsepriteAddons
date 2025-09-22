@@ -4,10 +4,6 @@ local targets <const> = { "ACTIVE", "ALL", "RANGE" }
 local edges <const> = { "CLAMP", "WRAP" }
 
 local defaults <const> = {
-    -- TODO: Blend normal maps dialog?
-    -- https://community.aseprite.org/t/normal-map-from-height-blending-normal-maps/13046
-    -- https://blog.selfshadow.com/publications/blending-in-detail/
-
     target = "ACTIVE",
     stretchContrast = false,
     scale = 16,
