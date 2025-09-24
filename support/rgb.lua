@@ -249,8 +249,6 @@ function Rgb.gridsRgb(cols, rows, layers, alpha)
     local cVrf = cols or 2
 
     -- Validate arguments.
-    -- TODO: Update to allow rows, columns and layers to be 1 wide
-    -- then use an offset?
     aVrf = math.min(math.max(aVrf, 0.0), 1.0)
     lVrf = math.min(math.max(lVrf, 2), 256)
     rVrf = math.min(math.max(rVrf, 2), 256)
