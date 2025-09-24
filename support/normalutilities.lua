@@ -1,4 +1,4 @@
-dofile("./utilities.lua")
+dofile("./aseutilities.lua")
 
 NormalUtilities = {}
 NormalUtilities.__index = NormalUtilities
@@ -8,6 +8,82 @@ setmetatable(NormalUtilities, {
         return cls.new(...)
     end
 })
+
+---Finds the average color of a selection in a sprite. Treats the color as a
+---normal used in a normal map. If the sprite color mode is not RGB, returns
+---up direction.
+---@param sprite Sprite
+---@param frame Frame|integer
+---@return Vec3
+---@nodiscard
+function NormalUtilities.averageColor(sprite, frame)
+    local sprSpec <const> = sprite.spec
+    local colorMode <const> = sprSpec.colorMode
+    if colorMode ~= ColorMode.RGB then return Vec3.up() end
+    local alphaIndex <const> = sprSpec.transparentColor
+    local colorSpace <const> = sprSpec.colorSpace
+
+    local sel <const>,
+    isValid <const> = AseUtilities.getSelection(sprite)
+
+    local flat = nil
+    if isValid then
+        flat, _, _ = AseUtilities.selToImage(
+            sel, sprite, frame)
+    else
+        local x <const>, y <const> = AseUtilities.getMouse()
+        local mouseSpec <const> = ImageSpec {
+            width = 1,
+            height = 1,
+            colorMode = colorMode,
+            transparentColor = alphaIndex
+        }
+        mouseSpec.colorSpace = colorSpace
+        flat = Image(mouseSpec)
+        flat:drawSprite(sprite, frame, Point(-x, -y))
+    end
+
+    local flatBytes <const> = flat.bytes
+    local wFlat <const> = flat.width
+    local hFlat <const> = flat.height
+    local areaFlat <const> = wFlat * hFlat
+
+    local abs <const> = math.abs
+    local strbyte <const> = string.byte
+
+    local xSum, ySum, zSum = 0.0, 0.0, 0.0
+
+    local i = 0
+    while i < areaFlat do
+        local i4 <const> = i * 4
+        local a8 <const> = strbyte(flatBytes, 4 + i4)
+        if a8 > 0 then
+            local r8 <const>, g8 <const>, b8 <const> = strbyte(
+                flatBytes, 1 + i4, 3 + i4)
+
+            local x = (r8 + r8 - 255) / 255.0
+            local y = (g8 + g8 - 255) / 255.0
+            local z = (b8 + b8 - 255) / 255.0
+
+            if abs(x) < 0.0039216 then x = 0.0 end
+            if abs(y) < 0.0039216 then y = 0.0 end
+            if abs(z) < 0.0039216 then z = 0.0 end
+
+            xSum = xSum + x
+            ySum = ySum + y
+            zSum = zSum + z
+        end
+        i = i + 1
+    end
+
+    local mSq <const> = xSum * xSum + ySum * ySum + zSum * zSum
+    if mSq > 0.0 then
+        local mInv <const> = 1.0 / math.sqrt(mSq)
+        return Vec3.new(xSum * mInv, ySum * mInv, zSum * mInv)
+    end
+
+    return Vec3.up()
+end
 
 ---Returns a copy of the source image that has been flipped horizontally.
 ---@param source Image source image

@@ -1,4 +1,3 @@
-dofile("../../../support/aseutilities.lua")
 dofile("../../../support/normalutilities.lua")
 
 -- The canvas or layer target.
