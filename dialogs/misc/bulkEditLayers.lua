@@ -252,7 +252,15 @@ dlg:button {
             return idTallyDict[a.id] < idTallyDict[b.id]
         end)
 
-        local format <const> = "%s %d"
+        local format = "%s %03d"
+        if lenRangeLayers < 1000 then
+            format = "%s %02d"
+        elseif lenRangeLayers < 100 then
+            format = "%s %01d"
+        elseif lenRangeLayers < 10 then
+            format = "%s %d"
+        end
+
         local strfmt <const> = string.format
 
         app.transaction("Rename Layers", function()

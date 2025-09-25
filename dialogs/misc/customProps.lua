@@ -29,6 +29,12 @@ local dataTypes <const> = {
 local defaults <const> = {
     -- Draw diagnostic rectangle tried in commit:
     -- cfc8afddf3a692803234997e3bda55da2ee77002
+    -- Problem was that, without resorting to standardized
+    -- methods in canvas or shape utilities to handle
+    -- issues like alpha unpremultiply in gray color mode
+    -- or blending in indexed color mode, there was too
+    -- much code. Maybe restrict draw function to RGB
+    -- color mode only?
 
     target = "CEL",
     dataType = "STRING",
