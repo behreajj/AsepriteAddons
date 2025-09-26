@@ -480,7 +480,7 @@ dlg:newrow { always = false }
 
 dlg:button {
     id = "addButton",
-    text = "&ADD",
+    text = "&+",
     focus = false,
     onclick = function()
         local args <const> = dlg.data
@@ -491,7 +491,7 @@ dlg:button {
 
 dlg:button {
     id = "subButton",
-    text = "&SUBTRACT",
+    text = "&-",
     focus = false,
     onclick = function()
         local args <const> = dlg.data
@@ -500,11 +500,9 @@ dlg:button {
     end
 }
 
-dlg:newrow { always = false }
-
 dlg:button {
     id = "mulButton",
-    text = "&MULTIPLY",
+    text = "&*",
     focus = false,
     onclick = function()
         local args <const> = dlg.data
@@ -515,7 +513,7 @@ dlg:button {
 
 dlg:button {
     id = "divButton",
-    text = "&DIVIDE",
+    text = "&/",
     focus = false,
     onclick = function()
         local args <const> = dlg.data
@@ -524,11 +522,9 @@ dlg:button {
     end
 }
 
-dlg:newrow { always = false }
-
 dlg:button {
     id = "setButton",
-    text = "S&ET",
+    text = "&=",
     focus = false,
     onclick = function()
         local args <const> = dlg.data
