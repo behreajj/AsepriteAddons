@@ -252,13 +252,13 @@ dlg:button {
             return idTallyDict[a.id] < idTallyDict[b.id]
         end)
 
-        local format = "%s %04d"
-        if lenRangeLayers < 1000 then
-            format = "%s %03d"
+        local format = "%s %d"
+        if lenRangeLayers < 10 then
+            format = "%s %01d"
         elseif lenRangeLayers < 100 then
             format = "%s %02d"
-        elseif lenRangeLayers < 10 then
-            format = "%s %01d"
+        elseif lenRangeLayers < 1000 then
+            format = "%s %03d"
         end
 
         local strfmt <const> = string.format
