@@ -568,6 +568,11 @@ dlg:button {
 
         -- Validate file name.
         local fileExt = app.fs.fileExtension(filename)
+        if fileExt == nil or #fileExt < 1 then
+            app.alert { title = "Error", text = "Missing file extension." }
+            return
+        end
+
         local fileExtLc = string.lower(fileExt)
         if fileExtLc == "tmx"
             or fileExtLc == "tsx" then
