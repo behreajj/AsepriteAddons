@@ -4,6 +4,7 @@ dofile("../../support/jsonutilities.lua")
 local frameTargetOptions <const> = { "ACTIVE", "ALL", "MANUAL", "RANGE" }
 local layerTargetOptions <const> = { "ACTIVE", "ALL", "RANGE" }
 local cropTypes <const> = { "CROPPED", "SPRITE" }
+local suffixPresets <const> = { "NAME", "UUID", "BOTH" }
 
 local defaults <const> = {
     -- If there's a malformed palette in indexed color mode, then background
@@ -27,11 +28,31 @@ local defaults <const> = {
     usePixelAspect = true,
     toPow2 = false,
     potUniform = false,
+    suffixPreset = "NAME",
     saveJson = false,
     boundsFormat = "TOP_LEFT",
     uuidPreset = "STRING",
     uuidIndex = nil,
 }
+
+---@param suffixPreset "NAME"|"UUID"|"BOTH" suffix preset
+---@param fileTitle string file title
+---@param verifName string verified layer name
+---@param uuid Uuid unique idenfitifier
+---@param frIdx integer frame index
+---@return string
+---@nodiscard
+local function genFileNameShort(suffixPreset, fileTitle, verifName, uuid, frIdx)
+    if suffixPreset == "BOTH" then
+        return string.format("%s_%s_%08x_%03d",
+            fileTitle, verifName, JsonUtilities.uuidToInt32(uuid, 1), frIdx - 1)
+    elseif suffixPreset == "UUID" then
+        return string.format("%s_%08x_%03d",
+            fileTitle, JsonUtilities.uuidToInt32(uuid, 1), frIdx - 1)
+    end
+    return string.format("%s_%s_%03d",
+        fileTitle, verifName, frIdx - 1)
+end
 
 local dlg <const> = Dialog { title = "Export Layers" }
 
@@ -220,6 +241,16 @@ dlg:file {
 
 dlg:newrow { always = false }
 
+dlg:combobox {
+    id = "suffixPreset",
+    label = "Suffix:",
+    option = defaults.suffixPreset,
+    options = suffixPresets,
+    hexpand = false,
+}
+
+dlg:newrow { always = false }
+
 dlg:check {
     id = "saveJson",
     label = "Save:",
@@ -281,7 +312,6 @@ dlg:button {
 
         -- Unpack arguments.
         local args <const> = dlg.data
-        local filename = args.filename --[[@as string]]
         local layerTarget = args.layerTarget
             or defaults.layerTarget --[[@as string]]
         local includeLocked <const> = args.includeLocked --[[@as boolean]]
@@ -303,15 +333,18 @@ dlg:button {
         local usePixelAspect <const> = args.usePixelAspect --[[@as boolean]]
         local toPow2 <const> = args.toPow2 --[[@as boolean]]
         local potUniform <const> = args.potUniform --[[@as boolean]]
+        local suffixPreset <const> = args.suffixPreset
+            or defaults.suffixPreset --[[@as string]]
+        local filename = args.filename --[[@as string]]
         local saveJson <const> = args.saveJson --[[@as boolean]]
         local boundsFormat <const> = args.boundsFormat
             or defaults.boundsFormat --[[@as string]]
 
-        -- Validate file name.
-        local fileExt = app.fs.fileExtension(filename)
-        if string.lower(fileExt) == "json" then
-            fileExt = app.preferences.export_file.image_default_extension --[[@as string]]
-            filename = string.sub(filename, 1, -5) .. fileExt
+        if #filename < 1 then
+            local spriteFileName <const> = activeSprite.filename
+            if app.fs.isFile(spriteFileName) then
+                filename = spriteFileName
+            end
         end
 
         local filePath = app.fs.filePath(filename)
@@ -319,6 +352,19 @@ dlg:button {
             app.alert { title = "Error", text = "Empty file path." }
             return
         end
+
+        -- Validate file name.
+        local fileExt = app.fs.fileExtension(filename)
+        if fileExt == nil or #fileExt < 1 then
+            app.alert { title = "Error", text = "Missing file extension." }
+            return
+        end
+
+        if string.lower(fileExt) == "json" then
+            fileExt = app.preferences.export_file.image_default_extension --[[@as string]]
+            filename = string.sub(filename, 1, -5) .. fileExt
+        end
+
         filePath = string.gsub(filePath, "\\", "\\\\")
 
         -- For explanatory comment, see framesExport.lua .
@@ -665,10 +711,11 @@ dlg:button {
                         end
 
                         local layerId <const> = chosenLayer.id
+                        local layerUuid <const> = chosenLayer.uuid
                         local layerName <const> = verifLayerNames[j]
-                        local fileNameShort <const> = strfmt(
-                            "%s_%d_%s_%03d",
-                            fileTitle, layerId, layerName, frIdx - 1)
+                        local fileNameShort <const> = genFileNameShort(
+                            suffixPreset, fileTitle,
+                            layerName, layerUuid, frIdx)
                         local fileNameLong <const> = strfmt(
                             "%s%s.%s",
                             filePath, fileNameShort, fileExt)
