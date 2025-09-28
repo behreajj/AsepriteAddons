@@ -595,11 +595,11 @@ dlg:button {
         local boundsFormat <const> = args.boundsFormat
             or defaults.boundsFormat --[[@as string]]
 
-        -- Validate file name.
-        local fileExt = app.fs.fileExtension(filename)
-        if string.lower(fileExt) == "json" then
-            fileExt = app.preferences.export_file.image_default_extension --[[@as string]]
-            filename = string.sub(filename, 1, -5) .. fileExt
+        if #filename < 1 then
+            local spriteFileName <const> = activeSprite.filename
+            if app.fs.isFile(spriteFileName) then
+                filename = spriteFileName
+            end
         end
 
         local filePath = app.fs.filePath(filename)
@@ -607,6 +607,19 @@ dlg:button {
             app.alert { title = "Error", text = "Empty file path." }
             return
         end
+
+        -- Validate file name.
+        local fileExt = app.fs.fileExtension(filename)
+        if fileExt == nil or #fileExt < 1 then
+            app.alert { title = "Error", text = "Missing file extension." }
+            return
+        end
+
+        if string.lower(fileExt) == "json" then
+            fileExt = app.preferences.export_file.image_default_extension --[[@as string]]
+            filename = string.sub(filename, 1, -5) .. fileExt
+        end
+
         filePath = string.gsub(filePath, "\\", "\\\\")
 
         -- .qoi and .webp file extensions do not allow indexed color mode and

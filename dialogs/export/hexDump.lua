@@ -313,6 +313,11 @@ dlg:button {
         local padBytes = true
         if outputType == "FILE" and exportFilepath and #exportFilepath > 0 then
             local fileExt = string.lower(app.fs.fileExtension(exportFilepath))
+            if fileExt == nil or #fileExt < 1 then
+                app.alert { title = "Error", text = "Missing file extension." }
+                return
+            end
+
             useMarkdown = fileExt == "md"
             useCsv = fileExt == "csv"
             useC = fileExt == "c"

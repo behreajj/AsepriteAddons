@@ -9,6 +9,8 @@ local blendModes <const> = {
 }
 
 local defaults <const> = {
+    -- TODO: Button to create a range? ALL, GROUPS, LEAVES, etc.
+
     -- This also has autoscrollbars and modifies dialog color widgets,
     -- but it doesn't seem to be a problem in terms of collapsing the
     -- dialog bounds.

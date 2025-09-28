@@ -832,8 +832,8 @@ dlg:button {
             return
         end
 
-        local ext <const> = app.fs.fileExtension(filepath)
-        if string.lower(ext) ~= "svg" then
+        local fileExt <const> = app.fs.fileExtension(filepath)
+        if string.lower(fileExt) ~= "svg" then
             app.alert { title = "Error", text = "Extension is not svg." }
             return
         end
