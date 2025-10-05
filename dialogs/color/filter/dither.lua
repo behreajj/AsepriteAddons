@@ -669,13 +669,10 @@ dlg:button {
 
                 if not trgImg then
                     local srcSpec <const> = srcImg.spec
-                    local wSrc <const> = srcSpec.width
-                    local hSrc <const> = srcSpec.height
-                    local srcBpp <const> = srcImg.bytesPerPixel
                     local trgPixels <const> = getBytes(srcImg)
-                    dither(trgPixels, wSrc, hSrc, srcBpp,
-                        matrix, cols, rows, srcPos.x, srcPos.y,
-                        factor, closestFunc)
+                    dither(trgPixels, srcSpec.width, srcSpec.height,
+                        srcImg.bytesPerPixel, matrix, cols, rows,
+                        srcPos.x, srcPos.y, factor, closestFunc)
                     trgImg = Image(srcSpec)
                     setBytes(trgImg, trgPixels)
                     premadeTrgImgs[srcImgId] = trgImg
