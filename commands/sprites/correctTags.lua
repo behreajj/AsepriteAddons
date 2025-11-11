@@ -13,6 +13,9 @@ local dict <const> = {}
 local tagsToRemove <const> = {}
 local lenTagsToRemove = 0
 
+-- TODO: Check for multiple tags named "Loop". It is a reserved tag name,
+-- and so there should be only one.
+
 local i = 0
 while i < lenTags do
     i = i + 1
