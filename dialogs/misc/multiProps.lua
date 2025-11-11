@@ -369,8 +369,13 @@ if tag then
         onchange = function()
             local args <const> = dlg.data
             local tagName <const> = args.tagName --[[@as string]]
+            -- Should setting the name to loop be allowed
+            -- in the event that the user wants to edit an
+            -- existing loop section?
+            -- if tagName ~= "Loop" then
             tag.name = tagName
             app.refresh()
+            -- end
         end
     }
 

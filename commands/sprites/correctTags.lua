@@ -15,6 +15,8 @@ local lenTagsToRemove = 0
 
 -- TODO: Check for multiple tags named "Loop". It is a reserved tag name,
 -- and so there should be only one.
+-- https://github.com/aseprite/aseprite/blob/main/src/app/loop_tag.cpp#L26
+-- https://github.com/aseprite/aseprite/blob/main/src/app/commands/cmd_set_loop_section.cpp
 
 local i = 0
 while i < lenTags do
