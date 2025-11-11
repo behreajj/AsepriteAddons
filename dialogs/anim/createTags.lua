@@ -195,6 +195,14 @@ dlg:button {
             or defaults.repeats --[[@as integer]]
         local deleteExisting <const> = args.deleteExisting --[[@as boolean]]
 
+        if nameFormat == "Loop" then
+            app.alert {
+                title = "Error",
+                text = "Loop is a reserved tag name."
+            }
+            return
+        end
+
         local validNameFormat <const> = #nameFormat > 0
             and pcall(function()
                 return string.format(nameFormat, 1, 2)
