@@ -362,7 +362,7 @@ dlg:button {
         local bAbsMin <const> = defaults.bAbsMin
         local bAbsMax <const> = -defaults.bAbsMin
 
-        local labZero <const> = { l = 0.0, a = 0.0, b = 0.0, alpha = 0.0 }
+        local labZero <const> = Lab.new(0.0, 0.0, 0.0, 0.0)
 
         -- Used in naming transactions by frame.
         local docPrefs <const> = app.preferences.document(activeSprite)

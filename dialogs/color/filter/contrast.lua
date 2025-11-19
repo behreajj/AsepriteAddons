@@ -263,12 +263,7 @@ dlg:button {
 
         ---@type table<integer, Lab>
         local abgr32ToLab <const> = {}
-        local labZero <const> = {
-            l = 0.0,
-            a = 0.0,
-            b = 0.0,
-            alpha = 0.0
-        }
+        local labZero <const> = Lab.new(0.0, 0.0, 0.0, 0.0)
         abgr32ToLab[0] = labZero
 
         ---@type Image[]

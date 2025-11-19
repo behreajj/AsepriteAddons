@@ -13,6 +13,10 @@ local cropTypes <const> = { "CROPPED", "SPRITE" }
 local sheetTypes <const> = { "HORIZONTAL", "SQUARE", "VERTICAL" }
 
 local defaults <const> = {
+    -- TODO: For export tag and tags, include a suffix option similar to
+    -- export layers? That way tags with the same name will not yield the
+    -- same exported file...
+
     -- Calculate total duration of selected frames and place in JSON?
     -- The reason why not is that if an animation is split to tags, then
     -- the start time is reset for every tag, not accumulated... And this

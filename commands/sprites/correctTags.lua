@@ -56,8 +56,8 @@ for _, arr in pairs(dict) do
     end
 end
 
--- "Loop" is a reserved tag name. The rename loop should already take care
--- of the case where multiple tags have this name.
+-- "Loop" is a reserved tag name. The rename loop should already
+-- take care of the case where multiple tags have this name.
 -- https://github.com/aseprite/aseprite/blob/main/src/app/loop_tag.cpp#L26
 -- https://github.com/aseprite/aseprite/blob/main/src/app/commands/cmd_set_loop_section.cpp
 

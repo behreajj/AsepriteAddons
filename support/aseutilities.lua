@@ -598,15 +598,14 @@ function AseUtilities.averageColor(sprite, frame)
 
     if count > 0 and alphaSum > 0.0 then
         local countInv <const> = 1.0 / count
-        return {
-            l = lSum * countInv,
-            a = aSum * countInv,
-            b = bSum * countInv,
-            alpha = alphaSum * countInv
-        }
+        return Lab.new(
+            lSum * countInv,
+            aSum * countInv,
+            bSum * countInv,
+            alphaSum * countInv)
     end
 
-    return { l = 0.0, a = 0.0, b = 0.0, alpha = 0.0 }
+    return Lab.new(0.0, 0.0, 0.0, 0.0)
 end
 
 ---Transforms a source image according to a flipping flag. If the flag is valid,

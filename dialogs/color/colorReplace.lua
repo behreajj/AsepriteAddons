@@ -325,6 +325,8 @@ dlg:button {
             end
 
             if replaceAllTiles then
+                -- TODO: Make tileSets const, then fill it in a loop with
+                -- activeSprite.tilesets.
                 tileSets = activeSprite.tilesets
             end
 
@@ -349,7 +351,7 @@ dlg:button {
                 local tileSize <const> = tileSet.grid.tileSize
                 local wSrc <const> = max(1, abs(tileSize.width))
                 local hSrc <const> = max(1, abs(tileSize.height))
-                local lenSrc = wSrc * hSrc
+                local lenSrc <const> = wSrc * hSrc
 
                 app.transaction("Replace Color Tiles", function()
                     local i = 0
@@ -378,9 +380,8 @@ dlg:button {
                                 trgByteStrs[j] = trgHexStr
                             end
 
-                            local trgSpec <const> = createSpec(wSrc, hSrc,
-                                colorMode, colorSpace, alphaIndex)
-                            local trgImg <const> = Image(trgSpec)
+                            local trgImg <const> = Image(createSpec(
+                                wSrc, hSrc, colorMode, colorSpace, alphaIndex))
                             trgImg.bytes = tconcat(trgByteStrs)
                             tile.image = trgImg
                         end -- End tile exists check.
@@ -447,9 +448,8 @@ dlg:button {
                             trgByteStrs[j] = trgHexStr
                         end
 
-                        local trgSpec <const> = createSpec(wSrc, hSrc,
-                            colorMode, colorSpace, alphaIndex)
-                        local trgImg <const> = Image(trgSpec)
+                        local trgImg <const> = Image(createSpec(
+                            wSrc, hSrc, colorMode, colorSpace, alphaIndex))
                         trgImg.bytes = tconcat(trgByteStrs)
 
                         if useTrim then
@@ -479,8 +479,8 @@ dlg:button {
                 local tolsq <const> = tolerance * tolerance
                 local frLab <const> = sRgbToLab(fromHex(frInt))
 
-                local zeroLab <const> = { l = 0.0, a = 0.0, b = 0.0, alpha = 0.0 }
-                local useExpand <const> = distSq(frLab, zeroLab, tScl) <= tolsq
+                local labZero <const> = Lab.new(0.0, 0.0, 0.0, 0.0)
+                local useExpand <const> = distSq(frLab, labZero, tScl) <= tolsq
 
                 ---@type table<integer, integer>
                 local dict <const> = {}
