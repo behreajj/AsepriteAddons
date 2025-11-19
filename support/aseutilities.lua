@@ -582,7 +582,7 @@ function AseUtilities.averageColor(sprite, frame)
         end
     end
 
-    local lSum, aSum, bSum, alphaSum = 0.0, 0.0, 0.0, 0.0
+    local lSum, aSum, bSum, tSum = 0.0, 0.0, 0.0, 0.0
     local count = 0
 
     local fromHex <const> = Rgb.fromHexAbgr32
@@ -592,17 +592,13 @@ function AseUtilities.averageColor(sprite, frame)
         lSum = lSum + lab.l * tally
         aSum = aSum + lab.a * tally
         bSum = bSum + lab.b * tally
-        alphaSum = alphaSum + lab.alpha * tally
+        tSum = tSum + lab.alpha * tally
         count = count + tally
     end
 
-    if count > 0 and alphaSum > 0.0 then
-        local countInv <const> = 1.0 / count
-        return Lab.new(
-            lSum * countInv,
-            aSum * countInv,
-            bSum * countInv,
-            alphaSum * countInv)
+    if count > 0 and tSum > 0.0 then
+        local cInv <const> = 1.0 / count
+        return Lab.new(lSum * cInv, aSum * cInv, bSum * cInv, tSum * cInv)
     end
 
     return Lab.new(0.0, 0.0, 0.0, 0.0)
