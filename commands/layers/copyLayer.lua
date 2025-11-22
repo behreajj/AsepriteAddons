@@ -43,6 +43,8 @@ local function copyLayer(
     else
         trgLayer = activeSprite:newLayer()
 
+        -- TODO: Might be able to assign duplicate properties as of
+        -- https://github.com/aseprite/aseprite/commit/464781690e46b0c56906d178213f6daffdfcaee7 ?
         trgLayer.isContinuous = srcLayer.isContinuous
         trgLayer.blendMode = srcLayer.blendMode or BlendMode.NORMAL
         trgLayer.opacity = srcLayer.opacity or 255

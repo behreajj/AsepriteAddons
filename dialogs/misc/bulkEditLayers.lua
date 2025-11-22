@@ -233,9 +233,13 @@ dlg:button {
         local nameEntry <const> = args.nameEntry --[[@as string]]
         local reverse <const> = args.reverse --[[@as boolean]]
 
+        local nameEntryVerif <const> = #nameEntry > 0
+            and nameEntry
+            or "Layer"
+
         if lenRangeLayers <= 1 then
             app.transaction("Rename Layer", function()
-                rangeLayers[1].name = nameEntry
+                rangeLayers[1].name = nameEntryVerif
             end)
             app.refresh()
             return
@@ -274,7 +278,7 @@ dlg:button {
                 local n <const> = reverse
                     and lenSortedLayers + 1 - i
                     or i
-                layer.name = strfmt(format, nameEntry, n)
+                layer.name = strfmt(format, nameEntryVerif, n)
             end
         end)
 
