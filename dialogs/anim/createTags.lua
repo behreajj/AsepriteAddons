@@ -203,11 +203,11 @@ dlg:button {
             return
         end
 
-        local validNameFormat <const> = #nameFormat > 0
+        local nameFormatIsValid <const> = #nameFormat > 0
             and pcall(function()
                 return string.format(nameFormat, 1, 2)
             end)
-        if not validNameFormat then
+        if not nameFormatIsValid then
             -- The % escapes are needed for text entry above,
             -- but should not be used here.
             nameFormat = "[%02d,%02d]"
@@ -385,7 +385,7 @@ dlg:button {
         -- versions of Aseprite.
         app.refresh()
 
-        if not validNameFormat then
+        if not nameFormatIsValid then
             app.alert {
                 title = "Warning",
                 text = { "Invalid name format.", "Default was used." }
