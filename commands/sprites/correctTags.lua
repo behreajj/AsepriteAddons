@@ -49,6 +49,11 @@ local lenTagsToRename = 0
 
 -- Transfer dictionary of arrays to array of arrays.
 for _, arr in pairs(dict) do
+    -- The check below doesn't account for cases where there is only one tag
+    -- with an empty string for a name. You could account for that here by
+    -- appending the array to the tagsToRename table when its name string length
+    -- is lteq zero or its array length is greater than one. However, if you
+    -- had "Tag (1)" and "", this would create two tags named "Tag (1)".
     local lenArr <const> = #arr
     if lenArr > 1 then
         lenTagsToRename = lenTagsToRename + 1
