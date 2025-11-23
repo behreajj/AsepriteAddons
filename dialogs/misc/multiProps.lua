@@ -118,10 +118,8 @@ dlg:entry {
     onchange = function()
         local args <const> = dlg.data
         local layerName <const> = args.layerName --[[@as string]]
-        if #layerName > 0 then
-            layer.name = layerName
-            app.refresh()
-        end
+        layer.name = #layerName > 0 and layerName or "Layer"
+        app.refresh()
     end
 }
 
@@ -220,10 +218,8 @@ if isTilemap then
             onchange = function()
                 local args <const> = dlg.data
                 local tilesetName <const> = args.tilesetName --[[@as string]]
-                if #tilesetName > 0 then
-                    tileSet.name = tilesetName
-                    app.refresh()
-                end
+                tileSet.name = #tilesetName > 0 and tilesetName or "Tile Set"
+                app.refresh()
             end
         }
 
@@ -373,15 +369,9 @@ if tag then
         onchange = function()
             local args <const> = dlg.data
             local tagName <const> = args.tagName --[[@as string]]
-            -- Should setting the name to loop be allowed
-            -- in the event that the user wants to edit an
-            -- existing loop section?
-            -- if tagName ~= "Loop" then
-            if #tagName > 0 then
-                tag.name = tagName
-                app.refresh()
-            end
-            -- end
+            tag.name = (#tagName > 0
+                and tagName ~= "Loop") and tagName or "Tag"
+            app.refresh()
         end
     }
 
