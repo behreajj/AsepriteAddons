@@ -27,11 +27,12 @@ while i < lenTags do
             -- TODO: Assign an ID similar to correctTilesets?
 
             local name <const> = tag.name
-            local arr <const> = dict[name]
+            local nameVerif <const> = #name > 0 and name or "Tag"
+            local arr <const> = dict[nameVerif]
             if arr then
                 arr[#arr + 1] = tag
             else
-                dict[name] = { tag }
+                dict[nameVerif] = { tag }
             end
         else
             lenTagsToRemove = lenTagsToRemove + 1
@@ -49,11 +50,6 @@ local lenTagsToRename = 0
 
 -- Transfer dictionary of arrays to array of arrays.
 for _, arr in pairs(dict) do
-    -- The check below doesn't account for cases where there is only one tag
-    -- with an empty string for a name. You could account for that here by
-    -- appending the array to the tagsToRename table when its name string length
-    -- is lteq zero or its array length is greater than one. However, if you
-    -- had "Tag (1)" and "", this would create two tags named "Tag (1)".
     local lenArr <const> = #arr
     if lenArr > 1 then
         lenTagsToRename = lenTagsToRename + 1
