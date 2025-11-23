@@ -78,7 +78,8 @@ if lenTagsToRename > 0 then
                 -- Two tags could have the same fromFrame and toFrame, so those
                 -- cannot be used as distinguishing features.
                 local oldName <const> = tag.name
-                local newName <const> = strfmt("%s (%d)", oldName, k)
+                local oldNameVerif <const> = #oldName > 0 and oldName or "Tag"
+                local newName <const> = strfmt("%s (%d)", oldNameVerif, k)
                 tag.name = newName
             end
         end
