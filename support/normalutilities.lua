@@ -199,7 +199,6 @@ end
 ---@return boolean isValid
 function NormalUtilities.rgbToVec3(rgb)
     -- TODO: Can this be used in other normal dialogs, like color picker?
-
     if rgb.a > 0.0 then
         local x <const> = rgb.r * 2.0 - 1.0
         local y <const> = rgb.g * 2.0 - 1.0
@@ -420,6 +419,7 @@ end
 ---Transforms vectors in an image according to the given function.
 ---Image bytes are assumed to be in 32 bit RGB color mode with
 ---zero as its alpha index.
+---@private
 ---@param wSrc integer width source
 ---@param hSrc integer height source
 ---@param colorSpace ColorSpace source color space
