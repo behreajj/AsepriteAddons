@@ -80,12 +80,17 @@ app.transaction("To Reference", function()
         refLayer.blendMode = srcBlendMode
         refLayer.color = srcColor
         refLayer.data = srcLayer.data
-        refLayer.isContinuous = srcLayer.isContinuous
-        refLayer.isEditable = srcLayer.isEditable
-        refLayer.isVisible = srcLayer.isVisible
         refLayer.opacity = srcOpacity
         refLayer.parent = srcLayer.parent
         refLayer.stackIndex = srcLayer.stackIndex
+
+        refLayer.isContinuous = srcLayer.isContinuous
+        refLayer.isEditable = srcLayer.isEditable
+        refLayer.isVisible = srcLayer.isVisible
+
+        if app.apiVersion >= 38 then
+            refLayer.properties = srcLayer.properties
+        end
 
         app.layer = refLayer
         sprite:deleteLayer(srcLayer)

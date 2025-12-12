@@ -28,6 +28,10 @@ app.transaction("Dereference Layer", function()
     derefLayer.isEditable = refLayer.isEditable
     derefLayer.isVisible = refLayer.isVisible
 
+    if app.apiVersion >= 38 then
+        derefLayer.properties = refLayer.properties
+    end
+
     local frObjs <const> = sprite.frames
     local lenFrObjs <const> = #frObjs
     local i = 0

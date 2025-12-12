@@ -1666,6 +1666,10 @@ function AseUtilities.flattenGroup(
     flattened.isEditable = activeLayer.isEditable
     flattened.isVisible = activeLayer.isVisible
 
+    if app.apiVersion >= 38 then
+        flattened.properties = activeLayer.properties
+    end
+
     return flattened
 end
 
