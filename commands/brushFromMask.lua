@@ -104,6 +104,10 @@ if not isValid then
             local cosaSzHf <const> = cosa * sizeHalfReal
             local sinaSzHf <const> = sina * sizeHalfReal
 
+            -- As of version 1.3.16 and 1.3.17-beta2, the rotational
+            -- direction for the square brush, but not the line brush,
+            -- is flipped. The sign of y could be flipped... or you
+            -- could wait to see if this a bug that is fixed.
             context:beginPath()
             context:moveTo(
                 math.floor(xCenteri - cosaSzHf + sinaSzHf),
