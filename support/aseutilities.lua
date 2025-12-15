@@ -3376,7 +3376,7 @@ function AseUtilities.skewImageY(source, angle)
     return target
 end
 
----Converts an image from a tile set layer to a regular image. If the Tileset
+---Converts an image from a tile map to a regular image. If the Tileset
 ---is nil, returns an image that copies the source's ImageSpec.
 ---@param imgSrc Image source image
 ---@param tileSet Tileset|nil tile set
