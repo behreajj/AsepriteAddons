@@ -1,20 +1,18 @@
 dofile("../../support/aseutilities.lua")
 
-local site <const> = app.site
-local activeSprite <const> = site.sprite
-if not activeSprite then return end
-
+---@param srcSprite Sprite
 ---@param srcLayer Layer
 ---@param parent Layer|Sprite
 ---@param spriteColorMode ColorMode
 ---@return Layer trgLayer
 local function copyLayer(
+    srcSprite,
     srcLayer,
     parent,
     spriteColorMode)
     local trgLayer = nil
     if srcLayer.isGroup then
-        trgLayer = activeSprite:newGroup()
+        trgLayer = srcSprite:newGroup()
 
         local useNewBlend = false
         local appPrefs <const> = app.preferences
@@ -37,19 +35,23 @@ local function copyLayer(
             local i = 0
             while i < lenChildren do
                 i = i + 1
-                copyLayer(srcChildren[i], trgLayer, spriteColorMode)
+                copyLayer(srcSprite, srcChildren[i], trgLayer, spriteColorMode)
             end -- End child layer loop.
         end     -- End children array exist.
     else
-        trgLayer = activeSprite:newLayer()
+        trgLayer = srcSprite:newLayer()
 
         trgLayer.isContinuous = srcLayer.isContinuous
         trgLayer.blendMode = srcLayer.blendMode or BlendMode.NORMAL
         trgLayer.opacity = srcLayer.opacity or 255
 
-        local frObjs <const> = activeSprite.frames
+        local frObjs <const> = srcSprite.frames
         local lenFrObjs <const> = #frObjs
 
+        -- TODO: Post an app alert to ask how to handle duplicating tile set
+        -- vs. referring to original tile set? See
+        -- https://community.aseprite.org/t/making-changes-to-a-duplicate-tileset-also-changes-the-original/
+        -- Problem is how to create a new tile map layer without an app.command.
         local srcIsTileMap <const> = srcLayer.isTilemap
         local srcTileSet = nil
         if srcIsTileMap then
@@ -73,7 +75,7 @@ local function copyLayer(
                         spriteColorMode)
                 end
 
-                local trgCel <const> = activeSprite:newCel(
+                local trgCel <const> = srcSprite:newCel(
                     trgLayer, frObj, srcImg, srcCel.position)
                 trgCel.color = colorCopy(trgCel.color, "")
                 trgCel.data = trgCel.data
@@ -97,6 +99,10 @@ local function copyLayer(
 
     return trgLayer
 end
+
+local site <const> = app.site
+local activeSprite <const> = site.sprite
+if not activeSprite then return end
 
 local activeLayer <const> = site.layer
     or activeSprite.layers[1]
@@ -141,7 +147,7 @@ if lenFiltered > 1 then
         local j = 0
         while j < lenFiltered do
             j = j + 1
-            copyLayer(filtered[j], copyParent, colorMode)
+            copyLayer(activeSprite, filtered[j], copyParent, colorMode)
         end
     end)
 
@@ -162,6 +168,7 @@ else
         string.format("Copy %s", #name > 0 and name or "Layer"),
         function()
             local trgLayer <const> = copyLayer(
+                activeSprite,
                 activeLayer,
                 activeLayer.parent,
                 activeSprite.colorMode)
