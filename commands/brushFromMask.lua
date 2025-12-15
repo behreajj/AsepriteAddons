@@ -108,19 +108,21 @@ if not isValid then
             -- direction for the square brush, but not the line brush,
             -- is flipped. The sign of y could be flipped... or you
             -- could wait to see if this a bug that is fixed.
+            local ySign <const> = app.apiVersion >= 38 and -1 or 1
+            local sinSign <const> = sinaSzHf * ySign
             context:beginPath()
             context:moveTo(
-                math.floor(xCenteri - cosaSzHf + sinaSzHf),
-                math.floor(yCenteri + cosaSzHf + sinaSzHf))
+                math.floor(xCenteri - cosaSzHf + sinSign),
+                math.floor(yCenteri + cosaSzHf + sinSign))
             context:lineTo(
-                math.floor(xCenteri + cosaSzHf + sinaSzHf),
-                math.floor(yCenteri + cosaSzHf - sinaSzHf))
+                math.floor(xCenteri + cosaSzHf + sinSign),
+                math.floor(yCenteri + cosaSzHf - sinSign))
             context:lineTo(
-                math.floor(xCenteri + cosaSzHf - sinaSzHf),
-                math.floor(yCenteri - cosaSzHf - sinaSzHf))
+                math.floor(xCenteri + cosaSzHf - sinSign),
+                math.floor(yCenteri - cosaSzHf - sinSign))
             context:lineTo(
-                math.floor(xCenteri - cosaSzHf - sinaSzHf),
-                math.floor(yCenteri - cosaSzHf + sinaSzHf))
+                math.floor(xCenteri - cosaSzHf - sinSign),
+                math.floor(yCenteri - cosaSzHf + sinSign))
             context:closePath()
             context:fill()
         else
