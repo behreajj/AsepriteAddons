@@ -71,16 +71,17 @@ local function copyLayer(
             local frObj <const> = frObjs[i]
             local srcCel <const> = srcLayer:cel(frObj)
             if srcCel then
-                local srcImg = srcCel.image
+                local srcImg <const> = srcCel.image
+                local trgImg = srcImg
                 if srcIsTileMap then
-                    srcImg = tileMapToImage(
-                        srcCel.image,
+                    trgImg = tileMapToImage(
+                        srcImg,
                         srcTileSet,
                         spriteColorMode)
                 end
 
                 local trgCel <const> = srcSprite:newCel(
-                    trgLayer, frObj, srcImg, srcCel.position)
+                    trgLayer, frObj, trgImg, srcCel.position)
                 trgCel.color = colorCopy(srcCel.color, "")
                 trgCel.data = srcCel.data
                 trgCel.opacity = srcCel.opacity
