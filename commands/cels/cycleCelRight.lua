@@ -42,8 +42,6 @@ if activeLayer.isBackground then
             destCel.color = origColor
             destCel.zIndex = origzIndex
 
-            -- TODO: Copy cel properties as of api v38
-
             app.frame = destFrObj
         end)
     end

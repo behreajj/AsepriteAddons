@@ -50,8 +50,9 @@ while j < lenFrObjs and searchRight do
     end
 end
 
--- TODO: As of api version 38, should source cel properties
--- be copied as well?
+local len <const> = 1 + j - i
+if len <= 1 then return end
+
 local srcImg <const> = Image(cel.image)
 local srcPos <const> = cel.position
 local srcColor <const> = cel.color
@@ -59,8 +60,8 @@ local srcData <const> = cel.data
 local srcOpacity <const> = cel.opacity
 local srcZIndex <const> = cel.zIndex
 
-local len <const> = 1 + j - i
-if len <= 1 then return end
+-- Cannot copy source cel properties, as it says that the cel
+-- has been destroyed.
 
 app.transaction("Fill Empty Cels", function()
     local k = 0
