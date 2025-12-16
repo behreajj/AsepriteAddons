@@ -77,10 +77,10 @@ local function copyLayer(
 
                 local trgCel <const> = srcSprite:newCel(
                     trgLayer, frObj, srcImg, srcCel.position)
-                trgCel.color = colorCopy(trgCel.color, "")
-                trgCel.data = trgCel.data
-                trgCel.opacity = trgCel.opacity
-                trgCel.zIndex = trgCel.zIndex
+                trgCel.color = colorCopy(srcCel.color, "")
+                trgCel.data = srcCel.data
+                trgCel.opacity = srcCel.opacity
+                trgCel.zIndex = srcCel.zIndex
             end -- End source cel exists.
         end     -- End frame loop.
     end         -- End layer is group check.
