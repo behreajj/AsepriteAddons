@@ -90,9 +90,9 @@ local function copyLayer(
         end     -- End frame loop.
     end         -- End layer is group check.
 
-    local srcLayerNameVerif <const> = #srcLayer.name >= 0
-        and srcLayer.name
-        or "Layer"
+    local srcLayerNameVerif <const> = #srcLayer.name <= 0
+        and "Layer"
+        or srcLayer.name .. " Copy"
 
     trgLayer.isContinuous = srcLayer.isContinuous
     trgLayer.blendMode = srcLayer.blendMode or BlendMode.NORMAL
