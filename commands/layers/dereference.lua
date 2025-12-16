@@ -15,6 +15,8 @@ end
 app.transaction("Dereference Layer", function()
     local derefLayer <const> = sprite:newLayer()
     local colorCopy <const> = AseUtilities.aseColorCopy
+    local apiVersion <const> = app.apiVersion
+    local canCopyProps <const> = apiVersion >= 38
 
     derefLayer.name = "Dereference"
     derefLayer.blendMode = refLayer.blendMode or BlendMode.NORMAL
@@ -28,7 +30,7 @@ app.transaction("Dereference Layer", function()
     derefLayer.isEditable = refLayer.isEditable
     derefLayer.isVisible = refLayer.isVisible
 
-    if app.apiVersion >= 38 then
+    if canCopyProps then
         derefLayer.properties = refLayer.properties
     end
 
@@ -48,6 +50,10 @@ app.transaction("Dereference Layer", function()
             derefCel.data = refCel.data
             derefCel.opacity = refCel.opacity
             derefCel.zIndex = refCel.zIndex
+
+            if canCopyProps then
+                derefCel.properties = refCel.properties
+            end
         end
     end
 

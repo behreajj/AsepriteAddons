@@ -53,6 +53,9 @@ app.transaction("To Reference", function()
     }
     local refLayer <const> = app.site.layer
     if refLayer and refLayer.isReference then
+        local apiVersion <const> = app.apiVersion
+        local canCopyProps <const> = apiVersion >= 38
+
         local lenFrObjs <const> = #frObjs
         local i = 0
         while i < lenFrObjs do
@@ -73,6 +76,10 @@ app.transaction("To Reference", function()
                 refCel.data = srcCel.data
                 refCel.opacity = srcCel.opacity
                 refCel.zIndex = srcCel.zIndex
+
+                if canCopyProps then
+                    refCel.properties = srcCel.properties
+                end
             end
         end
 
@@ -88,7 +95,7 @@ app.transaction("To Reference", function()
         refLayer.isEditable = srcLayer.isEditable
         refLayer.isVisible = srcLayer.isVisible
 
-        if app.apiVersion >= 38 then
+        if canCopyProps then
             refLayer.properties = srcLayer.properties
         end
 
