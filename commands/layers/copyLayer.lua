@@ -45,6 +45,10 @@ local function copyLayer(
     else
         trgLayer = srcSprite:newLayer()
 
+        trgLayer.blendMode = srcLayer.blendMode or BlendMode.NORMAL
+        trgLayer.opacity = srcLayer.opacity or 255
+        trgLayer.isContinuous = srcLayer.isContinuous
+
         local frObjs <const> = srcSprite.frames
         local lenFrObjs <const> = #frObjs
 
@@ -93,10 +97,6 @@ local function copyLayer(
     local srcLayerNameVerif <const> = #srcLayer.name <= 0
         and "Layer"
         or srcLayer.name .. " Copy"
-
-    trgLayer.isContinuous = srcLayer.isContinuous
-    trgLayer.blendMode = srcLayer.blendMode or BlendMode.NORMAL
-    trgLayer.opacity = srcLayer.opacity or 255
 
     trgLayer.name = srcLayerNameVerif
     trgLayer.color = AseUtilities.aseColorCopy(srcLayer.color, "")
