@@ -52,10 +52,6 @@ local function copyLayer(
         local frObjs <const> = srcSprite.frames
         local lenFrObjs <const> = #frObjs
 
-        -- TODO: Post an app alert to ask how to handle duplicating tile set
-        -- vs. referring to original tile set? See
-        -- https://community.aseprite.org/t/making-changes-to-a-duplicate-tileset-also-changes-the-original/
-        -- Problem is how to create a new tile map layer without an app.command.
         local srcIsTileMap <const> = srcLayer.isTilemap
         local srcTileSet = nil
         if srcIsTileMap then
