@@ -1321,12 +1321,13 @@ dlg:button {
         end)
 
         -- TODO: Turn this into its own AseUtilities method?
-        local tsIdActive <const> = tileSet.properties["id"]
+        local tsIdActive = tileSet.properties["id"]
         if tsIdActive == nil then
             local minint64 <const> = 0x1000000000000000
             local maxint64 <const> = 0x7fffffffffffffff
             math.randomseed(os.time())
-            tileSet.properties["id"] = math.random(minint64, maxint64)
+            tsIdActive = math.random(minint64, maxint64)
+            tileSet.properties["id"] = tsIdActive
         end
 
         ---@type Layer[]
