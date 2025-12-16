@@ -63,6 +63,8 @@ false, then returns to the first frame after reaching the last.
 
 - `ungroupLayers`: Sets the parent of layers in the active layer to their grandparent, if any.
 
+- `uniqueTileset`: If the active layer is a tile map, duplicates the tile set used by the layer. Assigns an ID to the duplicate's `properties` and names the duplicate based on that ID. Updates the layer reference to the duplicate tile set.
+
 ## Palette
 
 - `cycleSwatchLeft`: If the foreground color has an exact palette match, moves the palette swatch to the left. Does not trigger a palette remap.
@@ -102,5 +104,3 @@ false, then returns to the first frame after reaching the last.
 - `brushFromMask`: Creates a brush from a selection. If snap to grid is enabled, sets the brush center to top-left; otherwise, uses the selection pivot. With no selection, creates a custom square or line brush.
 
 - `brushFromTile`: Creates a brush from the active foreground tile.
-
-- `copyTileset`: If the active layer is a tile map, duplicates the tile set referred to by the layer. Assigns an ID to the duplicate's `properties` and names the duplicate based on that ID. Prompts the user as to whether the layer should update its reference to the duplicate tile set.

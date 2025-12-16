@@ -1,6 +1,3 @@
--- TODO: Should this function be moved to transformTiles, or should
--- functions in transformTiles be moved to commands?
-
 local site <const> = app.site
 local activeSprite <const> = site.sprite
 if not activeSprite then return end
@@ -18,26 +15,15 @@ local minint64 <const> = 0x1000000000000000
 local maxint64 <const> = 0x7fffffffffffffff
 local trgTsId <const> = math.random(minint64, maxint64)
 
-local trgTileSet <const> = activeSprite:newTileset(srcTileSet)
-trgTileSet.properties["id"] = trgTsId
-
-app.transaction("Rename Tile Set", function()
+app.transaction("Unique Tileset", function()
+    local trgTileSet <const> = activeSprite:newTileset(srcTileSet)
+    trgTileSet.properties["id"] = trgTsId
     -- if #trgTileSet.name <= 0 then
     trgTileSet.name = string.format("%16x", trgTsId)
     -- else
     -- trgTileSet.name = trgTileSet.name .. " Copy"
     -- end
+    activeLayer.tileset = trgTileSet
 end)
 
--- TODO: Is this query really needed?
-local response <const> = app.alert {
-    title = "Query",
-    text = "Set active layer tile set to copy?",
-    buttons = { "YES", "NO" }
-}
-
-if response == 1 then
-    app.transaction("Update Reference", function()
-        activeLayer.tileset = trgTileSet
-    end)
-end
+app.refresh()
