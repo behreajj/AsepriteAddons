@@ -50,6 +50,8 @@ while j < lenFrObjs and searchRight do
     end
 end
 
+-- TODO: As of api version 38, should source cel properties
+-- be copied as well?
 local srcImg <const> = Image(cel.image)
 local srcPos <const> = cel.position
 local srcColor <const> = cel.color
