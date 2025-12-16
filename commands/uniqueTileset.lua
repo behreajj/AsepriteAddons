@@ -13,12 +13,12 @@ if not activeLayer.isTilemap then return end
 local srcTileSet <const> = activeLayer.tileset
 if not srcTileSet then return end
 
-local trgTileSet <const> = activeSprite:newTileset(srcTileSet)
-
 math.randomseed(os.time())
 local minint64 <const> = 0x1000000000000000
 local maxint64 <const> = 0x7fffffffffffffff
 local trgTsId <const> = math.random(minint64, maxint64)
+
+local trgTileSet <const> = activeSprite:newTileset(srcTileSet)
 trgTileSet.properties["id"] = trgTsId
 
 app.transaction("Rename Tile Set", function()
