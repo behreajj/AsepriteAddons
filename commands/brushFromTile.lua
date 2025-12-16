@@ -23,36 +23,35 @@ local tile <const> = tileSet:tile(tiCurr)
 if not tile then return end
 
 local image <const> = tile.image
+if image:isEmpty() then return end
 
-if not image:isEmpty() then
-    local tfCurr <const> = app.pixelColor.tileF(tifCurr)
-    local flipped <const> = AseUtilities.bakeFlag(image, tfCurr)
+local tfCurr <const> = app.pixelColor.tileF(tifCurr)
+local flipped <const> = AseUtilities.bakeFlag(image, tfCurr)
 
-    local centerPreset = "CENTER"
-    local brushPattern = BrushPattern.NONE
-    local xPattern = 0
-    local yPattern = 0
+local centerPreset = "CENTER"
+local brushPattern = BrushPattern.NONE
+local xPattern = 0
+local yPattern = 0
 
-    -- local cel <const> = site.cel
-    -- if cel then
-    --     local celPos <const> = cel.position
-    --     xPattern = celPos.x
-    --     yPattern = celPos.y
-    -- end
+-- local cel <const> = site.cel
+-- if cel then
+--     local celPos <const> = cel.position
+--     xPattern = celPos.x
+--     yPattern = celPos.y
+-- end
 
-    -- Problem is that the brush's fore and background
-    -- color can be updated such that the brush no longer
-    -- uses colors in the image. The color mode of the
-    -- fore and background color in the color bar doesn't
-    -- matter. Setting brush fgColor and bgColor by method
-    -- doesn't help. Brush must be saved for color to be
-    -- fixed. Also happens to brush from mask.
-    app.transaction("Brush From Tile", function()
-        local brush <const> = AseUtilities.imageToBrush(
-            flipped, centerPreset,
-            brushPattern, xPattern, yPattern)
-        AseUtilities.setBrush(brush)
-    end)
-end
+-- Problem is that the brush's fore and background
+-- color can be updated such that the brush no longer
+-- uses colors in the image. The color mode of the
+-- fore and background color in the color bar doesn't
+-- matter. Setting brush fgColor and bgColor by method
+-- doesn't help. Brush must be saved for color to be
+-- fixed. Also happens to brush from mask.
+app.transaction("Brush From Tile", function()
+    local brush <const> = AseUtilities.imageToBrush(
+        flipped, centerPreset,
+        brushPattern, xPattern, yPattern)
+    AseUtilities.setBrush(brush)
+end)
 
 app.refresh()
