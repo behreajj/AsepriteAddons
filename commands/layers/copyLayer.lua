@@ -11,6 +11,10 @@ local function copyLayer(
     parent,
     spriteColorMode)
     local trgLayer = nil
+
+    local apiVersion <const> = app.apiVersion
+    local canCopyProps <const> = apiVersion >= 38
+
     if srcLayer.isGroup then
         trgLayer = srcSprite:newGroup()
 
@@ -81,6 +85,10 @@ local function copyLayer(
                 trgCel.data = srcCel.data
                 trgCel.opacity = srcCel.opacity
                 trgCel.zIndex = srcCel.zIndex
+
+                if canCopyProps then
+                    trgCel.properties = srcCel.properties
+                end
             end -- End source cel exists.
         end     -- End frame loop.
     end         -- End layer is group check.
@@ -93,7 +101,7 @@ local function copyLayer(
     trgLayer.isEditable = srcLayer.isEditable
     trgLayer.isVisible = srcLayer.isVisible
 
-    if app.apiVersion >= 38 then
+    if canCopyProps then
         trgLayer.properties = srcLayer.properties
     end
 
