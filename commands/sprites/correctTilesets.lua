@@ -47,8 +47,21 @@ app.transaction("Correct tile sets", function()
 
         uniques[tsNameVerif] = true
         tileSet.name = tsNameVerif
-    end
-end)
+
+        -- See https://community.aseprite.org/t/tile-removed-from-tilemap-if-single-color/27875
+        local firstTile <const> = tileSet:tile(0)
+        if firstTile then
+            local firstTileImage <const> = firstTile.image
+            if not firstTileImage:isEmpty() then
+                local blankImage <const> = Image(firstTileImage.spec)
+                local lastTile <const> = activeSprite:newTile(tileSet)
+                lastTile.image = Image(firstTileImage)
+                firstTile.image = blankImage
+            end -- End first tile is not empty.
+        end     -- End first tile exists.
+    end         -- End tile set loop.
+end)            -- End transaction.
+
 
 local appPrefs <const> = app.preferences
 if appPrefs then
@@ -77,11 +90,11 @@ if appPrefs then
                     local tileSet <const> = tileSets[j]
                     if not usedTileSets[tileSet.properties.id] then
                         activeSprite:deleteTileset(tileSet)
-                    end
-                end
-            end)
-        end
-    end
-end
+                    end -- End delete tile set.
+                end     -- End reverse tile set loop.
+            end)        -- End transaction.
+        end             -- End no alert on deleting unused tile sets.
+    end                 -- End tile map prefs exists.
+end                     -- End app prefs exists.
 
 app.refresh()
