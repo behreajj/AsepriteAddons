@@ -4,12 +4,8 @@ local targets <const> = { "ACTIVE", "ALL", "RANGE" }
 
 local defaults <const> = {
     -- TODO: Support creating a target from a selection?
-    -- Issue is that when a pixel border or edge is artifically
+    -- Issue is that when a pixel border or edge is artificially
     -- introduced by a selection, the outline has no way of telling.
-
-    -- Option to erase source image from the outline target layer
-    -- so that only the outline is visible tried in commit
-    -- a381cd20bdb36218ff98e275a47481c50ee1cc71 .
     target = "ACTIVE",
     iterations = 1,
     alphaFade = false,
@@ -22,6 +18,7 @@ local defaults <const> = {
     m20 = false,
     m21 = true,
     m22 = false,
+    eraseSrcPixels = true,
 }
 
 local dlg <const> = Dialog { title = "Outline Gradient" }
@@ -243,6 +240,9 @@ dlg:button {
         local aseBkgColor <const> = args.bkgColor --[[@as Color]]
         local iterations <const> = args.iterations
             or defaults.iterations --[[@as integer]]
+
+        -- TODO: Expose parameter?
+        local eraseSrcPixels <const> = defaults.eraseSrcPixels --[[@as boolean]]
 
         -- Find frames from target.
         local frIdcs <const> = Utilities.flatArr2(
@@ -499,6 +499,23 @@ dlg:button {
                     end -- End pixel loop.
                 end     -- End Iterations loop.
 
+                if eraseSrcPixels then
+                    local areaSrc <const> = wSrc * hSrc
+                    local k = 0
+                    while k < areaSrc do
+                        local kbpp <const> = k * srcBpp
+                        local hex <const> = strunpack(unpackFmt, strsub(
+                            srcByteStr, 1 + kbpp, srcBpp + kbpp))
+                        if (hex & 0xff000000) ~= 0x0 then
+                            local xTrg <const> = (k % wSrc) + iterations
+                            local yTrg <const> = (k // wSrc) + iterations
+                            local n <const> = yTrg * wTrg + xTrg
+                            write[1 + n] = alphaIndexVerif
+                        end
+                        k = k + 1
+                    end -- End source image loop.
+                end     -- End erase source pixels.
+
                 ---@type string[]
                 local writeByteStrArr <const> = {}
                 i = 0
@@ -519,9 +536,9 @@ dlg:button {
                             trgLayer, frIdx, trgImg,
                             Point(srcPos.x - iterations, srcPos.y - iterations))
                         trgCel.opacity = srcCel.opacity
-                    end)
-            end
-        end
+                    end) -- End transaction.
+            end          -- End source cel exists.
+        end              -- End frames loop.
 
         if removeSrcLayer then
             app.transaction("Delete Layer", function()
