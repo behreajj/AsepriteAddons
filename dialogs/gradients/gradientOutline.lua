@@ -499,6 +499,12 @@ dlg:button {
                     end -- End pixel loop.
                 end     -- End Iterations loop.
 
+                -- TODO: Could this be optimized by storing the initial read
+                -- of the source image above? Particularly if this is the
+                -- default option. See the i loop above... Would also spare you
+                -- checking to see if x and y are in bounds first... Maybe look
+                -- at how you padded an image with zeros for the iterations
+                -- sections of the target image...
                 if eraseSrcPixels then
                     local areaSrc <const> = wSrc * hSrc
                     local k = 0
