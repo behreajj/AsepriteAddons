@@ -10,6 +10,9 @@ local defaults <const> = {
     iterations = 1,
     alphaFade = false,
     reverseFade = false,
+
+    -- TODO: Expose parameter.
+    eraseSrcPixels = true,
     m00 = false,
     m01 = true,
     m02 = false,
@@ -18,7 +21,6 @@ local defaults <const> = {
     m20 = false,
     m21 = true,
     m22 = false,
-    eraseSrcPixels = true,
 }
 
 local dlg <const> = Dialog { title = "Outline Gradient" }
@@ -240,8 +242,6 @@ dlg:button {
         local aseBkgColor <const> = args.bkgColor --[[@as Color]]
         local iterations <const> = args.iterations
             or defaults.iterations --[[@as integer]]
-
-        -- TODO: Expose parameter?
         local eraseSrcPixels <const> = defaults.eraseSrcPixels --[[@as boolean]]
 
         -- Find frames from target.
@@ -424,6 +424,7 @@ dlg:button {
 
                 local wSrc <const> = srcSpec.width
                 local hSrc <const> = srcSpec.height
+                local areaSrc <const> = wSrc * hSrc
 
                 local unpackFmt <const> = "<I" .. srcBpp
                 local wTrg <const> = wSrc + itr2
@@ -431,24 +432,36 @@ dlg:button {
                 local areaTrg <const> = wTrg * hTrg
 
                 ---@type integer[]
+                local initial <const> = {}
+                ---@type integer[]
                 local read <const> = {}
                 ---@type integer[]
                 local write <const> = {}
 
+                -- Area target is bigger than area source, so write array
+                -- is filled with transparent color.
                 local i = 0
                 while i < areaTrg do
-                    local xSrc <const> = (i % wTrg) - iterations
-                    local ySrc <const> = (i // wTrg) - iterations
-
-                    local hex = alphaIndexVerif
-                    if ySrc >= 0 and ySrc < hSrc
-                        and xSrc >= 0 and xSrc < wSrc then
-                        local jbpp <const> = (ySrc * wSrc + xSrc) * srcBpp
-                        hex = strunpack(unpackFmt, strsub(srcByteStr,
-                            1 + jbpp, srcBpp + jbpp))
-                    end
                     i = i + 1
-                    write[i] = hex
+                    write[i] = alphaIndexVerif
+                end
+
+                -- Fill both the initial and write array with parsed
+                -- pixel color data.
+                i = 0
+                while i < areaSrc do
+                    local ibpp <const> = i * srcBpp
+                    local hexSrc <const> = strunpack(unpackFmt, strsub(
+                        srcByteStr, 1 + ibpp, srcBpp + ibpp))
+
+                    local xTrg <const> = (i % wSrc) + iterations
+                    local yTrg <const> = (i // wSrc) + iterations
+                    local iWrite <const> = yTrg * wTrg + xTrg
+
+                    initial[1 + i] = hexSrc
+                    write[1 + iWrite] = hexSrc
+
+                    i = i + 1
                 end
 
                 h = 0
@@ -497,26 +510,17 @@ dlg:button {
 
                         i = i + 1
                     end -- End pixel loop.
-                end     -- End Iterations loop.
+                end     -- End iterations loop.
 
-                -- TODO: Could this be optimized by storing the initial read
-                -- of the source image above? Particularly if this is the
-                -- default option. See the i loop above... Would also spare you
-                -- checking to see if x and y are in bounds first... Maybe look
-                -- at how you padded an image with zeros for the iterations
-                -- sections of the target image...
                 if eraseSrcPixels then
-                    local areaSrc <const> = wSrc * hSrc
                     local k = 0
                     while k < areaSrc do
-                        local kbpp <const> = k * srcBpp
-                        local hex <const> = strunpack(unpackFmt, strsub(
-                            srcByteStr, 1 + kbpp, srcBpp + kbpp))
-                        if (hex & 0xff000000) ~= 0x0 then
+                        local hexSrc <const> = initial[1 + k]
+                        if (hexSrc & 0xff000000) ~= 0x0 then
                             local xTrg <const> = (k % wSrc) + iterations
                             local yTrg <const> = (k // wSrc) + iterations
-                            local n <const> = yTrg * wTrg + xTrg
-                            write[1 + n] = alphaIndexVerif
+                            local kWrite <const> = yTrg * wTrg + xTrg
+                            write[1 + kWrite] = alphaIndexVerif
                         end
                         k = k + 1
                     end -- End source image loop.
