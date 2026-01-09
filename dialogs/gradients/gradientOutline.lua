@@ -7,12 +7,10 @@ local defaults <const> = {
     -- Issue is that when a pixel border or edge is artificially
     -- introduced by a selection, the outline has no way of telling.
     target = "ACTIVE",
+    eraseSrcPixels = true,
     iterations = 1,
     alphaFade = false,
     reverseFade = false,
-
-    -- TODO: Expose parameter.
-    eraseSrcPixels = true,
     m00 = false,
     m01 = true,
     m02 = false,
@@ -32,6 +30,16 @@ dlg:combobox {
     label = "Target:",
     option = defaults.target,
     options = targets,
+    hexpand = false,
+}
+
+dlg:newrow { always = false }
+
+dlg:check {
+    id = "eraseSrcPixels",
+    label = "Mask:",
+    text = "Source",
+    selected = defaults.eraseSrcPixels,
     hexpand = false,
 }
 
@@ -234,6 +242,7 @@ dlg:button {
         local args <const> = dlg.data
         local target <const> = args.target
             or defaults.target --[[@as string]]
+        local eraseSrcPixels <const> = args.eraseSrcPixels --[[@as boolean]]
         local alphaFade <const> = args.alphaFade --[[@as boolean]]
         local reverseFade <const> = args.reverseFade --[[@as boolean]]
         local clrSpacePreset <const> = args.clrSpacePreset --[[@as string]]
@@ -242,7 +251,6 @@ dlg:button {
         local aseBkgColor <const> = args.bkgColor --[[@as Color]]
         local iterations <const> = args.iterations
             or defaults.iterations --[[@as integer]]
-        local eraseSrcPixels <const> = defaults.eraseSrcPixels --[[@as boolean]]
 
         -- Find frames from target.
         local frIdcs <const> = Utilities.flatArr2(
