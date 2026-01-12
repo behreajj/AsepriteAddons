@@ -573,7 +573,8 @@ dlg:button {
                     local k = 0
                     while k < areaSrc do
                         local hexSrc <const> = initial[1 + k]
-                        if (hexSrc & 0xff000000) ~= 0x0 then
+                        if (hexSrc & 0xff000000) ~= 0x0
+                            and hexSrc ~= bkgHex then
                             local xTrg <const> = (k % wSrc) + iterations
                             local yTrg <const> = (k // wSrc) + iterations
                             local kWrite <const> = yTrg * wTrg + xTrg
