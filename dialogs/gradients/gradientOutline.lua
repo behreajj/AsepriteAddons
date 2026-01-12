@@ -21,6 +21,59 @@ local defaults <const> = {
     m22 = false,
 }
 
+---@param arr integer[] pixel array
+---@param wSrc integer width target image
+---@param hSrc integer height target image
+---@param itr integer outline iterations
+---@param alphaIndex integer alpha index color
+local function initPixelBorder(arr, wSrc, hSrc, itr, alphaIndex)
+    local itr2 <const> = itr + itr
+    local wBordered <const> = wSrc + itr2
+
+    local horizStripWeight <const> = wSrc + itr
+    local vertStripWeight <const> = hSrc + itr
+    local horizStripArea <const> = itr * horizStripWeight
+    local vertStripArea <const> = itr * vertStripWeight
+
+    -- Draw top and bottom horizontal strips.
+    local i = 0
+    while i < horizStripArea do
+        local xh <const> = i % horizStripWeight
+        local yh <const> = i // horizStripWeight
+
+        local xTop <const> = xh
+        local yTop <const> = yh
+        local idxTop <const> = xTop + yTop * wBordered
+        arr[1 + idxTop] = alphaIndex
+
+        local xBtm <const> = xh + itr
+        local yBtm <const> = yh + vertStripWeight
+        local idxBtm <const> = xBtm + yBtm * wBordered
+        arr[1 + idxBtm] = alphaIndex
+
+        i = i + 1
+    end
+
+    -- Draw left and right vertical strips.
+    local j = 0
+    while j < vertStripArea do
+        local x <const> = j % itr
+        local y <const> = j // itr
+
+        local xLft <const> = x
+        local yLft <const> = y + itr
+        local idxLft <const> = xLft + yLft * wBordered
+        arr[1 + idxLft] = alphaIndex
+
+        local xRgt <const> = x + horizStripWeight
+        local yRgt <const> = y
+        local idxRgt <const> = xRgt + yRgt * wBordered
+        arr[1 + idxRgt] = alphaIndex
+
+        j = j + 1
+    end
+end
+
 local dlg <const> = Dialog { title = "Outline Gradient" }
 
 local unfiltered <const> = GradientUtilities.dialogWidgets(dlg, false)
@@ -448,15 +501,11 @@ dlg:button {
 
                 -- Area target is bigger than area source, so write array
                 -- is filled with transparent color.
-                local i = 0
-                while i < areaTrg do
-                    i = i + 1
-                    write[i] = alphaIndexVerif
-                end
+                initPixelBorder(write, wSrc, hSrc, iterations, alphaIndexVerif)
 
                 -- Fill both the initial and write array with parsed
                 -- pixel color data.
-                i = 0
+                local i = 0
                 while i < areaSrc do
                     local ibpp <const> = i * srcBpp
                     local hexSrc <const> = strunpack(unpackFmt, strsub(
