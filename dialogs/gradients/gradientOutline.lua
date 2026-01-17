@@ -592,9 +592,8 @@ dlg:button {
                     writeByteStrArr[i] = strpack("<I4", write[i])
                 end
 
-                local trgSpec <const> = createSpec(wTrg, hTrg, colorMode,
-                    colorSpace, alphaIndexVerif)
-                local trgImg <const> = Image(trgSpec)
+                local trgImg <const> = Image(createSpec(wTrg, hTrg, colorMode,
+                    colorSpace, alphaIndexVerif))
                 trgImg.bytes = tconcat(writeByteStrArr)
 
                 transact(
