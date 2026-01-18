@@ -14,7 +14,7 @@ Unlike `dialog` scripts, it's not always apparent what `commands` scripts do. No
 
 ## Frames
 
-- `appendFrame`: Adds a new empty frame after the active frame. The active frame *remains* active.
+- `appendFrame`: Adds a new empty frame after the active frame. The active frame remains active.
 
 - `deleteFrame`: Deletes frames in the timeline range. Sets active frame to earliest prior to deleted range.
 
@@ -23,7 +23,7 @@ Unlike `dialog` scripts, it's not always apparent what `commands` scripts do. No
 - `nextFrame`: Moves the active frame to the next frame index. Preserves timeline ranges of `RangeType.LAYERS`. If play once is 
 false, then returns to the first frame after reaching the last.
 
-- `prependFrame`: Adds a new empty frame before the active frame. The active frame *remains* active.
+- `prependFrame`: Adds a new empty frame before the active frame. The active frame remains active.
 
 - `prevFrame`: Moves the active frame to the previous frame index. Preserves timeline ranges of `RangeType.LAYERS`. If play once is false, then returns to the last frame after reaching the first.
 
