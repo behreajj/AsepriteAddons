@@ -61,7 +61,7 @@ false, then returns to the first frame after reaching the last.
 
 - `toreference`: Converts a layer to a reference layer. Group layers are not supported, and should be flattened prior.
 
-- `ungroupLayers`: Sets the parent of layers in the active layer to their grandparent, if any.
+- `ungroupLayers`: Sets the parent of layers in the active range to their grandparent, if any.
 
 - `uniqueTileset`: If the active layer is a tile map, duplicates the tile set used by the layer. Assigns an ID to the duplicate's `properties` and names the duplicate based on that ID. Updates the layer reference to the duplicate tile set.
 
