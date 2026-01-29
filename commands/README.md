@@ -89,7 +89,7 @@ false, then returns to the first frame after reaching the last.
 
 - `correctTags`: Removes tags with out-of-bounds frames. Tags with duplicate names have a number appended to the end of the name.
 
-- `correctTilesets`: Checks tile set names for empty strings, invalid characters, and duplicates. Renames tile sets as needed. Assigns a unique ID to each set's `properties`.
+- `correctTilesets`: Checks tile set names for empty strings, invalid characters, and duplicates. Renames tile sets as needed. Assigns a unique ID to each set's `properties`. If the tile at index 0 in a tile set is not blank, then moves it to the end of the set and creates a blank tile in its place.
 
 - `flattenSprite`: Flattens a sprite's layers to one layer. Deletes all layers other than the flattened layer, including references.
 
