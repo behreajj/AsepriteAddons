@@ -47,6 +47,8 @@ false, then returns to the first frame after reaching the last.
 
 - `growRangeLayers`: Expands the existing range to include more layers. If the layer is a group, selects its children. Then, selects the layer's neighbors. Then selects its parents. Treats reference layers as a boundary.
 
+- `mergeLayers`: Creates a new layer by merging the active layer with the layer below in the parent layer stack. Uses built-in Aseprite blending methods. Alerts with error if either layer is locked, is a reference, or is a background. Merged tile map layers yield a regular layer.
+
 - `nextLayer`: Moves the active layer to the next layer up the stack. Preserves timeline ranges of `RangeType.FRAMES`. Stops when the top of the sprite layer stack is reached.
 
 - `prependLayer`: Prepends a new layer to the active parent, either sprite or group layer. The layer is prepended to the bottom of the layer stack. If the active layer is a group, does *not* child the new layer to the group. The new layer becomes the active layer.

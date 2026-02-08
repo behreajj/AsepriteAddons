@@ -67,7 +67,6 @@ local wSprite <const> = spriteSpec.width
 local hSprite <const> = spriteSpec.height
 
 local createSpec <const> = AseUtilities.createSpec
-local blendImage <const> = AseUtilities.blendImage
 local flatToImage <const> = AseUtilities.flatToImage
 local floor <const> = math.floor
 local max <const> = math.max
@@ -99,18 +98,6 @@ app.transaction("Merge Layers", function()
             wSprite, hSprite)
 
         if isValidOver or isValidUnder then
-            -- local imgBlended <const>,
-            -- xTlBlend <const>,
-            -- yTlBlend <const> = blendImage(
-            --     flatImgUnder, flatImgOver,
-            --     xTlUnder, yTlUnder,
-            --     xTlOver, yTlOver,
-            --     nil, false)
-
-            -- local celBlended <const> = sprite:newCel(
-            --     compLayer, i, imgBlended,
-            --     Point(xTlBlend, yTlBlend))
-
             local xMin <const> = min(xTlUnder, xTlOver)
             local yMin <const> = min(yTlUnder, yTlOver)
             local xMax <const> = max(
