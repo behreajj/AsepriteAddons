@@ -44,23 +44,28 @@ end
 local lenFrames <const> = #sprite.frames
 
 -- Unpack layer opacity.
-local overLyrOpacity <const> = overLayer.opacity or 255
-local underLyrOpacity <const> = underLayer.opacity or 255
-local overLyrOpac01 <const> = overLyrOpacity / 255.0
-local underLyrOpac01 <const> = underLyrOpacity / 255.0
+local overLyrOpac8 <const> = overLayer.opacity or 255
+local underLyrOpac8 <const> = underLayer.opacity or 255
+local overLyrOpac01 <const> = overLyrOpac8 / 255.0
+local underLyrOpac01 <const> = underLyrOpac8 / 255.0
 
+-- Unpack layer blend mode.
 local overLyrBlendMode <const> = overLayer.blendMode or BlendMode.NORMAL
 local underLyrBlendMode <const> = underLayer.blendMode or BlendMode.NORMAL
 
 -- Create new layer.
 local compLayer <const> = sprite:newLayer()
 app.transaction("Set Layer Props", function()
+    compLayer.color = AseUtilities.rgbToAseColor(
+        ColorUtilities.srLab2TosRgb(Lab.mix(
+            ColorUtilities.sRgbToSrLab2(
+                AseUtilities.aseColorToRgb(overLayer.color)),
+            ColorUtilities.sRgbToSrLab2(
+                AseUtilities.aseColorToRgb(underLayer.color)),
+            0.5)))
     compLayer.name = "Merged"
-    -- Exception: this always sets to parent.
     compLayer.parent = parent
-    compLayer.stackIndex = overLayer.stackIndex + 1
-
-    -- TODO: Blend compLayer color from source layer colors?
+    compLayer.stackIndex = overIndex + 1
 end)
 
 --Unpack the rest of sprite spec.
@@ -123,7 +128,7 @@ app.transaction("Merge Layers", function()
                 yTlOver + flatImgOver.height - 1)
 
             local imgBlended = Image(createSpec(
-                1 + xMax - xMin,  1 + yMax - yMin,
+                1 + xMax - xMin, 1 + yMax - yMin,
                 colorMode, colorSpace, alphaIndex))
 
             -- TODO: Decide draw image order based on z indices and
@@ -141,15 +146,15 @@ app.transaction("Merge Layers", function()
 
             sprite:newCel(compLayer, i, imgBlended, Point(xMin, yMin))
         elseif isValidOver then
-            local celBlended <const> = sprite:newCel(
+            local compCel <const> = sprite:newCel(
                 compLayer, i, flatImgOver,
                 Point(xTlOver, yTlOver))
-            celBlended.opacity = compOver8
+            compCel.opacity = compOver8
         elseif isValidUnder then
-            local celBlended <const> = sprite:newCel(
+            local compCel <const> = sprite:newCel(
                 compLayer, i, flatImgUnder,
                 Point(xTlUnder, yTlUnder))
-            celBlended.opacity = compUnder8
+            compCel.opacity = compUnder8
         end -- End over and under are valid.
     end     -- End frames loop.
 
