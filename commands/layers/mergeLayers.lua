@@ -56,21 +56,6 @@ local underLyrOpac01 <const> = underLyrOpac8 / 255.0
 local overLyrBlendMode <const> = overLayer.blendMode or BlendMode.NORMAL
 local underLyrBlendMode <const> = underLayer.blendMode or BlendMode.NORMAL
 
--- Create new layer.
-local compLayer <const> = sprite:newLayer()
-app.transaction("Set Layer Props", function()
-    compLayer.color = AseUtilities.rgbToAseColor(
-        ColorUtilities.srLab2TosRgb(Lab.mix(
-            ColorUtilities.sRgbToSrLab2(
-                AseUtilities.aseColorToRgb(overLayer.color)),
-            ColorUtilities.sRgbToSrLab2(
-                AseUtilities.aseColorToRgb(underLayer.color)),
-            0.5)))
-    compLayer.name = "Merged"
-    compLayer.parent = parent
-    compLayer.stackIndex = idxOverLayer + 1
-end)
-
 --Unpack the rest of sprite spec.
 local spriteSpec <const> = sprite.spec
 local colorMode <const> = spriteSpec.colorMode
@@ -86,6 +71,19 @@ local max <const> = math.max
 local min <const> = math.min
 
 app.transaction("Merge Layers", function()
+    local compLayer <const> = sprite:newLayer()
+
+    compLayer.color = AseUtilities.rgbToAseColor(
+        ColorUtilities.srLab2TosRgb(Lab.mix(
+            ColorUtilities.sRgbToSrLab2(
+                AseUtilities.aseColorToRgb(overLayer.color)),
+            ColorUtilities.sRgbToSrLab2(
+                AseUtilities.aseColorToRgb(underLayer.color)),
+            0.5)))
+    compLayer.name = "Merged"
+    compLayer.parent = parent
+    compLayer.stackIndex = idxOverLayer + 1
+
     local i = 0
     while i < lenFrames do
         i = i + 1
@@ -169,7 +167,8 @@ app.transaction("Merge Layers", function()
 
     sprite:deleteLayer(overLayer)
     sprite:deleteLayer(underLayer)
+
+    app.layer = compLayer
 end)
 
-app.layer = compLayer
 app.refresh()
