@@ -1,3 +1,5 @@
+dofile("../../support/aseutilities.lua")
+
 local site <const> = app.site
 local sprite <const> = site.sprite
 if not sprite then return end
@@ -56,6 +58,9 @@ app.transaction("Set Layer Props", function()
     compLayer.name = "Merged"
     -- Exception: this always sets to parent.
     compLayer.parent = parent
+    compLayer.stackIndex = overLayer.stackIndex + 1
+
+    -- TODO: Blend compLayer color from source layer colors?
 end)
 
 --Unpack the rest of sprite spec.
@@ -81,23 +86,33 @@ app.transaction("Merge Layers", function()
         flatImgUnder <const>,
         xTlUnder <const>,
         yTlUnder <const>,
-        celOpacityUnder <const> = flatToImage(
+        underCelOpac8 <const>,
+        zIndexUnder <const> = flatToImage(
             underLayer, i,
             colorMode, colorSpace, alphaIndex,
             true, false, true, true,
             wSprite, hSprite)
 
+        local underCelOpac01 <const> = underCelOpac8 / 255.0
+        local compUnder01 <const> = underLyrOpac01 * underCelOpac01
+        local compUnder8 <const> = floor(compUnder01 * 255.0 + 0.5)
+
         local isValidOver <const>,
         flatImgOver <const>,
         xTlOver <const>,
         yTlOver <const>,
-        celOpacityOver <const> = flatToImage(
+        overCelOpac8 <const>,
+        zIndexOver <const> = flatToImage(
             overLayer, i,
             colorMode, colorSpace, alphaIndex,
             true, false, true, true,
             wSprite, hSprite)
 
-        if isValidOver or isValidUnder then
+        local overCelOpac01 <const> = overCelOpac8 / 255.0
+        local compOver01 <const> = overLyrOpac01 * overCelOpac01
+        local compOver8 <const> = floor(compOver01 * 255.0 + 0.5)
+
+        if isValidOver and isValidUnder then
             local xMin <const> = min(xTlUnder, xTlOver)
             local yMin <const> = min(yTlUnder, yTlOver)
             local xMax <const> = max(
@@ -107,30 +122,34 @@ app.transaction("Merge Layers", function()
                 yTlUnder + flatImgUnder.height - 1,
                 yTlOver + flatImgOver.height - 1)
 
-            local wBlended <const> = 1 + xMax - xMin
-            local hBlended <const> = 1 + yMax - yMin
+            local imgBlended = Image(createSpec(
+                1 + xMax - xMin,  1 + yMax - yMin,
+                colorMode, colorSpace, alphaIndex))
 
-            local celOpacOver01 <const> = celOpacityOver / 255.0
-            local celOpacUnder01 <const> = celOpacityUnder / 255.0
-
-            local blendSpec <const> = createSpec(
-                wBlended, hBlended,
-                colorMode, colorSpace, alphaIndex)
-            local imgBlended = Image(blendSpec)
+            -- TODO: Decide draw image order based on z indices and
+            -- layer stack index?
             imgBlended:drawImage(
                 flatImgUnder,
                 Point(xTlUnder - xMin, yTlUnder - yMin),
-                floor((underLyrOpac01 * celOpacUnder01) * 255.0 + 0.5),
+                compUnder8,
                 underLyrBlendMode)
             imgBlended:drawImage(
                 flatImgOver,
                 Point(xTlOver - xMin, yTlOver - yMin),
-                floor((overLyrOpac01 * celOpacOver01) * 255.0 + 0.5),
+                compOver8,
                 overLyrBlendMode)
 
+            sprite:newCel(compLayer, i, imgBlended, Point(xMin, yMin))
+        elseif isValidOver then
             local celBlended <const> = sprite:newCel(
-                compLayer, i, imgBlended,
-                Point(xMin, yMin))
+                compLayer, i, flatImgOver,
+                Point(xTlOver, yTlOver))
+            celBlended.opacity = compOver8
+        elseif isValidUnder then
+            local celBlended <const> = sprite:newCel(
+                compLayer, i, flatImgUnder,
+                Point(xTlUnder, yTlUnder))
+            celBlended.opacity = compUnder8
         end -- End over and under are valid.
     end     -- End frames loop.
 
