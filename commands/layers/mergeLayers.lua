@@ -7,12 +7,12 @@ if not sprite then return end
 local overLayer <const> = site.layer
 if not overLayer then return end
 
-local overIndex <const> = overLayer.stackIndex
-if overIndex < 2 then return end
+local idxOverLayer <const> = overLayer.stackIndex
+if idxOverLayer < 2 then return end
 
 local parent <const> = overLayer.parent
-local underIndex <const> = overIndex - 1
-local underLayer <const> = parent.layers[underIndex]
+local idxUnderLayer <const> = idxOverLayer - 1
+local underLayer <const> = parent.layers[idxUnderLayer]
 
 if (not overLayer.isEditable)
     or (not underLayer.isEditable) then
@@ -68,7 +68,7 @@ app.transaction("Set Layer Props", function()
             0.5)))
     compLayer.name = "Merged"
     compLayer.parent = parent
-    compLayer.stackIndex = overIndex + 1
+    compLayer.stackIndex = idxOverLayer + 1
 end)
 
 --Unpack the rest of sprite spec.
@@ -95,7 +95,7 @@ app.transaction("Merge Layers", function()
         xTlUnder <const>,
         yTlUnder <const>,
         underCelOpac8 <const>,
-        zIndexUnder <const> = flatToImage(
+        zIdxUnder <const> = flatToImage(
             underLayer, i,
             colorMode, colorSpace, alphaIndex,
             true, false, true, true,
@@ -104,13 +104,14 @@ app.transaction("Merge Layers", function()
         local underCelOpac01 <const> = underCelOpac8 / 255.0
         local compUnder01 <const> = underLyrOpac01 * underCelOpac01
         local compUnder8 <const> = floor(compUnder01 * 255.0 + 0.5)
+        local drawOrderUnder <const> = idxUnderLayer + zIdxUnder
 
         local isValidOver <const>,
         flatImgOver <const>,
         xTlOver <const>,
         yTlOver <const>,
         overCelOpac8 <const>,
-        zIndexOver <const> = flatToImage(
+        zIdxOver <const> = flatToImage(
             overLayer, i,
             colorMode, colorSpace, alphaIndex,
             true, false, true, true,
@@ -119,6 +120,7 @@ app.transaction("Merge Layers", function()
         local overCelOpac01 <const> = overCelOpac8 / 255.0
         local compOver01 <const> = overLyrOpac01 * overCelOpac01
         local compOver8 <const> = floor(compOver01 * 255.0 + 0.5)
+        local drawOrderOver <const> = idxOverLayer + zIdxOver
 
         if isValidOver and isValidUnder then
             local xMin <const> = min(xTlUnder, xTlOver)
@@ -134,18 +136,22 @@ app.transaction("Merge Layers", function()
                 1 + xMax - xMin, 1 + yMax - yMin,
                 colorMode, colorSpace, alphaIndex))
 
-            -- TODO: Decide draw image order based on z indices and
-            -- layer stack index?
-            imgBlended:drawImage(
-                flatImgUnder,
-                Point(xTlUnder - xMin, yTlUnder - yMin),
-                compUnder8,
-                underLyrBlendMode)
-            imgBlended:drawImage(
-                flatImgOver,
-                Point(xTlOver - xMin, yTlOver - yMin),
-                compOver8,
-                overLyrBlendMode)
+            local ptUnder <const> = Point(xTlUnder - xMin, yTlUnder - yMin)
+            local ptOver <const> = Point(xTlOver - xMin, yTlOver - yMin)
+
+            if (drawOrderUnder < drawOrderOver)
+                or ((drawOrderUnder == drawOrderOver)
+                    and (zIdxUnder < zIdxOver)) then
+                imgBlended:drawImage(
+                    flatImgUnder, ptUnder, compUnder8, underLyrBlendMode)
+                imgBlended:drawImage(
+                    flatImgOver, ptOver, compOver8, overLyrBlendMode)
+            else
+                imgBlended:drawImage(
+                    flatImgOver, ptOver, compOver8, overLyrBlendMode)
+                imgBlended:drawImage(
+                    flatImgUnder, ptUnder, compUnder8, underLyrBlendMode)
+            end
 
             sprite:newCel(compLayer, i, imgBlended, Point(xMin, yMin))
         elseif isValidOver then
