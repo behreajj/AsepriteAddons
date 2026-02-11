@@ -5,10 +5,7 @@ local refLayer <const> = site.layer
 if not refLayer then return end
 
 if not refLayer.isReference then
-    app.alert {
-        title = "Error",
-        text = "Layer is not a reference."
-    }
+    app.tip { text = "Layer is not a reference." }
     return
 end
 

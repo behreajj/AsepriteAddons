@@ -16,31 +16,19 @@ local underLayer <const> = parent.layers[idxUnderLayer]
 
 if (not overLayer.isEditable)
     or (not underLayer.isEditable) then
-    -- TODO: These early returns could also use app.tip,
-    -- which is less obtrusive. The same is true for all
-    -- commands.
-    app.alert {
-        title = "Error",
-        text = "Locked layers cannot be merged."
-    }
+    app.tip { text = "Locked layers cannot be merged." }
     return
 end
 
 if overLayer.isReference
     or underLayer.isReference then
-    app.alert {
-        title = "Error",
-        text = "Reference layers cannot be merged."
-    }
+    app.tip { text = "Reference layers cannot be merged." }
     return
 end
 
 if overLayer.isBackground
     or underLayer.isBackground then
-    app.alert {
-        title = "Error",
-        text = "Background layers cannot be merged."
-    }
+    app.tip { text = "Background layers cannot be merged." }
     return
 end
 

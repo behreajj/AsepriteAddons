@@ -6,10 +6,7 @@ local activeLayer <const> = app.site.layer
 if not activeLayer then return end
 
 if activeLayer.isReference then
-    app.alert {
-        title = "Error",
-        text = "Layer is already a reference."
-    }
+    app.tip { text = "Layer is already a reference." }
     return
 end
 
@@ -32,10 +29,7 @@ if activeIsGroup then
     -- srcLayer = AseUtilities.flattenGroup(
     --     sprite, activeLayer, frObjs,
     --     true, false, true, true)
-    app.alert {
-        title = "Error",
-        text = "Group layers are not supported."
-    }
+    app.tip { text = "Group layers are not supported." }
     return
 end
 

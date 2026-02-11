@@ -7,10 +7,7 @@ if not activeSprite then return end
 local activeLayer <const> = site.layer
 if not activeLayer then return end
 if not activeLayer.isGroup then
-    app.alert {
-        title = "Error",
-        text = "Layer is not a group."
-    }
+    app.tip { text = "Layer is not a group." }
     return
 end
 
