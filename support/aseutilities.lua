@@ -3112,8 +3112,12 @@ function AseUtilities.selToImage(sel, sprite, frame)
     return image, xSel, ySel
 end
 
----Sets a palette in a sprite at a given index to a table of colors represented
----as hexadecimal integers. The palette index defaults to 1.
+---Sets a palette in a sprite at a given index to an array of colors represented
+---as hexadecimal integers. If the array is empty, then resizes the palette to
+---contain 1 swatch, clear black.
+---
+---The palette index defaults to 1.
+---
 ---The keepMaxLen flag is for setting palettes in indexed color mode, where a
 ---shorter palette would cause invalid indices in image maps.
 ---

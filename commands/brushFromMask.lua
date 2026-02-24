@@ -104,10 +104,11 @@ if not isValid then
             local cosaSzHf <const> = cosa * sizeHalfReal
             local sinaSzHf <const> = sina * sizeHalfReal
 
-            -- As of version 1.3.16 and 1.3.17-beta2, the rotational
+            -- In version 1.3.16 and 1.3.17-beta2, the rotational
             -- direction for the square brush, but not the line brush,
-            -- is flipped.
-            local ySign <const> = app.apiVersion >= 38 and -1 or 1
+            -- was flipped. The sign of the y axis once changed based
+            -- on API version.
+            local ySign <const> = 1
             local sinSign <const> = sinaSzHf * ySign
             context:beginPath()
             context:moveTo(
