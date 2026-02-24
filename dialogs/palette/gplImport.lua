@@ -180,6 +180,16 @@ dlg:button {
 
         ---@type integer[]
         local colors = {}
+
+        -- TODO: An invalid gpl file can generate zero colors. Aseprite
+        -- allows sprites to have zero length palettes. It's not a major
+        -- problem here because AseUtilities setPalette has an else case
+        -- for zero length arrays. Ideally though, this script would
+        -- report sthe error with an alert.
+        --
+        -- Maybe total colors array above will have to be kept separate
+        -- from an internal parsed colors array.
+        -- See https://github.com/aseprite/aseprite/issues/5673 .
         local lenColors = 0
         local columns = 0
 
