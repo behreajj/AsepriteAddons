@@ -197,97 +197,97 @@ dlg:button {
         local strunpack <const> = string.unpack
         local tconcat <const> = table.concat
 
-        -- app.transaction("Noise", function()
+        app.transaction("Noise", function()
+            local trgLayer <const> = activeSprite:newLayer()
+            local srcLayerName = "Layer"
+            if #srcLayer.name > 0 then
+                srcLayerName = srcLayer.name
+            end
+            trgLayer.name = string.format(
+                "%s Noise", srcLayerName)
+            trgLayer.parent = AseUtilities.getTopVisibleParent(srcLayer)
+            trgLayer.opacity = srcLayer.opacity or 255
+            -- Do not copy blend mode, it only confuses things.
 
-        local trgLayer <const> = activeSprite:newLayer()
-        local srcLayerName = "Layer"
-        if #srcLayer.name > 0 then
-            srcLayerName = srcLayer.name
-        end
-        trgLayer.name = string.format(
-            "%s Noise", srcLayerName)
-        trgLayer.parent = AseUtilities.getTopVisibleParent(srcLayer)
-        trgLayer.opacity = srcLayer.opacity or 255
-        -- Do not copy blend mode, it only confuses things.
+            ---@type table<integer, {l: number, c: number, h: number, a: number}>
+            local srcToLchDict <const> = {}
 
-        ---@type table<integer, {l: number, c: number, h: number, a: number}>
-        local srcToLchDict <const> = {}
+            local i = 0
+            while i < lenFrIdcs do
+                i = i + 1
+                local frIdx <const> = frIdcs[i]
+                local srcCel <const> = srcLayer:cel(frIdx)
+                if srcCel then
+                    local srcImg = srcCel.image
 
-        local i = 0
-        while i < lenFrIdcs do
-            i = i + 1
-            local frIdx <const> = frIdcs[i]
-            local srcCel <const> = srcLayer:cel(frIdx)
-            if srcCel then
-                local srcImg = srcCel.image
+                    -- TODO: If you wanted noise to remain stable across frames
+                    -- would you reset it with randomseed here?
 
-                if isTileMap then
-                    srcImg = tilesToImage(srcImg, tileSet, ColorMode.RGB)
-                end
-
-                local srcBytes <const> = srcImg.bytes
-                local srcSpec <const> = srcImg.spec
-                local srcWidth <const> = srcSpec.width
-                local srcHeight <const> = srcSpec.height
-                local area <const> = srcWidth * srcHeight
-
-                ---@type string[]
-                local trgByteArr <const> = {}
-
-                local j = 0
-                while j < area do
-                    local j4 <const> = j * 4
-                    local srcAbgr32 <const> = strunpack("<I4", strsub(
-                        srcBytes, 1 + j4, 4 + j4))
-                    local trgAbgr32 = 0
-
-                    local srcLch = srcToLchDict[srcAbgr32]
-                    if not srcLch then
-                        srcLch = labToLch(sRgbToLab(fromHex(srcAbgr32)))
-                        srcToLchDict[srcAbgr32] = srcLch
+                    if isTileMap then
+                        srcImg = tilesToImage(srcImg, tileSet, ColorMode.RGB)
                     end
 
-                    if srcLch.a > 0.0 then
-                        local lRng <const> = rng() * lScale2 - lScale
-                        local cRng <const> = rng() * cScale2 - cScale
-                        local hRng <const> = rng() * hScale2 - hScale01
+                    local srcBytes <const> = srcImg.bytes
+                    local srcSpec <const> = srcImg.spec
+                    local srcWidth <const> = srcSpec.width
+                    local srcHeight <const> = srcSpec.height
+                    local area <const> = srcWidth * srcHeight
 
-                        local lSrc <const> = srcLch.l
-                        local cSrc <const> = srcLch.c
-                        local hSrc <const> = srcLch.h
+                    ---@type string[]
+                    local trgByteArr <const> = {}
 
-                        local lTrg <const> = lSrc + lRng
-                        local cTrg <const> = max(cSrc + cRng, 0.0)
-                        local hTrg = hSrc + hRng
-                        if cTrg < 0.00005 then
-                            local fac <const> = lTrg * 0.01
-                            hTrg = hRng
-                                + (1.0 - fac) * Lab.SR_HUE_SHADOW
-                                + fac * Lab.SR_HUE_LIGHT
+                    local j = 0
+                    while j < area do
+                        local j4 <const> = j * 4
+                        local srcAbgr32 <const> = strunpack("<I4", strsub(
+                            srcBytes, 1 + j4, 4 + j4))
+                        local trgAbgr32 = 0
+
+                        local srcLch = srcToLchDict[srcAbgr32]
+                        if not srcLch then
+                            srcLch = labToLch(sRgbToLab(fromHex(srcAbgr32)))
+                            srcToLchDict[srcAbgr32] = srcLch
                         end
 
-                        trgAbgr32 = toHex(labTosRgb(lchToLab(
-                            lTrg,
-                            cTrg,
-                            hTrg,
-                            srcLch.a)))
-                    end -- Non zero alpha.
+                        if srcLch.a > 0.0 then
+                            local lRng <const> = rng() * lScale2 - lScale
+                            local cRng <const> = rng() * cScale2 - cScale
+                            local hRng <const> = rng() * hScale2 - hScale01
 
-                    j = j + 1
-                    trgByteArr[j] = strpack("<I4", trgAbgr32)
-                end -- End pixels loop.
+                            local lSrc <const> = srcLch.l
+                            local cSrc <const> = srcLch.c
+                            local hSrc <const> = srcLch.h
 
-                local trgImg <const> = Image(srcSpec)
-                trgImg.bytes = tconcat(trgByteArr)
+                            local lTrg <const> = lSrc + lRng
+                            local cTrg <const> = max(cSrc + cRng, 0.0)
+                            local hTrg = hSrc + hRng
+                            if cTrg < 0.00005 then
+                                local fac <const> = lTrg * 0.01
+                                hTrg = hRng
+                                    + (1.0 - fac) * Lab.SR_HUE_SHADOW
+                                    + fac * Lab.SR_HUE_LIGHT
+                            end
 
-                local trgCel <const> = activeSprite:newCel(
-                    trgLayer, frIdx, trgImg, srcCel.position)
-                trgCel.opacity = srcCel.opacity
-            end -- End source cel exists.
-        end     -- End frames loop.
+                            trgAbgr32 = toHex(labTosRgb(lchToLab(
+                                lTrg,
+                                cTrg,
+                                hTrg,
+                                srcLch.a)))
+                        end -- Non zero alpha.
 
+                        j = j + 1
+                        trgByteArr[j] = strpack("<I4", trgAbgr32)
+                    end -- End pixels loop.
 
-        -- end)
+                    local trgImg <const> = Image(srcSpec)
+                    trgImg.bytes = tconcat(trgByteArr)
+
+                    local trgCel <const> = activeSprite:newCel(
+                        trgLayer, frIdx, trgImg, srcCel.position)
+                    trgCel.opacity = srcCel.opacity
+                end -- End source cel exists.
+            end -- End frames loop.
+        end)
 
         if removeSrcLayer then
             app.transaction("Delete Layer", function()
