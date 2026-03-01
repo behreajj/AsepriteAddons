@@ -236,6 +236,9 @@ dlg:button {
                         local cRng <const> = rng() * cScale2 - cScale
                         local hRng <const> = rng() * hScale2 - hScale01
 
+                        -- TODO: Problem case where source chroma is zero,
+                        -- so re-saturated hues tend toward red.
+
                         trgAbgr32 = toHex(labTosRgb(lchToLab(
                             srcLch.l + lRng,
                             max(srcLch.c + cRng, 0.0),
