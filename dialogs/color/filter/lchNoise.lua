@@ -208,9 +208,9 @@ dlg:button {
 
                 local srcBytes <const> = srcImg.bytes
                 local srcSpec <const> = srcImg.spec
-                local wSrc <const> = srcSpec.width
-                local hSrc <const> = srcSpec.height
-                local area <const> = wSrc * hSrc
+                local srcWidth <const> = srcSpec.width
+                local srcHeight <const> = srcSpec.height
+                local area <const> = srcWidth * srcHeight
 
                 ---@type string[]
                 local trgByteArr <const> = {}
@@ -236,13 +236,22 @@ dlg:button {
                         local cRng <const> = rng() * cScale2 - cScale
                         local hRng <const> = rng() * hScale2 - hScale01
 
-                        -- TODO: Problem case where source chroma is zero,
-                        -- so re-saturated hues tend toward red.
+                        local lSrc <const> = srcLch.l
+                        local cSrc <const> = srcLch.c
+                        local hSrc <const> = srcLch.h
+
+                        local lTrg <const> = lSrc + lRng
+                        local cTrg <const> = max(cSrc + cRng, 0.0)
+                        local hTrg <const> = cTrg > 0.0
+                            and hSrc + hRng
+                            or ((1.0 - lTrg * 0.01) * Lab.SR_HUE_SHADOW
+                                + lTrg * 0.01 * (1.0 + Lab.SR_HUE_LIGHT)
+                                + hRng)
 
                         trgAbgr32 = toHex(labTosRgb(lchToLab(
-                            srcLch.l + lRng,
-                            max(srcLch.c + cRng, 0.0),
-                            srcLch.h + hRng,
+                            lTrg,
+                            cTrg,
+                            hTrg,
                             srcLch.a)))
                     end -- Non zero alpha.
 
