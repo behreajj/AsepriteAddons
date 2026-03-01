@@ -3,10 +3,13 @@ dofile("../../../support/aseutilities.lua")
 local targets <const> = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
 
 local defaults <const> = {
+    -- TODO: Support LAB vs. LCH? See colorAdjust.
     target = "ACTIVE",
     lScale = 20.0,
     cScale = 20.0,
     hScale = 30.0,
+    printElapsed = false,
+    updateSeedOnApply = false,
 }
 
 local dlg <const> = Dialog { title = "Lch Noise" }
@@ -74,11 +77,23 @@ dlg:slider {
 
 dlg:newrow { always = false }
 
+dlg:check {
+    id = "printElapsed",
+    label = "Print:",
+    text = "Diagnostic",
+    selected = defaults.printElapsed,
+    hexpand = false,
+}
+
+dlg:newrow { always = false }
+
 dlg:button {
-    id = "adjustButton",
+    id = "confirm",
     text = "&OK",
     focus = true,
     onclick = function()
+        local startTime <const> = os.clock()
+
         -- Early returns.
         local site <const> = app.site
         local activeSprite <const> = site.sprite
@@ -112,6 +127,7 @@ dlg:button {
             or defaults.cScale --[[@as number]]
         local hScaleDeg <const> = args.hScale
             or defaults.hScale --[[@as number]]
+        local updateSeedOnApply <const> = defaults.updateSeedOnApply --[[@as boolean]]
 
         -- This needs to be done first, otherwise range will be lost.
         local isSelect <const> = target == "SELECTION"
@@ -194,6 +210,9 @@ dlg:button {
         trgLayer.opacity = srcLayer.opacity or 255
         -- Do not copy blend mode, it only confuses things.
 
+        ---@type table<integer, {l: number, c: number, h: number, a: number}>
+        local srcToLchDict <const> = {}
+
         local i = 0
         while i < lenFrIdcs do
             i = i + 1
@@ -214,9 +233,6 @@ dlg:button {
 
                 ---@type string[]
                 local trgByteArr <const> = {}
-
-                ---@type table<integer, {l: number, c: number, h: number, a: number}>
-                local srcToLchDict <const> = {}
 
                 local j = 0
                 while j < area do
@@ -242,11 +258,13 @@ dlg:button {
 
                         local lTrg <const> = lSrc + lRng
                         local cTrg <const> = max(cSrc + cRng, 0.0)
-                        local hTrg <const> = cTrg > 0.0
-                            and hSrc + hRng
-                            or ((1.0 - lTrg * 0.01) * Lab.SR_HUE_SHADOW
-                                + lTrg * 0.01 * (1.0 + Lab.SR_HUE_LIGHT)
-                                + hRng)
+                        local hTrg = hSrc + hRng
+                        if cTrg < 0.00005 then
+                            local fac <const> = lTrg * 0.01
+                            hTrg = hRng
+                                + (1.0 - fac) * Lab.SR_HUE_SHADOW
+                                + fac * Lab.SR_HUE_LIGHT
+                        end
 
                         trgAbgr32 = toHex(labTosRgb(lchToLab(
                             lTrg,
@@ -277,7 +295,17 @@ dlg:button {
             end)
         end
 
+        if updateSeedOnApply then
+            local newSeed <const> = math.random(-2147483648, 2147483647)
+            dlg:modify { id = "seed", text = string.format("%d", newSeed) }
+        end
+
         app.refresh()
+
+        local printElapsed <const> = args.printElapsed --[[@as boolean]]
+        if printElapsed then
+            AseUtilities.printElapsed(startTime)
+        end
     end
 }
 
