@@ -243,7 +243,7 @@ dlg:button {
         local tilesToImage <const> = AseUtilities.tileMapToImage
         local labnew <const> = Lab.new
         local labToLch <const> = Lab.toLch
-        local lchToLab <const> = Lab.fromLchInternal
+        local lchToLab <const> = Lab.fromLch
         local fromHex <const> = Rgb.fromHexAbgr32
         local toHex <const> = Rgb.toHex
         local labTosRgb <const> = ColorUtilities.srLab2TosRgb
@@ -319,14 +319,8 @@ dlg:button {
                                 local cSrc <const> = srcLch.c
                                 local hSrc <const> = srcLch.h
 
-                                local cTrg <const> = max(cSrc + cRng, 0.0)
-                                local hTrg = hSrc + hRng
-                                if cTrg < 0.00005 then
-                                    local fac <const> = lTrg * 0.01
-                                    hTrg = hRng
-                                        + (1.0 - fac) * Lab.SR_HUE_SHADOW
-                                        + fac * Lab.SR_HUE_LIGHT
-                                end
+                                local cTrg <const> = cSrc + cRng
+                                local hTrg <const> = hSrc + hRng
 
                                 trgLab = lchToLab(lTrg, cTrg, hTrg, tSrc)
                             else
