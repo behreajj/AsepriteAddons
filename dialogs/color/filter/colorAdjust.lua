@@ -282,8 +282,11 @@ dlg:canvas {
         local clb <const> = -defaults.maxChroma
         local cub <const> = defaults.maxChroma
 
+        -- Lch to Rgb conversion must be validated, not internal, because
+        -- negative chroma will cause complementary hue color to appear
+        -- due to negative scalar when converting to Cartesian coordinates.
         local h <const> = active.hAdj - 0.5
-        local lchTosRgb <const> = ColorUtilities.srLchTosRgbInternal
+        local lchTosRgb <const> = ColorUtilities.srLchTosRgb
         local toHex <const> = Rgb.toHex
         local strpack <const> = string.pack
 
