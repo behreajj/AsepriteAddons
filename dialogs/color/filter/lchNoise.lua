@@ -1,11 +1,14 @@
 dofile("../../../support/aseutilities.lua")
 
 local targets <const> = { "ACTIVE", "ALL", "RANGE", "SELECTION" }
+local modes <const> = { "LAB", "LCH" }
 
 local defaults <const> = {
-    -- TODO: Support LAB vs. LCH? See colorAdjust.
     target = "ACTIVE",
+    mode = "LCH",
     lScale = 20.0,
+    aScale = 20.0,
+    bScale = 20.0,
     cScale = 20.0,
     hScale = 30.0,
     printElapsed = false,
@@ -47,6 +50,27 @@ dlg:button {
 
 dlg:newrow { always = false }
 
+dlg:combobox {
+    id = "mode",
+    label = "Space:",
+    focus = false,
+    option = defaults.mode,
+    options = modes,
+    hexpand = false,
+    onchange = function()
+        local args <const> = dlg.data
+        local mode <const> = args.mode --[[@as string]]
+        local isLch <const> = mode == "LCH"
+        local isLab <const> = mode == "LAB"
+        dlg:modify { id = "cScale", visible = isLch }
+        dlg:modify { id = "hScale", visible = isLch }
+        dlg:modify { id = "aScale", visible = isLab }
+        dlg:modify { id = "bScale", visible = isLab }
+    end
+}
+
+dlg:newrow { always = false }
+
 dlg:slider {
     id = "lScale",
     label = "L:",
@@ -58,11 +82,34 @@ dlg:slider {
 dlg:newrow { always = false }
 
 dlg:slider {
+    id = "aScale",
+    label = "A:",
+    min = 0,
+    max = math.floor(0.5 + Lab.SR_MAX_CHROMA),
+    value = defaults.aScale,
+    visible = defaults.mode == "LAB"
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
+    id = "bScale",
+    label = "B:",
+    min = 0,
+    max = math.floor(0.5 + Lab.SR_MAX_CHROMA),
+    value = defaults.bScale,
+    visible = defaults.mode == "LAB"
+}
+
+dlg:newrow { always = false }
+
+dlg:slider {
     id = "cScale",
     label = "C:",
     min = 0,
     max = math.floor(0.5 + Lab.SR_MAX_CHROMA),
-    value = defaults.cScale
+    value = defaults.cScale,
+    visible = defaults.mode == "LCH"
 }
 
 dlg:newrow { always = false }
@@ -72,7 +119,8 @@ dlg:slider {
     label = "H:",
     min = 0,
     max = 180,
-    value = defaults.hScale
+    value = defaults.hScale,
+    visible = defaults.mode == "LCH"
 }
 
 dlg:newrow { always = false }
@@ -119,10 +167,16 @@ dlg:button {
         local args <const> = dlg.data
         local target <const> = args.target
             or defaults.target --[[@as string]]
+        local mode <const> = args.mode
+            or defaults.mode --[[@as string]]
         local seed <const> = args.seed
             or os.time() --[[@as integer]]
         local lScale <const> = args.lScale
             or defaults.lScale --[[@as number]]
+        local aScale <const> = args.aScale
+            or defaults.aScale --[[@as number]]
+        local bScale <const> = args.bScale
+            or defaults.bScale --[[@as number]]
         local cScale <const> = args.cScale
             or defaults.cScale --[[@as number]]
         local hScaleDeg <const> = args.hScale
@@ -178,12 +232,16 @@ dlg:button {
 
         math.randomseed(seed)
         local lScale2 <const> = lScale + lScale
+        local aScale2 <const> = aScale + aScale
+        local bScale2 <const> = bScale + bScale
         local cScale2 <const> = cScale + cScale
         local hScale01 <const> = hScaleDeg / 360.0
         local hScale2 <const> = hScale01 + hScale01
+        local useLch <const> = mode == "LCH"
 
         -- Cache methods used in loops.
         local tilesToImage <const> = AseUtilities.tileMapToImage
+        local labnew <const> = Lab.new
         local labToLch <const> = Lab.toLch
         local lchToLab <const> = Lab.fromLchInternal
         local fromHex <const> = Rgb.fromHexAbgr32
@@ -209,8 +267,8 @@ dlg:button {
             trgLayer.opacity = srcLayer.opacity or 255
             -- Do not copy blend mode, it only confuses things.
 
-            ---@type table<integer, {l: number, c: number, h: number, a: number}>
-            local srcToLchDict <const> = {}
+            ---@type table<integer, Lab>
+            local srcToLabDict <const> = {}
 
             local i = 0
             while i < lenFrIdcs do
@@ -219,10 +277,6 @@ dlg:button {
                 local srcCel <const> = srcLayer:cel(frIdx)
                 if srcCel then
                     local srcImg = srcCel.image
-
-                    -- TODO: If you wanted noise to remain stable across frames
-                    -- would you reset it with randomseed here?
-
                     if isTileMap then
                         srcImg = tilesToImage(srcImg, tileSet, ColorMode.RGB)
                     end
@@ -243,36 +297,49 @@ dlg:button {
                             srcBytes, 1 + j4, 4 + j4))
                         local trgAbgr32 = 0
 
-                        local srcLch = srcToLchDict[srcAbgr32]
-                        if not srcLch then
-                            srcLch = labToLch(sRgbToLab(fromHex(srcAbgr32)))
-                            srcToLchDict[srcAbgr32] = srcLch
+                        local srcLab = srcToLabDict[srcAbgr32]
+                        if not srcLab then
+                            srcLab = sRgbToLab(fromHex(srcAbgr32))
+                            srcToLabDict[srcAbgr32] = srcLab
                         end
 
-                        if srcLch.a > 0.0 then
+                        local tSrc <const> = srcLab.alpha
+                        if tSrc > 0.0 then
+                            local trgLab = srcLab
+
                             local lRng <const> = rng() * lScale2 - lScale
-                            local cRng <const> = rng() * cScale2 - cScale
-                            local hRng <const> = rng() * hScale2 - hScale01
-
-                            local lSrc <const> = srcLch.l
-                            local cSrc <const> = srcLch.c
-                            local hSrc <const> = srcLch.h
-
+                            local lSrc <const> = srcLab.l
                             local lTrg <const> = lSrc + lRng
-                            local cTrg <const> = max(cSrc + cRng, 0.0)
-                            local hTrg = hSrc + hRng
-                            if cTrg < 0.00005 then
-                                local fac <const> = lTrg * 0.01
-                                hTrg = hRng
-                                    + (1.0 - fac) * Lab.SR_HUE_SHADOW
-                                    + fac * Lab.SR_HUE_LIGHT
-                            end
 
-                            trgAbgr32 = toHex(labTosRgb(lchToLab(
-                                lTrg,
-                                cTrg,
-                                hTrg,
-                                srcLch.a)))
+                            if useLch then
+                                local cRng <const> = rng() * cScale2 - cScale
+                                local hRng <const> = rng() * hScale2 - hScale01
+
+                                local srcLch <const> = labToLch(srcLab)
+                                local cSrc <const> = srcLch.c
+                                local hSrc <const> = srcLch.h
+
+                                local cTrg <const> = max(cSrc + cRng, 0.0)
+                                local hTrg = hSrc + hRng
+                                if cTrg < 0.00005 then
+                                    local fac <const> = lTrg * 0.01
+                                    hTrg = hRng
+                                        + (1.0 - fac) * Lab.SR_HUE_SHADOW
+                                        + fac * Lab.SR_HUE_LIGHT
+                                end
+
+                                trgLab = lchToLab(lTrg, cTrg, hTrg, tSrc)
+                            else
+                                local aRng <const> = rng() * aScale2 - aScale
+                                local bRng <const> = rng() * bScale2 - bScale
+
+                                local aTrg <const> = srcLab.a + aRng
+                                local bTrg <const> = srcLab.b + bRng
+
+                                trgLab = labnew(lTrg, aTrg, bTrg, tSrc)
+                            end -- End color space check.
+
+                            trgAbgr32 = toHex(labTosRgb(trgLab))
                         end -- Non zero alpha.
 
                         j = j + 1
@@ -286,7 +353,7 @@ dlg:button {
                         trgLayer, frIdx, trgImg, srcCel.position)
                     trgCel.opacity = srcCel.opacity
                 end -- End source cel exists.
-            end -- End frames loop.
+            end     -- End frames loop.
         end)
 
         if removeSrcLayer then
