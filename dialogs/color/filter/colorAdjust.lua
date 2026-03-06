@@ -669,7 +669,8 @@ dlg:button {
         -- Cache methods used in loops.
         local tilesToImage <const> = AseUtilities.tileMapToImage
         local labToLch <const> = Lab.toLch
-        local lchToLab <const> = Lab.fromLchInternal
+        -- Must be validated, not internal.
+        local lchToLab <const> = Lab.fromLch
         local labnew <const> = Lab.new
         local fromHex <const> = Rgb.fromHexAbgr32
         local toHex <const> = Rgb.toHex
