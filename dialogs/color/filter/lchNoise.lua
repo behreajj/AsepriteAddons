@@ -308,19 +308,15 @@ dlg:button {
                             local trgLab = srcLab
 
                             local lRng <const> = rng() * lScale2 - lScale
-                            local lSrc <const> = srcLab.l
-                            local lTrg <const> = lSrc + lRng
+                            local lTrg <const> = srcLab.l + lRng
 
                             if useLch then
                                 local cRng <const> = rng() * cScale2 - cScale
                                 local hRng <const> = rng() * hScale2 - hScale01
 
                                 local srcLch <const> = labToLch(srcLab)
-                                local cSrc <const> = srcLch.c
-                                local hSrc <const> = srcLch.h
-
-                                local cTrg <const> = cSrc + cRng
-                                local hTrg <const> = hSrc + hRng
+                                local cTrg <const> = srcLch.c + cRng
+                                local hTrg <const> = srcLch.h + hRng
 
                                 trgLab = lchToLab(lTrg, cTrg, hTrg, tSrc)
                             else
