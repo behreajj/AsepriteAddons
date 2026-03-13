@@ -518,11 +518,12 @@ dlg:button {
                                 end     -- End palette exists.
                             end         -- End color mode block.
 
-                            trgImg = Image(ImageSpec {
+                            local trgSpec <const> = ImageSpec {
                                 width = wSrcImg,
                                 height = hSrcImg,
                                 colorMode = ColorMode.RGB
-                            })
+                            }
+                            trgImg = Image(trgSpec)
                             trgImg.bytes = tconcat(trgByteArr)
                         end -- End image is not RGB.
 
