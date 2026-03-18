@@ -209,9 +209,8 @@ dlg:button {
         while h < lenOpenSprites do
             h = h + 1
             local sprite <const> = openSprites[h]
-            local filename <const> = app.fs.fileTitle(sprite.filename)
-
             local profile <const> = sprite.colorSpace
+
             if profile == profActive then
                 candLenExact = candLenExact + 1
                 candidatesExact[candLenExact] = sprite
@@ -221,11 +220,12 @@ dlg:button {
                 candLenApprox = candLenApprox + 1
                 candidatesApprox[candLenApprox] = sprite
             else
+                local filename <const> = app.fs.fileTitle(sprite.filename)
                 errorFlag = true
                 rejLen = rejLen + 1
                 rejected[rejLen] = filename
-            end
-        end
+            end -- End profile check.
+        end     -- End open sprites loop.
 
         local hexesProfile,
         hexesSrgb = AseUtilities.asePaletteLoad(
