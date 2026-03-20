@@ -937,7 +937,7 @@ end
 ---@param dialog Dialog dialog
 ---@param id string canvas id
 ---@param label string canvas label
----@param width integer canvas weight
+---@param width integer canvas width
 ---@param height integer canvas height
 ---@param isVisible? boolean is visible
 ---@param lDef? number lightness default
