@@ -13,7 +13,7 @@ setmetatable(BoundsLab, {
 })
 
 ---Constructs a new axis aligned bounding box (AABB) for a 3D volume,
----represented by a minimum and maximum coordinate. Defaults to passing vectors
+---represented by a minimum and maximum coordinate. Defaults to passing colors
 ---by value.
 ---@param mn Lab lower bound
 ---@param mx Lab upper bound
@@ -24,7 +24,7 @@ function BoundsLab.new(mn, mx)
 end
 
 ---Constructs a new axis aligned bounding box (AABB) for a 3D volume,
----represented by a minimum and maximum coordinate. Vectors are assigned by
+---represented by a minimum and maximum coordinate. Colors are assigned by
 ---reference.
 ---@param mn Lab lower bound
 ---@param mx Lab upper bound
@@ -38,7 +38,7 @@ function BoundsLab.newByRef(mn, mx)
 end
 
 ---Constructs a new axis aligned bounding box (AABB) for a 3D volume,
----represented by a minimum and maximum coordinate. Vectors are copied by value.
+---represented by a minimum and maximum coordinate. Colors are copied by value.
 ---@param mn Lab lower bound
 ---@param mx Lab upper bound
 ---@return BoundsLab
@@ -146,7 +146,7 @@ end
 ---axis, the horizontal split. On the z axis, the depth split.
 ---@param bounds BoundsLab bounds
 ---@param xFac number vertical factor
----@param yFac number horizontal vector
+---@param yFac number horizontal factor
 ---@param zFac number depth factor
 ---@param bsw BoundsLab back south west octant
 ---@param bse BoundsLab back south east octant
@@ -196,7 +196,7 @@ function BoundsLab.toJson(b)
         Lab.toJson(b.mx))
 end
 
----Returns a bounds with the dimensions of the CIE LAB or SR LAB 2 color spaces.
+---Returns a bounds with the dimensions of the SR LAB 2 color space.
 ---Intended for use with an octree containing points of color.
 ---@return BoundsLab
 ---@nodiscard
