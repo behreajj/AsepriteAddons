@@ -2239,6 +2239,13 @@ end
 ---@return Palette
 ---@nodiscard
 function AseUtilities.getPalette(frame, palettes)
+    local lenPalettes <const> = #palettes
+    if lenPalettes <= 0 then
+        local emptyPal <const> = Palette(1)
+        emptyPal:setColor(0, Color { r = 0, g = 0, b = 0, a = 0 })
+        return emptyPal
+    end
+
     local idx = 1
     local typeFrObj <const> = type(frame)
     if typeFrObj == "number"
@@ -2248,7 +2255,8 @@ function AseUtilities.getPalette(frame, palettes)
         ---@diagnostic disable-next-line: undefined-field
         idx = frame.frameNumber
     end
-    if idx > #palettes then idx = 1 end
+    if idx > lenPalettes then idx = 1 end
+
     return palettes[idx]
 end
 
