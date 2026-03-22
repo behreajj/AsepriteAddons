@@ -1407,6 +1407,12 @@ function AseUtilities.defaultFolder()
             end
         end
     end
+
+    local pathSep <const> = app.fs.pathSeparator
+    if string.sub(folderPath, #folderPath) ~= pathSep then
+        folderPath = folderPath .. pathSep
+    end
+
     return folderPath
 end
 
