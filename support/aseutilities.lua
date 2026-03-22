@@ -3141,13 +3141,16 @@ end
 ---@param paletteIndex? integer index
 ---@param keepMaxLen? boolean keep maximum length
 function AseUtilities.setPalette(arr, sprite, paletteIndex, keepMaxLen)
-    local palIdxVerif = paletteIndex or 1
     local palettes <const> = sprite.palettes
     local lenPalettes <const> = #palettes
-    local lenHexArr <const> = #arr
+    if lenPalettes <= 0 then return end
+
+    local palIdxVerif = paletteIndex or 1
     -- This should be consistent behavior with getPalette.
     if palIdxVerif > lenPalettes then palIdxVerif = 1 end
     local palette <const> = palettes[palIdxVerif]
+
+    local lenHexArr <const> = #arr
     if lenHexArr > 0 then
         app.transaction("Set Palette", function()
             local lenNew <const> = keepMaxLen
