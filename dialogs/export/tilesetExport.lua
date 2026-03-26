@@ -397,6 +397,7 @@ dlg:file {
     label = "File:",
     filetypes = tiledImgExts,
     basepath = AseUtilities.defaultFolder(),
+    filename = "*.png",
     title = "Export Tile Set",
     save = true,
     focus = true

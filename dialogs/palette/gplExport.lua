@@ -73,6 +73,7 @@ dlg:file {
     label = "Path:",
     filetypes = { "gpl" },
     basepath = AseUtilities.defaultFolder(),
+    filename = "*.gpl",
     title = "Export Gpl",
     save = true,
     focus = true

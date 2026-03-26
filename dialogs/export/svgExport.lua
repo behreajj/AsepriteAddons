@@ -801,6 +801,7 @@ dlg:file {
     label = "Path:",
     filetypes = { "svg" },
     basepath = AseUtilities.defaultFolder(),
+    filename = "*.svg",
     title = "Export Svg",
     save = true,
     focus = true

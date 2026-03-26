@@ -77,6 +77,7 @@ dlg:file {
     id = "filepath",
     filetypes = AseUtilities.FILE_FORMATS_PAL,
     basepath = AseUtilities.defaultFolder(),
+    filename = "*.gpl",
     save = true,
     visible = defaults.palTarget == "FILE"
 }
