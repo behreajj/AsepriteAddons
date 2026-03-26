@@ -98,23 +98,29 @@ local function readBrush(binStr)
     local imageSpec <const> = AseUtilities.createSpec(wImage, hImage)
     local image = Image(imageSpec)
 
+    local brushTypeIsImage <const> = brushType == BrushType.IMAGE
     local lenBytesIsValid <const> = (wImage * hImage * 4) == lenImageBytes
         and lenImageBytes > 0
-    if brushType == BrushType.IMAGE
-        and lenBytesIsValid then
+    if brushTypeIsImage and lenBytesIsValid then
         local imageBytes <const> = strsub(binStr, 87, 86 + lenImageBytes)
         image.bytes = imageBytes
     end
 
-    local brush <const> = Brush {
-        angle = brushAngle,
-        center = Point(brushCenterX, brushCenterY),
-        image = image,
-        pattern = brushPattern,
-        patternOrigin = Point(brushPatternX, brushPatternY),
-        size = brushSize,
-        type = brushType,
-    }
+    -- Providing an image to the brush constructor when the brush
+    -- type is not image seems to cause problems.
+    local brush <const> = brushTypeIsImage
+        and Brush {
+            center = Point(brushCenterX, brushCenterY),
+            image = image,
+            pattern = brushPattern,
+            patternOrigin = Point(brushPatternX, brushPatternY),
+            type = brushType,
+        }
+        or Brush {
+            angle = brushAngle,
+            size = brushSize,
+            type = brushType,
+        }
 
     return brush, enabledFlags,
         fgAbgr32, bgAbgr32,
