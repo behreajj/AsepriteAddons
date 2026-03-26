@@ -107,7 +107,8 @@ local function readBrush(binStr)
     end
 
     -- Providing an image to the brush constructor when the brush
-    -- type is not image seems to cause problems.
+    -- type is not image causes problems. See
+    -- https://github.com/aseprite/aseprite/blob/main/src/app/script/brush_class.cpp#L45
     local brush <const> = brushTypeIsImage
         and Brush {
             center = Point(brushCenterX, brushCenterY),
