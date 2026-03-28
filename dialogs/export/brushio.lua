@@ -17,6 +17,7 @@ local defaults <const> = {
     inkEnabled = false,
     opacityEnabled = false,
     pxPerfectEnabled = false,
+    dynamicsEnabled = false,
 
     -- 0000 0001
     fgColorMask = 1,
@@ -40,6 +41,20 @@ local defaults <const> = {
 ---@return Ink toolInk
 ---@return integer toolOpacity
 ---@return boolean usePixelPerfect
+---@return {
+--- useStabilizer: boolean,
+--- stableFac: number,
+--- dynamicSize: integer,
+--- dynamicAngle: integer,
+--- dynamicColor: integer,
+--- minSize: integer,
+--- minAngle: integer,
+--- colorFromTo: integer,
+--- minPressure: number,
+--- maxPressure: number,
+--- minVelocity: number,
+--- maxVelocity: number} toolDynamics
+---@nodiscard
 local function readBrush(binStr)
     local strfmt <const> = string.format
     local strbyte <const> = string.byte
@@ -53,7 +68,7 @@ local function readBrush(binStr)
         --     "Signature \"%s\" does not match expected \"%s\"",
         --     signature, defaults.signature))
         return Brush { angle = 0, size = 1, type = BrushType.CIRCLE },
-            0, 0, 0, Ink.SIMPLE, 255, false
+            0, 0, 0, Ink.SIMPLE, 255, false, {}
     end
 
     -- local ffVersion <const> = strunpack("B", strsub(binStr, 9, 9))
@@ -91,7 +106,8 @@ local function readBrush(binStr)
     -- print(string.format("toolOpacity: %d", toolOpacity))
     -- print(string.format("usePixelPerfect: %d", usePixelPerfect))
 
-    local useStabilizer <const> = strunpack("B", strsub(binStr, 39, 39))
+    -- TODO: Replace strunpack("B") with strbyte?
+    local useStabilizer <const> = strunpack("B", strsub(binStr, 39, 39)) ~= 0
     local stableFac <const> = strunpack("B", strsub(binStr, 40, 40))
     -- DynamicSensor:
     -- 0 Static
@@ -156,9 +172,25 @@ local function readBrush(binStr)
             type = brushType,
         }
 
+    local toolDynamics <const> = {
+        useStabilizer = useStabilizer,
+        stableFac = stableFac,
+        dynamicSize = dynamicSize,
+        dynamicAngle = dynamicAngle,
+        dynamicColor = dynamicColor,
+        minSize = minSize,
+        minAngle = minAngle,
+        colorFromTo = colorFromTo,
+        minPressure = minPressure,
+        maxPressure = maxPressure,
+        minVelocity = minVelocity,
+        maxVelocity = maxVelocity,
+    }
+
     return brush, enabledFlags,
         fgAbgr32, bgAbgr32,
-        toolInk, toolOpacity, usePixelPerfect
+        toolInk, toolOpacity, usePixelPerfect,
+        toolDynamics
 end
 
 local dlg <const> = Dialog { title = "Brush IO" }
@@ -232,28 +264,76 @@ dlg:button {
         bgAbgr32 <const>,
         toolInk <const>,
         toolOpacity <const>,
-        usePixelPerfect <const> = readBrush(brushBytes)
+        usePixelPerfect <const>,
+        toolDynamics <const> = readBrush(brushBytes)
 
         local tool <const> = app.tool
         local toolPrefs <const> = app.preferences.tool(tool)
         if toolPrefs then
-            if toolPrefs.ink then
-                if enabledFlags & defaults.inkMask ~= 0 then
-                    toolPrefs.ink = toolInk
-                end
+            if toolPrefs.ink and (enabledFlags & defaults.inkMask ~= 0) then
+                toolPrefs.ink = toolInk
             end
 
-            if toolPrefs.opacity then
-                if enabledFlags & defaults.opacityMask ~= 0 then
-                    toolPrefs.opacity = toolOpacity
-                end
+            if toolPrefs.opacity and (enabledFlags & defaults.opacityMask ~= 0) then
+                toolPrefs.opacity = toolOpacity
             end
 
-            if toolPrefs.freehand_algorithm then
-                if enabledFlags & defaults.pxPerfectMask ~= 0 then
-                    toolPrefs.freehand_algorithm = usePixelPerfect
-                        and 1
-                        or 0
+            if toolPrefs.freehand_algorithm and (enabledFlags & defaults.pxPerfectMask ~= 0) then
+                toolPrefs.freehand_algorithm = usePixelPerfect
+                    and 1
+                    or 0
+            end
+
+            local dynamicsPrefs <const> = toolPrefs.dynamics
+            if dynamicsPrefs and (enabledFlags & defaults.dynamicsMask ~= 0) then
+                if dynamicsPrefs.stabilizer ~= nil then
+                    dynamicsPrefs.stabilizer = toolDynamics.useStabilizer
+                end
+
+                if dynamicsPrefs.stabilizer_factor then
+                    dynamicsPrefs.stabilizer_factor = toolDynamics.stableFac
+                end
+
+                if dynamicsPrefs.size then
+                    dynamicsPrefs.size = toolDynamics.dynamicSize
+                end
+
+                if dynamicsPrefs.angle then
+                    dynamicsPrefs.angle = toolDynamics.dynamicAngle
+                end
+
+                if dynamicsPrefs.gradient then
+                    dynamicsPrefs.gradient = toolDynamics.dynamicColor
+                end
+
+                if dynamicsPrefs.min_size then
+                    dynamicsPrefs.min_size = toolDynamics.minSize
+                end
+
+                if dynamicsPrefs.min_angle then
+                    dynamicsPrefs.min_angle = toolDynamics.minAngle
+                end
+
+                if dynamicsPrefs.color_from_to then
+                    dynamicsPrefs.color_from_to = toolDynamics.colorFromTo
+                end
+
+                -- dynamicsPrefs.matrix_name is skipped.
+
+                if dynamicsPrefs.min_pressure_threshold then
+                    dynamicsPrefs.min_pressure_threshold = toolDynamics.minPressure
+                end
+
+                if dynamicsPrefs.max_pressure_threshold then
+                    dynamicsPrefs.max_pressure_threshold = toolDynamics.maxPressure
+                end
+
+                if dynamicsPrefs.min_velocity_threshold then
+                    dynamicsPrefs.min_velocity_threshold = toolDynamics.minVelocity
+                end
+
+                if dynamicsPrefs.max_velocity_threshold then
+                    dynamicsPrefs.max_velocity_threshold = toolDynamics.maxVelocity
                 end
             end
         end
@@ -316,6 +396,13 @@ dlg:check {
     id = "opacityEnabled",
     text = "Opacity",
     selected = defaults.opacityEnabled,
+    hexpand = false,
+}
+
+dlg:check {
+    id = "dynamicsEnabled",
+    text = "Dynamics",
+    selected = defaults.dynamicsEnabled,
     hexpand = false,
 }
 
@@ -407,6 +494,7 @@ dlg:button {
         local inkEnabled <const> = args.inkEnabled --[[@as boolean]]
         local opacityEnabled <const> = args.opacityEnabled --[[@as boolean]]
         local pxPerfectEnabled <const> = args.pxPerfectEnabled --[[@as boolean]]
+        local dynamicsEnabled <const> = args.dynamicsEnabled --[[@as boolean]]
 
         -- Concatenate booleans into a single 16 bit integer.
         local enabledFlags = 0
@@ -424,6 +512,9 @@ dlg:button {
         end
         if pxPerfectEnabled then
             enabledFlags = enabledFlags | defaults.pxPerfectMask
+        end
+        if dynamicsEnabled then
+            enabledFlags = enabledFlags | defaults.dynamicsMask
         end
 
         local enabledFlagsStr <const> = strpack("<I2", enabledFlags)
