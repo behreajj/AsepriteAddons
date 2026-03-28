@@ -960,7 +960,8 @@ dlg:button {
         -- Switching the color above will trigger Aseprite to
         -- reset the brush's image data to a color.
         if brushType == BrushType.IMAGE
-            and brushImage ~= nil then
+            and brushImage ~= nil
+            and brushImage.colorMode == ColorMode.RGB then
             local resetImage <const> = Image(brushImage.spec)
             resetImage.bytes = brushImageStr
             app.brush = Brush {
