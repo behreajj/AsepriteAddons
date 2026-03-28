@@ -281,6 +281,7 @@ dlg:button {
             local brushPrefs <const> = toolPrefs.brush
             if brushPrefs then
                 local brushType <const> = brush.type
+                local brushSize <const> = brush.size
 
                 if brushPrefs.type
                     and brushType ~= BrushType.IMAGE then
@@ -289,12 +290,13 @@ dlg:button {
 
                 if brushPrefs.size
                     and brushType ~= BrushType.IMAGE then
-                    brushPrefs.size = brush.size
+                    brushPrefs.size = brushSize
                 end
 
                 if brushPrefs.angle
                     and brushType ~= BrushType.IMAGE
-                    and brushType ~= BrushType.CIRCLE then
+                    and brushType ~= BrushType.CIRCLE
+                    and brushSize > 1 then
                     brushPrefs.angle = brush.angle
                 end
             end
