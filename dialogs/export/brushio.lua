@@ -301,22 +301,26 @@ dlg:button {
                 end
             end
 
-            if toolPrefs.ink and (enabledFlags & defaults.inkMask ~= 0) then
+            if toolPrefs.ink
+                and (enabledFlags & defaults.inkMask ~= 0) then
                 toolPrefs.ink = toolInk
             end
 
-            if toolPrefs.opacity and (enabledFlags & defaults.opacityMask ~= 0) then
+            if toolPrefs.opacity
+                and (enabledFlags & defaults.opacityMask ~= 0) then
                 toolPrefs.opacity = toolOpacity
             end
 
-            if toolPrefs.freehand_algorithm and (enabledFlags & defaults.pxPerfectMask ~= 0) then
+            if toolPrefs.freehand_algorithm
+                and (enabledFlags & defaults.pxPerfectMask ~= 0) then
                 toolPrefs.freehand_algorithm = usePixelPerfect
                     and 1
                     or 0
             end
 
             local dynamicsPrefs <const> = toolPrefs.dynamics
-            if dynamicsPrefs and (enabledFlags & defaults.dynamicsMask ~= 0) then
+            if dynamicsPrefs
+                and (enabledFlags & defaults.dynamicsMask ~= 0) then
                 if dynamicsPrefs.stabilizer ~= nil then
                     dynamicsPrefs.stabilizer = toolDynamics.useStabilizer
                 end
