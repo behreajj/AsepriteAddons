@@ -101,12 +101,14 @@ local function readBrush(binStr)
 
     local toolInk <const> = strunpack("B", strsub(binStr, 36, 36))
     local toolOpacity <const> = strunpack("B", strsub(binStr, 37, 37))
-    local usePixelPerfect <const> = strunpack("B", strsub(binStr, 38, 38))
+    local usePixelPerfect <const> = strunpack("B", strsub(binStr, 38, 38)) == 1
     -- print(string.format("toolInk: %d", toolInk))
     -- print(string.format("toolOpacity: %d", toolOpacity))
-    -- print(string.format("usePixelPerfect: %d", usePixelPerfect))
+    -- print(string.format(
+    --     "usePixelPerfect: %d %s",
+    --     strunpack("B", strsub(binStr, 38, 38)),
+    --     usePixelPerfect and "true" or "false"))
 
-    -- TODO: Replace strunpack("B") with strbyte?
     local useStabilizer <const> = strunpack("B", strsub(binStr, 39, 39)) ~= 0
     local stableFac <const> = strunpack("B", strsub(binStr, 40, 40))
     -- DynamicSensor:
@@ -129,7 +131,11 @@ local function readBrush(binStr)
 
     local brushType <const> = strunpack("B", strsub(binStr, 80, 80))
     local brushSize <const> = strunpack("B", strsub(binStr, 81, 81))
-    local brushAngle <const> = strunpack("<i2", strsub(binStr, 81, 82))
+    local brushAngle <const> = strunpack("<i2", strsub(binStr, 82, 83))
+    -- print(string.format("brushType: %d", brushType))
+    -- print(string.format("brushSize: %d", brushSize))
+    -- print(string.format("brushAngle: %d", brushAngle))
+
     local brushCenterX <const> = strunpack("<i8", strsub(binStr, 84, 91))
     local brushCenterY <const> = strunpack("<i8", strsub(binStr, 92, 99))
     local brushPattern <const> = strunpack("B", strsub(binStr, 100, 100))
@@ -270,6 +276,29 @@ dlg:button {
         local tool <const> = app.tool
         local toolPrefs <const> = app.preferences.tool(tool)
         if toolPrefs then
+            -- Brush properties also need to be assigned to preferences
+            -- for the UI to update in the context bar.
+            local brushPrefs <const> = toolPrefs.brush
+            if brushPrefs then
+                local brushType <const> = brush.type
+
+                if brushPrefs.type
+                    and brushType ~= BrushType.IMAGE then
+                    brushPrefs.type = brushType
+                end
+
+                if brushPrefs.size
+                    and brushType ~= BrushType.IMAGE then
+                    brushPrefs.size = brush.size
+                end
+
+                if brushPrefs.angle
+                    and brushType ~= BrushType.IMAGE
+                    and brushType ~= BrushType.CIRCLE then
+                    brushPrefs.angle = brush.angle
+                end
+            end
+
             if toolPrefs.ink and (enabledFlags & defaults.inkMask ~= 0) then
                 toolPrefs.ink = toolInk
             end
@@ -524,6 +553,10 @@ dlg:button {
         local brushType <const> = brush.type
         local brushSize <const> = min(max(brush.size, 0), 255)
         local brushAngle <const> = min(max(brush.angle, -32768), 32767)
+        -- print(string.format("brushType: %d", brushType))
+        -- print(string.format("brushSize: %d", brushSize))
+        -- print(string.format("brushAngle: %d", brushAngle))
+
         local brushCenter <const> = brush.center
         local brushPattern <const> = brush.pattern
         local brushPatternOrigin <const> = brush.patternOrigin
