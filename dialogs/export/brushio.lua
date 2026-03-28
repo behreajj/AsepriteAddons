@@ -1,10 +1,17 @@
 dofile("../../support/aseutilities.lua")
 
+local imageDataModes <const> = {
+    "ALPHA",
+    "LIGHT",
+    "STAMP",
+}
+
 local defaults <const> = {
-    -- For brush dynamics, see
-    -- https://github.com/aseprite/aseprite/blob/main/src/app/tools/dynamics.h
+    imageDataMode = "STAMP",
 
     signature = "ASEBRUSH",
+    ffVersion = 1,
+
     fgColorEnabled = false,
     bgColorEnabled = false,
     inkEnabled = false,
@@ -20,7 +27,9 @@ local defaults <const> = {
     -- 0000 1000
     opacityMask = 8,
     -- 0001 0000
-    pxPerfectMask = 16
+    pxPerfectMask = 16,
+    -- 0010 0000
+    dynamicsMask = 32,
 }
 
 ---@param binStr string
@@ -40,20 +49,20 @@ local function readBrush(binStr)
 
     local signature <const> = strsub(binStr, 1, 8)
     if signature ~= defaults.signature then
-        -- app.alert {
-        --     title = "Error",
-        --     text = string.format(
-        --         "Signature \"%s\" does not match expected \"%s\"",
-        --         signature, defaults.signature)
-        -- }
+        -- print(string.format(
+        --     "Signature \"%s\" does not match expected \"%s\"",
+        --     signature, defaults.signature))
         return Brush { angle = 0, size = 1, type = BrushType.CIRCLE },
             0, 0, 0, Ink.SIMPLE, 255, false
     end
 
+    -- local ffVersion <const> = strunpack("B", strsub(binStr, 9, 9))
+    -- print(string.format("ffVersion: %d", ffVersion))
+
     -- local uuidBytes <const> = {}
     -- local j = 0
     -- while j < 16 do
-    --     local uuidByte <const> = strbyte(binStr, 9 + j)
+    --     local uuidByte <const> = strbyte(binStr, 10 + j)
     --     uuidBytes[1 + j] = uuidByte
     --     j = j + 1
     -- end
@@ -65,34 +74,59 @@ local function readBrush(binStr)
     --     local uuidHex <const> = strfmt("%02X", uuidBytes[k])
     --     uuidHexes[k] = uuidHex
     -- end
-
     -- print(string.format("UUID: %s", tconcat(uuidHexes)))
 
-    local enabledFlags <const> = strunpack("<I2", strsub(binStr, 25, 26))
+    local enabledFlags <const> = strunpack("<I2", strsub(binStr, 26, 27))
+    -- print(string.format("enabledFlags: %d", enabledFlags))
 
-    local fgAbgr32 <const> = strunpack("<I4", strsub(binStr, 27, 30))
-    local bgAbgr32 <const> = strunpack("<I4", strsub(binStr, 31, 34))
+    local fgAbgr32 <const> = strunpack("<I4", strsub(binStr, 28, 31))
+    local bgAbgr32 <const> = strunpack("<I4", strsub(binStr, 32, 35))
+    -- print(string.format("fgAbgr32: %08x", fgAbgr32))
+    -- print(string.format("bgAbgr32: %08x", bgAbgr32))
 
-    local toolInk <const> = strunpack("B", strsub(binStr, 35, 35))
-    local toolOpacity <const> = strunpack("B", strsub(binStr, 36, 36))
-    local usePixelPerfect <const> = strunpack("B", strsub(binStr, 37, 37))
+    local toolInk <const> = strunpack("B", strsub(binStr, 36, 36))
+    local toolOpacity <const> = strunpack("B", strsub(binStr, 37, 37))
+    local usePixelPerfect <const> = strunpack("B", strsub(binStr, 38, 38))
+    -- print(string.format("toolInk: %d", toolInk))
+    -- print(string.format("toolOpacity: %d", toolOpacity))
+    -- print(string.format("usePixelPerfect: %d", usePixelPerfect))
 
-    local brushType <const> = strunpack("B", strsub(binStr, 38, 38))
-    local brushSize <const> = strunpack("B", strsub(binStr, 39, 39))
-    local brushAngle <const> = strunpack("<i2", strsub(binStr, 40, 41))
-    local brushCenterX <const> = strunpack("<i8", strsub(binStr, 42, 49))
-    local brushCenterY <const> = strunpack("<i8", strsub(binStr, 50, 57))
-    local brushPattern <const> = strunpack("B", strsub(binStr, 58, 58))
-    local brushPatternX <const> = strunpack("<i8", strsub(binStr, 59, 66))
-    local brushPatternY <const> = strunpack("<i8", strsub(binStr, 67, 74))
+    local useStabilizer <const> = strunpack("B", strsub(binStr, 39, 39))
+    local stableFac <const> = strunpack("B", strsub(binStr, 40, 40))
+    -- DynamicSensor:
+    -- 0 Static
+    -- 1 Pressure
+    -- 2 Velocity
+    local dynamicSize <const> = strunpack("B", strsub(binStr, 41, 41))
+    local dynamicAngle <const> = strunpack("B", strsub(binStr, 42, 42))
+    local dynamicColor <const> = strunpack("B", strsub(binStr, 43, 43))
+    local minSize <const> = strunpack("B", strsub(binStr, 44, 44))
+    local minAngle <const> = strunpack("<i2", strsub(binStr, 45, 46))
+    -- ColorFromTo:
+    -- 0 BgToFg
+    -- 1 FgToBg
+    local colorFromTo <const> = strunpack("B", strsub(binStr, 47, 47))
+    local minPressure <const> = strunpack("<d", strsub(binStr, 48, 55))
+    local maxPressure <const> = strunpack("<d", strsub(binStr, 56, 63))
+    local minVelocity <const> = strunpack("<d", strsub(binStr, 64, 71))
+    local maxVelocity <const> = strunpack("<d", strsub(binStr, 72, 79))
 
-    local wImage <const> = strunpack("<I2", strsub(binStr, 75, 76))
-    local hImage <const> = strunpack("<I2", strsub(binStr, 77, 78))
-    local lenImageBytes <const> = strunpack("<I8", strsub(binStr, 79, 86))
+    local brushType <const> = strunpack("B", strsub(binStr, 80, 80))
+    local brushSize <const> = strunpack("B", strsub(binStr, 81, 81))
+    local brushAngle <const> = strunpack("<i2", strsub(binStr, 81, 82))
+    local brushCenterX <const> = strunpack("<i8", strsub(binStr, 84, 91))
+    local brushCenterY <const> = strunpack("<i8", strsub(binStr, 92, 99))
+    local brushPattern <const> = strunpack("B", strsub(binStr, 100, 100))
+    local brushPatternX <const> = strunpack("<i8", strsub(binStr, 101, 108))
+    local brushPatternY <const> = strunpack("<i8", strsub(binStr, 109, 116))
+
+    local wImage <const> = strunpack("<I2", strsub(binStr, 117, 118))
+    local hImage <const> = strunpack("<I2", strsub(binStr, 119, 120))
+    local lenImageBytes <const> = strunpack("<I8", strsub(binStr, 121, 128))
 
     -- print(wImage * hImage * 4)
     -- print(lenImageBytes)
-    -- print(86 + lenImageBytes)
+    -- print(128 + lenImageBytes)
     -- print(#binStr)
 
     local imageSpec <const> = AseUtilities.createSpec(wImage, hImage)
@@ -102,13 +136,12 @@ local function readBrush(binStr)
     local lenBytesIsValid <const> = (wImage * hImage * 4) == lenImageBytes
         and lenImageBytes > 0
     if brushTypeIsImage and lenBytesIsValid then
-        local imageBytes <const> = strsub(binStr, 87, 86 + lenImageBytes)
+        local imageBytes <const> = strsub(binStr, 129, 128 + lenImageBytes)
         image.bytes = imageBytes
     end
 
     -- Providing an image to the brush constructor when the brush
-    -- type is not image causes problems. See
-    -- https://github.com/aseprite/aseprite/blob/main/src/app/script/brush_class.cpp#L45
+    -- type is not image causes problems.
     local brush <const> = brushTypeIsImage
         and Brush {
             center = Point(brushCenterX, brushCenterY),
@@ -151,6 +184,7 @@ dlg:file {
 --     height = 128,
 --     focus = false,
 --     onpaint = function(event)
+--         local ctx <const> = event.context
 --     end
 -- }
 
@@ -241,6 +275,18 @@ dlg:button {
 
 dlg:separator { id = "exportSep", text = "Save" }
 
+dlg:combobox {
+    id = "imageDataMode",
+    label = "Data:",
+    option = defaults.imageDataMode,
+    options = imageDataModes,
+    hexpand = false,
+    onchange = function()
+    end
+}
+
+dlg:newrow { always = false }
+
 dlg:check {
     id = "fgColorEnabled",
     label = "Color:",
@@ -289,9 +335,6 @@ dlg:file {
     label = "Path:",
     filetypes = { "brush" },
     basepath = AseUtilities.defaultFolder(),
-    -- TODO: Redo all file widgets where save is true
-    -- to include filename field for better compatibility
-    -- with macs?
     filename = "*.brush",
     title = "Export Brush",
     save = true,
@@ -335,6 +378,7 @@ dlg:button {
         if binFile == nil then return end
 
         -- Cache commonly used functions.
+        local floor <const> = math.floor
         local max <const> = math.max
         local min <const> = math.min
         local strbyte <const> = string.byte
@@ -353,9 +397,11 @@ dlg:button {
             uuidStrArr[j] = strchar(uuid[j])
         end
         local uuidStr <const> = tconcat(uuidStrArr)
-        -- print(tostring(uuid))
+        -- print("UUID: " .. tostring(uuid))
 
         -- Unpack arguments.
+        local imageDataMode <const> = args.imageDataMode
+            or defaults.imageDataMode --[[@as string]]
         local fgColorEnabled <const> = args.fgColorEnabled --[[@as boolean]]
         local bgColorEnabled <const> = args.bgColorEnabled --[[@as boolean]]
         local inkEnabled <const> = args.inkEnabled --[[@as boolean]]
@@ -498,25 +544,114 @@ dlg:button {
         local toolOpacity = 255
         local usePixelPerfect = false
 
+        -- Dynamics properties within tool.
+        local useStabilizer = false
+        -- In the range 0 to 64.
+        local stableFac = 0
+        -- DynamicSensor:
+        -- 0 Static
+        -- 1 Pressure
+        -- 2 Velocity
+        local dynamicSize = 0
+        local dynamicAngle = 0
+        local dynamicColor = 0
+        -- For both size and angle, the max is the tool's
+        -- size and angle, outside of dynamics.
+        local minSize = 1
+        local minAngle = 0
+        -- ColorFromTo:
+        -- 0 BgToFg
+        -- 1 FgToBg
+        local colorFromTo = 0
+        local minPressure = 0.1
+        local maxPressure = 0.9
+        local minVelocity = 0.1
+        local maxVelocity = 0.9
+
         local tool <const> = app.tool
         local toolPrefs <const> = app.preferences.tool(tool)
         if toolPrefs then
             if toolPrefs.ink then
-                toolInk = toolPrefs.ink
+                toolInk = toolPrefs.ink --[[@as Ink]]
             end
 
             if toolPrefs.opacity then
-                toolOpacity = toolPrefs.opacity
+                toolOpacity = toolPrefs.opacity --[[@as integer]]
             end
 
             if toolPrefs.freehand_algorithm then
                 usePixelPerfect = toolPrefs.freehand_algorithm == 1
+            end
+
+            local dynamicsPrefs <const> = toolPrefs.dynamics
+            if dynamicsPrefs then
+                if dynamicsPrefs.stabilizer then
+                    useStabilizer = dynamicsPrefs.stabilizer --[[@as boolean]]
+                end
+
+                if dynamicsPrefs.stabilizer_factor then
+                    stableFac = dynamicsPrefs.stabilizer_factor --[[@as integer]]
+                end
+
+                if dynamicsPrefs.size then
+                    dynamicSize = dynamicsPrefs.size --[[@as integer]]
+                end
+
+                if dynamicsPrefs.angle then
+                    dynamicAngle = dynamicsPrefs.angle --[[@as integer]]
+                end
+
+                if dynamicsPrefs.gradient then
+                    dynamicColor = dynamicsPrefs.gradient --[[@as integer]]
+                end
+
+                if dynamicsPrefs.min_size then
+                    minSize = dynamicsPrefs.min_size --[[@as integer]]
+                end
+
+                if dynamicsPrefs.min_angle then
+                    minAngle = dynamicsPrefs.min_angle --[[@as integer]]
+                end
+
+                if dynamicsPrefs.color_from_to then
+                    colorFromTo = dynamicsPrefs.color_from_to --[[@as integer]]
+                end
+
+                -- dynamicsPrefs.matrix_name is skipped.
+
+                if dynamicsPrefs.min_pressure_threshold then
+                    minPressure = dynamicsPrefs.min_pressure_threshold --[[@as number]]
+                end
+
+                if dynamicsPrefs.max_pressure_threshold then
+                    maxPressure = dynamicsPrefs.max_pressure_threshold --[[@as number]]
+                end
+
+                if dynamicsPrefs.min_velocity_threshold then
+                    minVelocity = dynamicsPrefs.min_velocity_threshold --[[@as number]]
+                end
+
+                if dynamicsPrefs.max_velocity_threshold then
+                    maxVelocity = dynamicsPrefs.max_velocity_threshold --[[@as number]]
+                end
             end
         end
 
         local toolInkStr <const> = strchar(toolInk)
         local toolOpacityStr <const> = strchar(min(max(toolOpacity, 0), 255))
         local usePixelPerfectStr <const> = strchar(usePixelPerfect and 1 or 0)
+        local useStabilizerStr <const> = strchar(useStabilizer and 1 or 0)
+        local stableFacStr <const> = strchar(stableFac)
+        local dynamicSizeStr <const> = strchar(dynamicSize)
+        local dynamicAngleStr <const> = strchar(dynamicAngle)
+        local dynamicColorStr <const> = strchar(dynamicColor)
+        local minSizeStr <const> = strchar(minSize)
+        local minAngleStr <const> = strpack("<i2", minAngle)
+        local colorFromToStr <const> = strchar(colorFromTo)
+        local minPressureStr <const> = strpack("<d", minPressure)
+        local maxPressureStr <const> = strpack("<d", maxPressure)
+        local minVelocityStr <const> = strpack("<d", minVelocity)
+        local maxVelocityStr <const> = strpack("<d", maxVelocity)
 
         -- Foreground and background colors must be written
         -- after the image data! Otherwise Aseprite will fill
@@ -526,48 +661,190 @@ dlg:button {
         local bgColor <const> = AseUtilities.aseColorCopy(app.fgColor, "UNBOUNDED")
         app.command.SwitchColors()
 
+        local r8Fore <const> = min(max(fgColor.red, 0), 255)
+        local g8Fore <const> = min(max(fgColor.green, 0), 255)
+        local b8Fore <const> = min(max(fgColor.blue, 0), 255)
+        local a8Fore <const> = min(max(fgColor.alpha, 0), 255)
+
+        local r8Back <const> = min(max(bgColor.red, 0), 255)
+        local g8Back <const> = min(max(bgColor.green, 0), 255)
+        local b8Back <const> = min(max(bgColor.blue, 0), 255)
+        local a8Back <const> = min(max(bgColor.alpha, 0), 255)
+
         local fgStr <const> = strpack(
             "B B B B",
-            min(max(fgColor.red, 0), 255),
-            min(max(fgColor.green, 0), 255),
-            min(max(fgColor.blue, 0), 255),
-            min(max(fgColor.alpha, 0), 255))
+            r8Fore, g8Fore, b8Fore, a8Fore)
         local bgStr <const> = strpack(
             "B B B B",
-            min(max(bgColor.red, 0), 255),
-            min(max(bgColor.green, 0), 255),
-            min(max(bgColor.blue, 0), 255),
-            min(max(bgColor.alpha, 0), 255))
+            r8Back, g8Back, b8Back, a8Back)
+
+        -- Redo image data if mode requires it.
+        local charZero <const> = strchar(0)
+        local char255 <const> = strchar(255)
+        local foreIsValid <const> = a8Fore > 0
+        local r8Char <const> = foreIsValid and strchar(r8Fore) or char255
+        local g8Char <const> = foreIsValid and strchar(g8Fore) or char255
+        local b8Char <const> = foreIsValid and strchar(b8Fore) or char255
+
+        if imageDataMode == "ALPHA" then
+            ---@type string[]
+            local alphaStrs <const> = {}
+            local areaImage <const> = wImage * hImage
+            local i = 0
+            while i < areaImage do
+                local i4 <const> = i * 4
+
+                alphaStrs[1 + i4] = charZero
+                alphaStrs[2 + i4] = charZero
+                alphaStrs[3 + i4] = charZero
+                alphaStrs[4 + i4] = charZero
+
+                local a8 <const> = strbyte(brushImageStr, 4 + i4)
+                if a8 > 0 then
+                    alphaStrs[1 + i4] = r8Char
+                    alphaStrs[2 + i4] = g8Char
+                    alphaStrs[3 + i4] = b8Char
+                    alphaStrs[4 + i4] = strchar(a8)
+                end
+
+                i = i + 1
+            end -- End pixels loop.
+
+            brushImageStr = tconcat(alphaStrs)
+        elseif imageDataMode == "LIGHT" then
+            local rgbnew <const> = Rgb.new
+            local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
+
+            ---@type number[]
+            local factors <const> = {}
+            local facMin = 0.5
+            local facMax = 0.5
+
+            local areaImage <const> = wImage * hImage
+            local h = 0
+            while h < areaImage do
+                local h4 <const> = h * 4
+                local a8 <const> = strbyte(brushImageStr, 4 + h4)
+                local fac = 0.0
+                if a8 > 0 then
+                    local r8 <const> = strbyte(brushImageStr, 1 + h4)
+                    local g8 <const> = strbyte(brushImageStr, 2 + h4)
+                    local b8 <const> = strbyte(brushImageStr, 3 + h4)
+
+                    local srgb <const> = rgbnew(
+                        r8 / 255.0,
+                        g8 / 255.0,
+                        b8 / 255.0,
+                        a8 / 255.0)
+                    local lab <const> = sRgbToLab(srgb)
+                    fac = lab.l * 0.01
+                    if fac < facMin then facMin = fac end
+                    if fac > facMax then facMax = fac end
+                end
+
+                factors[1 + h] = fac
+                h = h + 1
+            end -- End pixels loop.
+
+            ---@type string[]
+            local lightStrs <const> = {}
+
+            local diff <const> = facMax - facMin
+            local diffIsValid <const> = diff ~= 0.0
+            local scalar <const> = diffIsValid and 1.0 / diff or 0.0
+
+            local i = 0
+            while i < areaImage do
+                local i4 <const> = i * 4
+
+                lightStrs[1 + i4] = charZero
+                lightStrs[2 + i4] = charZero
+                lightStrs[3 + i4] = charZero
+                lightStrs[4 + i4] = charZero
+
+                local a8 <const> = strbyte(brushImageStr, 4 + i4)
+                if a8 > 0 then
+                    local fac <const> = diffIsValid
+                        and (factors[1 + i] - facMin) * scalar
+                        or a8 / 255.0
+                    local f8 <const> = floor(fac * 255 + 0.5)
+                    if f8 > 0 then
+                        local aComp <const> = (a8 * f8) // 255
+
+                        lightStrs[1 + i4] = r8Char
+                        lightStrs[2 + i4] = g8Char
+                        lightStrs[3 + i4] = b8Char
+                        lightStrs[4 + i4] = strchar(aComp)
+                        -- lightStrs[4 + i4] = strchar(f8)
+                    end
+                end
+
+                i = i + 1
+            end
+
+            brushImageStr = tconcat(lightStrs)
+        end
 
         -- Do the final write.
+        local ffVersionStr <const> = strpack("B", defaults.ffVersion)
         local binStr <const> = table.concat({
             defaults.signature, -- 08 bytes, 000 offset
-            uuidStr,            -- 16 bytes, 008 offset
-            enabledFlagsStr,    -- 02 bytes, 024 offset
-
-            fgStr,              -- 04 bytes, 026 offset
-            bgStr,              -- 04 bytes, 030 offset
-
-            toolInkStr,         -- 01 bytes, 034 offset
-            toolOpacityStr,     -- 01 bytes, 035 offset
-            usePixelPerfectStr, -- 01 bytes, 036 offset
-
-            brushTypeStr,       -- 01 bytes, 037 offset
-            brushSizeStr,       -- 01 bytes, 038 offset
-            brushAngleStr,      -- 02 bytes, 039 offset
-            brushCenterXStr,    -- 08 bytes, 041 offset
-            brushCenterYStr,    -- 08 bytes, 049 offset
-            brushPatternStr,    -- 01 bytes, 057 offset
-            brushPatternXStr,   -- 08 bytes, 058 offset
-            brushPatternYStr,   -- 08 bytes, 066 offset
-
-            wImageStr,          -- 02 bytes, 074 offset
-            hImageStr,          -- 02 bytes, 076 offset
-            lenBrushImageStr,   -- 08 bytes, 078 offset
-            brushImageStr,      -- variable, 086 offset
+            ffVersionStr,       -- 01 bytes, 008 offset
+            uuidStr,            -- 16 bytes, 009 offset
+            enabledFlagsStr,    -- 02 bytes, 025 offset
+            fgStr,              -- 04 bytes, 027 offset
+            bgStr,              -- 04 bytes, 031 offset
+            toolInkStr,         -- 01 bytes, 035 offset
+            toolOpacityStr,     -- 01 bytes, 036 offset
+            usePixelPerfectStr, -- 01 bytes, 037 offset
+            useStabilizerStr,   -- 01 bytes, 038 offset
+            stableFacStr,       -- 01 bytes, 039 offset
+            dynamicSizeStr,     -- 01 bytes, 040 offset
+            dynamicAngleStr,    -- 01 bytes, 041 offset
+            dynamicColorStr,    -- 01 bytes, 042 offset
+            minSizeStr,         -- 01 bytes, 043 offset
+            minAngleStr,        -- 02 bytes, 044 offset
+            colorFromToStr,     -- 01 bytes, 046 offset
+            minPressureStr,     -- 08 bytes, 047 offset
+            maxPressureStr,     -- 08 bytes, 055 offset
+            minVelocityStr,     -- 08 bytes, 063 offset
+            maxVelocityStr,     -- 08 bytes, 071 offset
+            brushTypeStr,       -- 01 bytes, 079 offset
+            brushSizeStr,       -- 01 bytes, 080 offset
+            brushAngleStr,      -- 02 bytes, 081 offset
+            brushCenterXStr,    -- 08 bytes, 083 offset
+            brushCenterYStr,    -- 08 bytes, 091 offset
+            brushPatternStr,    -- 01 bytes, 099 offset
+            brushPatternXStr,   -- 08 bytes, 100 offset
+            brushPatternYStr,   -- 08 bytes, 108 offset
+            wImageStr,          -- 02 bytes, 116 offset
+            hImageStr,          -- 02 bytes, 118 offset
+            lenBrushImageStr,   -- 08 bytes, 120 offset
+            brushImageStr,      -- variable, 128 offset
         })
-        binFile:write(binStr)
+
+        local _ <const>,
+        writeErr <const> = binFile:write(binStr)
         binFile:close()
+
+        -- Switching the color above will trigger Aseprite to
+        -- reset the brush's image data to a color.
+        if brushType == BrushType.IMAGE
+            and brushImage ~= nil then
+            local resetImage <const> = Image(brushImage.spec)
+            resetImage.bytes = brushImageStr
+            app.brush = Brush {
+                center = brushCenter,
+                image = resetImage,
+                pattern = brushPattern,
+                patternOrigin = brushPatternOrigin,
+                type = BrushType.IMAGE,
+            }
+        end
+
+        if not writeErr then
+            app.alert { title = "Success", text = "File exported." }
+        end
     end
 }
 
