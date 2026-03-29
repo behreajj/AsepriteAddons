@@ -3,6 +3,7 @@ dofile("../../support/aseutilities.lua")
 local imageDataModes <const> = {
     "ALPHA",
     "LIGHT",
+    "SHADE",
     "STAMP",
 }
 
@@ -893,9 +894,8 @@ dlg:button {
             end -- End pixels loop.
 
             brushImageStr = tconcat(alphaStrs)
-        elseif imageDataMode == "LIGHT" then
-            -- TODO: Option to invert the factor for shade?
-
+        elseif imageDataMode == "LIGHT"
+            or imageDataMode == "SHADE" then
             local rgbnew <const> = Rgb.new
             local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
 
@@ -928,11 +928,18 @@ dlg:button {
 
                 factors[1 + h] = fac
                 h = h + 1
-            end -- End pixels loop.
+            end -- End factors loop.
+
+            if imageDataMode == "SHADE" then
+                local k = 0
+                while k < areaImage do
+                    k = k + 1
+                    factors[k] = 1.0 - factors[k]
+                end
+            end
 
             ---@type string[]
             local lightStrs <const> = {}
-
             local diff <const> = facMax - facMin
             local diffIsValid <const> = diff ~= 0.0
             local scalar <const> = diffIsValid and 1.0 / diff or 0.0
