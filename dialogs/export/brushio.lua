@@ -898,6 +898,7 @@ dlg:button {
             or imageDataMode == "SHADE" then
             local rgbnew <const> = Rgb.new
             local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
+            local isShade <const> = imageDataMode == "SHADE"
 
             ---@type number[]
             local factors <const> = {}
@@ -921,7 +922,8 @@ dlg:button {
                         b8 / 255.0,
                         a8 / 255.0)
                     local lab <const> = sRgbToLab(srgb)
-                    fac = lab.l * 0.01
+                    fac = isShade and 1.0 - lab.l * 0.01 or lab.l * 0.01
+
                     if fac < facMin then facMin = fac end
                     if fac > facMax then facMax = fac end
                 end
@@ -929,14 +931,6 @@ dlg:button {
                 factors[1 + h] = fac
                 h = h + 1
             end -- End factors loop.
-
-            if imageDataMode == "SHADE" then
-                local k = 0
-                while k < areaImage do
-                    k = k + 1
-                    factors[k] = 1.0 - factors[k]
-                end
-            end
 
             ---@type string[]
             local lightStrs <const> = {}
