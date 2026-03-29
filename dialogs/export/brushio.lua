@@ -120,7 +120,6 @@ local function readBrush(binStr)
     local minAngle <const> = strunpack("<i2", strsub(binStr, 45, 46))
     local colorFromTo <const> = strbyte(binStr, 47, 47)
 
-    -- TODO: These could be floats instead of doubles.
     local minPressure <const> = strunpack("<d", strsub(binStr, 48, 55))
     local maxPressure <const> = strunpack("<d", strsub(binStr, 56, 63))
     local minVelocity <const> = strunpack("<d", strsub(binStr, 64, 71))
@@ -812,8 +811,6 @@ dlg:button {
         local minSizeStr <const> = strchar(minSize)
         local minAngleStr <const> = strpack("<i2", minAngle)
         local colorFromToStr <const> = strchar(colorFromTo)
-        -- TODO: These could be floats. See
-        -- https://github.com/aseprite/aseprite/blob/main/src/app/tools/dynamics.h
         local minPressureStr <const> = strpack("<d", minPressure)
         local maxPressureStr <const> = strpack("<d", maxPressure)
         local minVelocityStr <const> = strpack("<d", minVelocity)
@@ -865,9 +862,12 @@ dlg:button {
         local charZero <const> = strchar(0)
         local char255 <const> = strchar(255)
         local foreIsValid <const> = a8Fore > 0
-        local r8Char <const> = foreIsValid and strchar(r8Fore) or char255
-        local g8Char <const> = foreIsValid and strchar(g8Fore) or char255
-        local b8Char <const> = foreIsValid and strchar(b8Fore) or char255
+        local charDefault <const> = imageDataMode == "SHADE"
+            and charZero
+            or char255
+        local r8Char <const> = foreIsValid and strchar(r8Fore) or charDefault
+        local g8Char <const> = foreIsValid and strchar(g8Fore) or charDefault
+        local b8Char <const> = foreIsValid and strchar(b8Fore) or charDefault
 
         if imageDataMode == "ALPHA" then
             ---@type string[]
@@ -898,12 +898,12 @@ dlg:button {
             or imageDataMode == "SHADE" then
             local rgbnew <const> = Rgb.new
             local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
-            local isShade <const> = imageDataMode == "SHADE"
 
             ---@type number[]
             local factors <const> = {}
             local facMin = 0.5
             local facMax = 0.5
+            local isShade <const> = imageDataMode == "SHADE"
 
             local areaImage <const> = wImage * hImage
             local h = 0
