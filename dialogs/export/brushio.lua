@@ -270,9 +270,18 @@ dlg:button {
         usePixelPerfect <const>,
         toolDynamics <const> = readBrush(brushBytes)
 
-        if app.site.tilemapMode == TilemapMode.TILES then
-            app.command.ToggleTilesMode()
+        if brush.type == BrushType.IMAGE
+            and brush.image:isEmpty() then
+            app.alert {
+                text = "Error",
+                title = "Brush image is empty."
+            }
+            return
         end
+
+        -- if app.site.tilemapMode == TilemapMode.TILES then
+        --     app.command.ToggleTilesMode()
+        -- end
 
         -- This cannot be entirely replaced with AseUtilities.setBrush
         -- because this uses enabledFlags and sets brush dynamics, does
@@ -522,14 +531,6 @@ dlg:button {
             return
         end
 
-        local binFile <const>, err <const> = io.open(filepath, "wb")
-        if err ~= nil then
-            if binFile then binFile:close() end
-            app.alert { title = "Error", text = err }
-            return
-        end
-        if binFile == nil then return end
-
         -- Cache commonly used functions.
         local floor <const> = math.floor
         local max <const> = math.max
@@ -613,6 +614,14 @@ dlg:button {
         local hImage = 0
         if brushType == BrushType.IMAGE
             and brushImage ~= nil then
+            if brushImage:isEmpty() then
+                app.alert {
+                    text = "Error",
+                    title = "Brush image is empty."
+                }
+                return
+            end
+
             local imageSpec <const> = brushImage.spec
             wImage = min(max(imageSpec.width, 0), 65535)
             hImage = min(max(imageSpec.height, 0), 65535)
@@ -688,7 +697,6 @@ dlg:button {
 
                 brushImageStr = tconcat(rgbArr)
             else
-                binFile:close()
                 app.alert {
                     title = "Error",
                     text = { "Unexpected brush image color mode." }
@@ -901,8 +909,8 @@ dlg:button {
 
             ---@type number[]
             local factors <const> = {}
-            local facMin = 0.5
-            local facMax = 0.5
+            local facMin = 2147483647
+            local facMax = -2147483648
             local isShade <const> = imageDataMode == "SHADE"
 
             local areaImage <const> = wImage * hImage
@@ -936,6 +944,16 @@ dlg:button {
             local lightStrs <const> = {}
             local diff <const> = facMax - facMin
             local diffIsValid <const> = diff ~= 0.0
+            if not diffIsValid then
+                app.alert {
+                    title = "Error",
+                    text = {
+                        "Brush image does not have enough contrast",
+                        "for this image data mode."
+                    }
+                }
+                return
+            end
             local scalar <const> = diffIsValid and 1.0 / diff or 0.0
 
             local i = 0
@@ -951,9 +969,9 @@ dlg:button {
                 if a8 > 0 then
                     local fac <const> = diffIsValid
                         and (factors[1 + i] - facMin) * scalar
-                        or a8 / 255.0
-                    local f8 <const> = floor(fac * 255 + 0.5)
-                    if f8 > 0 then
+                        or 1.0
+                    if fac > 0.0 then
+                        local f8 <const> = floor(fac * 255 + 0.5)
                         local aComp <const> = (a8 * f8) // 255
 
                         lightStrs[1 + i4] = r8Char
@@ -971,42 +989,49 @@ dlg:button {
         end
 
         -- Do the final write.
-        local ffVersionStr <const> = strpack("B", defaults.ffVersion)
         local binStr <const> = table.concat({
-            defaults.signature, -- 08 bytes, 000 offset
-            ffVersionStr,       -- 01 bytes, 008 offset
-            uuidStr,            -- 16 bytes, 009 offset
-            enabledFlagsStr,    -- 02 bytes, 025 offset
-            fgStr,              -- 04 bytes, 027 offset
-            bgStr,              -- 04 bytes, 031 offset
-            toolInkStr,         -- 01 bytes, 035 offset
-            toolOpacityStr,     -- 01 bytes, 036 offset
-            usePixelPerfectStr, -- 01 bytes, 037 offset
-            useStabilizerStr,   -- 01 bytes, 038 offset
-            stableFacStr,       -- 01 bytes, 039 offset
-            dynamicSizeStr,     -- 01 bytes, 040 offset
-            dynamicAngleStr,    -- 01 bytes, 041 offset
-            dynamicColorStr,    -- 01 bytes, 042 offset
-            minSizeStr,         -- 01 bytes, 043 offset
-            minAngleStr,        -- 02 bytes, 044 offset
-            colorFromToStr,     -- 01 bytes, 046 offset
-            minPressureStr,     -- 08 bytes, 047 offset
-            maxPressureStr,     -- 08 bytes, 055 offset
-            minVelocityStr,     -- 08 bytes, 063 offset
-            maxVelocityStr,     -- 08 bytes, 071 offset
-            brushTypeStr,       -- 01 bytes, 079 offset
-            brushSizeStr,       -- 01 bytes, 080 offset
-            brushAngleStr,      -- 02 bytes, 081 offset
-            brushCenterXStr,    -- 08 bytes, 083 offset
-            brushCenterYStr,    -- 08 bytes, 091 offset
-            brushPatternStr,    -- 01 bytes, 099 offset
-            brushPatternXStr,   -- 08 bytes, 100 offset
-            brushPatternYStr,   -- 08 bytes, 108 offset
-            wImageStr,          -- 02 bytes, 116 offset
-            hImageStr,          -- 02 bytes, 118 offset
-            lenBrushImageStr,   -- 08 bytes, 120 offset
-            brushImageStr,      -- variable, 128 offset
+            defaults.signature,          -- 08 bytes, 000 offset
+            strchar(defaults.ffVersion), -- 01 bytes, 008 offset
+            uuidStr,                     -- 16 bytes, 009 offset
+            enabledFlagsStr,             -- 02 bytes, 025 offset
+            fgStr,                       -- 04 bytes, 027 offset
+            bgStr,                       -- 04 bytes, 031 offset
+            toolInkStr,                  -- 01 bytes, 035 offset
+            toolOpacityStr,              -- 01 bytes, 036 offset
+            usePixelPerfectStr,          -- 01 bytes, 037 offset
+            useStabilizerStr,            -- 01 bytes, 038 offset
+            stableFacStr,                -- 01 bytes, 039 offset
+            dynamicSizeStr,              -- 01 bytes, 040 offset
+            dynamicAngleStr,             -- 01 bytes, 041 offset
+            dynamicColorStr,             -- 01 bytes, 042 offset
+            minSizeStr,                  -- 01 bytes, 043 offset
+            minAngleStr,                 -- 02 bytes, 044 offset
+            colorFromToStr,              -- 01 bytes, 046 offset
+            minPressureStr,              -- 08 bytes, 047 offset
+            maxPressureStr,              -- 08 bytes, 055 offset
+            minVelocityStr,              -- 08 bytes, 063 offset
+            maxVelocityStr,              -- 08 bytes, 071 offset
+            brushTypeStr,                -- 01 bytes, 079 offset
+            brushSizeStr,                -- 01 bytes, 080 offset
+            brushAngleStr,               -- 02 bytes, 081 offset
+            brushCenterXStr,             -- 08 bytes, 083 offset
+            brushCenterYStr,             -- 08 bytes, 091 offset
+            brushPatternStr,             -- 01 bytes, 099 offset
+            brushPatternXStr,            -- 08 bytes, 100 offset
+            brushPatternYStr,            -- 08 bytes, 108 offset
+            wImageStr,                   -- 02 bytes, 116 offset
+            hImageStr,                   -- 02 bytes, 118 offset
+            lenBrushImageStr,            -- 08 bytes, 120 offset
+            brushImageStr,               -- variable, 128 offset
         })
+
+        local binFile <const>, err <const> = io.open(filepath, "wb")
+        if err ~= nil then
+            if binFile then binFile:close() end
+            app.alert { title = "Error", text = err }
+            return
+        end
+        if binFile == nil then return end
 
         local _ <const>,
         writeErr <const> = binFile:write(binStr)
