@@ -7,6 +7,8 @@ local imageDataModes <const> = {
 }
 
 local defaults <const> = {
+    -- TODO: Show dynamics min and max with number inputs?
+    -- TODO: Allow user to set UUID?
     imageDataMode = "STAMP",
 
     signature = "ASEBRUSH",
@@ -56,11 +58,9 @@ local defaults <const> = {
 --- maxVelocity: number} toolDynamics
 ---@nodiscard
 local function readBrush(binStr)
-    local strfmt <const> = string.format
     local strbyte <const> = string.byte
     local strsub <const> = string.sub
     local strunpack <const> = string.unpack
-    local tconcat <const> = table.concat
 
     local signature <const> = strsub(binStr, 1, 8)
     if signature ~= defaults.signature then
@@ -77,7 +77,7 @@ local function readBrush(binStr)
     -- local uuidBytes <const> = {}
     -- local j = 0
     -- while j < 16 do
-    --     local uuidByte <const> = strbyte(binStr, 10 + j)
+    --     local uuidByte <const> = string.byte(binStr, 10 + j)
     --     uuidBytes[1 + j] = uuidByte
     --     j = j + 1
     -- end
@@ -86,7 +86,7 @@ local function readBrush(binStr)
     -- local k = 0
     -- while k < 16 do
     --     k = k + 1
-    --     local uuidHex <const> = strfmt("%02X", uuidBytes[k])
+    --     local uuidHex <const> = string.format("%02X", uuidBytes[k])
     --     uuidHexes[k] = uuidHex
     -- end
     -- print(string.format("UUID: %s", tconcat(uuidHexes)))
@@ -109,21 +109,17 @@ local function readBrush(binStr)
     --     strunpack("B", strsub(binStr, 38, 38)),
     --     usePixelPerfect and "true" or "false"))
 
+    -- TODO: Try using string byte again?
     local useStabilizer <const> = strunpack("B", strsub(binStr, 39, 39)) ~= 0
     local stableFac <const> = strunpack("B", strsub(binStr, 40, 40))
-    -- DynamicSensor:
-    -- 0 Static
-    -- 1 Pressure
-    -- 2 Velocity
     local dynamicSize <const> = strunpack("B", strsub(binStr, 41, 41))
     local dynamicAngle <const> = strunpack("B", strsub(binStr, 42, 42))
     local dynamicColor <const> = strunpack("B", strsub(binStr, 43, 43))
     local minSize <const> = strunpack("B", strsub(binStr, 44, 44))
     local minAngle <const> = strunpack("<i2", strsub(binStr, 45, 46))
-    -- ColorFromTo:
-    -- 0 BgToFg
-    -- 1 FgToBg
     local colorFromTo <const> = strunpack("B", strsub(binStr, 47, 47))
+
+    -- TODO: These could be floats instead of doubles.
     local minPressure <const> = strunpack("<d", strsub(binStr, 48, 55))
     local maxPressure <const> = strunpack("<d", strsub(binStr, 56, 63))
     local minVelocity <const> = strunpack("<d", strsub(binStr, 64, 71))
@@ -373,14 +369,27 @@ dlg:button {
             end
         end
 
-        if enabledFlags & defaults.fgColorMask ~= 0 then
-            app.fgColor = AseUtilities.hexToAseColor(fgAbgr32)
-        end
+        -- if enabledFlags & defaults.fgColorMask ~= 0 then
+        -- app.fgColor = AseUtilities.hexToAseColor(fgAbgr32)
+        -- end
 
-        if enabledFlags & defaults.bgColorMask ~= 0 then
-            app.command.SwitchColors()
-            app.fgColor = AseUtilities.hexToAseColor(bgAbgr32)
-            app.command.SwitchColors()
+        -- if enabledFlags & defaults.bgColorMask ~= 0 then
+        -- app.command.SwitchColors()
+        -- app.fgColor = AseUtilities.hexToAseColor(bgAbgr32)
+        -- app.command.SwitchColors()
+        -- end
+
+        local colorBarPrefs <const> = app.preferences.color_bar
+        if colorBarPrefs then
+            if colorBarPrefs.fg_color
+                and enabledFlags & defaults.fgColorMask ~= 0 then
+                colorBarPrefs.fg_color = AseUtilities.hexToAseColor(fgAbgr32)
+            end
+
+            if colorBarPrefs.bg_color
+                and enabledFlags & defaults.bgColorMask ~= 0 then
+                colorBarPrefs.fg_color = AseUtilities.hexToAseColor(bgAbgr32)
+            end
         end
 
         app.brush = brush
@@ -433,6 +442,8 @@ dlg:check {
     selected = defaults.opacityEnabled,
     hexpand = false,
 }
+
+dlg:newrow { always = false }
 
 dlg:check {
     id = "dynamicsEnabled",
@@ -778,6 +789,8 @@ dlg:button {
         local minSizeStr <const> = strchar(minSize)
         local minAngleStr <const> = strpack("<i2", minAngle)
         local colorFromToStr <const> = strchar(colorFromTo)
+        -- TODO: These could be floats. See
+        -- https://github.com/aseprite/aseprite/blob/main/src/app/tools/dynamics.h
         local minPressureStr <const> = strpack("<d", minPressure)
         local maxPressureStr <const> = strpack("<d", maxPressure)
         local minVelocityStr <const> = strpack("<d", minVelocity)
@@ -786,10 +799,25 @@ dlg:button {
         -- Foreground and background colors must be written
         -- after the image data! Otherwise Aseprite will fill
         -- the brush with the foreground color.
-        local fgColor <const> = AseUtilities.aseColorCopy(app.fgColor, "UNBOUNDED")
-        app.command.SwitchColors()
-        local bgColor <const> = AseUtilities.aseColorCopy(app.fgColor, "UNBOUNDED")
-        app.command.SwitchColors()
+        -- local fgColor <const> = AseUtilities.aseColorCopy(app.fgColor, "UNBOUNDED")
+        -- app.command.SwitchColors()
+        -- local bgColor <const> = AseUtilities.aseColorCopy(app.fgColor, "UNBOUNDED")
+        -- app.command.SwitchColors()
+
+        local fgColor = Color { r = 0, g = 0, b = 0, a = 0 }
+        local bgColor = Color { r = 0, g = 0, b = 0, a = 0 }
+        local colorBarPrefs <const> = app.preferences.color_bar
+        if colorBarPrefs then
+            local fgColorPrefs <const> = colorBarPrefs.fg_color --[[@as Color]]
+            if fgColorPrefs then
+                fgColor = AseUtilities.aseColorCopy(fgColorPrefs, "")
+            end
+
+            local bgColorPrefs <const> = colorBarPrefs.bg_color --[[@as Color]]
+            if bgColorPrefs then
+                bgColor = AseUtilities.aseColorCopy(bgColor, "")
+            end
+        end
 
         local r8Fore <const> = min(max(fgColor.red, 0), 255)
         local g8Fore <const> = min(max(fgColor.green, 0), 255)
@@ -910,7 +938,7 @@ dlg:button {
                 end
 
                 i = i + 1
-            end
+            end -- End pixels loop.
 
             brushImageStr = tconcat(lightStrs)
         end
@@ -963,6 +991,8 @@ dlg:button {
             and brushImage ~= nil
             and brushImage.colorMode == ColorMode.RGB then
             local resetImage <const> = Image(brushImage.spec)
+            -- TODO: This only works for RGB color mode brush images.
+            -- To support indexed and gray, you'd need to re-convert.
             resetImage.bytes = brushImageStr
             app.brush = Brush {
                 center = brushCenter,
