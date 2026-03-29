@@ -3185,6 +3185,7 @@ end
 ---pencil's opacity depending on ink type.
 ---@param brush Brush brush
 function AseUtilities.setBrush(brush)
+    -- TODO: Make more consistent with brushio?
     if app.site.tilemapMode == TilemapMode.TILES then
         app.command.ToggleTilesMode()
     end

@@ -298,24 +298,22 @@ dlg:button {
                 if toolBrushPrefs then
                     local brushType <const> = brush.type
                     local brushSize <const> = brush.size
+                    local isNotImage <const> = brushType ~= BrushType.IMAGE
 
-                    if toolBrushPrefs.type
-                        and brushType ~= BrushType.IMAGE then
+                    if toolBrushPrefs.type and isNotImage then
                         toolBrushPrefs.type = brushType
                     end
 
-                    if toolBrushPrefs.size
-                        and brushType ~= BrushType.IMAGE then
+                    if toolBrushPrefs.size and isNotImage then
                         toolBrushPrefs.size = brushSize
                     end
 
-                    if toolBrushPrefs.angle
-                        and brushType ~= BrushType.IMAGE
+                    if toolBrushPrefs.angle and isNotImage
                         and brushType ~= BrushType.CIRCLE
                         and brushSize > 1 then
                         toolBrushPrefs.angle = brush.angle
                     end
-                end
+                end -- End tool brush prefs exists.
 
                 if toolPrefs.ink
                     and (enabledFlags & defaults.inkMask ~= 0) then
