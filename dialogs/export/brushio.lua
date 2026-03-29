@@ -831,15 +831,17 @@ dlg:button {
             end
         end
 
-        local r8Fore <const> = min(max(fgColor.red, 0), 255)
-        local g8Fore <const> = min(max(fgColor.green, 0), 255)
-        local b8Fore <const> = min(max(fgColor.blue, 0), 255)
-        local a8Fore <const> = min(max(fgColor.alpha, 0), 255)
+        -- These do not need to be validated for min and max because
+        -- aseColorCopy above has already done so.
+        local r8Fore <const> = fgColor.red
+        local g8Fore <const> = fgColor.green
+        local b8Fore <const> = fgColor.blue
+        local a8Fore <const> = fgColor.alpha
 
-        local r8Back <const> = min(max(bgColor.red, 0), 255)
-        local g8Back <const> = min(max(bgColor.green, 0), 255)
-        local b8Back <const> = min(max(bgColor.blue, 0), 255)
-        local a8Back <const> = min(max(bgColor.alpha, 0), 255)
+        local r8Back <const> = bgColor.red
+        local g8Back <const> = bgColor.green
+        local b8Back <const> = bgColor.blue
+        local a8Back <const> = bgColor.alpha
 
         local fgStr <const> = strpack(
             "B B B B",
