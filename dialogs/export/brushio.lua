@@ -270,117 +270,140 @@ dlg:button {
         usePixelPerfect <const>,
         toolDynamics <const> = readBrush(brushBytes)
 
-        -- As with tool brush properties below, global brush properties
-        -- also need to be set from the brush.
+        if app.site.tilemapMode == TilemapMode.TILES then
+            app.command.ToggleTilesMode()
+        end
+
+        -- This cannot be entirely replaced with AseUtilities.setBrush
+        -- because this uses enabledFlags and sets brush dynamics, does
+        -- not set the tool to pencil, etc.
         local appPrefs <const> = app.preferences
-        local globalBrushPrefs <const> = appPrefs.brush
-        if globalBrushPrefs then
-            if globalBrushPrefs.pattern
-                and brush.type == BrushType.IMAGE then
-                globalBrushPrefs.pattern = brush.pattern
-            end
-        end
+        if appPrefs then
+            -- As with tool brush properties below, global brush properties
+            -- also need to be set from the brush.
+            local globalBrushPrefs <const> = appPrefs.brush
+            if globalBrushPrefs then
+                if globalBrushPrefs.pattern
+                    and brush.type == BrushType.IMAGE then
+                    globalBrushPrefs.pattern = brush.pattern
+                end
+            end -- End global brush prefs exists.
 
-        local tool <const> = app.tool
-        local toolPrefs <const> = appPrefs.tool(tool)
-        if toolPrefs then
-            -- Brush properties also need to be assigned to preferences
-            -- for the UI to update in the context bar.
-            local toolBrushPrefs <const> = toolPrefs.brush
-            if toolBrushPrefs then
-                local brushType <const> = brush.type
-                local brushSize <const> = brush.size
+            local tool <const> = app.tool
+            local toolPrefs <const> = appPrefs.tool(tool)
+            if toolPrefs then
+                -- Brush properties also need to be assigned to preferences
+                -- for the UI to update in the context bar.
+                local toolBrushPrefs <const> = toolPrefs.brush
+                if toolBrushPrefs then
+                    local brushType <const> = brush.type
+                    local brushSize <const> = brush.size
 
-                if toolBrushPrefs.type
-                    and brushType ~= BrushType.IMAGE then
-                    toolBrushPrefs.type = brushType
+                    if toolBrushPrefs.type
+                        and brushType ~= BrushType.IMAGE then
+                        toolBrushPrefs.type = brushType
+                    end
+
+                    if toolBrushPrefs.size
+                        and brushType ~= BrushType.IMAGE then
+                        toolBrushPrefs.size = brushSize
+                    end
+
+                    if toolBrushPrefs.angle
+                        and brushType ~= BrushType.IMAGE
+                        and brushType ~= BrushType.CIRCLE
+                        and brushSize > 1 then
+                        toolBrushPrefs.angle = brush.angle
+                    end
                 end
 
-                if toolBrushPrefs.size
-                    and brushType ~= BrushType.IMAGE then
-                    toolBrushPrefs.size = brushSize
+                if toolPrefs.ink
+                    and (enabledFlags & defaults.inkMask ~= 0) then
+                    toolPrefs.ink = toolInk
                 end
 
-                if toolBrushPrefs.angle
-                    and brushType ~= BrushType.IMAGE
-                    and brushType ~= BrushType.CIRCLE
-                    and brushSize > 1 then
-                    toolBrushPrefs.angle = brush.angle
-                end
-            end
-
-            if toolPrefs.ink
-                and (enabledFlags & defaults.inkMask ~= 0) then
-                toolPrefs.ink = toolInk
-            end
-
-            if toolPrefs.opacity
-                and (enabledFlags & defaults.opacityMask ~= 0) then
-                toolPrefs.opacity = toolOpacity
-            end
-
-            if toolPrefs.freehand_algorithm
-                and (enabledFlags & defaults.pxPerfectMask ~= 0) then
-                toolPrefs.freehand_algorithm = usePixelPerfect
-                    and 1
-                    or 0
-            end
-
-            local dynamicsPrefs <const> = toolPrefs.dynamics
-            if dynamicsPrefs
-                and (enabledFlags & defaults.dynamicsMask ~= 0) then
-                if dynamicsPrefs.stabilizer ~= nil then
-                    dynamicsPrefs.stabilizer = toolDynamics.useStabilizer
+                if toolPrefs.opacity
+                    and (enabledFlags & defaults.opacityMask ~= 0) then
+                    toolPrefs.opacity = toolOpacity
                 end
 
-                if dynamicsPrefs.stabilizer_factor then
-                    dynamicsPrefs.stabilizer_factor = toolDynamics.stableFac
+                if toolPrefs.freehand_algorithm
+                    and (enabledFlags & defaults.pxPerfectMask ~= 0) then
+                    toolPrefs.freehand_algorithm = usePixelPerfect
+                        and 1
+                        or 0
                 end
 
-                if dynamicsPrefs.size then
-                    dynamicsPrefs.size = toolDynamics.dynamicSize
+                local dynamicsPrefs <const> = toolPrefs.dynamics
+                if dynamicsPrefs
+                    and (enabledFlags & defaults.dynamicsMask ~= 0) then
+                    if dynamicsPrefs.stabilizer ~= nil then
+                        dynamicsPrefs.stabilizer = toolDynamics.useStabilizer
+                    end
+
+                    if dynamicsPrefs.stabilizer_factor then
+                        dynamicsPrefs.stabilizer_factor = toolDynamics.stableFac
+                    end
+
+                    if dynamicsPrefs.size then
+                        dynamicsPrefs.size = toolDynamics.dynamicSize
+                    end
+
+                    if dynamicsPrefs.angle then
+                        dynamicsPrefs.angle = toolDynamics.dynamicAngle
+                    end
+
+                    if dynamicsPrefs.gradient then
+                        dynamicsPrefs.gradient = toolDynamics.dynamicColor
+                    end
+
+                    if dynamicsPrefs.min_size then
+                        dynamicsPrefs.min_size = toolDynamics.minSize
+                    end
+
+                    if dynamicsPrefs.min_angle then
+                        dynamicsPrefs.min_angle = toolDynamics.minAngle
+                    end
+
+                    if dynamicsPrefs.color_from_to then
+                        dynamicsPrefs.color_from_to = toolDynamics.colorFromTo
+                    end
+
+                    -- dynamicsPrefs.matrix_name is skipped.
+
+                    if dynamicsPrefs.min_pressure_threshold then
+                        dynamicsPrefs.min_pressure_threshold = toolDynamics.minPressure
+                    end
+
+                    if dynamicsPrefs.max_pressure_threshold then
+                        dynamicsPrefs.max_pressure_threshold = toolDynamics.maxPressure
+                    end
+
+                    if dynamicsPrefs.min_velocity_threshold then
+                        dynamicsPrefs.min_velocity_threshold = toolDynamics.minVelocity
+                    end
+
+                    if dynamicsPrefs.max_velocity_threshold then
+                        dynamicsPrefs.max_velocity_threshold = toolDynamics.maxVelocity
+                    end
+                end -- End dynamics prefs exists.
+            end     -- End tool prefs exists.
+
+            local colorBarPrefs <const> = appPrefs.color_bar
+            if colorBarPrefs then
+                if colorBarPrefs.fg_color
+                    and enabledFlags & defaults.fgColorMask ~= 0 then
+                    colorBarPrefs.fg_color = AseUtilities.hexToAseColor(fgAbgr32)
                 end
 
-                if dynamicsPrefs.angle then
-                    dynamicsPrefs.angle = toolDynamics.dynamicAngle
+                if colorBarPrefs.bg_color
+                    and enabledFlags & defaults.bgColorMask ~= 0 then
+                    colorBarPrefs.bg_color = AseUtilities.hexToAseColor(bgAbgr32)
                 end
+            end -- End color bar prefs exists.
+        end     -- End app prefs exists.
 
-                if dynamicsPrefs.gradient then
-                    dynamicsPrefs.gradient = toolDynamics.dynamicColor
-                end
-
-                if dynamicsPrefs.min_size then
-                    dynamicsPrefs.min_size = toolDynamics.minSize
-                end
-
-                if dynamicsPrefs.min_angle then
-                    dynamicsPrefs.min_angle = toolDynamics.minAngle
-                end
-
-                if dynamicsPrefs.color_from_to then
-                    dynamicsPrefs.color_from_to = toolDynamics.colorFromTo
-                end
-
-                -- dynamicsPrefs.matrix_name is skipped.
-
-                if dynamicsPrefs.min_pressure_threshold then
-                    dynamicsPrefs.min_pressure_threshold = toolDynamics.minPressure
-                end
-
-                if dynamicsPrefs.max_pressure_threshold then
-                    dynamicsPrefs.max_pressure_threshold = toolDynamics.maxPressure
-                end
-
-                if dynamicsPrefs.min_velocity_threshold then
-                    dynamicsPrefs.min_velocity_threshold = toolDynamics.minVelocity
-                end
-
-                if dynamicsPrefs.max_velocity_threshold then
-                    dynamicsPrefs.max_velocity_threshold = toolDynamics.maxVelocity
-                end
-            end
-        end
-
+        -- -- Alternate way to set fore and back color:
         -- if enabledFlags & defaults.fgColorMask ~= 0 then
         -- app.fgColor = AseUtilities.hexToAseColor(fgAbgr32)
         -- end
@@ -390,19 +413,6 @@ dlg:button {
         -- app.fgColor = AseUtilities.hexToAseColor(bgAbgr32)
         -- app.command.SwitchColors()
         -- end
-
-        local colorBarPrefs <const> = appPrefs.color_bar
-        if colorBarPrefs then
-            if colorBarPrefs.fg_color
-                and enabledFlags & defaults.fgColorMask ~= 0 then
-                colorBarPrefs.fg_color = AseUtilities.hexToAseColor(fgAbgr32)
-            end
-
-            if colorBarPrefs.bg_color
-                and enabledFlags & defaults.bgColorMask ~= 0 then
-                colorBarPrefs.bg_color = AseUtilities.hexToAseColor(bgAbgr32)
-            end
-        end
 
         app.brush = brush
         app.refresh()

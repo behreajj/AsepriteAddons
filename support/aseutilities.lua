@@ -3216,10 +3216,10 @@ function AseUtilities.setBrush(brush)
     if appPrefs then
         -- Setting the preference for the active brush is more important than
         -- setting a brush object's pattern property.
-        local appBrushPrefs <const> = appPrefs.brush
-        if appBrushPrefs then
-            appBrushPrefs.pattern = brush.pattern
-        end -- End app brush prefs exists.
+        local globalBrushPrefs <const> = appPrefs.brush
+        if globalBrushPrefs then
+            globalBrushPrefs.pattern = brush.pattern
+        end -- End global brush prefs exists.
 
         local newTool <const> = app.tool --[[@as Tool]]
         local toolPrefs <const> = appPrefs.tool(newTool)
@@ -3235,12 +3235,6 @@ function AseUtilities.setBrush(brush)
             -- local toolBrushPrefs <const> = toolPrefs.brush
             -- if toolBrushPrefs then
             --     toolBrushPrefs.type = brush.type
-            -- end
-
-            -- https://github.com/aseprite/aseprite/blob/main/src/app/tools/dynamics.h
-            -- local toolDynamicsPrefs <const> = toolPrefs.dynamics
-            -- if toolDynamicsPrefs then
-            -- toolDynamicsPrefs.gradient = 0
             -- end
         end -- End tool prefs exists.
     end     -- End app prefs exists.
