@@ -621,6 +621,7 @@ dlg:button {
             if imageColorMode == ColorMode.RGB then
                 brushImageStr = brushImage.bytes
             elseif imageColorMode == ColorMode.GRAY then
+                ---@type string[]
                 local rgbArr <const> = {}
                 local grayBytes <const> = brushImage.bytes
                 local areaImage <const> = wImage * hImage
@@ -646,6 +647,7 @@ dlg:button {
 
                 brushImageStr = tconcat(rgbArr)
             elseif imageColorMode == ColorMode.INDEXED then
+                ---@type string[]
                 local rgbArr <const> = {}
                 local idxBytes <const> = brushImage.bytes
                 local areaImage <const> = wImage * hImage
@@ -892,6 +894,8 @@ dlg:button {
 
             brushImageStr = tconcat(alphaStrs)
         elseif imageDataMode == "LIGHT" then
+            -- TODO: Option to invert the factor for shade?
+
             local rgbnew <const> = Rgb.new
             local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
 
