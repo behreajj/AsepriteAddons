@@ -99,9 +99,9 @@ local function readBrush(binStr)
     -- print(string.format("fgAbgr32: %08x", fgAbgr32))
     -- print(string.format("bgAbgr32: %08x", bgAbgr32))
 
-    local toolInk <const> = strunpack("B", strsub(binStr, 36, 36))
-    local toolOpacity <const> = strunpack("B", strsub(binStr, 37, 37))
-    local usePixelPerfect <const> = strunpack("B", strsub(binStr, 38, 38)) == 1
+    local toolInk <const> = strbyte(binStr, 36, 36)
+    local toolOpacity <const> = strbyte(binStr, 37, 37)
+    local usePixelPerfect <const> = strbyte(binStr, 38, 38) == 1
     -- print(string.format("toolInk: %d", toolInk))
     -- print(string.format("toolOpacity: %d", toolOpacity))
     -- print(string.format(
@@ -109,15 +109,15 @@ local function readBrush(binStr)
     --     strunpack("B", strsub(binStr, 38, 38)),
     --     usePixelPerfect and "true" or "false"))
 
-    -- TODO: Try using string byte again?
-    local useStabilizer <const> = strunpack("B", strsub(binStr, 39, 39)) ~= 0
-    local stableFac <const> = strunpack("B", strsub(binStr, 40, 40))
-    local dynamicSize <const> = strunpack("B", strsub(binStr, 41, 41))
-    local dynamicAngle <const> = strunpack("B", strsub(binStr, 42, 42))
-    local dynamicColor <const> = strunpack("B", strsub(binStr, 43, 43))
-    local minSize <const> = strunpack("B", strsub(binStr, 44, 44))
+    local useStabilizer <const> = strbyte(binStr, 39, 39) ~= 0
+    local stableFac <const> = strbyte(binStr, 40, 40)
+    local dynamicSize <const> = strbyte(binStr, 41, 41)
+    local dynamicAngle <const> = strbyte(binStr, 42, 42)
+    local dynamicColor <const> = strbyte(binStr, 43, 43)
+    local minSize <const> = strbyte(binStr, 44, 44)
+
     local minAngle <const> = strunpack("<i2", strsub(binStr, 45, 46))
-    local colorFromTo <const> = strunpack("B", strsub(binStr, 47, 47))
+    local colorFromTo <const> = strbyte(binStr, 47, 47)
 
     -- TODO: These could be floats instead of doubles.
     local minPressure <const> = strunpack("<d", strsub(binStr, 48, 55))
@@ -125,8 +125,8 @@ local function readBrush(binStr)
     local minVelocity <const> = strunpack("<d", strsub(binStr, 64, 71))
     local maxVelocity <const> = strunpack("<d", strsub(binStr, 72, 79))
 
-    local brushType <const> = strunpack("B", strsub(binStr, 80, 80))
-    local brushSize <const> = strunpack("B", strsub(binStr, 81, 81))
+    local brushType <const> = strbyte(binStr, 80, 80)
+    local brushSize <const> = strbyte(binStr, 81, 81)
     local brushAngle <const> = strunpack("<i2", strsub(binStr, 82, 83))
     -- print(string.format("brushType: %d", brushType))
     -- print(string.format("brushSize: %d", brushSize))
@@ -134,9 +134,10 @@ local function readBrush(binStr)
 
     local brushCenterX <const> = strunpack("<i8", strsub(binStr, 84, 91))
     local brushCenterY <const> = strunpack("<i8", strsub(binStr, 92, 99))
-    local brushPattern <const> = strunpack("B", strsub(binStr, 100, 100))
+    local brushPattern <const> = strbyte(binStr, 100, 100)
     local brushPatternX <const> = strunpack("<i8", strsub(binStr, 101, 108))
     local brushPatternY <const> = strunpack("<i8", strsub(binStr, 109, 116))
+    -- print(string.format("brushPattern: %d", brushPattern))
 
     local wImage <const> = strunpack("<I2", strsub(binStr, 117, 118))
     local hImage <const> = strunpack("<I2", strsub(binStr, 119, 120))
@@ -269,31 +270,42 @@ dlg:button {
         usePixelPerfect <const>,
         toolDynamics <const> = readBrush(brushBytes)
 
+        -- As with tool brush properties below, global brush properties
+        -- also need to be set from the brush.
+        local appPrefs <const> = app.preferences
+        local globalBrushPrefs <const> = appPrefs.brush
+        if globalBrushPrefs then
+            if globalBrushPrefs.pattern
+                and brush.type == BrushType.IMAGE then
+                globalBrushPrefs.pattern = brush.pattern
+            end
+        end
+
         local tool <const> = app.tool
-        local toolPrefs <const> = app.preferences.tool(tool)
+        local toolPrefs <const> = appPrefs.tool(tool)
         if toolPrefs then
             -- Brush properties also need to be assigned to preferences
             -- for the UI to update in the context bar.
-            local brushPrefs <const> = toolPrefs.brush
-            if brushPrefs then
+            local toolBrushPrefs <const> = toolPrefs.brush
+            if toolBrushPrefs then
                 local brushType <const> = brush.type
                 local brushSize <const> = brush.size
 
-                if brushPrefs.type
+                if toolBrushPrefs.type
                     and brushType ~= BrushType.IMAGE then
-                    brushPrefs.type = brushType
+                    toolBrushPrefs.type = brushType
                 end
 
-                if brushPrefs.size
+                if toolBrushPrefs.size
                     and brushType ~= BrushType.IMAGE then
-                    brushPrefs.size = brushSize
+                    toolBrushPrefs.size = brushSize
                 end
 
-                if brushPrefs.angle
+                if toolBrushPrefs.angle
                     and brushType ~= BrushType.IMAGE
                     and brushType ~= BrushType.CIRCLE
                     and brushSize > 1 then
-                    brushPrefs.angle = brush.angle
+                    toolBrushPrefs.angle = brush.angle
                 end
             end
 
@@ -379,7 +391,7 @@ dlg:button {
         -- app.command.SwitchColors()
         -- end
 
-        local colorBarPrefs <const> = app.preferences.color_bar
+        local colorBarPrefs <const> = appPrefs.color_bar
         if colorBarPrefs then
             if colorBarPrefs.fg_color
                 and enabledFlags & defaults.fgColorMask ~= 0 then
