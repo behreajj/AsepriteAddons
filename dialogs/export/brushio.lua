@@ -400,7 +400,7 @@ dlg:button {
 
             if colorBarPrefs.bg_color
                 and enabledFlags & defaults.bgColorMask ~= 0 then
-                colorBarPrefs.fg_color = AseUtilities.hexToAseColor(bgAbgr32)
+                colorBarPrefs.bg_color = AseUtilities.hexToAseColor(bgAbgr32)
             end
         end
 
@@ -827,7 +827,7 @@ dlg:button {
 
             local bgColorPrefs <const> = colorBarPrefs.bg_color --[[@as Color]]
             if bgColorPrefs then
-                bgColor = AseUtilities.aseColorCopy(bgColor, "")
+                bgColor = AseUtilities.aseColorCopy(bgColorPrefs, "")
             end
         end
 
