@@ -710,6 +710,12 @@ dlg:button {
         local wImageStr <const> = strpack("<I2", wImage)
         local hImageStr <const> = strpack("<I2", hImage)
 
+        -- Foreground and background colors must be written
+        -- after the image data! Otherwise Aseprite will fill
+        -- the brush with the foreground color.
+        local fgColor = Color { r = 0, g = 0, b = 0, a = 0 }
+        local bgColor = Color { r = 0, g = 0, b = 0, a = 0 }
+
         -- Write tool properties.
         local toolInk = Ink.SIMPLE
         local toolOpacity = 255
@@ -739,74 +745,95 @@ dlg:button {
         local minVelocity = 0.1
         local maxVelocity = 0.9
 
-        local tool <const> = app.tool
-        local toolPrefs <const> = app.preferences.tool(tool)
-        if toolPrefs then
-            if toolPrefs.ink then
-                toolInk = toolPrefs.ink --[[@as Ink]]
-            end
-
-            if toolPrefs.opacity then
-                toolOpacity = toolPrefs.opacity --[[@as integer]]
-            end
-
-            if toolPrefs.freehand_algorithm then
-                usePixelPerfect = toolPrefs.freehand_algorithm == 1
-            end
-
-            local dynamicsPrefs <const> = toolPrefs.dynamics
-            if dynamicsPrefs then
-                if dynamicsPrefs.stabilizer then
-                    useStabilizer = dynamicsPrefs.stabilizer --[[@as boolean]]
+        local appPrefs <const> = app.preferences
+        if appPrefs then
+            local tool <const> = app.tool
+            local toolPrefs <const> = appPrefs.tool(tool)
+            if toolPrefs then
+                if toolPrefs.ink then
+                    toolInk = toolPrefs.ink --[[@as Ink]]
                 end
 
-                if dynamicsPrefs.stabilizer_factor then
-                    stableFac = dynamicsPrefs.stabilizer_factor --[[@as integer]]
+                if toolPrefs.opacity then
+                    toolOpacity = toolPrefs.opacity --[[@as integer]]
                 end
 
-                if dynamicsPrefs.size then
-                    dynamicSize = dynamicsPrefs.size --[[@as integer]]
+                if toolPrefs.freehand_algorithm then
+                    usePixelPerfect = toolPrefs.freehand_algorithm == 1
                 end
 
-                if dynamicsPrefs.angle then
-                    dynamicAngle = dynamicsPrefs.angle --[[@as integer]]
+                local dynamicsPrefs <const> = toolPrefs.dynamics
+                if dynamicsPrefs then
+                    if dynamicsPrefs.stabilizer then
+                        useStabilizer = dynamicsPrefs.stabilizer --[[@as boolean]]
+                    end
+
+                    if dynamicsPrefs.stabilizer_factor then
+                        stableFac = dynamicsPrefs.stabilizer_factor --[[@as integer]]
+                    end
+
+                    if dynamicsPrefs.size then
+                        dynamicSize = dynamicsPrefs.size --[[@as integer]]
+                    end
+
+                    if dynamicsPrefs.angle then
+                        dynamicAngle = dynamicsPrefs.angle --[[@as integer]]
+                    end
+
+                    if dynamicsPrefs.gradient then
+                        dynamicColor = dynamicsPrefs.gradient --[[@as integer]]
+                    end
+
+                    if dynamicsPrefs.min_size then
+                        minSize = dynamicsPrefs.min_size --[[@as integer]]
+                    end
+
+                    if dynamicsPrefs.min_angle then
+                        minAngle = dynamicsPrefs.min_angle --[[@as integer]]
+                    end
+
+                    if dynamicsPrefs.color_from_to then
+                        colorFromTo = dynamicsPrefs.color_from_to --[[@as integer]]
+                    end
+
+                    -- dynamicsPrefs.matrix_name is skipped.
+
+                    if dynamicsPrefs.min_pressure_threshold then
+                        minPressure = dynamicsPrefs.min_pressure_threshold --[[@as number]]
+                    end
+
+                    if dynamicsPrefs.max_pressure_threshold then
+                        maxPressure = dynamicsPrefs.max_pressure_threshold --[[@as number]]
+                    end
+
+                    if dynamicsPrefs.min_velocity_threshold then
+                        minVelocity = dynamicsPrefs.min_velocity_threshold --[[@as number]]
+                    end
+
+                    if dynamicsPrefs.max_velocity_threshold then
+                        maxVelocity = dynamicsPrefs.max_velocity_threshold --[[@as number]]
+                    end
+                end -- Dynamics prefs exists.
+            end     -- Tool prefs exists.
+
+            local colorBarPrefs <const> = appPrefs.color_bar
+            if colorBarPrefs then
+                local fgColorPrefs <const> = colorBarPrefs.fg_color --[[@as Color]]
+                if fgColorPrefs then
+                    fgColor = AseUtilities.aseColorCopy(fgColorPrefs, "")
                 end
 
-                if dynamicsPrefs.gradient then
-                    dynamicColor = dynamicsPrefs.gradient --[[@as integer]]
+                local bgColorPrefs <const> = colorBarPrefs.bg_color --[[@as Color]]
+                if bgColorPrefs then
+                    bgColor = AseUtilities.aseColorCopy(bgColorPrefs, "")
                 end
+            end -- Color bar prefs exists.
+        end     -- App prefs exists.
 
-                if dynamicsPrefs.min_size then
-                    minSize = dynamicsPrefs.min_size --[[@as integer]]
-                end
-
-                if dynamicsPrefs.min_angle then
-                    minAngle = dynamicsPrefs.min_angle --[[@as integer]]
-                end
-
-                if dynamicsPrefs.color_from_to then
-                    colorFromTo = dynamicsPrefs.color_from_to --[[@as integer]]
-                end
-
-                -- dynamicsPrefs.matrix_name is skipped.
-
-                if dynamicsPrefs.min_pressure_threshold then
-                    minPressure = dynamicsPrefs.min_pressure_threshold --[[@as number]]
-                end
-
-                if dynamicsPrefs.max_pressure_threshold then
-                    maxPressure = dynamicsPrefs.max_pressure_threshold --[[@as number]]
-                end
-
-                if dynamicsPrefs.min_velocity_threshold then
-                    minVelocity = dynamicsPrefs.min_velocity_threshold --[[@as number]]
-                end
-
-                if dynamicsPrefs.max_velocity_threshold then
-                    maxVelocity = dynamicsPrefs.max_velocity_threshold --[[@as number]]
-                end
-            end
-        end
+        -- local fgColor <const> = AseUtilities.aseColorCopy(app.fgColor, "UNBOUNDED")
+        -- app.command.SwitchColors()
+        -- local bgColor <const> = AseUtilities.aseColorCopy(app.fgColor, "UNBOUNDED")
+        -- app.command.SwitchColors()
 
         local toolInkStr <const> = strchar(toolInk)
         local toolOpacityStr <const> = strchar(min(max(toolOpacity, 0), 255))
@@ -823,29 +850,6 @@ dlg:button {
         local maxPressureStr <const> = strpack("<d", maxPressure)
         local minVelocityStr <const> = strpack("<d", minVelocity)
         local maxVelocityStr <const> = strpack("<d", maxVelocity)
-
-        -- Foreground and background colors must be written
-        -- after the image data! Otherwise Aseprite will fill
-        -- the brush with the foreground color.
-        -- local fgColor <const> = AseUtilities.aseColorCopy(app.fgColor, "UNBOUNDED")
-        -- app.command.SwitchColors()
-        -- local bgColor <const> = AseUtilities.aseColorCopy(app.fgColor, "UNBOUNDED")
-        -- app.command.SwitchColors()
-
-        local fgColor = Color { r = 0, g = 0, b = 0, a = 0 }
-        local bgColor = Color { r = 0, g = 0, b = 0, a = 0 }
-        local colorBarPrefs <const> = app.preferences.color_bar
-        if colorBarPrefs then
-            local fgColorPrefs <const> = colorBarPrefs.fg_color --[[@as Color]]
-            if fgColorPrefs then
-                fgColor = AseUtilities.aseColorCopy(fgColorPrefs, "")
-            end
-
-            local bgColorPrefs <const> = colorBarPrefs.bg_color --[[@as Color]]
-            if bgColorPrefs then
-                bgColor = AseUtilities.aseColorCopy(bgColorPrefs, "")
-            end
-        end
 
         -- These do not need to be validated for min and max because
         -- aseColorCopy above has already done so.
