@@ -145,6 +145,7 @@ dlg:file {
     id = "exportFilepath",
     filetypes = exportFileExts,
     basepath = AseUtilities.defaultFolder(),
+    filename = "*.md",
     save = true,
     focus = false,
     visible = defaults.outputType == "FILE"

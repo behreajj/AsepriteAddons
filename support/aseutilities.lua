@@ -1390,6 +1390,25 @@ function AseUtilities.createSprite(spec, fileName, showLayerEdges)
     return sprite
 end
 
+---Gets the default file extension for exporting a sprite.
+---Attempts to read the path from user preferences.
+---Defaults to png.
+---@return string
+---@nodiscard
+function AseUtilities.defaultFileExt()
+    local appPrefs <const> = app.preferences
+    if appPrefs then
+        local exportPrefs <const> = appPrefs.export_file
+        if exportPrefs then
+            local ext <const> = exportPrefs.image_default_extension
+            if ext and #ext > 0 then
+                return ext
+            end
+        end
+    end
+    return "png"
+end
+
 ---Gets the default folder path for a file widget.
 ---Attempts to read the path from user preferences.
 ---Defaults to user documents path.

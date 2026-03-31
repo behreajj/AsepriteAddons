@@ -234,6 +234,7 @@ dlg:file {
     label = "File:",
     filetypes = AseUtilities.FILE_FORMATS_SAVE,
     basepath = AseUtilities.defaultFolder(),
+    filename = "*." .. AseUtilities.defaultFileExt(),
     title = "Export Layers",
     save = true,
     focus = true
@@ -361,7 +362,7 @@ dlg:button {
         end
 
         if string.lower(fileExt) == "json" then
-            fileExt = app.preferences.export_file.image_default_extension --[[@as string]]
+            fileExt = AseUtilities.defaultFileExt()
             filename = string.sub(filename, 1, -5) .. fileExt
         end
 
