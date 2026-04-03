@@ -277,8 +277,6 @@ dlg:button {
             return
         end
 
-        -- TODO: Combine this with AseUtilities setBrush in some way?
-
         -- This cannot be entirely replaced with AseUtilities.setBrush
         -- because this uses enabledFlags and sets brush dynamics, does
         -- not set the tool to pencil, etc.
