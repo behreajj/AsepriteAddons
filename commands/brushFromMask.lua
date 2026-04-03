@@ -48,7 +48,7 @@ if not isValid then
 
     local brushType <const> = brush.type
     local brushSize <const> = brush.size
-    local brushDegrees <const> = brush.angle
+    local brushDegrees <const> = brush.angle % 360
 
     if brushSize <= 1 then return end
     if brushType == BrushType.IMAGE

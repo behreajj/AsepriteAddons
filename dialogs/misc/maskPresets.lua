@@ -595,7 +595,7 @@ dlg:button {
             local amount <const> = args.amount
                 or defaults.amount --[[@as integer]]
             local brushSize <const> = brush.size
-            local brushDegrees <const> = brush.angle
+            local brushDegrees <const> = brush.angle % 360
 
             local rotNeeded <const> = brushSize > 1
                 and brushDegrees % 90 ~= 0
@@ -745,7 +745,7 @@ dlg:button {
     end
 }
 
-dlg:button  {
+dlg:button {
     id = "invertButton",
     text = "IN&VERT",
     focus = false,
