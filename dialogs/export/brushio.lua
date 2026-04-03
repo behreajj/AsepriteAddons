@@ -8,8 +8,6 @@ local imageDataModes <const> = {
 }
 
 local defaults <const> = {
-    -- TODO: Show dynamics min and max with number inputs?
-    -- TODO: Allow user to set UUID?
     imageDataMode = "STAMP",
 
     signature = "ASEBRUSH",
@@ -944,8 +942,6 @@ dlg:button {
                 h = h + 1
             end -- End factors loop.
 
-            ---@type string[]
-            local lightStrs <const> = {}
             local diff <const> = facMax - facMin
             local diffIsValid <const> = diff ~= 0.0
             if not diffIsValid then
@@ -958,6 +954,9 @@ dlg:button {
                 }
                 return
             end
+
+            ---@type string[]
+            local lightStrs <const> = {}
             local scalar <const> = diffIsValid and 1.0 / diff or 0.0
 
             local i = 0
@@ -982,7 +981,6 @@ dlg:button {
                         lightStrs[2 + i4] = g8Char
                         lightStrs[3 + i4] = b8Char
                         lightStrs[4 + i4] = strchar(aComp)
-                        -- lightStrs[4 + i4] = strchar(f8)
                     end
                 end
 
