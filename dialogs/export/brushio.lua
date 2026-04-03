@@ -277,9 +277,7 @@ dlg:button {
             return
         end
 
-        -- if app.site.tilemapMode == TilemapMode.TILES then
-        --     app.command.ToggleTilesMode()
-        -- end
+        -- TODO: Combine this with AseUtilities setBrush in some way?
 
         -- This cannot be entirely replaced with AseUtilities.setBrush
         -- because this uses enabledFlags and sets brush dynamics, does

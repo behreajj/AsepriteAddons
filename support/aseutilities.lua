@@ -3204,7 +3204,6 @@ end
 ---pencil's opacity depending on ink type.
 ---@param brush Brush brush
 function AseUtilities.setBrush(brush)
-    -- TODO: Make more consistent with brushio?
     if app.site.tilemapMode == TilemapMode.TILES then
         app.command.ToggleTilesMode()
     end
@@ -3238,24 +3237,46 @@ function AseUtilities.setBrush(brush)
         -- setting a brush object's pattern property.
         local globalBrushPrefs <const> = appPrefs.brush
         if globalBrushPrefs then
-            globalBrushPrefs.pattern = brush.pattern
+            if globalBrushPrefs.pattern
+                and brush.type == BrushType.IMAGE then
+                globalBrushPrefs.pattern = brush.pattern
+            end
         end -- End global brush prefs exists.
 
         local newTool <const> = app.tool --[[@as Tool]]
         local toolPrefs <const> = appPrefs.tool(newTool)
         if toolPrefs then
-            -- Causes a UI glitch.
-            -- toolPrefs.ink = Ink.SIMPLE
-            toolPrefs.opacity = toolOpacity
+            -- Brush properties also need to be assigned to preferences
+            -- for the UI to update in the context bar.
+            local toolBrushPrefs <const> = toolPrefs.brush
+            if toolBrushPrefs then
+                local brushType <const> = brush.type
+                local brushSize <const> = brush.size
+                local isNotImage <const> = brushType ~= BrushType.IMAGE
 
-            -- Trying to set tool brush image type causes UI glitch
-            -- where custom brush can't be reverted to built-in brush
-            -- through Esc key or the context bar Back button until the
-            -- brush type is changed in the UI.
-            -- local toolBrushPrefs <const> = toolPrefs.brush
-            -- if toolBrushPrefs then
-            --     toolBrushPrefs.type = brush.type
+                if toolBrushPrefs.type and isNotImage then
+                    toolBrushPrefs.type = brushType
+                end
+
+                if toolBrushPrefs.size and isNotImage then
+                    toolBrushPrefs.size = brushSize
+                end
+
+                if toolBrushPrefs.angle and isNotImage
+                    and brushType ~= BrushType.CIRCLE
+                    and brushSize > 1 then
+                    toolBrushPrefs.angle = brush.angle
+                end
+            end -- End tool brush prefs exists.
+
+            -- Causes a UI glitch?
+            -- if toolPrefs.ink then
+            -- toolPrefs.ink = Ink.SIMPLE
             -- end
+
+            if toolPrefs.opacity then
+                toolPrefs.opacity = toolOpacity
+            end
         end -- End tool prefs exists.
     end     -- End app prefs exists.
 end
