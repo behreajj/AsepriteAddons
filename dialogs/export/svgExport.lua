@@ -1326,7 +1326,8 @@ dlg:button {
             "\n</svg>"
         })
 
-        local file <const>, err <const> = io.open(filepath, "w")
+        local file <const> <close>,
+            err <const> = io.open(filepath, "w")
         if file then
             file:write(svgStr)
             file:close()

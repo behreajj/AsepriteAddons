@@ -831,7 +831,8 @@ dlg:button {
             end
             jsonFilepath = jsonFilepath .. ".json"
 
-            local file <const>, err <const> = io.open(jsonFilepath, "w")
+            local file <const> <close>,
+                err <const> = io.open(jsonFilepath, "w")
             if file then
                 file:write(jsonString)
                 file:close()

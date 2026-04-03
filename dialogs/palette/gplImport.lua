@@ -227,7 +227,8 @@ dlg:button {
 
         local isValidRiff = false
         if extIsPal then
-            local binFile <const>, binErr <const> = io.open(filepath, "rb")
+            local binFile <const> <close>,
+                binErr <const> = io.open(filepath, "rb")
             if binErr ~= nil then
                 app.alert { title = "Error", text = binErr }
                 return
@@ -308,7 +309,8 @@ dlg:button {
         end
 
         if not isValidRiff then
-            local asciiFile <const>, asciiErr <const> = io.open(filepath, "r")
+            local asciiFile <const> <close>,
+                asciiErr <const> = io.open(filepath, "r")
             if asciiErr ~= nil then
                 app.alert { title = "Error", text = asciiErr }
                 return

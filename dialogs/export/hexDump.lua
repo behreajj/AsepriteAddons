@@ -199,7 +199,8 @@ dlg:button {
                 return
             end
 
-            local readFile <const>, readErr <const> = io.open(importFilepath, "rb")
+            local readFile <const> <close>,
+                readErr <const> = io.open(importFilepath, "rb")
             if readErr ~= nil then
                 if readFile then readFile:close() end
                 app.alert { title = "Error", text = readErr }
@@ -458,7 +459,8 @@ dlg:button {
                 return
             end
 
-            local writeFile <const>, writeErr <const> = io.open(exportFilepath, "w")
+            local writeFile <const> <close>,
+                writeErr <const> = io.open(exportFilepath, "w")
             if writeErr ~= nil then
                 if writeFile then writeFile:close() end
                 app.alert { title = "Error", text = writeErr }

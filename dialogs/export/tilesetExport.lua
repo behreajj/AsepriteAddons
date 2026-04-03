@@ -960,7 +960,8 @@ dlg:button {
                                     local idcsFilePath <const> = strfmt(
                                         "%s%s_indices.csv",
                                         filePath, fileName)
-                                    local idcsFile <const>, _ <const> = ioOpen(idcsFilePath, "w")
+                                    local idcsFile <const> <close>,
+                                        _ <const> = ioOpen(idcsFilePath, "w")
                                     if idcsFile then
                                         idcsFile:write(idcsData)
                                         idcsFile:close()
@@ -969,14 +970,16 @@ dlg:button {
                                     local flipsFilePath <const> = strfmt(
                                         "%s%s_flags.csv",
                                         filePath, fileName)
-                                    local flipsFile <const>, _ <const> = ioOpen(flipsFilePath, "w")
+                                    local flipsFile <const> <close>,
+                                        _ <const> = ioOpen(flipsFilePath, "w")
                                     if flipsFile then
                                         flipsFile:write(flipsData)
                                         flipsFile:close()
                                     end
                                 else
                                     local csvFilePath <const> = strfmt("%s%s.csv", filePath, fileName)
-                                    local csvFile <const>, _ <const> = ioOpen(csvFilePath, "w")
+                                    local csvFile <const> <close>,
+                                        _ <const> = ioOpen(csvFilePath, "w")
                                     if csvFile then
                                         csvFile:write(idcsData)
                                         csvFile:close()
@@ -1186,7 +1189,8 @@ dlg:button {
                     tconcat(tPropStrs, "\n"))
 
                 local tsxFilePath <const> = strfmt("%s%s.tsx", filePath, fileName)
-                local tsxFile <const>, _ <const> = ioOpen(tsxFilePath, "w")
+                local tsxFile <const> <close>,
+                    _ <const> = ioOpen(tsxFilePath, "w")
                 if tsxFile then
                     tsxFile:write(tsxStr)
                     tsxFile:close()
@@ -1365,7 +1369,8 @@ dlg:button {
                     end
                     tmxFilepath = strfmt("%s_%03d.tmx", tmxFilepath, frIdx - 1)
 
-                    local tmxFile <const>, _ <const> = ioOpen(tmxFilepath, "w")
+                    local tmxFile <const> <close>,
+                        _ <const> = ioOpen(tmxFilepath, "w")
                     if tmxFile then
                         tmxFile:write(tmxString)
                         tmxFile:close()
