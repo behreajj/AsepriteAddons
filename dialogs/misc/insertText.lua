@@ -281,8 +281,7 @@ dlg:button {
 
         if msgSrc == "FILE" then
             if msgFilePath and #msgFilePath > 0 then
-                local file <const> <close>,
-                    err <const> = io.open(msgFilePath, "r")
+                local file <const>, err <const> = io.open(msgFilePath, "r")
                 local flatStr = nil
                 if file ~= nil then
                     flatStr = file:read("*all") --[[@as string]]

@@ -248,8 +248,7 @@ dlg:button {
             return
         end
 
-        local binFile <const> <close>,
-            err <const> = io.open(filepath, "rb")
+        local binFile <const>, err <const> = io.open(filepath, "rb")
         if err ~= nil then
             if binFile then binFile:close() end
             app.alert { title = "Error", text = err }
@@ -1028,8 +1027,7 @@ dlg:button {
             brushImageStr,               -- variable, 128 offset
         })
 
-        local binFile <const> <close>,
-            err <const> = io.open(filepath, "wb")
+        local binFile <const>, err <const> = io.open(filepath, "wb")
         if err ~= nil then
             if binFile then binFile:close() end
             app.alert { title = "Error", text = err }

@@ -220,8 +220,7 @@ dlg:button {
 
         gplStr = gplStr .. table.concat(entryStrArr, '\n')
 
-        local file <const> <close>,
-            err <const> = io.open(filepath, "w")
+        local file <const>, err <const> = io.open(filepath, "w")
         if file then
             file:write(gplStr)
             file:close()
