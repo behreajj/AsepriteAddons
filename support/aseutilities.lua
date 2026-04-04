@@ -2002,7 +2002,7 @@ function AseUtilities.frameObjsToIdcs(frObjs)
 end
 
 ---Gets the sprite's background checker width, height and colors from
----from preferences. Colors are retrieved by reference. The zoom boolean
+---preferences. Colors are retrieved by reference. The zoom boolean
 ---applies to reference layers and to the old render engine.
 ---@param sprite Sprite|nil sprite
 ---@return integer wCheck
