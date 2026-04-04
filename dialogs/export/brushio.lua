@@ -505,9 +505,16 @@ dlg:button {
                     toolPrefs.ink = toolInk
                 end
 
-                if toolPrefs.opacity
-                    and (enabledFlags & defaults.opacityMask ~= 0) then
-                    toolPrefs.opacity = toolOpacity
+                -- Due to the quirks of Aseprite's tool opacity,
+                -- assume that if opacity is unchecked in the file,
+                -- then the image is intended to be opaque.
+                -- This is slightly different than AseUtilities setBrush.
+                if toolPrefs.opacity then
+                    if enabledFlags & defaults.opacityMask ~= 0 then
+                        toolPrefs.opacity = toolOpacity
+                    else
+                        toolPrefs.opacity = 255
+                    end
                 end
 
                 if toolPrefs.freehand_algorithm
