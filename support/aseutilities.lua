@@ -2004,7 +2004,7 @@ end
 ---Gets the sprite's background checker width, height and colors from
 ---from preferences. Colors are retrieved by reference. The zoom boolean
 ---applies to reference layers and to the old render engine.
----@param sprite Sprite sprite
+---@param sprite Sprite|nil sprite
 ---@return integer wCheck
 ---@return integer hCheck
 ---@return Color aAse
@@ -2019,6 +2019,8 @@ function AseUtilities.getBkgChecker(sprite)
 
     local appPrefs <const> = app.preferences
     if not appPrefs then return wCheck, hCheck, aAse, bAse, zoom end
+
+    if not sprite then return wCheck, hCheck, aAse, bAse, zoom end
 
     local docPrefs <const> = appPrefs.document(sprite)
     if not docPrefs then return wCheck, hCheck, aAse, bAse, zoom end
