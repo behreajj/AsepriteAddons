@@ -34,6 +34,13 @@ local defaults <const> = {
     dynamicsMask = 32,
 }
 
+local active <const> = {
+    brush = Brush(),
+    enabledFlags = 0,
+    fgAbgr32 = 0,
+    bgAbgr32 = 0,
+}
+
 ---@param binStr string
 ---@return Brush brush
 ---@return integer enabledFlags
@@ -198,6 +205,110 @@ local dlg <const> = Dialog { title = "Brush IO" }
 
 dlg:separator { id = "importSep", text = "Load" }
 
+dlg:canvas {
+    id = "previewCanvas",
+    width = 128,
+    height = 128,
+    focus = false,
+    onpaint = function(event)
+        local brush <const> = active.brush
+        local fgAbgr32 <const> = active.fgAbgr32
+
+        local brushType <const> = brush.type
+        local brushSize <const> = brush.size
+        local brushDegrees <const> = brush.angle % 360
+
+        local query <const> = AseUtilities.DIMETRIC_ANGLES[brushDegrees]
+        local brushRadians <const> = query
+            or (0.017453292519943 * brushDegrees)
+        local cosa <const> = math.cos(brushRadians)
+        local sina <const> = math.sin(brushRadians)
+
+        local ctx <const> = event.context
+        ctx.antialias = false
+        ctx.color = fgAbgr32 & 0xff000000 ~= 0
+            and AseUtilities.hexToAseColor(fgAbgr32)
+            or Color { r = 255, g = 255, b = 255, a = 255 }
+
+        local wCanvas <const> = ctx.width
+        local hCanvas <const> = ctx.height
+        local xCenteri <const> = math.floor(wCanvas * 0.5 + 0.5)
+        local yCenteri <const> = math.floor(hCanvas * 0.5 + 0.5)
+        local sizeHalfReal <const> = brushSize * 0.5
+
+        local site <const> = app.site
+        local sprite <const> = site.sprite
+        local wCheck <const>,
+        hCheck <const>,
+        aAse <const>,
+        bAse <const> = AseUtilities.getBkgChecker(sprite)
+        local bkgImage <const> = AseUtilities.checkerImage(
+            wCanvas, hCanvas, wCheck, hCheck,
+            AseUtilities.aseColorToHex(aAse, ColorMode.RGB),
+            AseUtilities.aseColorToHex(bAse, ColorMode.RGB))
+        local drawRect <const> = Rectangle(0, 0, wCanvas, hCanvas)
+        ctx:drawImage(bkgImage, drawRect, drawRect)
+
+        if brushType == BrushType.CIRCLE then
+            local kappa <const> = 0.5522847498307936
+            local kSize <const> = kappa * sizeHalfReal
+
+            local right <const> = xCenteri + sizeHalfReal
+            local left <const> = xCenteri - sizeHalfReal
+            local top <const> = yCenteri + sizeHalfReal
+            local bottom <const> = yCenteri - sizeHalfReal
+
+            ctx:beginPath()
+            ctx:moveTo(right, yCenteri)
+            ctx:cubicTo(right, yCenteri + kSize, xCenteri + kSize, top, xCenteri, top)
+            ctx:cubicTo(xCenteri - kSize, top, left, yCenteri + kSize, left, yCenteri)
+            ctx:cubicTo(left, yCenteri - kSize, xCenteri - kSize, bottom, xCenteri, bottom)
+            ctx:cubicTo(xCenteri + kSize, bottom, right, yCenteri - kSize, right, yCenteri)
+            ctx:closePath()
+            ctx:fill()
+        elseif brushType == BrushType.SQUARE then
+            local cosaSzHf <const> = cosa * sizeHalfReal
+            local sinaSzHf <const> = sina * sizeHalfReal
+            local ySign <const> = 1
+            local sinSign <const> = sinaSzHf * ySign
+
+            ctx:beginPath()
+            ctx:moveTo(
+                math.floor(xCenteri - cosaSzHf + sinSign),
+                math.floor(yCenteri + cosaSzHf + sinSign))
+            ctx:lineTo(
+                math.floor(xCenteri + cosaSzHf + sinSign),
+                math.floor(yCenteri + cosaSzHf - sinSign))
+            ctx:lineTo(
+                math.floor(xCenteri + cosaSzHf - sinSign),
+                math.floor(yCenteri - cosaSzHf - sinSign))
+            ctx:lineTo(
+                math.floor(xCenteri - cosaSzHf - sinSign),
+                math.floor(yCenteri - cosaSzHf + sinSign))
+            ctx:closePath()
+            ctx:fill()
+        elseif brushType == BrushType.LINE then
+            local cosaSzHf <const> = cosa * sizeHalfReal
+            local sinaSzHf <const> = sina * sizeHalfReal
+
+            ctx:beginPath()
+            ctx:moveTo(xCenteri - cosaSzHf, yCenteri + sinaSzHf)
+            ctx:lineTo(xCenteri + cosaSzHf, yCenteri - sinaSzHf)
+            ctx:stroke()
+        elseif brushType == BrushType.IMAGE then
+            local brushImage <const> = brush.image
+            if brushImage then
+                ctx:drawImage(
+                    brushImage,
+                    xCenteri - math.floor(brushImage.width * 0.5),
+                    yCenteri - math.floor(brushImage.height * 0.5))
+            end
+        end
+    end
+}
+
+dlg:newrow { always = false }
+
 dlg:file {
     id = "importFilepath",
     label = "Path:",
@@ -208,20 +319,62 @@ dlg:file {
     focus = false
 }
 
--- dlg:newrow { always = false }
-
--- dlg:canvas {
---     id = "previewCanvas",
---     label = "Preview:",
---     width = 128,
---     height = 128,
---     focus = false,
---     onpaint = function(event)
---         local ctx <const> = event.context
---     end
--- }
-
 dlg:newrow { always = false }
+
+dlg:button {
+    id = "previewButton",
+    text = "&PREVIEW",
+    focus = false,
+    onclick = function()
+        local args <const> = dlg.data
+
+        local filepath <const> = args.importFilepath --[[@as string]]
+        if (not filepath) or (#filepath < 1) then
+            app.alert {
+                title = "Error",
+                text = "Filepath is empty."
+            }
+            return
+        end
+
+        local fileExt <const> = app.fs.fileExtension(filepath)
+        if string.lower(fileExt) ~= "brush" then
+            app.alert {
+                title = "Error",
+                text = "Extension is not \"brush\"."
+            }
+            return
+        end
+
+        local binFile <const>, err <const> = io.open(filepath, "rb")
+        if err ~= nil then
+            if binFile then binFile:close() end
+            app.alert { title = "Error", text = err }
+            return
+        end
+        if binFile == nil then return end
+
+        local brushBytes <const> = binFile:read("a")
+        binFile:close()
+
+        -- TODO: Support tool opacity in preview.
+        local brush <const>,
+        enabledFlags <const>,
+        fgAbgr32 <const>,
+        bgAbgr32 <const>,
+        _ <const>,
+        _ <const>,
+        _ <const>,
+        _ <const> = readBrush(brushBytes)
+
+        active.brush = brush
+        active.enabledFlags = enabledFlags
+        active.fgAbgr32 = fgAbgr32
+        active.bgAbgr32 = bgAbgr32
+
+        dlg:repaint()
+    end,
+}
 
 dlg:button {
     id = "importButton",
