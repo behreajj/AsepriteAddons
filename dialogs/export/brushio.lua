@@ -38,7 +38,7 @@ local active <const> = {
     brush = Brush(),
     enabledFlags = 0,
     fgAbgr32 = 0,
-    bgAbgr32 = 0,
+    toolOpacity = 255,
 }
 
 ---@param binStr string
@@ -213,6 +213,8 @@ dlg:canvas {
     onpaint = function(event)
         local brush <const> = active.brush
         local fgAbgr32 <const> = active.fgAbgr32
+        local enabledFlags <const> = active.enabledFlags
+        local toolOpacity <const> = active.toolOpacity
 
         local brushType <const> = brush.type
         local brushSize <const> = brush.size
@@ -224,11 +226,28 @@ dlg:canvas {
         local cosa <const> = math.cos(brushRadians)
         local sina <const> = math.sin(brushRadians)
 
+        local fgColor = Color { r = 255, g = 255, b = 255, a = 255 }
+        if fgAbgr32 & 0xff000000 ~= 0 then
+            fgColor = AseUtilities.hexToAseColor(fgAbgr32)
+        end
+
+        local useToolOpacity <const> = toolOpacity > 0
+            and toolOpacity < 255
+            and enabledFlags & defaults.opacityMask ~= 0
+        if useToolOpacity then
+            local toolOpac01 <const> = toolOpacity / 255.0
+            local fgAlpha01 <const> = fgColor.alpha / 255.0
+            local comp01 <const> = toolOpac01 * fgAlpha01
+            fgColor = Color {
+                r = fgColor.red,
+                g = fgColor.green,
+                b = fgColor.blue,
+                a = math.floor(comp01 * 255.0 + 0.5)
+            }
+        end
+
         local ctx <const> = event.context
         ctx.antialias = false
-        ctx.color = fgAbgr32 & 0xff000000 ~= 0
-            and AseUtilities.hexToAseColor(fgAbgr32)
-            or Color { r = 255, g = 255, b = 255, a = 255 }
 
         local wCanvas <const> = ctx.width
         local hCanvas <const> = ctx.height
@@ -258,6 +277,7 @@ dlg:canvas {
             local top <const> = yCenteri + sizeHalfReal
             local bottom <const> = yCenteri - sizeHalfReal
 
+            ctx.color = fgColor
             ctx:beginPath()
             ctx:moveTo(right, yCenteri)
             ctx:cubicTo(right, yCenteri + kSize, xCenteri + kSize, top, xCenteri, top)
@@ -272,6 +292,7 @@ dlg:canvas {
             local ySign <const> = 1
             local sinSign <const> = sinaSzHf * ySign
 
+            ctx.color = fgColor
             ctx:beginPath()
             ctx:moveTo(
                 math.floor(xCenteri - cosaSzHf + sinSign),
@@ -291,6 +312,7 @@ dlg:canvas {
             local cosaSzHf <const> = cosa * sizeHalfReal
             local sinaSzHf <const> = sina * sizeHalfReal
 
+            ctx.color = fgColor
             ctx:beginPath()
             ctx:moveTo(xCenteri - cosaSzHf, yCenteri + sinaSzHf)
             ctx:lineTo(xCenteri + cosaSzHf, yCenteri - sinaSzHf)
@@ -298,12 +320,20 @@ dlg:canvas {
         elseif brushType == BrushType.IMAGE then
             local brushImage <const> = brush.image
             if brushImage then
+                if useToolOpacity then
+                    ctx.color = Color {
+                        r = 255,
+                        g = 255,
+                        b = 255,
+                        a = toolOpacity
+                    }
+                end
                 ctx:drawImage(
                     brushImage,
                     xCenteri - math.floor(brushImage.width * 0.5),
                     yCenteri - math.floor(brushImage.height * 0.5))
-            end
-        end
+            end -- End brush image exists.
+        end     -- End brush type.
     end
 }
 
@@ -357,20 +387,19 @@ dlg:button {
         local brushBytes <const> = binFile:read("a")
         binFile:close()
 
-        -- TODO: Support tool opacity in preview.
         local brush <const>,
         enabledFlags <const>,
         fgAbgr32 <const>,
-        bgAbgr32 <const>,
         _ <const>,
         _ <const>,
+        toolOpacity <const>,
         _ <const>,
         _ <const> = readBrush(brushBytes)
 
         active.brush = brush
         active.enabledFlags = enabledFlags
         active.fgAbgr32 = fgAbgr32
-        active.bgAbgr32 = bgAbgr32
+        active.toolOpacity = toolOpacity
 
         dlg:repaint()
     end,
@@ -557,17 +586,6 @@ dlg:button {
             end -- End color bar prefs exists.
         end     -- End app prefs exists.
 
-        -- -- Alternate way to set fore and back color:
-        -- if enabledFlags & defaults.fgColorMask ~= 0 then
-        -- app.fgColor = AseUtilities.hexToAseColor(fgAbgr32)
-        -- end
-
-        -- if enabledFlags & defaults.bgColorMask ~= 0 then
-        -- app.command.SwitchColors()
-        -- app.fgColor = AseUtilities.hexToAseColor(bgAbgr32)
-        -- app.command.SwitchColors()
-        -- end
-
         app.brush = brush
         app.refresh()
     end
@@ -581,8 +599,6 @@ dlg:combobox {
     option = defaults.imageDataMode,
     options = imageDataModes,
     hexpand = false,
-    onchange = function()
-    end
 }
 
 dlg:newrow { always = false }
@@ -849,8 +865,8 @@ dlg:button {
                     text = { "Unexpected brush image color mode." }
                 }
                 return
-            end
-        end
+            end -- End image color mode.
+        end     -- End brush type is image.
 
         local lenBrushImage <const> = #brushImageStr
         local lenBrushImageStr <const> = strpack("<I8", lenBrushImage)
@@ -976,11 +992,6 @@ dlg:button {
                 end
             end -- Color bar prefs exists.
         end     -- App prefs exists.
-
-        -- local fgColor <const> = AseUtilities.aseColorCopy(app.fgColor, "UNBOUNDED")
-        -- app.command.SwitchColors()
-        -- local bgColor <const> = AseUtilities.aseColorCopy(app.fgColor, "UNBOUNDED")
-        -- app.command.SwitchColors()
 
         local toolInkStr <const> = strchar(toolInk)
         local toolOpacityStr <const> = strchar(min(max(toolOpacity, 0), 255))
