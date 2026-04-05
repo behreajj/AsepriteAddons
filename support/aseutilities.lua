@@ -2004,7 +2004,7 @@ end
 ---Gets the sprite's background checker width, height and colors from
 ---preferences. Colors are retrieved by reference. The zoom boolean
 ---applies to reference layers and to the old render engine.
----@param sprite Sprite|nil sprite
+---@param sprite? Sprite sprite
 ---@return integer wCheck
 ---@return integer hCheck
 ---@return Color aAse
