@@ -814,7 +814,7 @@ dlg:button {
                             bLab.a, bLab.b,
                             v, t)
                     end
-                end
+                end -- Non zero alpha.
 
                 local cClr <const> = labTosRgb(labnew(cl, ca, cb, tuv))
                 local cRed <const> = floor(min(max(cClr.r, 0.0), 1.0) * 255.0 + 0.5)
@@ -826,15 +826,14 @@ dlg:button {
                 cStrs[j] = strpack(
                     "B B B B",
                     cRed, cGreen, cBlue, cAlpha)
-            end
+            end -- End pixels loop.
 
             local cImage <const> = Image(createSpec(
                 cWidth, cHeight, spriteColorMode, colorSpace, alphaIndex))
             cImage.bytes = tconcat(cStrs)
 
             activeSprite:newCel(compLayer, frIdx, cImage, Point(cx, cy))
-        end
-        -- end)
+        end -- End frames loop.
 
         AseUtilities.hideSource(activeSprite, aLayer, frIdcs, delUnderStr)
         AseUtilities.hideSource(activeSprite, bLayer, frIdcs, delOverStr)
