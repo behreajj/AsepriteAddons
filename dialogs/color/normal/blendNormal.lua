@@ -152,9 +152,11 @@ dlg:button {
         local hSprite <const> = spriteSpec.height
 
         -- Cache global functions used in loop.
+        local acos <const> = math.acos
         local floor <const> = math.floor
         local max <const> = math.max
         local min <const> = math.min
+        local sin <const> = math.sin
         local sqrt <const> = math.sqrt
 
         local strbyte <const> = string.byte
@@ -368,13 +370,6 @@ dlg:button {
                 local t <const> = bOpac01 * (bAlpha / 255.0) -- Over layer
 
                 if t > 0.0 and v > 0.0 then
-                    -- TODO: The strength of the blend isn't properly
-                    -- adjusted according to the alpha. Maybe use the
-                    -- geometric definition of slerp from wikipedia
-                    -- to go from under to over by over opacity?
-                    local u <const> = 1.0 - t
-                    local tuv <const> = t + u * v
-
                     local tx <const> = ar01 * 2.0 - 1.0
                     local ty <const> = ag01 * 2.0 - 1.0
                     local tz <const> = ab01 * 2.0
@@ -395,21 +390,51 @@ dlg:button {
                         nx = dx * magInv3
                         ny = dy * magInv3
                         nz = dz * magInv3
+                    end -- Valid 3D square magnitude.
 
-                        if useZLock and nz < 0.0 then
-                            local sqMag2 <const> = dx * dx + dy * dy
-                            if sqMag2 > 0.0 then
-                                local magInv2 <const> = 1.0 / sqrt(sqMag2)
-                                nx = dx * magInv2
-                                ny = dy * magInv2
-                                nz = 0.0
-                            end -- Valid 2D square magnitude.
-                        end     -- Blue is negative.
-                    end         -- Valid 3D square magnitude.
+                    local u <const> = 1.0 - t
+                    local tuv <const> = t + u * v
 
-                    cRed = min(max(floor(nx * 127.5 + 128.0), 0), 255)
-                    cGreen = min(max(floor(ny * 127.5 + 128.0), 0), 255)
-                    cBlue = min(max(floor(nz * 127.5 + 128.0), 0), 255)
+                    -- Mix result by alpha of over channel.
+                    local cnx, cny, cnz = 0.0, 0.0, 1.0
+                    if t >= 1.0 then
+                        cnx, cny, cnz = nx, ny, nz
+                    else
+                        local odDot <const> = min(max(
+                            anx * nx + any * ny + anz * nz,
+                            -0.999999), 0.999999)
+                        local omega <const> = acos(odDot)
+                        local omSin <const> = sin(omega)
+                        local omSinInv <const> = omSin ~= 0.0 and 1.0 / omSin or 1.0
+                        local oFac <const> = sin(u * omega) * omSinInv
+                        local dFac <const> = sin(t * omega) * omSinInv
+
+                        cnx = oFac * anx + dFac * nx
+                        cny = oFac * any + dFac * ny
+                        cnz = oFac * anz + dFac * nz
+
+                        local cmsq <const> = cnx * cnx + cny * cny + cnz * cnz
+                        if cmsq > 0.0 then
+                            local cmInv <const> = 1.0 / sqrt(cmsq)
+                            cnx = cnx * cmInv
+                            cny = cny * cmInv
+                            cnz = cnz * cmInv
+                        end -- Mix magnitude is valid.
+                    end     -- Over alpha is opaque.
+
+                    if useZLock and cnz < 0.0 then
+                        local sqMag2 <const> = cnx * cnx + cny * cny
+                        if sqMag2 > 0.0 then
+                            local magInv2 <const> = 1.0 / sqrt(sqMag2)
+                            cnx = cnx * magInv2
+                            cny = cny * magInv2
+                            cnz = 0.0
+                        end -- Valid 2D square magnitude.
+                    end     -- Blue is negative.
+
+                    cRed = min(max(floor(cnx * 127.5 + 128.0), 0), 255)
+                    cGreen = min(max(floor(cny * 127.5 + 128.0), 0), 255)
+                    cBlue = min(max(floor(cnz * 127.5 + 128.0), 0), 255)
                     cAlpha = min(max(floor(tuv * 255.0 + 0.5), 0), 255)
                 elseif v > 0.0 then
                     -- Under layer is opaque, over is clear.
