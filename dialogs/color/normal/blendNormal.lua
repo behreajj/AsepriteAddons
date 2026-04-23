@@ -368,6 +368,10 @@ dlg:button {
                 local t <const> = bOpac01 * (bAlpha / 255.0) -- Over layer
 
                 if t > 0.0 and v > 0.0 then
+                    -- TODO: The strength of the blend isn't properly
+                    -- adjusted according to the alpha. Maybe use the
+                    -- geometric definition of slerp from wikipedia
+                    -- to go from under to over by over opacity?
                     local u <const> = 1.0 - t
                     local tuv <const> = t + u * v
 
