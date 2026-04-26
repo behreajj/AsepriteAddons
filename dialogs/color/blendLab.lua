@@ -504,7 +504,7 @@ dlg:button {
         local tilesToImage <const> = AseUtilities.tileMapToImage
         local createSpec <const> = AseUtilities.createSpec
 
-        local clrNew <const> = Rgb.new
+        local rgnew <const> = Rgb.new
         local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
         local labTosRgb <const> = ColorUtilities.srLab2TosRgb
         local labToLch <const> = Lab.toLch
@@ -752,7 +752,7 @@ dlg:button {
                     | aRed
                 local aLab = dict[aInt]
                 if not aLab then
-                    local aClr <const> = clrNew(
+                    local aClr <const> = rgnew(
                         aRed / 255.0,
                         aGreen / 255.0,
                         aBlue / 255.0,
@@ -767,7 +767,7 @@ dlg:button {
                     | bRed
                 local bLab = dict[bInt]
                 if not bLab then
-                    local bClr <const> = clrNew(
+                    local bClr <const> = rgnew(
                         bRed / 255.0,
                         bGreen / 255.0,
                         bBlue / 255.0,
