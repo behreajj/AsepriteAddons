@@ -447,8 +447,8 @@ dlg:button {
             return
         end
 
-        local bLayer <const> = site.layer
-        if not bLayer then
+        local overLayer <const> = site.layer
+        if not overLayer then
             app.alert {
                 title = "Error",
                 text = "There is no active layer."
@@ -456,7 +456,7 @@ dlg:button {
             return
         end
 
-        local overIndex <const> = bLayer.stackIndex
+        local overIndex <const> = overLayer.stackIndex
         if overIndex < 2 then
             app.alert {
                 title = "Error",
@@ -467,11 +467,11 @@ dlg:button {
 
         -- A parent may be a sprite or a group layer.
         -- Over and under layer should belong to same group.
-        local parent <const> = bLayer.parent
+        local parent <const> = overLayer.parent
         local underIndex <const> = overIndex - 1
-        local aLayer <const> = parent.layers[underIndex]
+        local underLayer <const> = parent.layers[underIndex]
 
-        if bLayer.isReference or aLayer.isReference then
+        if overLayer.isReference or underLayer.isReference then
             app.alert {
                 title = "Error",
                 text = "Reference layers are not supported."
@@ -479,7 +479,7 @@ dlg:button {
             return
         end
 
-        if bLayer.isGroup or aLayer.isGroup then
+        if overLayer.isGroup or underLayer.isGroup then
             app.alert {
                 title = "Error",
                 text = "Group layers are not supported."
@@ -591,23 +591,23 @@ dlg:button {
             end
         end
 
-        local overIsTile <const> = bLayer.isTilemap
+        local overIsTile <const> = overLayer.isTilemap
         local tileSetOver = nil
-        local underIsTile <const> = aLayer.isTilemap
+        local underIsTile <const> = underLayer.isTilemap
         local tileSetUnder = nil
         if overIsTile then
-            tileSetOver = bLayer.tileset
+            tileSetOver = overLayer.tileset
         end
         if underIsTile then
-            tileSetUnder = aLayer.tileset
+            tileSetUnder = underLayer.tileset
         end
 
         local frIdcs <const> = Utilities.flatArr2(
             AseUtilities.getFrames(activeSprite, target))
 
         -- Unpack layer opacity.
-        local overLyrOpacity <const> = bLayer.opacity or 255
-        local underLyrOpacity <const> = aLayer.opacity or 255
+        local overLyrOpacity <const> = overLayer.opacity or 255
+        local underLyrOpacity <const> = underLayer.opacity or 255
         local bLayerOpac01 <const> = overLyrOpacity / 255.0
         local aLayerOpac01 <const> = underLyrOpacity / 255.0
 
@@ -618,12 +618,12 @@ dlg:button {
             if useLch then
                 compLayer.name = string.format(
                     "Comp %s %s L %s C %s H %s T %s",
-                    bLayer.name, aLayer.name,
+                    overLayer.name, underLayer.name,
                     lPreset, cPreset, hPreset, alphaComp)
             else
                 compLayer.name = string.format(
                     "Comp %s %s L %s AB %s T %s",
-                    bLayer.name, aLayer.name,
+                    overLayer.name, underLayer.name,
                     lPreset, abPreset, alphaComp)
             end
             -- Exception: this always sets to parent.
@@ -647,7 +647,7 @@ dlg:button {
             local bImage = nil
             local bOpac01 = 1.0
 
-            local bCel <const> = bLayer:cel(frIdx)
+            local bCel <const> = overLayer:cel(frIdx)
             if bCel then
                 bImage = bCel.image
                 if overIsTile then
@@ -675,7 +675,7 @@ dlg:button {
             local aImage = nil
             local aOpac01 = 1.0
 
-            local aCel <const> = aLayer:cel(frIdx)
+            local aCel <const> = underLayer:cel(frIdx)
             if aCel then
                 aImage = aCel.image
                 if underIsTile then
@@ -835,8 +835,8 @@ dlg:button {
             activeSprite:newCel(compLayer, frIdx, cImage, Point(cx, cy))
         end -- End frames loop.
 
-        AseUtilities.hideSource(activeSprite, aLayer, frIdcs, delUnderStr)
-        AseUtilities.hideSource(activeSprite, bLayer, frIdcs, delOverStr)
+        AseUtilities.hideSource(activeSprite, underLayer, frIdcs, delUnderStr)
+        AseUtilities.hideSource(activeSprite, overLayer, frIdcs, delOverStr)
         app.layer = compLayer
         app.refresh()
 
