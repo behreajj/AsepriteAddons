@@ -5,7 +5,6 @@ local modes <const> = { "LAB", "LCH" }
 
 local defaults <const> = {
     target = "ACTIVE",
-    varyByFrame = true,
     mode = "LCH",
     lScale = 20.0,
     aScale = 20.0,
@@ -16,41 +15,6 @@ local defaults <const> = {
     updateSeedOnApply = false,
 }
 
----See Bob Jenkins, lookup3
----http://burtleburtle.net/bob/c/lookup3.c
----@param a integer
----@param b integer
----@param c integer
----@return integer
-local function hash(a, b, c)
-    c = c ~ b
-    c = c - (b << 0xe | b >> 0x20 - 0xe)
-    a = a ~ c
-    a = a - (c << 0xb | c >> 0x20 - 0xb)
-    b = b ~ a
-    b = b - (a << 0x19 | a >> 0x20 - 0x19)
-    c = c ~ b
-    c = c - (b << 0x10 | b >> 0x20 - 0x10)
-    a = a ~ c
-    a = a - (c << 0x4 | c >> 0x20 - 0x4)
-    b = b ~ a
-    b = b - (a << 0xe | a >> 0x20 - 0xe)
-    c = c ~ b
-    c = c - (b << 0x18 | b >> 0x20 - 0x18)
-    return c;
-end
-
----@param x integer
----@param y integer
----@param z integer
----@param seed integer
----@return number
-local function hash3(x, y, z, seed)
-    local xyz <const> = ((84696351 ~ x) * 16777619 ~ y) * 16777619 ~ z
-    return string.unpack("f", string.pack("i4", hash(
-        xyz, seed, 0) & 0x007fffff | 0x3f800000)) - 1.0
-end
-
 local dlg <const> = Dialog { title = "Lch Noise" }
 
 dlg:combobox {
@@ -59,16 +23,6 @@ dlg:combobox {
     focus = false,
     option = defaults.target,
     options = targets,
-    hexpand = false,
-}
-
-dlg:newrow { always = false }
-
-dlg:check {
-    id = "varyByFrame",
-    label = "Vary:",
-    text = "Frame",
-    selected = defaults.varyByFrame,
     hexpand = false,
 }
 
@@ -213,7 +167,6 @@ dlg:button {
         local args <const> = dlg.data
         local target <const> = args.target
             or defaults.target --[[@as string]]
-        local varyByFrame <const> = args.varyByFrame --[[@as boolean ]]
         local mode <const> = args.mode
             or defaults.mode --[[@as string]]
         local seed <const> = args.seed
@@ -295,6 +248,8 @@ dlg:button {
         local toHex <const> = Rgb.toHex
         local labTosRgb <const> = ColorUtilities.srLab2TosRgb
         local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
+        local max <const> = math.max
+        local rng <const> = math.random
         local strpack <const> = string.pack
         local strsub <const> = string.sub
         local strunpack <const> = string.unpack
@@ -319,14 +274,8 @@ dlg:button {
             while i < lenFrIdcs do
                 i = i + 1
                 local frIdx <const> = frIdcs[i]
-                local z <const> = varyByFrame and frIdx or 0
-
                 local srcCel <const> = srcLayer:cel(frIdx)
                 if srcCel then
-                    local srcPos <const> = srcCel.position
-                    local xCel <const> = srcPos.x
-                    local yCel <const> = srcPos.y
-
                     local srcImg = srcCel.image
                     if isTileMap then
                         srcImg = tilesToImage(srcImg, tileSet, ColorMode.RGB)
@@ -343,11 +292,6 @@ dlg:button {
 
                     local j = 0
                     while j < area do
-                        local xLocal <const> = j % srcWidth
-                        local yLocal <const> = j // srcWidth
-                        local x <const> = xCel + xLocal
-                        local y <const> = yCel + yLocal
-
                         local j4 <const> = j * 4
                         local srcAbgr32 <const> = strunpack("<I4", strsub(
                             srcBytes, 1 + j4, 4 + j4))
@@ -363,12 +307,12 @@ dlg:button {
                         if tSrc > 0.0 then
                             local trgLab = srcLab
 
-                            local lRng <const> = hash3(x, y, z, seed) * lScale2 - lScale
+                            local lRng <const> = rng() * lScale2 - lScale
                             local lTrg <const> = srcLab.l + lRng
 
                             if useLch then
-                                local cRng <const> = hash3(x, y, z, seed) * cScale2 - cScale
-                                local hRng <const> = hash3(x, y, z, seed) * hScale2 - hScale01
+                                local cRng <const> = rng() * cScale2 - cScale
+                                local hRng <const> = rng() * hScale2 - hScale01
 
                                 local srcLch <const> = labToLch(srcLab)
                                 local cTrg <const> = srcLch.c + cRng
@@ -376,8 +320,8 @@ dlg:button {
 
                                 trgLab = lchToLab(lTrg, cTrg, hTrg, tSrc)
                             else
-                                local aRng <const> = hash3(x, y, z, seed) * aScale2 - aScale
-                                local bRng <const> = hash3(x, y, z, seed) * bScale2 - bScale
+                                local aRng <const> = rng() * aScale2 - aScale
+                                local bRng <const> = rng() * bScale2 - bScale
 
                                 local aTrg <const> = srcLab.a + aRng
                                 local bTrg <const> = srcLab.b + bRng
