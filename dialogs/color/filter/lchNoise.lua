@@ -248,7 +248,6 @@ dlg:button {
         local toHex <const> = Rgb.toHex
         local labTosRgb <const> = ColorUtilities.srLab2TosRgb
         local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
-        local max <const> = math.max
         local rng <const> = math.random
         local strpack <const> = string.pack
         local strsub <const> = string.sub
