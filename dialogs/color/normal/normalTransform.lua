@@ -470,7 +470,7 @@ dlg:button {
         local cels <const> = AseUtilities.filterCels(
             activeSprite, activeLayer, trgFrames, majorTarget,
             false, false, false, false)
-        local lenCels = #cels
+        local lenCels <const> = #cels
 
         local resize <const> = NormalUtilities.resizeImageNearest
 
