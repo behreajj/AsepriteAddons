@@ -117,8 +117,6 @@ function ClrGradient:reverse()
     local i, n = 1, lenKeys
     while i < n do
         t[i], t[n] = t[n], t[i]
-        -- t[i].step = 1.0 - t[i].step
-        -- t[n].step = 1.0 - t[n].step
         i, n = i + 1, n - 1
     end
 
