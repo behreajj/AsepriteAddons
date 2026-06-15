@@ -2303,6 +2303,9 @@ function AseUtilities.getSelection(sprite)
     -- pressed, then a crash will result. MoveMask doesn't work because move
     -- quantity has a minimum of 1. For this to work, it cannot be wrapped in
     -- a transaction.
+
+    -- TODO: After https://github.com/aseprite/aseprite/pull/5876 is merged,
+    -- this could be revisited to see if two commands can be replaced with one.
     app.command.InvertMask()
     app.command.InvertMask()
 
