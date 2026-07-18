@@ -97,7 +97,7 @@ while currentLayer.__name ~= "doc::Sprite" do
             local kin <const> = {}
             AseUtilities.appendGroups(neighbor, kin, true, true)
             AseUtilities.appendLeaves(neighbor, kin, true, true, true, true)
-            local lenKin = #kin
+            local lenKin <const> = #kin
 
             local k = 0
             while k < lenKin do
