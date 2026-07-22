@@ -2300,14 +2300,15 @@ end
 ---@return boolean
 function AseUtilities.getSelection(sprite)
     -- If a selection is moved, but the drag and drop pixels checkmark is not
-    -- pressed, then a crash will result. MoveMask doesn't work because move
-    -- quantity has a minimum of 1. For this to work, it cannot be wrapped in
-    -- a transaction.
+    -- pressed, then a crash will result.
+    --
+    -- MoveMask is not viable until release 1.3.18. The api version was not
+    -- updated in this release, so it can't be used to switch between the old
+    -- and new behaviors. See https://github.com/aseprite/aseprite/issues/5843
 
-    -- TODO: After https://github.com/aseprite/aseprite/pull/5876 is merged,
-    -- this could be revisited to see if two commands can be replaced with one.
-    app.command.InvertMask()
-    app.command.InvertMask()
+    app.command.MoveMask { quantity = 0 }
+    -- app.command.InvertMask()
+    -- app.command.InvertMask()
 
     local srcSel <const> = sprite.selection
     if (not srcSel) or srcSel.isEmpty then
