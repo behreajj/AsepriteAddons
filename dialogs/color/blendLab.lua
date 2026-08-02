@@ -814,16 +814,15 @@ dlg:button {
                     end
                 end -- Non zero alpha.
 
-                local cClr <const> = labTosRgb(labnew(cl, ca, cb, tuv))
-                local cRed <const> = floor(min(max(cClr.r, 0.0), 1.0) * 255.0 + 0.5)
-                local cGreen <const> = floor(min(max(cClr.g, 0.0), 1.0) * 255.0 + 0.5)
-                local cBlue <const> = floor(min(max(cClr.b, 0.0), 1.0) * 255.0 + 0.5)
-                local cAlpha <const> = floor(min(max(cClr.a, 0.0), 1.0) * 255.0 + 0.5)
-
                 j = j + 1
+
+                local cRgb <const> = labTosRgb(labnew(cl, ca, cb, tuv))
                 cStrs[j] = strpack(
                     "B B B B",
-                    cRed, cGreen, cBlue, cAlpha)
+                    floor(min(max(cRgb.r, 0.0), 1.0) * 255.0 + 0.5),
+                    floor(min(max(cRgb.g, 0.0), 1.0) * 255.0 + 0.5),
+                    floor(min(max(cRgb.b, 0.0), 1.0) * 255.0 + 0.5),
+                    floor(min(max(cRgb.a, 0.0), 1.0) * 255.0 + 0.5))
             end -- End pixels loop.
 
             local cImage <const> = Image(createSpec(
