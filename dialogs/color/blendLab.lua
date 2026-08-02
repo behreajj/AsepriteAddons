@@ -752,12 +752,11 @@ dlg:button {
                     | aRed
                 local aLab = dict[aInt]
                 if not aLab then
-                    local aClr <const> = rgbnew(
+                    aLab = sRgbToLab(rgbnew(
                         aRed / 255.0,
                         aGreen / 255.0,
                         aBlue / 255.0,
-                        1.0)
-                    aLab = sRgbToLab(aClr)
+                        1.0))
                     dict[aInt] = aLab
                 end
 
@@ -767,12 +766,11 @@ dlg:button {
                     | bRed
                 local bLab = dict[bInt]
                 if not bLab then
-                    local bClr <const> = rgbnew(
+                    bLab = sRgbToLab(rgbnew(
                         bRed / 255.0,
                         bGreen / 255.0,
                         bBlue / 255.0,
-                        1.0)
-                    bLab = sRgbToLab(bClr)
+                        1.0))
                     dict[bInt] = bLab
                 end
 
