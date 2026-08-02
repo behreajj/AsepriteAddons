@@ -743,8 +743,8 @@ dlg:button {
                     bRed, bGreen, bBlue, bAlpha = strbyte(bpx, 1 + bIdx, 4 + bIdx)
                 end
 
-                local t = bOpac01 * (bAlpha / 255.0)
-                local v = aOpac01 * (aAlpha / 255.0)
+                local v <const> = aOpac01 * (aAlpha / 255.0)
+                local t <const> = bOpac01 * (bAlpha / 255.0)
 
                 local aInt <const> = aAlpha << 0x18
                     | aBlue << 0x10
@@ -816,6 +816,8 @@ dlg:button {
 
                 j = j + 1
 
+                -- TODO: Would it be more efficient to use one string pack
+                -- or four string bytes?
                 local cRgb <const> = labTosRgb(labnew(cl, ca, cb, tuv))
                 cStrs[j] = strpack(
                     "B B B B",
