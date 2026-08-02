@@ -318,7 +318,10 @@ dlg:button {
 
         local trgSel <const> = Selection(Rectangle(
             0, 0, w, spec.height))
-        updateSel(sprite, trgSel, selMode)
+
+        app.transaction("Select Left", function()
+            updateSel(sprite, trgSel, selMode)
+        end)
         app.refresh()
     end
 }
@@ -350,7 +353,10 @@ dlg:button {
 
         local trgSel <const> = Selection(Rectangle(
             x, 0, w, spec.height))
-        updateSel(sprite, trgSel, selMode)
+
+        app.transaction("Select Right", function()
+            updateSel(sprite, trgSel, selMode)
+        end)
         app.refresh()
     end
 }
@@ -375,7 +381,10 @@ dlg:button {
         local x <const> = (w == short) and 0 or (w - short) // 2
         local y <const> = (h == short) and 0 or (h - short) // 2
         local trgSel <const> = Selection(Rectangle(x, y, short, short))
-        updateSel(sprite, trgSel, selMode)
+
+        app.transaction("Select Square", function()
+            updateSel(sprite, trgSel, selMode)
+        end)
         app.refresh()
     end
 }
@@ -407,7 +416,10 @@ dlg:button {
 
         local trgSel <const> = Selection(Rectangle(
             0, 0, spec.width, h))
-        updateSel(sprite, trgSel, selMode)
+
+        app.transaction("Select Top", function()
+            updateSel(sprite, trgSel, selMode)
+        end)
         app.refresh()
     end
 }
@@ -439,7 +451,10 @@ dlg:button {
 
         local trgSel <const> = Selection(Rectangle(
             0, y, spec.width, h))
-        updateSel(sprite, trgSel, selMode)
+
+        app.transaction("Select Bottom", function()
+            updateSel(sprite, trgSel, selMode)
+        end)
         app.refresh()
     end
 }
@@ -466,7 +481,7 @@ dlg:button {
         local selMode <const> = args.selMode
             or defaults.selMode --[[@as string]]
 
-        app.transaction("Select Cel", function()
+        app.transaction("Select Frame", function()
             updateSel(activeSprite, trgSel, selMode)
         end)
         app.refresh()
@@ -550,7 +565,9 @@ dlg:button {
             i = i + 1
         end
 
-        updateSel(sprite, trgSel, selMode)
+        app.transaction("Select Circle", function()
+            updateSel(sprite, trgSel, selMode)
+        end)
         app.refresh()
     end
 }
@@ -643,7 +660,7 @@ dlg:button {
                     xMouse - diam // 2,
                     yMouse - diam // 2,
                     diam, diam))
-            end
+            end -- End rotation needed.
         else
             local amount <const> = args.amount
                 or defaults.amount --[[@as integer]]
@@ -672,11 +689,11 @@ dlg:button {
                 end
                 i = i + 1
             end
-        end
+        end -- End brush type block.
 
         trgSel:intersect(activeSprite.bounds)
 
-        app.transaction("Select Cel", function()
+        app.transaction("Select Cursor", function()
             updateSel(activeSprite, trgSel, selMode)
         end)
         app.refresh()
