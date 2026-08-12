@@ -285,7 +285,6 @@ dlg:canvas {
         -- Lch to Rgb conversion must be validated, not internal, because
         -- negative chroma will cause complementary hue color to appear
         -- due to negative scalar when converting to Cartesian coordinates.
-        local h <const> = active.hAdj - 0.5
         local lchTosRgb <const> = ColorUtilities.srLchTosRgb
         local toHex <const> = Rgb.toHex
         local strpack <const> = string.pack
@@ -295,6 +294,7 @@ dlg:canvas {
         local barHeight <const> = ctx.height
         active.cBarWidth = barWidth
 
+        local h <const> = active.hAdj - 0.5
         local xtoc <const> = barWidth > 1 and cub / (barWidth - 1.0) or 0.0
         local cAdj <const> = active.cAdj
 
