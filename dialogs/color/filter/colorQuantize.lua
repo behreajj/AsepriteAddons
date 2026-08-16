@@ -7,6 +7,8 @@ local defaults <const> = {
     -- TODO: Separate color space setting for LCH, LAB?
     -- As with color curves, could get the local minimum
     -- and maximum for A, B, chroma and other unbounded channels.
+    -- Would have to do search min and max across all
+    -- chosen frames.
     target = "ACTIVE",
     genPalette = false
 }
