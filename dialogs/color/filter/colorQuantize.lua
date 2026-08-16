@@ -4,9 +4,9 @@ dofile("../../../support/quantizeutilities.lua")
 local targets <const> = { "ACTIVE", "ALL", "PALETTE", "RANGE" }
 
 local defaults <const> = {
-    -- TODO: Separate color space setting for LAB?
-    -- Maybe convert lab to 16bit integer, then quantize
-    -- then convert back?
+    -- TODO: Separate color space setting for LCH, LAB?
+    -- As with color curves, could get the local minimum
+    -- and maximum for A, B, chroma and other unbounded channels.
     target = "ACTIVE",
     genPalette = false
 }
