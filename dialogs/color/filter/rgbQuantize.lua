@@ -301,7 +301,7 @@ dlg:button {
                 trgImg.bytes = tconcat(trgBytesArr)
 
                 transact(
-                    strfmt("Color Quantize %d", frIdx + frameUiOffset),
+                    strfmt("RGB Quantize %d", frIdx + frameUiOffset),
                     function()
                         local trgCel = activeSprite:newCel(
                             trgLayer, frIdx,
