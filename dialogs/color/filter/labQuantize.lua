@@ -20,13 +20,14 @@ local defaults <const> = {
     bLevels = 16, -- signed
 
     lLevelsMin = 2,
-    lLevelsMax = 256,
     cLevelsMin = 2,
-    cLevelsMax = 256,
     hLevelsMin = 2,
-    hLevelsMax = 256,
     abLevelsMin = 2,
-    abLevelsMax = 256,
+
+    lLevelsMax = 128,
+    cLevelsMax = 128,
+    hLevelsMax = 128,
+    abLevelsMax = 128,
 
     printElapsed = false,
 }
