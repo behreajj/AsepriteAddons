@@ -55,12 +55,6 @@ dlg:combobox {
         local args <const> = dlg.data
 
         local mode <const> = args.mode --[[@as string]]
-        local lEnabled <const> = args.lEnabled --[[@as boolean]]
-        local cEnabled <const> = args.cEnabled --[[@as boolean]]
-        local hEnabled <const> = args.hEnabled --[[@as boolean]]
-        local aEnabled <const> = args.aEnabled --[[@as boolean]]
-        local bEnabled <const> = args.bEnabled --[[@as boolean]]
-
         local isLch <const> = mode == "LCH"
         local isLab <const> = mode == "LAB"
 
@@ -69,11 +63,17 @@ dlg:combobox {
         dlg:modify { id = "aEnabled", visible = isLab }
         dlg:modify { id = "bEnabled", visible = isLab }
 
-        dlg:modify { id = "lLevels", visible = lEnabled }
-        dlg:modify { id = "cLevels", visible = isLch and cEnabled }
-        dlg:modify { id = "hLevels", visible = isLch and hEnabled }
-        dlg:modify { id = "aLevels", visible = isLab and aEnabled }
-        dlg:modify { id = "bLevels", visible = isLab and bEnabled }
+        dlg:modify { id = "lEnabled", selected = true }
+        dlg:modify { id = "cEnabled", selected = isLch }
+        dlg:modify { id = "hEnabled", selected = isLch }
+        dlg:modify { id = "aEnabled", selected = isLab }
+        dlg:modify { id = "bEnabled", selected = isLab }
+
+        dlg:modify { id = "lLevels", visible = true }
+        dlg:modify { id = "cLevels", visible = isLch }
+        dlg:modify { id = "hLevels", visible = isLch }
+        dlg:modify { id = "aLevels", visible = isLab }
+        dlg:modify { id = "bLevels", visible = isLab }
     end
 }
 
@@ -421,15 +421,17 @@ dlg:button {
         end             -- End frames loop.
 
         local aRange <const> = aMax - aMin
-        local aViable <const> = aRange > 0.5
+        local aViable <const> = math.abs(aRange) > 0.0
         local aDenom <const> = aViable and 1.0 / aRange or 0.0
+        -- print(strfmt("aMin: %.3f, aMax: %.3f, aRange: %.3f", aMin, aMax, aRange))
 
         local bRange <const> = bMax - bMin
-        local bViable <const> = bRange > 0.5
+        local bViable <const> = math.abs(bRange) > 0.0
         local bDenom <const> = bViable and 1.0 / bRange or 0.0
+        -- print(strfmt("bMin: %.3f, bMax: %.3f, bRange: %.3f", bMin, bMax, bRange))
 
         local cRange <const> = cMax - cMin
-        local cViable <const> = cRange > 0.5
+        local cViable <const> = cRange > 0.0
         local cDenom <const> = cViable and 1.0 / cRange or 0.0
 
         local trgLayer <const> = activeSprite:newLayer()
@@ -439,20 +441,23 @@ dlg:button {
                 srcLayerName = srcLayer.name
             end
 
-            -- TODO: This is no longer clear for LAB mode, where some channels
-            -- are enabled vs. disabled.
+            local baseName <const> = strfmt("%s Quantized", srcLayerName)
             if mode == "LCH" then
-                trgLayer.name = string.format(
-                    "%s Quantized L%02d C %02d H %02d",
-                    srcLayerName, lLevels, cLevels, hLevels)
+                local name = baseName
+                if lEnabled then name = name .. strfmt(" L%02d", lLevels) end
+                if cEnabled then name = name .. strfmt(" C%02d", cLevels) end
+                if hEnabled then name = name .. strfmt(" H%02d", hLevels) end
+                trgLayer.name = name
             elseif mode == "LAB" then
-                trgLayer.name = string.format(
-                    "%s Quantized L%02d A%02d B%02d",
-                    srcLayerName, lLevels, aLevels, bLevels)
+                local name = baseName
+                if lEnabled then name = name .. strfmt(" L%02d", lLevels) end
+                if aEnabled then name = name .. strfmt(" A%02d", aLevels) end
+                if bEnabled then name = name .. strfmt(" B%02d", bLevels) end
+                trgLayer.name = name
             else
-                trgLayer.name = string.format(
-                    "%s Quantized", srcLayerName)
+                trgLayer.name = baseName
             end
+
             trgLayer.parent = AseUtilities.getTopVisibleParent(srcLayer)
             trgLayer.opacity = srcLayer.opacity or 255
             trgLayer.blendMode = srcLayer.blendMode
