@@ -330,6 +330,25 @@ dlg:button {
             end
         end
 
+        local useLchQuant <const> = mode == "LCH"
+        if useLchQuant and (not lEnabled)
+            and (not cEnabled)
+            and (not hEnabled) then
+            app.alert {
+                title = "Error",
+                text = "At least one color channel must be quantized."
+            }
+            return
+        elseif (not lEnabled)
+            and (not aEnabled)
+            and (not bEnabled) then
+            app.alert {
+                title = "Error",
+                text = "At least one color channel must be quantized."
+            }
+            return
+        end
+
         -- Check for tile map support.
         local isTileMap <const> = srcLayer.isTilemap
         local tileSet = nil
@@ -356,9 +375,6 @@ dlg:button {
         local quantizeSigned <const> = Utilities.quantizeSignedInternal
         local quantizeUnsigned <const> = Utilities.quantizeUnsignedInternal
 
-        -- TODO: Handle case where neither L, C, nor H are enabled
-        -- and where neither L, A, nor B are enabled with early returns.
-        local useLchQuant <const> = mode == "LCH"
         local lDelta <const> = lLevels ~= 1 and 1.0 / (lLevels - 1.0) or 0.0
         local cDelta <const> = cLevels ~= 1 and 1.0 / (cLevels - 1.0) or 0.0
         local hDelta <const> = hLevels ~= 0 and 1.0 / hLevels or 0.0
