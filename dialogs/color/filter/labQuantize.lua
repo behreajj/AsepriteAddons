@@ -392,6 +392,10 @@ dlg:button {
         local bMax = -2147483648
         local cMax = -2147483648
 
+        -- A minor issue is that this approach differs from other filters,
+        -- like color curves, that need to find the minimum and maximum
+        -- in order to normalize values. Color curves, for example, finds
+        -- the boundaries only for the current image considered.
         local h = 0
         while h < lenFrIdcs do
             h = h + 1
@@ -412,30 +416,32 @@ dlg:button {
                 local i = 0
                 while i < area do
                     local i4 <const> = i * 4
+                    i = i + 1
                     local srcAbgr32 <const> = strunpack("<I4", strsub(
                         srcBytes, 1 + i4, 4 + i4))
                     local srcLab = abgr32ToLab[srcAbgr32]
                     if not srcLab then
                         srcLab = sRgbToLab(fromHex(srcAbgr32))
                         abgr32ToLab[srcAbgr32] = srcLab
-                    end
 
-                    if srcLab.alpha > 0.0 then
-                        local a <const> = srcLab.a
-                        local b <const> = srcLab.b
-                        local c <const> = sqrt(a * a + b * b)
+                        -- If the source lab has already been visited, then
+                        -- it shouldn't be necessary to do this again.
+                        if srcLab.alpha > 0.0 then
+                            local a <const> = srcLab.a
+                            local b <const> = srcLab.b
+                            local c <const> = sqrt(a * a + b * b)
 
-                        if a < aMin then aMin = a end
-                        if a > aMax then aMax = a end
-                        if b < bMin then bMin = b end
-                        if b > bMax then bMax = b end
-                        if c < cMin then cMin = c end
-                        if c > cMax then cMax = c end
-                    end -- End non-zero source alpha.
-                    i = i + 1
-                end     -- End pixels loop.
-            end         -- End source cel exists.
-        end             -- End frames loop.
+                            if a < aMin then aMin = a end
+                            if a > aMax then aMax = a end
+                            if b < bMin then bMin = b end
+                            if b > bMax then bMax = b end
+                            if c < cMin then cMin = c end
+                            if c > cMax then cMax = c end
+                        end -- End non-zero source alpha.
+                    end     -- End source lab has not been visited.
+                end         -- End pixels loop.
+            end             -- End source cel exists.
+        end                 -- End frames loop.
 
         local aRange <const> = aMax - aMin
         local aViable <const> = math.abs(aRange) > 0.0
