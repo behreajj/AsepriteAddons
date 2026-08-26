@@ -331,6 +331,8 @@ dlg:button {
         end
 
         local useLchQuant <const> = mode == "LCH"
+            and (cEnabled or hEnabled)
+
         if useLchQuant and (not lEnabled)
             and (not cEnabled)
             and (not hEnabled) then
@@ -392,7 +394,7 @@ dlg:button {
         local bMax = -2147483648
         local cMax = -2147483648
 
-        -- A minor issue is that this approach differs from other filters,
+        -- TODO: this approach differs from other filters,
         -- like color curves, that need to find the minimum and maximum
         -- in order to normalize values. Color curves, for example, finds
         -- the boundaries only for the current image considered.
