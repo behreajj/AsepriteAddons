@@ -13,11 +13,11 @@ local defaults <const> = {
     aEnabled = true,
     bEnabled = true,
 
-    lLevels = 16, -- unsigned
-    cLevels = 16, -- unsigned
-    hLevels = 16, -- signed
-    aLevels = 16, -- signed
-    bLevels = 16, -- signed
+    lLevels = 8, -- unsigned
+    cLevels = 8, -- unsigned
+    hLevels = 8, -- signed
+    aLevels = 8, -- signed
+    bLevels = 8, -- signed
 
     lLevelsMin = 2,
     cLevelsMin = 2,
