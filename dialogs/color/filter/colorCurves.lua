@@ -376,15 +376,15 @@ dlg:button {
         local strpack <const> = string.pack
         local strsub <const> = string.sub
         local strunpack <const> = string.unpack
+        local tconcat <const> = table.concat
+        local transact <const> = app.transaction
+        local labnew <const> = Lab.new
         local toHex <const> = Rgb.toHex
         local fromHex <const> = Rgb.fromHexAbgr32
-        local labTosRgb <const> = ColorUtilities.srLab2TosRgb
-        local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
-        local labnew <const> = Lab.new
-        local tconcat <const> = table.concat
         local bisectRight <const> = Utilities.bisectRight
         local tilesToImage <const> = AseUtilities.tileMapToImage
-        local transact <const> = app.transaction
+        local labTosRgb <const> = ColorUtilities.srLab2TosRgb
+        local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
 
         local k = 0
         while k < lenFrIdcs do

@@ -366,16 +366,16 @@ dlg:button {
         local strunpack <const> = string.unpack
         local tconcat <const> = table.concat
         local transact <const> = app.transaction
-        local tilesToImage <const> = AseUtilities.tileMapToImage
         local labToLch <const> = Lab.toLch
         local lchToLab <const> = Lab.fromLch
         local labnew <const> = Lab.new
         local fromHex <const> = Rgb.fromHexAbgr32
         local toHex <const> = Rgb.toHex
-        local labTosRgb <const> = ColorUtilities.srLab2TosRgb
-        local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
         local quantizeSigned <const> = Utilities.quantizeSignedInternal
         local quantizeUnsigned <const> = Utilities.quantizeUnsignedInternal
+        local tilesToImage <const> = AseUtilities.tileMapToImage
+        local labTosRgb <const> = ColorUtilities.srLab2TosRgb
+        local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
 
         local lDelta <const> = lLevels ~= 1 and 1.0 / (lLevels - 1.0) or 0.0
         local cDelta <const> = cLevels ~= 1 and 1.0 / (cLevels - 1.0) or 0.0
