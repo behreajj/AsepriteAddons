@@ -15,19 +15,19 @@ setmetatable(Lab, {
 
 ---The maximum value on the green-magenta axis in SR LAB 2
 ---for a color converted from standard RGB.
-Lab.SR_A_MAX = 104.49946
+Lab.SR_A_MAX = 104.49946815095
 
 ---The minimum value on the green-magenta axis in SR LAB 2
 ---for a color converted from standard RGB.
-Lab.SR_A_MIN = -82.955986
+Lab.SR_A_MIN = -82.955968989256
 
 ---The maximum value on the blue-yellow axis in SR LAB 2
 ---for a color converted from standard RGB.
-Lab.SR_B_MAX = 95.18662
+Lab.SR_B_MAX = 95.186622629221
 
 ---The minimum value on the blue-yellow axis in SR LAB 2
 ---for a color converted from standard RGB.
-Lab.SR_B_MIN = -110.8078
+Lab.SR_B_MIN = -110.80780195452
 
 ---Arbitrary hue assigned to lighter grays in SR LCH
 ---conversion functions.
@@ -39,7 +39,7 @@ Lab.SR_HUE_SHADOW = 0.80922841685655
 
 ---Maximum chroma of a color in SR LCH that is in gamut
 ---in standard RGB.
-Lab.SR_MAX_CHROMA = 119.07602046756
+Lab.SR_MAX_CHROMA = 119.43130317355
 
 ---Constructs a new color from lightness, a, b and alpha channels.
 ---The expected range for lightness is [0.0, 100.0].
