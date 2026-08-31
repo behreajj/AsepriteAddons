@@ -242,6 +242,8 @@ dlg:button {
 
             -- YY-CHR generated pal files have no header.
             -- https://github.com/aseprite/aseprite/issues/1206
+            -- The CHR comes from the image data portion of an NES ROM.
+            -- https://www.emulationonline.com/systems/nes/chr-graphics/#chr-data
             local magicWordRiff <const> = strunpack("<I4",
                 strsub(fileData, 1, 4))
             local magicCheckRiff <const> = strunpack("<I4", "RIFF")
