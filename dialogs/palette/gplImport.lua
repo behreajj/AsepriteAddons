@@ -306,8 +306,8 @@ dlg:button {
                     colors[lenColors] = hex
                     j = j + 1
                 end
-            end
-        end
+            end -- End valid riff header.
+        end     -- End extension is pal.
 
         if not isValidRiff then
             local asciiFile <const>, asciiErr <const> = io.open(filepath, "r")
