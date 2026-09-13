@@ -2157,11 +2157,11 @@ function AseUtilities.getFrames(sprite, target, batch, mnStr, tags)
     end
 end
 
----Gets a sprite's groups as a flat array. Whether layers are appended depends
----on the arguments provided.
+---Gets a sprite's groups as a flat array. Whether groups are appended
+---depends on the arguments provided.
 ---@param sprite Sprite sprite
----@param includeLocked? boolean include locked layers
----@param includeHidden? boolean include hidden layers
+---@param includeLocked? boolean include locked groups
+---@param includeHidden? boolean include hidden groups
 ---@return Layer[]
 ---@nodiscard
 function AseUtilities.getGroups(sprite, includeLocked, includeHidden)
