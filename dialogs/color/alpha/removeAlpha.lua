@@ -23,6 +23,65 @@ local defaults <const> = {
     usePremul = true,
 }
 
+---@param sprite Sprite active sprite
+---@param layer Layer|nil active layer
+---@param target string target preset
+---@param includeLocked? boolean include locked layers
+---@param includeHidden? boolean include hidden layers
+---@return Layer[]
+---@nodiscard
+local function filterGroups(
+    sprite, layer, target,
+    includeLocked, includeHidden)
+    if target == "ALL" then
+        return AseUtilities.getGroups(sprite, includeLocked, includeHidden)
+    elseif target == "RANGE" then
+        ---@type Layer[]
+        local trgLayers = {}
+
+        local tlHidden <const> = not app.preferences.general.visible_timeline --[[@as boolean]]
+        if tlHidden then
+            app.command.Timeline { open = true }
+        end
+
+        local range <const> = app.range
+        if range.sprite == sprite then
+            if range.type == RangeType.FRAMES then
+                trgLayers = AseUtilities.getGroups(sprite,
+                    includeLocked, includeHidden)
+            else
+                local lenTrgLayers = 0
+                local rangeLayers <const> = range.layers
+                local lenRangeLayers <const> = #rangeLayers
+                local i = 0
+                while i < lenRangeLayers do
+                    i = i + 1
+                    local rangeLayer <const> = rangeLayers[i]
+                    if rangeLayer.isGroup
+                        and (includeHidden or rangeLayer.isVisible)
+                        and (includeLocked or rangeLayer.isEditable) then
+                        lenTrgLayers = lenTrgLayers + 1
+                        trgLayers[lenTrgLayers] = rangeLayer
+                    end -- Criteria check.
+                end     -- Range layers loop.
+            end         -- Range type check.
+        end             -- Range sprite matches active.
+
+        if tlHidden then
+            app.command.Timeline { close = true }
+        end
+
+        return trgLayers
+    else
+        -- Default to "ACTIVE"
+        if layer then
+            return AseUtilities.appendGroups(
+                layer, {}, includeLocked, includeHidden)
+        end
+        return {}
+    end -- End target string block.
+end
+
 ---@param srcImg Image
 ---@param threshold integer
 ---@param absOpaque boolean
@@ -286,15 +345,12 @@ dlg:button {
             or defaults.removePalette --[[@as boolean]]
 
         if opaqueLayer ~= "NONE" then
-            -- TODO: As of 1.3.10 beta, this also has to do groups.
-            -- See app.preferences.experimental.new_blend . Is it worth
-            -- making a filterGroups function?
+            local activeLayer <const> = site.layer
 
             local chosenLayers <const> = AseUtilities.filterLayers(
-                activeSprite, site.layer, opaqueLayer, includeLocked,
+                activeSprite, activeLayer, opaqueLayer, includeLocked,
                 includeHidden, includeTiles, false)
             local lenChosenLayers <const> = #chosenLayers
-
             if lenChosenLayers > 0 then
                 app.transaction("Opaque Layers", function()
                     local i = 0
@@ -303,8 +359,22 @@ dlg:button {
                         chosenLayers[i].opacity = 255
                     end
                 end)
-            end
-        end
+            end -- End non-zero chosen layers.
+
+            local chosenGroups <const> = filterGroups(
+                activeSprite, activeLayer, opaqueLayer, includeLocked,
+                includeHidden)
+            local lenChosenGroups <const> = #chosenGroups
+            if lenChosenGroups > 0 then
+                app.transaction("Opaque Groups", function()
+                    local j = 0
+                    while j < lenChosenGroups do
+                        j = j + 1
+                        chosenGroups[j].opacity = 255
+                    end
+                end)
+            end -- End non-zero chosen groups.
+        end     -- End opaque layers.
 
         if opaqueCel ~= "NONE" then
             local chosenCels <const> = AseUtilities.filterCels(
