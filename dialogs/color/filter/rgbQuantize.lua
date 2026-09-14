@@ -4,6 +4,8 @@ dofile("../../../support/quantizeutilities.lua")
 local targets <const> = { "ACTIVE", "ALL", "PALETTE", "RANGE" }
 
 local defaults <const> = {
+    -- Last commit with lab quantize dialog:
+    -- 014b80163a7fc3a2e7a9101442a971c312242b28
     target = "ACTIVE",
     genPalette = false
 }
