@@ -11,6 +11,9 @@ end
 
 local appRange <const> = app.range
 if appRange.sprite == activeSprite then
+    -- TODO: Problem with having range sprite be the outermost test
+    -- is that you can create a range in one sprite, tab to another,
+    -- then call the command and nothing would happen?
     local selectCel <const> = AseUtilities.selectCel
     local spriteBounds <const> = activeSprite.bounds
 

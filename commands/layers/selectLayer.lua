@@ -176,6 +176,12 @@ local function evalLayer(
     return 0.0, layer
 end
 
+-- TODO: Create a combined select layer and cel?
+-- See selectCelsRange.
+-- Would have to convert many functions to AseUtilities,
+-- possibly even making private methods only available
+-- within AseUtilities.
+
 local site <const> = app.site
 local sprite <const> = site.sprite
 if not sprite then return end
