@@ -206,7 +206,7 @@ dlg:button {
         local sepGroup <const> = activeSprite:newGroup()
         app.transaction("Set Group Props", function()
             sepGroup.name = srcLayer.name .. " Separated"
-            sepGroup.parent = AseUtilities.getTopVisibleParent(srcLayer)
+            sepGroup.parent = AseUtilities.topVisibleParent(srcLayer)
             sepGroup.isCollapsed = true
 
             sepGroup.blendMode = srcLayer.blendMode or BlendMode.NORMAL

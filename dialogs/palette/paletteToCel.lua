@@ -238,7 +238,7 @@ dlg:button {
             end
             trgLayer.name = string.format("%s %03d",
                 srcLayerName, lenHexesSrgb)
-            trgLayer.parent = AseUtilities.getTopVisibleParent(srcLayer)
+            trgLayer.parent = AseUtilities.topVisibleParent(srcLayer)
             trgLayer.opacity = srcLayer.opacity or 255
             trgLayer.blendMode = srcLayer.blendMode
                 or BlendMode.NORMAL

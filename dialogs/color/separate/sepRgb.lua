@@ -245,7 +245,7 @@ dlg:button {
             greenLyr.parent = sepGroup
             blueLyr.parent = sepGroup
 
-            sepGroup.parent = AseUtilities.getTopVisibleParent(srcLayer)
+            sepGroup.parent = AseUtilities.topVisibleParent(srcLayer)
             sepGroup.isCollapsed = true
             sepGroup.name = srcLayer.name .. " Separated"
         end)

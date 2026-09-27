@@ -2332,21 +2332,6 @@ function AseUtilities.getSelection(sprite)
     return trgSel, true
 end
 
----Gets the top most parent layer that is visible. Returns the sprite as a
----parent if it is reached.
----@param layer Layer
----@return Layer|Sprite
-function AseUtilities.getTopVisibleParent(layer)
-    local query = layer --[[@as Layer|Sprite]]
-    while query do
-        query = query.parent
-        ---@diagnostic disable-next-line: undefined-field
-        if query.__name == "doc::Sprite" then return query end
-        if query.isVisible then return query end
-    end
-    return layer
-end
-
 ---Get unique cels from layers that have already been verified as leaves and
 ---filtered. Cels are ordered by frame number, then by layer id.
 ---@param leaves Layer[] leaf layers
@@ -3507,6 +3492,21 @@ function AseUtilities.tileMapToImage(imgSrc, tileSet, colorMode)
     end
 
     return imgTrg
+end
+
+---Gets the top most parent layer that is visible. Returns the sprite as a
+---parent if it is reached.
+---@param layer Layer
+---@return Layer|Sprite
+function AseUtilities.topVisibleParent(layer)
+    local query = layer --[[@as Layer|Sprite]]
+    while query do
+        query = query.parent
+        ---@diagnostic disable-next-line: undefined-field
+        if query.__name == "doc::Sprite" then return query end
+        if query.isVisible then return query end
+    end
+    return layer
 end
 
 ---Returns a copy of the source image that has been transposed.

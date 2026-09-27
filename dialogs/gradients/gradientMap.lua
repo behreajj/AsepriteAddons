@@ -177,7 +177,7 @@ dlg:button {
         -- Do not copy source layer blend mode.
         local trgLayer = activeSprite:newLayer()
         app.transaction("Set Layer Props", function()
-            trgLayer.parent = AseUtilities.getTopVisibleParent(srcLayer)
+            trgLayer.parent = AseUtilities.topVisibleParent(srcLayer)
             trgLayer.opacity = srcLayer.opacity or 255
             trgLayer.name = "Gradient Map"
             if useMixed then

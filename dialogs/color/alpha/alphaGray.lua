@@ -218,7 +218,7 @@ dlg:button {
             elseif isAlphaToGray then
                 trgLayer.name = srcLayerName .. " To Gray"
             end
-            trgLayer.parent = AseUtilities.getTopVisibleParent(srcLayer)
+            trgLayer.parent = AseUtilities.topVisibleParent(srcLayer)
             trgLayer.opacity = srcLayer.opacity or 255
         end)
 

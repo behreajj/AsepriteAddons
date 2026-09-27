@@ -221,7 +221,7 @@ dlg:button {
                 "%s Quantized R%02d G%02d B%02d A%02d",
                 srcLayerName,
                 rLevels, gLevels, bLevels, aLevels)
-            trgLayer.parent = AseUtilities.getTopVisibleParent(srcLayer)
+            trgLayer.parent = AseUtilities.topVisibleParent(srcLayer)
             trgLayer.opacity = srcLayer.opacity or 255
             trgLayer.blendMode = srcLayer.blendMode
                 or BlendMode.NORMAL

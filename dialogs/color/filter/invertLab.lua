@@ -230,7 +230,7 @@ dlg:button {
             end
             trgLayer.name = string.format(
                 "%s Inverted", srcLayerName)
-            trgLayer.parent = AseUtilities.getTopVisibleParent(srcLayer)
+            trgLayer.parent = AseUtilities.topVisibleParent(srcLayer)
             trgLayer.opacity = srcLayer.opacity or 255
             -- Do not copy blend mode, it only confuses things.
 

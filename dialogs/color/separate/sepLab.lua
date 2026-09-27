@@ -640,7 +640,7 @@ dlg:button {
 
         local trgLayer <const> = activeSprite:newLayer()
         app.transaction("Set Layer Props", function()
-            trgLayer.parent = AseUtilities.getTopVisibleParent(srcLayer)
+            trgLayer.parent = AseUtilities.topVisibleParent(srcLayer)
             trgLayer.name = string.format(
                 "%s Mask%s",
                 srcLayer.name, biasLabel)
