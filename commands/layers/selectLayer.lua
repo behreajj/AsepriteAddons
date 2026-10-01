@@ -88,6 +88,11 @@ local function evalLayer(
         local cel <const> = layer:cel(frame)
         if not cel then return 0.0, layer end
 
+        local aCel8 <const> = cel.opacity
+        if aCel8 <= 0 then return 0.0, layer end
+        local aCel01 <const> = aCel8 / 255.0
+        local aFinal01 <const> = aLayerHier01 * aCel01
+
         local celPos <const> = cel.position
         local xtlCel <const> = celPos.x
         local ytlCel <const> = celPos.y
@@ -124,11 +129,6 @@ local function evalLayer(
         local xLocal <const> = xMouse - xtlCel
         local yLocal <const> = yMouse - ytlCel
 
-        local aCel8 <const> = cel.opacity
-        if aCel8 <= 0 then return 0.0, layer end
-
-        local aCel01 <const> = aCel8 / 255.0
-        local aFinal01 <const> = aLayerHier01 * aCel01
         local bpp <const> = image.bytesPerPixel
         local byteStr <const> = image.bytes
 
