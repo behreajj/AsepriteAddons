@@ -498,11 +498,14 @@ dlg:button {
         local max <const> = math.max
         local min <const> = math.min
         local strbyte <const> = string.byte
+        local strfmt <const> = string.format
         local strpack <const> = string.pack
         local tconcat <const> = table.concat
 
-        local tilesToImage <const> = AseUtilities.tileMapToImage
+        local transact <const> = app.transaction
+
         local createSpec <const> = AseUtilities.createSpec
+        local tilesToImage <const> = AseUtilities.tileMapToImage
 
         local rgbnew <const> = Rgb.new
         local sRgbToLab <const> = ColorUtilities.sRgbToSrLab2Internal
@@ -633,6 +636,11 @@ dlg:button {
         ---@type table<integer, Lab>
         local dict <const> = {}
         dict[0] = labnew(0.0, 0.0, 0.0, 0.0)
+
+        -- Get frame UI offset.
+        local docPrefs <const> = app.preferences.document(activeSprite)
+        local tlPrefs <const> = docPrefs.timeline
+        local frameUiOffset <const> = tlPrefs.first_frame - 1 --[[@as integer]]
 
         local i = 0
         local lenFrames <const> = #frIdcs
@@ -831,7 +839,10 @@ dlg:button {
                 cWidth, cHeight, spriteColorMode, colorSpace, alphaIndex))
             cImage.bytes = tconcat(cStrs)
 
-            activeSprite:newCel(compLayer, frIdx, cImage, Point(cx, cy))
+            transact(strfmt("Blend LAB %s", frIdx + frameUiOffset),
+                function()
+                    activeSprite:newCel(compLayer, frIdx, cImage, Point(cx, cy))
+                end)
         end -- End frames loop.
 
         AseUtilities.hideSource(activeSprite, underLayer, frIdcs, delUnderStr)
