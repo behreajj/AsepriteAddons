@@ -729,8 +729,8 @@ dlg:button {
             local cStrs <const> = {}
             local j = 0
             while j < cLen do
-                local x = j % cWidth
-                local y = j // cWidth
+                local x <const> = j % cWidth
+                local y <const> = j // cWidth
 
                 local aRed, aGreen, aBlue, aAlpha = 0, 0, 0, 0
                 local bRed, bGreen, bBlue, bAlpha = 0, 0, 0, 0
