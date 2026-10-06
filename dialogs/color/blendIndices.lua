@@ -12,6 +12,12 @@ local idxCompOptions <const> = {
     "UNDER",
 }
 
+local alphaCompOptions <const> = {
+    "EXCLUDE",
+    "INTERSECT",
+    "UNION",
+}
+
 local defaults <const> = {
     -- https://github.com/aseprite/aseprite/issues/2427
     -- https://github.com/aseprite/aseprite/issues/3230
@@ -22,6 +28,7 @@ local defaults <const> = {
     -- the alpha index.
     target = "ACTIVE",
     idxComp = "OVER",
+    alphaComp = "UNION",
     delOver = "HIDE",
     delUnder = "HIDE",
     printElapsed = false,
@@ -30,84 +37,64 @@ local defaults <const> = {
 ---@param uIdx integer under index
 ---@param oIdx integer over index
 ---@param palLength integer palette length
----@param alphaIndex integer alpha index
 ---@return integer cl
-local function idxCompAdd(uIdx, oIdx, palLength, alphaIndex)
-    if oIdx == alphaIndex then return uIdx end
-    if uIdx == alphaIndex then return oIdx end
+local function idxCompAdd(uIdx, oIdx, palLength)
     return (uIdx + oIdx) % palLength
 end
 
 ---@param uIdx integer under index
 ---@param oIdx integer over index
 ---@param palLength integer palette length
----@param alphaIndex integer alpha index
 ---@return integer cl
-local function idxCompBitAnd(uIdx, oIdx, palLength, alphaIndex)
-    if oIdx == alphaIndex then return uIdx end
-    if uIdx == alphaIndex then return oIdx end
+local function idxCompBitAnd(uIdx, oIdx, palLength)
     return (uIdx & oIdx) % palLength
 end
 
 ---@param uIdx integer under index
 ---@param oIdx integer over index
 ---@param palLength integer palette length
----@param alphaIndex integer alpha index
 ---@return integer cl
-local function idxCompBitOr(uIdx, oIdx, palLength, alphaIndex)
-    if oIdx == alphaIndex then return uIdx end
-    if uIdx == alphaIndex then return oIdx end
+local function idxCompBitOr(uIdx, oIdx, palLength)
     return (uIdx | oIdx) % palLength
 end
 
 ---@param uIdx integer under index
 ---@param oIdx integer over index
 ---@param palLength integer palette length
----@param alphaIndex integer alpha index
 ---@return integer cl
-local function idxCompBitXor(uIdx, oIdx, palLength, alphaIndex)
-    if oIdx == alphaIndex then return uIdx end
-    if uIdx == alphaIndex then return oIdx end
+local function idxCompBitXor(uIdx, oIdx, palLength)
     return (uIdx ~ oIdx) % palLength
 end
 
 ---@param uIdx integer under index
 ---@param oIdx integer over index
 ---@param palLength integer palette length
----@param alphaIndex integer alpha index
 ---@return integer cl
-local function idxCompAverage(uIdx, oIdx, palLength, alphaIndex)
-    if oIdx == alphaIndex then return uIdx end
-    if uIdx == alphaIndex then return oIdx end
+local function idxCompAverage(uIdx, oIdx, palLength)
     return ((uIdx + oIdx) // 2) % palLength
 end
 
 ---@param uIdx integer under index
 ---@param oIdx integer over index
 ---@param palLength integer palette length
----@param alphaIndex integer alpha index
 ---@return integer cl
-local function idxCompOver(uIdx, oIdx, palLength, alphaIndex)
+local function idxCompOver(uIdx, oIdx, palLength)
     return oIdx % palLength
 end
 
 ---@param uIdx integer under index
 ---@param oIdx integer over index
 ---@param palLength integer palette length
----@param alphaIndex integer alpha index
 ---@return integer cl
-local function idxCompSub(uIdx, oIdx, palLength, alphaIndex)
-    if oIdx == alphaIndex then return uIdx end
-    if uIdx == alphaIndex then return oIdx end
+local function idxCompSub(uIdx, oIdx, palLength)
     return (uIdx - oIdx) % palLength
 end
 
 ---@param uIdx integer under index
 ---@param oIdx integer over index
 ---@param palLength integer palette length
----@param alphaIndex integer alpha index
 ---@return integer cl
-local function idxCompUnder(uIdx, oIdx, palLength, alphaIndex)
+local function idxCompUnder(uIdx, oIdx, palLength)
     return uIdx % palLength
 end
 
@@ -128,6 +115,16 @@ dlg:combobox {
     label = "Index:",
     option = defaults.idxComp,
     options = idxCompOptions,
+    hexpand = false,
+}
+
+dlg:newrow { always = false }
+
+dlg:combobox {
+    id = "alphaComp",
+    label = "Alpha:",
+    option = defaults.alphaComp,
+    options = alphaCompOptions,
     hexpand = false,
 }
 
@@ -264,6 +261,8 @@ dlg:button {
             or defaults.target --[[@as string]]
         local idxComp <const> = args.idxComp
             or defaults.idxComp --[[@as string]]
+        local alphaComp <const> = args.alphaComp
+            or defaults.alphaComp --[[@as string]]
         local delOverStr <const> = args.delOver
             or defaults.delOver --[[@as string]]
         local delUnderStr <const> = args.delUnder
@@ -293,6 +292,10 @@ dlg:button {
                 overLayer.name, underLayer.name, idxComp)
             compLayer.parent = parent
         end)
+
+        local useUnion <const> = alphaComp == "UNION"
+        local useIntersect <const> = alphaComp == "INTERSECT"
+        local useExclude <const> = alphaComp == "EXCLUDE"
 
         local idxBlendFunc = idxCompOver
         if idxComp == "ADD" then
@@ -398,11 +401,12 @@ dlg:button {
             local cStrs <const> = {}
             local j = 0
             while j < cLen do
-                local x = j % cWidth
-                local y = j // cWidth
+                local x <const> = j % cWidth
+                local y <const> = j // cWidth
 
                 local aVal = alphaIndex
                 local bVal = alphaIndex
+                local cVal = alphaIndex
 
                 local axs <const> = x - axud
                 local ays <const> = y - ayud
@@ -418,10 +422,31 @@ dlg:button {
                     bVal = strbyte(bpx, bys * bWidth + bxs + 1)
                 end
 
-                j = j + 1
+                local aIsOpaque <const> = aVal ~= alphaIndex
+                local bIsOpaque <const> = bVal ~= alphaIndex
+                if useUnion then
+                    if aIsOpaque and bIsOpaque then
+                        cVal = idxBlendFunc(aVal, bVal, palLength)
+                    elseif bIsOpaque then
+                        cVal = bVal
+                    elseif aIsOpaque then
+                        cVal = aVal
+                    end
+                elseif useIntersect then
+                    if aIsOpaque and bIsOpaque then
+                        cVal = idxBlendFunc(aVal, bVal, palLength)
+                    end
+                elseif useExclude then
+                    if aIsOpaque and bIsOpaque then
+                        cVal = alphaIndex
+                    elseif bIsOpaque then
+                        cVal = bVal
+                    elseif aIsOpaque then
+                        cVal = aVal
+                    end
+                end -- End alpha comp block.
 
-                local cVal <const> = idxBlendFunc(
-                    aVal, bVal, palLength, alphaIndex)
+                j = j + 1
                 cStrs[j] = strchar(cVal)
             end -- End pixels loop.
 
