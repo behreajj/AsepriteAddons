@@ -21,11 +21,6 @@ local alphaCompOptions <const> = {
 local defaults <const> = {
     -- https://github.com/aseprite/aseprite/issues/2427
     -- https://github.com/aseprite/aseprite/issues/3230
-
-    -- TODO: Consider alpha union or intersect option.
-    -- In that case, the compilation functions would
-    -- be better off without cases where one color is
-    -- the alpha index.
     target = "ACTIVE",
     idxComp = "OVER",
     alphaComp = "UNION",
