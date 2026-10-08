@@ -798,6 +798,8 @@ dlg:button {
             local imageColorMode <const> = imageSpec.colorMode
 
             if imageColorMode == ColorMode.RGB then
+                -- TODO: This would cause a problem for images with dimensions
+                -- greater than the max possible for an unsigned short, 65535.
                 brushImageStr = brushImage.bytes
             elseif imageColorMode == ColorMode.GRAY then
                 ---@type string[]
