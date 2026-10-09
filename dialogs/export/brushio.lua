@@ -701,6 +701,24 @@ dlg:button {
             return
         end
 
+        local fileTitle <const> = app.fs.fileTitle(filepath)
+        if #fileTitle < 1 then
+            app.alert {
+                title = "Error",
+                text = "File title is empty."
+            }
+            return
+        end
+
+        local pathSep = app.fs.pathSeparator
+        pathSep = string.gsub(pathSep, "\\", "\\\\")
+
+        local filePathVerif <const> = app.fs.filePath(filepath)
+            .. pathSep
+            .. Utilities.validateFilename(fileTitle)
+            .. "."
+            .. fileExt
+
         -- Cache commonly used functions.
         local floor <const> = math.floor
         local max <const> = math.max
@@ -800,6 +818,7 @@ dlg:button {
             if imageColorMode == ColorMode.RGB then
                 -- TODO: This would cause a problem for images with dimensions
                 -- greater than the max possible for an unsigned short, 65535.
+                -- It could also help remove zero alpha non-black colors.
                 brushImageStr = brushImage.bytes
             elseif imageColorMode == ColorMode.GRAY then
                 ---@type string[]
@@ -1196,7 +1215,7 @@ dlg:button {
             brushImageStr,               -- variable, 128 offset
         })
 
-        local binFile <const>, err <const> = io.open(filepath, "wb")
+        local binFile <const>, err <const> = io.open(filePathVerif, "wb")
         if err ~= nil then
             if binFile then binFile:close() end
             app.alert { title = "Error", text = err }
