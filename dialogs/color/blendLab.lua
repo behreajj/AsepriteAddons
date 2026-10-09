@@ -30,8 +30,15 @@ local hCompOptions <const> = {
 local lCompOptions <const> = {
     -- Commit with expanded options:
     -- 67c3b47218af708e478d1b585d9c860148905772
+    --
     -- AB blend for adopt chroma and hue:
     -- d69312be1d83862f0bb0c938cd78046c81db447b
+    --
+    -- Blend indices for indexed color mode:
+    -- a34ebb4a00986a14895ce1bb53c366a04f188725
+    -- Per Github issues:
+    -- https://github.com/aseprite/aseprite/issues/2427
+    -- https://github.com/aseprite/aseprite/issues/3230
     "ADD",
     "AVERAGE",
     "BLEND",
