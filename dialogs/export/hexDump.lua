@@ -31,7 +31,7 @@ local importFileExts <const> = {
 local exportFileExts <const> = { "c", "csv", "md", "txt" }
 
 local inputTypes <const> = { "CEL", "COMPOSITE", "FILE", "PALETTE" }
-local outputTypes <const> = { "FILE", "PRINT" }
+local outputTypes <const> = { "FILE", "CLIPBOARD", "PRINT" }
 local rgbaFormats <const> = { "ABGR", "BGR", "RGB", "RGBA" }
 
 local defaults <const> = {
@@ -458,7 +458,26 @@ dlg:button {
                 return
             end
 
-            local writeFile <const>, writeErr <const> = io.open(exportFilepath, "w")
+            local fileTitle <const> = app.fs.fileTitle(exportFilepath)
+            if #fileTitle < 1 then
+                app.alert {
+                    title = "Error",
+                    text = "File title is empty."
+                }
+                return
+            end
+
+            local pathSep = app.fs.pathSeparator
+            pathSep = string.gsub(pathSep, "\\", "\\\\")
+
+            local fileExt <const> = app.fs.fileExtension(exportFilepath)
+            local filePathVerif <const> = app.fs.filePath(exportFilepath)
+                .. pathSep
+                .. Utilities.validateFilename(fileTitle)
+                .. "."
+                .. fileExt
+
+            local writeFile <const>, writeErr <const> = io.open(filePathVerif, "w")
             if writeErr ~= nil then
                 if writeFile then writeFile:close() end
                 app.alert { title = "Error", text = writeErr }
@@ -470,6 +489,9 @@ dlg:button {
             writeFile:close()
 
             app.alert { title = "Success", text = "Hex file saved." }
+        elseif outputType == "CLIPBOARD" then
+            app.clipboard.text = compStr
+            app.alert { title = "Success", text = "Hex copied to clipboard." }
         else
             print(compStr)
         end
